@@ -1,0 +1,17 @@
+{
+  "name": "wireframes-cli",
+  "version": "0.1.0",
+  "description": "CLI for managing wireframe projects",
+  "private": true,
+  "type": "commonjs",
+  "bin": {
+    "wf": "./bin/wf.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node -e \"console.log('build-ok')\"",
+    "test": "node --test"
+  }
+}
