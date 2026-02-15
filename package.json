@@ -13,5 +13,8 @@
   "scripts": {
     "build": "node -e \"console.log('build-ok')\"",
     "test": "node --test"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
   }
 }

@@ -1,0 +1,9 @@
+'use strict';
+
+const SUPPORTED_SPEC_VERSION = '1.1';
+const SUPPORTED_CLI_VERSION = '0.1.0';
+
+module.exports = {
+  SUPPORTED_SPEC_VERSION,
+  SUPPORTED_CLI_VERSION,
+};

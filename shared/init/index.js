@@ -2,9 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-
-const SUPPORTED_SPEC_VERSION = '1.1';
-const SUPPORTED_CLI_VERSION = '0.1.0';
+const { SUPPORTED_SPEC_VERSION, SUPPORTED_CLI_VERSION } = require('../schema/constants');
 
 function quote(value) {
   return JSON.stringify(String(value));
