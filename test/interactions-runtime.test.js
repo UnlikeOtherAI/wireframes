@@ -119,6 +119,54 @@ test('renderNode serializes state-bound attributes for runtime updates', () => {
   assert.equal(html.includes('placeholder=\"Find \"'), true);
 });
 
+test('renderNode stores selection value for collection-bound items', () => {
+  const html = renderNode({
+    id: 'product_list',
+    component: 'section',
+    binding: { source: 'products', itemVar: 'product' },
+    children: [
+      {
+        id: 'row',
+        component: 'text',
+        selection: {
+          scope: 'page',
+          stateKey: 'selected_product',
+        },
+        props: {
+          text: '{{product.name}}',
+        },
+      },
+    ],
+  }, {
+    dataSources: {
+      products: {
+        items: [
+          { id: 101, name: 'Phone' },
+          { id: 102, name: 'Laptop' },
+        ],
+        primaryKey: 'id',
+      },
+    },
+  });
+
+  assert.equal(html.includes('data-selection-key=\"selected_product\"'), true);
+  assert.equal(html.includes('data-selection-value=\"101\"'), true);
+  assert.equal(html.includes('data-selection-value=\"102\"'), true);
+});
+
+test('buildInteractionRuntime reads selection value attribute and respects selectable flag', () => {
+  const script = buildInteractionRuntime({
+    routeId: 'home',
+    routeTable: { home: 'home.html' },
+    appStateDefaults: {},
+    pageStateDefaults: {},
+    platform: 'web',
+  });
+
+  assert.equal(script.includes('selectionValueForNode'), true);
+  assert.equal(script.includes('data-selection-selectable'), true);
+});
+
 test('renderWireframeMarkup resolves route-bound text before runtime', () => {
   const html = renderWireframeMarkup({
     roots: [

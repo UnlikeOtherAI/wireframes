@@ -132,6 +132,17 @@ function setState(scope, key, value) {
   else setAtPath(WF_PAGE_STATE, key, value);
   refresh();
 }
+
+function selectionValueForNode(node) {
+  var raw = node.getAttribute('data-selection-value');
+  if (raw == null || raw === '') return node.getAttribute('id') || '';
+  try {
+    return JSON.parse(raw);
+  } catch (_err) {
+    return raw;
+  }
+}
+
 function toggleState(scope, key) {
   setState(scope, key, !resolveExpr('{{' + scope + '.' + key + '}}', null, WF_PAGE_STATE));
 }
@@ -386,7 +397,8 @@ function refreshSelection() {
     var scope = node.getAttribute('data-selection-scope') || 'page';
     var key = node.getAttribute('data-selection-key') || '';
     var current = resolveExpr('{{' + scope + '.' + key + '}}', null, WF_PAGE_STATE);
-    if (current && current === node.getAttribute('id')) node.classList.add('wf-selected');
+    var expected = selectionValueForNode(node);
+    if (current === expected) node.classList.add('wf-selected');
     else node.classList.remove('wf-selected');
   });
 }
@@ -395,9 +407,10 @@ function bindSelection() {
     if (node._wfSelectionBound) return;
     node._wfSelectionBound = true;
     node.addEventListener('click', function () {
+      if (node.getAttribute('data-selection-selectable') === 'false') return;
       var scope = node.getAttribute('data-selection-scope') || 'page';
       var key = node.getAttribute('data-selection-key') || '';
-      if (key) setState(scope, key, node.getAttribute('id'));
+      if (key) setState(scope, key, selectionValueForNode(node));
     });
   });
 }

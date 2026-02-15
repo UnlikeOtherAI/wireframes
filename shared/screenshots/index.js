@@ -209,7 +209,12 @@ function resolvePageDataSources(projectPath, page) {
       continue;
     }
     const items = Array.isArray(loaded.document?.dataset?.items) ? loaded.document.dataset.items : [];
-    sourceMap[sourceId] = items;
+    sourceMap[sourceId] = {
+      items,
+      primaryKey: typeof loaded.document?.dataset?.primaryKey === 'string'
+        ? loaded.document.dataset.primaryKey
+        : null,
+    };
   }
 
   return sourceMap;

@@ -62,6 +62,18 @@ const OVERLAY_Z_INDEX = {
 const OVERLAY_PLACEMENTS = new Set(['top', 'bottom', 'left', 'right', 'center']);
 const BINDING_TOKEN = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z0-9_.]+)\s*\}\}/g;
 
+function isBoundSelectionValue(value) {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
+}
+
+function serializeSelectionValue(value) {
+  try {
+    return JSON.stringify(value);
+  } catch (_error) {
+    return '';
+  }
+}
+
 function cloneNode(value) {
   try {
     return JSON.parse(JSON.stringify(value));
@@ -92,7 +104,7 @@ function suffixNodeIds(node, suffix) {
 
 function resolveCollectionItems(binding, options = {}) {
   if (!isObject(binding) || typeof binding.source !== 'string' || binding.source.trim() === '') {
-    return [];
+    return { items: [], primaryKey: null };
   }
 
   const sourceId = binding.source.trim();
@@ -100,14 +112,16 @@ function resolveCollectionItems(binding, options = {}) {
   const sourceData = sources[sourceId];
 
   if (Array.isArray(sourceData)) {
-    return sourceData;
+    return { items: sourceData, primaryKey: null };
   }
 
   if (isObject(sourceData) && Array.isArray(sourceData.items)) {
-    return sourceData.items;
+    const rawPrimaryKey = typeof sourceData.primaryKey === 'string' ? sourceData.primaryKey.trim() : '';
+    const primaryKey = rawPrimaryKey ? rawPrimaryKey : null;
+    return { items: sourceData.items, primaryKey };
   }
 
-  return [];
+  return { items: [], primaryKey: null };
 }
 
 function getBindingItemVar(binding, options = {}) {
@@ -128,7 +142,8 @@ function renderCollectionNode(node, options = {}) {
     return null;
   }
 
-  const items = resolveCollectionItems(node.binding, options);
+  const collection = resolveCollectionItems(node.binding, options);
+  const items = Array.isArray(collection.items) ? collection.items : [];
   if (!Array.isArray(items) || items.length === 0) {
     return null;
   }
@@ -141,6 +156,7 @@ function renderCollectionNode(node, options = {}) {
   delete cloned.binding;
   return {
     items,
+    primaryKey: collection.primaryKey,
     cloned,
     bindingItemVar: getBindingItemVar(node.binding, options),
   };
@@ -301,7 +317,7 @@ function nodeComponent(node) {
 
 const wfNodeBorderStyle = 'border:var(--wf-border-width,1px) var(--wf-border-style,solid) #333;border-radius:var(--wf-corner-radius,0px)';
 
-function buildNodeDataAttributes(node, stateBindings) {
+function buildNodeDataAttributes(node, stateBindings, selectionValue) {
   const entries = [];
   if (Array.isArray(node.interaction) && node.interaction.length > 0) {
     entries.push(`data-wf-interactions="${escapeAttr(JSON.stringify(node.interaction))}"`);
@@ -329,6 +345,12 @@ function buildNodeDataAttributes(node, stateBindings) {
   }
   if (node.selection && typeof node.selection.scope === 'string' && node.selection.scope.trim() !== '') {
     entries.push(`data-selection-scope="${escapeAttr(node.selection.scope)}"`);
+  }
+  if (node.selection && isBoundSelectionValue(selectionValue)) {
+    entries.push(`data-selection-value="${escapeAttr(serializeSelectionValue(selectionValue))}"`);
+  }
+  if (node.selection && node.selection.selectable === false) {
+    entries.push('data-selection-selectable="false"');
   }
   return entries.length > 0 ? ` ${entries.join(' ')}` : '';
 }
@@ -581,6 +603,7 @@ function renderNode(node, options = {}) {
   const parentLayoutType = options.parentLayoutType || 'stack';
   const projectPath = options.projectPath || '';
   const stateBindings = isObject(node.stateBindings) ? { ...node.stateBindings } : {};
+  const selectionValue = options.selectionValue;
   const bindingContext = {
     routeId: options.routeId || '',
     props,
@@ -597,8 +620,13 @@ function renderNode(node, options = {}) {
           return '';
         }
         suffixNodeIds(clone, String(index));
+        const primaryKey = collectionData.primaryKey;
+        const nextSelectionValue = isBoundSelectionValue(isObject(item) ? item[primaryKey] : undefined)
+          ? item[primaryKey]
+          : options.selectionValue;
         return renderNode(clone, {
           ...options,
+          selectionValue: nextSelectionValue,
           itemContext: isObject(item) ? item : {},
           itemVar: collectionData.bindingItemVar,
         });
@@ -616,7 +644,7 @@ function renderNode(node, options = {}) {
 
   const headingLevel = Number.isInteger(props.level) ? props.level : 3;
   const safeHeadingLevel = Math.max(1, Math.min(6, headingLevel));
-  const dataAttrs = () => buildNodeDataAttributes(node, stateBindings);
+  const dataAttrs = () => buildNodeDataAttributes(node, stateBindings, selectionValue);
   const isOverlayRoot = node.kind === 'overlay';
   const primitives = {
     heading: () => {
