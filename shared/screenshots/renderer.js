@@ -44,6 +44,7 @@ function renderRoot(root, options) {
     ...options,
     routeId: options.routeId || '',
     pageStyle: localPageStyle,
+    dataSources: options.dataSources || {},
   });
   const rootStyle = [
     'margin:8px;padding:8px',
@@ -77,6 +78,7 @@ function renderWireframeMarkup({
   pageStyle = {},
   defaultGridColumns = 12,
   projectPath,
+  dataSources = {},
   frame = null,
 }) {
   const viewportWidth = Number.isFinite(pageViewport?.width) ? pageViewport.width : 1280;
@@ -108,16 +110,18 @@ function renderWireframeMarkup({
     ${renderRoots(roots, {
       pageStyle,
       projectPath,
+      dataSources,
       defaultGridColumns,
       routeId: pageRouteId,
     })}
-    </div>
   </div>
-    </div>`
+    </div>
+  </div>`
     : `<div id="wf-wireframe-shell" style="${pageShellStyle}">
   ${renderRoots(roots, {
     pageStyle,
     projectPath,
+    dataSources,
     defaultGridColumns,
     routeId: pageRouteId,
   })}

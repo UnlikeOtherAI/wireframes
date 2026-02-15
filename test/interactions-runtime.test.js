@@ -70,6 +70,38 @@ test('renderNode resolves route, props, item, and state bindings in text', () =>
   assert.equal(html.includes('data-bind=\"state.mode\"'), true);
 });
 
+test('renderNode renders collection bindings with custom itemVar and nested item paths', () => {
+  const html = renderNode({
+    id: 'product_list',
+    component: 'section',
+    binding: {
+      source: 'products',
+      itemVar: 'product',
+    },
+    children: [
+      {
+        id: 'product_name',
+        component: 'text',
+        props: {
+          text: '{{product.name}} - {{product.address.city}}',
+        },
+      },
+    ],
+  }, {
+    dataSources: {
+      products: [
+        { name: 'Laptop', address: { city: 'Chicago' } },
+        { name: 'Phone', address: { city: 'Seattle' } },
+      ],
+    },
+  });
+
+  assert.equal(html.includes('Laptop - Chicago'), true);
+  assert.equal(html.includes('Phone - Seattle'), true);
+  assert.equal(html.includes('id="product_name_0"'), true);
+  assert.equal(html.includes('id="product_name_1"'), true);
+});
+
 test('renderNode serializes state-bound attributes for runtime updates', () => {
   const html = renderNode({
     id: 'search_box',

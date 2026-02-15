@@ -60,7 +60,91 @@ const OVERLAY_Z_INDEX = {
 };
 
 const OVERLAY_PLACEMENTS = new Set(['top', 'bottom', 'left', 'right', 'center']);
-const BINDING_TOKEN = /\{\{\s*(state|appState|route|props|item)\.([a-zA-Z0-9_.]+)\s*\}\}/g;
+const BINDING_TOKEN = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z0-9_.]+)\s*\}\}/g;
+
+function cloneNode(value) {
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return value;
+  }
+}
+
+function suffixNodeIds(node, suffix) {
+  if (!isObject(node)) {
+    return;
+  }
+
+  if (typeof node.id === 'string' && node.id.trim() !== '') {
+    node.id = `${node.id}_${suffix}`;
+  }
+
+  const childKeys = ['children', 'content', 'nodes'];
+  for (const key of childKeys) {
+    if (!Array.isArray(node[key])) {
+      continue;
+    }
+    for (const child of node[key]) {
+      suffixNodeIds(child, suffix);
+    }
+  }
+}
+
+function resolveCollectionItems(binding, options = {}) {
+  if (!isObject(binding) || typeof binding.source !== 'string' || binding.source.trim() === '') {
+    return [];
+  }
+
+  const sourceId = binding.source.trim();
+  const sources = isObject(options.dataSources) ? options.dataSources : {};
+  const sourceData = sources[sourceId];
+
+  if (Array.isArray(sourceData)) {
+    return sourceData;
+  }
+
+  if (isObject(sourceData) && Array.isArray(sourceData.items)) {
+    return sourceData.items;
+  }
+
+  return [];
+}
+
+function getBindingItemVar(binding, options = {}) {
+  const configuredVar = binding && typeof binding.itemVar === 'string' ? binding.itemVar.trim() : '';
+  if (configuredVar) {
+    return configuredVar;
+  }
+
+  if (typeof options.itemVar === 'string' && options.itemVar.trim() !== '') {
+    return options.itemVar.trim();
+  }
+
+  return 'item';
+}
+
+function renderCollectionNode(node, options = {}) {
+  if (!isObject(node) || !isObject(node.binding) || typeof node.binding.source !== 'string') {
+    return null;
+  }
+
+  const items = resolveCollectionItems(node.binding, options);
+  if (!Array.isArray(items) || items.length === 0) {
+    return null;
+  }
+
+  const cloned = cloneNode(node);
+  if (!isObject(cloned) || !isObject(cloned.binding)) {
+    return null;
+  }
+
+  delete cloned.binding;
+  return {
+    items,
+    cloned,
+    bindingItemVar: getBindingItemVar(node.binding, options),
+  };
+}
 
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
@@ -94,7 +178,8 @@ function resolveTemplateToken(type, path, options = {}) {
   if (type === 'props') {
     return getPathValue(options.props, path);
   }
-  if (type === 'item') {
+  const itemVariable = typeof options.itemVar === 'string' && options.itemVar.trim() !== '' ? options.itemVar.trim() : 'item';
+  if (type === 'item' || type === itemVariable) {
     return getPathValue(options.item, path);
   }
   return undefined;
@@ -500,7 +585,26 @@ function renderNode(node, options = {}) {
     routeId: options.routeId || '',
     props,
     item: options.itemContext || {},
+    itemVar: options.itemVar || 'item',
   };
+
+  const collectionData = renderCollectionNode(node, options);
+  if (collectionData) {
+    return collectionData.items
+      .map((item, index) => {
+        const clone = cloneNode(collectionData.cloned);
+        if (!isObject(clone)) {
+          return '';
+        }
+        suffixNodeIds(clone, String(index));
+        return renderNode(clone, {
+          ...options,
+          itemContext: isObject(item) ? item : {},
+          itemVar: collectionData.bindingItemVar,
+        });
+      })
+      .join('\n');
+  }
 
   const childStyle = [
     layoutToCss(layout, size, { defaultGridColumns }),

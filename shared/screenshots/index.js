@@ -12,6 +12,7 @@ const { listRoutes } = require(path.resolve(__dirname, '..', 'introspection', 'r
 const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema'));
 const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
 const { buildTreeTargets } = require(path.resolve(__dirname, '..', 'tree'));
+const { getDatasetDocument } = require(path.resolve(__dirname, '..', 'data', 'utils'));
 
 const DEFAULT_OUTPUT_DIR = 'screenshots';
 const VIEWPORT_PRESETS = {
@@ -189,6 +190,31 @@ function collectRouteMap(projectPath) {
   };
 }
 
+function resolvePageDataSources(projectPath, page) {
+  const sourceMap = {};
+  const dataSources = Array.isArray(page?.dataSources) ? page.dataSources : [];
+
+  for (const entry of dataSources) {
+    if (!isObject(entry) || typeof entry.id !== 'string' || typeof entry.dataset !== 'string') {
+      continue;
+    }
+    const sourceId = entry.id.trim();
+    const datasetId = entry.dataset.trim();
+    if (!sourceId || !datasetId) {
+      continue;
+    }
+
+    const loaded = getDatasetDocument({ projectPath, datasetId });
+    if (!loaded.ok) {
+      continue;
+    }
+    const items = Array.isArray(loaded.document?.dataset?.items) ? loaded.document.dataset.items : [];
+    sourceMap[sourceId] = items;
+  }
+
+  return sourceMap;
+}
+
 function readSitemapStateDefaults(projectPath) {
   const sitemap = readYaml(path.join(projectPath, 'sitemap.yaml'));
   if (!isObject(sitemap)) {
@@ -240,6 +266,7 @@ function resolvePageTargets(projectPath, pageId) {
     const pageLoaded = loadDocumentFromFile(pageFilePath(projectPath, id), { supportedSpecVersion: SUPPORTED_SPEC_VERSION });
     const page = pageLoaded.document?.page;
     if (!isObject(page)) return { ok: false, error: `Page "${id}" has no page payload.` };
+    const dataSources = resolvePageDataSources(projectPath, page);
 
     const viewportResult = resolveViewport(page.viewport);
     if (!viewportResult.ok) return { ok: false, error: viewportResult.error };
@@ -252,6 +279,7 @@ function resolvePageTargets(projectPath, pageId) {
       route: routeInfo.path || '/',
       pageRouteId: routeInfo.id || routeMap.routeIdByPage?.get(id) || id,
       routeTable,
+      dataSources,
       appStateDefaults,
       pageStateDefaults: isObject(page.pageState) ? page.pageState : {},
       viewport: {
@@ -301,6 +329,7 @@ async function captureScreenshots(targets, outputPath, frame) {
         pageId: target.pageId,
         pageRouteId: target.pageRouteId,
         routeTable: target.routeTable,
+        dataSources: target.dataSources,
         appStateDefaults: target.appStateDefaults,
         pageStateDefaults: target.pageStateDefaults,
         pageViewport: target.viewport,
