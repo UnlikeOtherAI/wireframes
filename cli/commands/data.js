@@ -11,10 +11,13 @@ const {
   listDatasets,
   removeDataItem,
   removeDataset,
+  validateDataset,
+  dataStats,
+  dataKeys,
   updateDataItem,
 } = require(path.resolve(__dirname, '..', '..', 'shared', 'data'));
 
-const SUBCOMMAND_USAGE = 'Usage: wf data <add|remove|import|list|item> ...';
+const SUBCOMMAND_USAGE = 'Usage: wf data <add|remove|import|list|validate|stats|keys|item> ...';
 const ITEM_SUBCOMMAND_USAGE = 'Usage: wf data item <add|update|remove|get|list> ...';
 
 function parseDataAddArgs(args) {
@@ -145,12 +148,6 @@ function parseDataItemKeyArgArgs(args) {
   };
 }
 
-function parseDataItemListArgs(args) {
-  return {
-    datasetId: args[0],
-  };
-}
-
 function runData(args, context = {}) {
   const cwd = context.cwd || process.cwd();
   const [subcommand, ...rest] = args;
@@ -263,6 +260,86 @@ function runData(args, context = {}) {
     for (const datasetId of datasets) {
       console.log(datasetId);
     }
+    return;
+  }
+
+  if (subcommand === 'validate') {
+    const datasetId = rest[0];
+    if (!datasetId) {
+      console.error('wf data validate requires <datasetId>.');
+      console.log(SUBCOMMAND_USAGE);
+      process.exitCode = 2;
+      return;
+    }
+
+    const result = validateDataset({
+      projectPath: cwd,
+      datasetId,
+    });
+    if (result.ok) {
+      console.log(`Dataset "${result.datasetId}" is valid.`);
+      return;
+    }
+
+    console.error('wf data validate found issues:');
+    for (const issue of result.errors) {
+      console.error(`  - ${issue}`);
+    }
+    process.exitCode = 1;
+    return;
+  }
+
+  if (subcommand === 'stats') {
+    const datasetId = rest[0];
+    if (!datasetId) {
+      console.error('wf data stats requires <datasetId>.');
+      console.log(SUBCOMMAND_USAGE);
+      process.exitCode = 2;
+      return;
+    }
+
+    const result = dataStats({
+      projectPath: cwd,
+      datasetId,
+    });
+    if (result.ok) {
+      console.log(`Dataset: ${result.datasetId}`);
+      console.log(`Item count: ${result.itemCount}`);
+      console.log(`Dataset byte size: ${result.byteSize}`);
+      const fieldSummary = result.fieldSummary
+        .map((field) => `${field.field}:{count=${field.count},types=${field.types.join('|') || 'null'}}`)
+        .join('; ');
+      console.log(`Field summary: ${fieldSummary || 'none'}`);
+      return;
+    }
+
+    console.error(`wf data stats failed: ${result.error}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  if (subcommand === 'keys') {
+    const datasetId = rest[0];
+    if (!datasetId) {
+      console.error('wf data keys requires <datasetId>.');
+      console.log(SUBCOMMAND_USAGE);
+      process.exitCode = 2;
+      return;
+    }
+
+    const result = dataKeys({
+      projectPath: cwd,
+      datasetId,
+    });
+    if (result.ok) {
+      for (const primaryKey of result.keys) {
+        console.log(primaryKey);
+      }
+      return;
+    }
+
+    console.error(`wf data keys failed: ${result.error}`);
+    process.exitCode = 1;
     return;
   }
 
@@ -382,7 +459,7 @@ function runData(args, context = {}) {
     }
 
     if (itemSubcommand === 'list') {
-      const options = parseDataItemListArgs(itemArgs);
+      const options = parseDataItemKeyArgArgs(itemArgs);
       if (!options.datasetId) {
         console.error('wf data item list requires <datasetId>.');
         console.log(ITEM_SUBCOMMAND_USAGE);

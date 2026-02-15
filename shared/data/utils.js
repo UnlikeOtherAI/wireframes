@@ -47,6 +47,10 @@ function isPrimitive(value) {
   return value === null || ['string', 'number', 'boolean'].includes(typeof value);
 }
 
+function isValidPrimaryKeyValue(value) {
+  return value !== null && ['string', 'number', 'boolean'].includes(typeof value);
+}
+
 function parseDatasetId(datasetId) {
   if (typeof datasetId !== 'string' || !DATASET_ID_REGEX.test(datasetId.trim())) {
     return {
@@ -273,6 +277,12 @@ function ensureDatasetState(projectPath, datasetId, datasetDocument) {
     if (!Object.prototype.hasOwnProperty.call(item, primaryKey)) {
       return { ok: false, error: `Item in dataset "${datasetId}" is missing primary key "${primaryKey}".` };
     }
+    if (!isValidPrimaryKeyValue(item[primaryKey])) {
+      return {
+        ok: false,
+        error: `Dataset "${datasetId}" contains invalid primary key value "${String(item[primaryKey])}" for "${primaryKey}".`,
+      };
+    }
 
     const normalized = stringifyPrimaryKey(item[primaryKey]);
     if (seen.has(normalized)) {
@@ -462,6 +472,7 @@ module.exports = {
   collectPagesWithStateMatches,
   collectSitemapStateMatches,
   ensureDatasetState,
+  isValidPrimaryKeyValue,
   buildDatasetDocument,
   listDataUsages,
   isObject,

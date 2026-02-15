@@ -17,12 +17,14 @@ const {
   collectPagesWithStateMatches,
   collectSitemapStateMatches,
   ensureDatasetState,
+  isValidPrimaryKeyValue,
   buildDatasetDocument,
   listDataUsages,
   isObject,
   isPrimaryKeyMatch,
   stringifyPrimaryKey,
 } = require(path.resolve(__dirname, 'utils'));
+const { validateDataset, dataStats, dataKeys } = require(path.resolve(__dirname, 'analysis'));
 
 function mutateDatasetAndValidate(projectPath, filePath, mutate) {
   const previous = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null;
@@ -172,6 +174,12 @@ function importData({ projectPath, datasetId, from, overwrite = false }) {
       return { ok: false, error: `Imported item is missing primary key "${primaryKey}".` };
     }
     const keyValue = item[primaryKey];
+    if (!isValidPrimaryKeyValue(keyValue)) {
+      return {
+        ok: false,
+        error: `Imported item has invalid primary key value "${String(keyValue)}" for "${primaryKey}".`,
+      };
+    }
     const normalized = stringifyPrimaryKey(keyValue);
     if (Object.prototype.hasOwnProperty.call(seenIncoming, normalized)) {
       return { ok: false, error: `Duplicate primary key "${String(keyValue)}" in import payload.` };
@@ -259,6 +267,9 @@ function addDataItem({ projectPath, datasetId, item, from }) {
   if (!Object.prototype.hasOwnProperty.call(parsedItem.value, primaryKey)) {
     return { ok: false, error: `Item is missing primary key "${primaryKey}".` };
   }
+  if (!isValidPrimaryKeyValue(parsedItem.value[primaryKey])) {
+    return { ok: false, error: `Item has invalid primary key value "${String(parsedItem.value[primaryKey])}" for "${primaryKey}".` };
+  }
 
   const items = Array.isArray(dataset.items) ? [...dataset.items] : [];
   const target = parsedItem.value[primaryKey];
@@ -314,6 +325,9 @@ function updateDataItem({ projectPath, datasetId, primaryKeyValue, item, from })
   const primaryKey = dataset.primaryKey;
   if (!Object.prototype.hasOwnProperty.call(parsedItem.value, primaryKey)) {
     return { ok: false, error: `Item is missing primary key "${primaryKey}".` };
+  }
+  if (!isValidPrimaryKeyValue(parsedItem.value[primaryKey])) {
+    return { ok: false, error: `Item has invalid primary key value "${String(parsedItem.value[primaryKey])}" for "${primaryKey}".` };
   }
 
   if (!isPrimaryKeyMatch(parsedItem.value[primaryKey], parsedKey.value)) {
@@ -478,4 +492,7 @@ module.exports = {
   removeDataItem,
   getDataItem,
   listDataItems,
+  validateDataset,
+  dataStats,
+  dataKeys,
 };

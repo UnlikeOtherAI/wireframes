@@ -12,9 +12,12 @@ const {
   addDataItem,
   addDataset,
   getDataItem,
+  dataKeys,
   importData,
   listDataItems,
   listDatasets,
+  dataStats,
+  validateDataset,
   removeDataItem,
   removeDataset,
   updateDataItem,
@@ -199,4 +202,85 @@ test('wf data item remove fails when default state references value', () => {
 
   assert.equal(blocked.ok, false);
   assert.ok(blocked.error.includes('referenced in state'));
+});
+
+test('wf data validate checks primary key, declared fields, nulls, and type consistency', () => {
+  const projectPath = createTempProject('Data Validate');
+
+  const datasetPath = path.join(projectPath, 'data', 'users.yaml');
+  writeYaml(datasetPath, {
+    documentType: 'dataset',
+    specVersion: '1.1',
+    id: 'users',
+    dataset: {
+      id: 'users',
+      primaryKey: 'user_id',
+      fields: ['user_id', 'name', 'age'],
+      items: [
+        { user_id: 'u001', name: 'Alice', age: 28 },
+        { user_id: 'u001', name: 'Bob', age: 30 },
+        { user_id: 'u002', age: 31 },
+        { user_id: 'u003', name: 'Cara', age: null },
+        { user_id: 'u004', name: 42, age: '30' },
+      ],
+    },
+  });
+
+  const result = validateDataset({ projectPath, datasetId: 'users' });
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((entry) => entry.includes('duplicate primary key')));
+  assert.ok(result.errors.some((entry) => entry.includes('missing declared field "name"')));
+  assert.ok(result.errors.some((entry) => entry.includes('null value for field "age"')));
+  assert.ok(result.errors.some((entry) => entry.includes('inconsistent types in dataset "users"')));
+});
+
+test('wf data stats reports item count, field summary, and byte size', () => {
+  const projectPath = createTempProject('Data Stats');
+
+  addDataset({
+    projectPath,
+    datasetId: 'products',
+    primaryKey: 'sku',
+    fields: 'sku,name,price',
+  });
+
+  const statsTarget = path.join(projectPath, 'data', 'products.yaml');
+  const statDoc = readYaml(statsTarget);
+  statDoc.dataset.items = [
+    { sku: 'sku-1', name: 'A', price: 10 },
+    { sku: 'sku-2', name: 'B', price: 11.5 },
+  ];
+  writeYaml(statsTarget, statDoc);
+
+  const result = dataStats({ projectPath, datasetId: 'products' });
+  assert.equal(result.ok, true);
+  assert.equal(result.itemCount, 2);
+  assert.equal(result.fieldSummary.find((entry) => entry.field === 'sku').count, 2);
+  assert.equal(typeof result.byteSize, 'number');
+  assert.ok(result.byteSize > 0);
+});
+
+test('wf data keys lists primary key values', () => {
+  const projectPath = createTempProject('Data Keys');
+  const addResult = addDataset({
+    projectPath,
+    datasetId: 'roles',
+    primaryKey: 'code',
+  });
+  assert.equal(addResult.ok, true);
+
+  addDataItem({
+    projectPath,
+    datasetId: 'roles',
+    item: JSON.stringify({ code: 'admin', name: 'Admin' }),
+  });
+  addDataItem({
+    projectPath,
+    datasetId: 'roles',
+    item: JSON.stringify({ code: 'viewer', name: 'Viewer' }),
+  });
+
+  const result = dataKeys({ projectPath, datasetId: 'roles' });
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.keys, ['admin', 'viewer']);
 });
