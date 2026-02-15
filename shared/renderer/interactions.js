@@ -17,13 +17,110 @@ function buildInteractionRuntime({
     ? pageStateDefaults
     : {};
 
+  return buildInteractionRuntimeFromContext({
+    routeId: String(routeId || '').trim(),
+    routeTable: safeRouteTable,
+    appStateDefaults: safeAppState,
+    pageStateDefaults: safePageState,
+    platform: platform || 'web',
+  });
+}
+
+function buildInteractionRuntimeFromContext({
+  routeId = '',
+  routeTable = {},
+  appStateDefaults = {},
+  pageStateDefaults = {},
+  platform = 'web',
+} = {}) {
+  const safeRouteTable = routeTable && typeof routeTable === 'object' && !Array.isArray(routeTable)
+    ? routeTable
+    : {};
+  const safeAppState = appStateDefaults && typeof appStateDefaults === 'object' && !Array.isArray(appStateDefaults)
+    ? appStateDefaults
+    : {};
+  const safePageState = pageStateDefaults && typeof pageStateDefaults === 'object' && !Array.isArray(pageStateDefaults)
+    ? pageStateDefaults
+    : {};
+
+  return buildInteractionRuntimeFromContextExpression({
+    routeId: String(routeId || '').trim(),
+    routeTable: safeRouteTable,
+    appStateDefaults: safeAppState,
+    pageStateDefaults: safePageState,
+    platform: platform || 'web',
+  });
+}
+
+function buildInteractionRuntimeFromWindowContext({
+  routeId = '',
+  routeTable = {},
+  appStateDefaults = {},
+  pageStateDefaults = {},
+  platform = 'web',
+} = {}) {
+  const safeRouteTable = routeTable && typeof routeTable === 'object' && !Array.isArray(routeTable)
+    ? routeTable
+    : {};
+  const safeAppState = appStateDefaults && typeof appStateDefaults === 'object' && !Array.isArray(appStateDefaults)
+    ? appStateDefaults
+    : {};
+  const safePageState = pageStateDefaults && typeof pageStateDefaults === 'object' && !Array.isArray(pageStateDefaults)
+    ? pageStateDefaults
+    : {};
+
+  return buildInteractionRuntimeFromContextExpression({
+    routeId: String(routeId || '').trim(),
+    routeTable: safeRouteTable,
+    appStateDefaults: safeAppState,
+    pageStateDefaults: safePageState,
+    platform: platform || 'web',
+    useWindowContext: true,
+  });
+}
+
+function buildInteractionRuntimeFromContextExpression({
+  routeId = '',
+  routeTable = {},
+  appStateDefaults = {},
+  pageStateDefaults = {},
+  platform = 'web',
+  useWindowContext = false,
+}) {
+  const fallbackContext = JSON.stringify({
+    routeId: String(routeId || '').trim(),
+    routeTable,
+    appStateDefaults,
+    pageStateDefaults,
+    platform: platform || 'web',
+  });
+  const rawContext = useWindowContext ? '(function () {'
+    + 'var raw = typeof window !== "undefined" && window && window.WF_RUNTIME_CONTEXT ? window.WF_RUNTIME_CONTEXT : null;'
+    + 'if (!raw || typeof raw !== "object" || Array.isArray(raw)) { return ' + fallbackContext + '; }'
+    + 'return {'
+    + `routeId: typeof raw.routeId === 'string' ? String(raw.routeId).trim() : ${JSON.stringify(String(routeId || '').trim())},`
+    + `routeTable: raw.routeTable && typeof raw.routeTable === 'object' && !Array.isArray(raw.routeTable) ? raw.routeTable : ${JSON.stringify(routeTable)},`
+    + `appStateDefaults: raw.appStateDefaults && typeof raw.appStateDefaults === 'object' && !Array.isArray(raw.appStateDefaults) ? raw.appStateDefaults : ${JSON.stringify(appStateDefaults)},`
+    + `pageStateDefaults: raw.pageStateDefaults && typeof raw.pageStateDefaults === 'object' && !Array.isArray(raw.pageStateDefaults) ? raw.pageStateDefaults : ${JSON.stringify(pageStateDefaults)},`
+    + `platform: typeof raw.platform === 'string' ? String(raw.platform) : ${JSON.stringify(platform || 'web')}`
+    + '};'
+    + '}())'
+    : fallbackContext;
+
   return `(function () {
 'use strict';
-var WF_ROUTE_ID = ${JSON.stringify(String(routeId || '').trim())};
-var WF_ROUTES = ${JSON.stringify(safeRouteTable)};
-var WF_APP_STATE_DEFAULTS = ${JSON.stringify(safeAppState)};
-var WF_PAGE_STATE_DEFAULTS = ${JSON.stringify(safePageState)};
-var WF_PLATFORM = ${JSON.stringify(platform || 'web')};
+var WF_RUNTIME_CONTEXT = ${rawContext};
+var WF_ROUTE_ID = String(WF_RUNTIME_CONTEXT.routeId || '');
+var WF_ROUTES = (WF_RUNTIME_CONTEXT.routeTable && typeof WF_RUNTIME_CONTEXT.routeTable === 'object' && !Array.isArray(WF_RUNTIME_CONTEXT.routeTable))
+  ? WF_RUNTIME_CONTEXT.routeTable
+  : {};
+var WF_APP_STATE_DEFAULTS = (WF_RUNTIME_CONTEXT.appStateDefaults && typeof WF_RUNTIME_CONTEXT.appStateDefaults === 'object' && !Array.isArray(WF_RUNTIME_CONTEXT.appStateDefaults))
+  ? WF_RUNTIME_CONTEXT.appStateDefaults
+  : {};
+var WF_PAGE_STATE_DEFAULTS = (WF_RUNTIME_CONTEXT.pageStateDefaults && typeof WF_RUNTIME_CONTEXT.pageStateDefaults === 'object' && !Array.isArray(WF_RUNTIME_CONTEXT.pageStateDefaults))
+  ? WF_RUNTIME_CONTEXT.pageStateDefaults
+  : {};
+var WF_PLATFORM = String(WF_RUNTIME_CONTEXT.platform || 'web');
 var WF_APP_PREFIX = 'wf_app_';
 var WF_PAGE_STATE = {};
 var WF_APP_STATE = {};
@@ -425,4 +522,8 @@ window.addEventListener('load', init);
 })();`;
 }
 
-module.exports = { buildInteractionRuntime };
+module.exports = {
+  buildInteractionRuntime,
+  buildInteractionRuntimeFromContext,
+  buildInteractionRuntimeFromWindowContext,
+};

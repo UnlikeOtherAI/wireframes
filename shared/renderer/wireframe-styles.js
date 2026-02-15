@@ -135,7 +135,19 @@ function mergeWireframeStyle(pageStyle, nodeStyle) {
   };
 }
 
-function readLocalImage(projectPath, source) {
+function normalizeAssetUrlPrefix(prefix) {
+  if (typeof prefix !== 'string') {
+    return '';
+  }
+  const trimmed = prefix.trim();
+  if (!trimmed) {
+    return '';
+  }
+  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`;
+}
+
+function readLocalImage(projectPath, source, options = {}) {
   if (typeof source !== 'string') {
     return null;
   }
@@ -152,6 +164,11 @@ function readLocalImage(projectPath, source) {
   const assetPath = path.join(projectPath, 'assets', trimmed.replace(/^\/+/, ''));
   if (!fs.existsSync(assetPath)) {
     return null;
+  }
+
+  const assetUrlPrefix = normalizeAssetUrlPrefix(options.assetUrlPrefix);
+  if (assetUrlPrefix) {
+    return `${assetUrlPrefix}${trimmed.replace(/^\/+/, '')}`;
   }
 
   const buffer = fs.readFileSync(assetPath);

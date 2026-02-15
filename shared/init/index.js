@@ -23,7 +23,7 @@ function buildManifestDocument({ projectName, projectId }) {
 }
 
 function buildConfigDocument() {
-  return 'cli:\n  strictValidation: true\n  failOnWarnings: false\n  export:\n    includeAssets: true\n    compressLevel: 9\n';
+  return 'cli:\n  strictValidation: true\n  failOnWarnings: false\n  export:\n    includeAssets: true\n    compressLevel: 9\n  build:\n    outputDir: ./wireframes/build\n    clean: false\n    basePath: /\n  serve:\n    port: 8080\n    open: false\n    hotReload: true\n';
 }
 
 function buildSitemapDocument() {

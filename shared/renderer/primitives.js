@@ -407,7 +407,9 @@ function renderImageElement(projectPath, props, options = {}) {
   const width = toPx(props.width);
   const height = toPx(props.height);
 
-  const resolvedSource = readLocalImage(projectPath, rawSource) || (rawSource ? rawSource : null);
+  const resolvedSource = readLocalImage(projectPath, rawSource, {
+    assetUrlPrefix: options && typeof options.assetUrlPrefix === 'string' ? options.assetUrlPrefix : '',
+  }) || (rawSource ? rawSource : null);
   if (!resolvedSource) {
     return `<div class="wf-image wf-image-placeholder">${escapeHtml(alt)}</div>`;
   }
@@ -668,7 +670,10 @@ function renderNode(node, options = {}) {
     },
     image: () => {
       const classes = buildNodeClasses(node, 'image');
-      const image = renderImageElement(projectPath, props, bindingContext);
+      const image = renderImageElement(projectPath, props, {
+        ...bindingContext,
+        assetUrlPrefix: options && typeof options.assetUrlPrefix === 'string' ? options.assetUrlPrefix : '',
+      });
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${image}</div>`;
     },
     button: () => {

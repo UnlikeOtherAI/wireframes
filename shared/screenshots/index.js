@@ -424,5 +424,6 @@ module.exports = {
   resolveFrame,
   renderWireframeMarkup,
   buildIndexEntries,
+  resolvePageTargets,
   DEFAULT_OUTPUT_DIR,
 };
