@@ -27,8 +27,54 @@ const PRIMITIVE_COMPONENTS = new Set([
   'spacer',
 ]);
 
+const OVERLAY_TYPES = new Set([
+  'modal',
+  'alert',
+  'dropdown',
+  'popover',
+  'drawer_left',
+  'drawer_right',
+  'bottom_sheet',
+  'toast',
+  'tooltip',
+]);
+
+const OVERLAY_BACKDROP_TYPES = new Set([
+  'modal',
+  'alert',
+  'drawer_left',
+  'drawer_right',
+  'bottom_sheet',
+]);
+
+const OVERLAY_Z_INDEX = {
+  dropdown: 100,
+  popover: 100,
+  tooltip: 100,
+  modal: 200,
+  drawer_left: 200,
+  drawer_right: 200,
+  bottom_sheet: 200,
+  toast: 400,
+  alert: 400,
+};
+
+const OVERLAY_PLACEMENTS = new Set(['top', 'bottom', 'left', 'right', 'center']);
+
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function normalizeChildren(node) {
+  if (!isObject(node)) {
+    return [];
+  }
+
+  return [
+    ...(Array.isArray(node.children) ? node.children : []),
+    ...(Array.isArray(node.content) ? node.content : []),
+    ...(Array.isArray(node.nodes) ? node.nodes : []),
+  ];
 }
 
 function escapeHtml(value) {
@@ -75,6 +121,18 @@ function buildNodeDataAttributes(node) {
   if (isObject(node.stateBindings)) {
     entries.push(`data-wf-state-bindings="${escapeAttr(JSON.stringify(node.stateBindings))}"`);
   }
+  if (node.kind === 'overlay' && typeof node.type === 'string' && node.type.trim() !== '') {
+    entries.push(`data-wf-overlay-type="${escapeAttr(node.type)}"`);
+  }
+  if (node.kind === 'overlay' && typeof node.trigger === 'string' && node.trigger.trim() !== '') {
+    entries.push(`data-wf-overlay-trigger="${escapeAttr(node.trigger)}"`);
+  }
+  if (node.kind === 'overlay' && typeof node.placement === 'string' && node.placement.trim() !== '') {
+    entries.push(`data-wf-overlay-placement="${escapeAttr(node.placement)}"`);
+  }
+  if (node.kind === 'overlay' && Array.isArray(node.dismissOn) && node.dismissOn.length > 0) {
+    entries.push(`data-wf-overlay-dismiss="${escapeAttr(JSON.stringify(node.dismissOn))}"`);
+  }
   if (node.selection && typeof node.selection.stateKey === 'string' && node.selection.stateKey.trim() !== '') {
     entries.push(`data-selection-key="${escapeAttr(node.selection.stateKey)}"`);
   }
@@ -91,6 +149,11 @@ function buildNodeClasses(node, primitive, level = null) {
     }
   } else if (primitive) {
     classList.push(`wf-${toSafeClass(primitive)}`);
+  } else if (node.kind === 'overlay') {
+    classList.push('wf-overlay');
+    if (typeof node.type === 'string' && node.type.trim() !== '') {
+      classList.push(`wf-overlay-${toSafeClass(node.type)}`);
+    }
   } else {
     classList.push(`wf-${toSafeClass(nodeComponent(node))}`);
   }
@@ -150,16 +213,109 @@ function renderSectionTitle(props) {
 }
 
 function renderChildren(node, options) {
-  const children = Array.isArray(node.children) ? node.children : [];
-  const contentChildren = Array.isArray(node.content) ? node.content : [];
-  if (children.length === 0 && contentChildren.length === 0) {
+  const children = normalizeChildren(node);
+  if (children.length === 0) {
     return '';
   }
 
-  return `<div class="wf-node-children">${renderNodes([...children, ...contentChildren], {
+  return `<div class="wf-node-children">${renderNodes(children, {
     ...options,
     parentLayoutType: isObject(node.layout) ? node.layout.type || 'stack' : 'stack',
   })}</div>`;
+}
+
+function overlayTypeNeedsBackdrop(type) {
+  return OVERLAY_BACKDROP_TYPES.has(type);
+}
+
+function overlayTypeStyle(type, placement) {
+  const normalizedPlacement = OVERLAY_PLACEMENTS.has(placement) ? placement : 'bottom';
+  const zIndex = Object.prototype.hasOwnProperty.call(OVERLAY_Z_INDEX, type) ? OVERLAY_Z_INDEX[type] : 100;
+
+  if (type === 'modal' || type === 'alert') {
+    return [
+      'position:fixed',
+      'inset:0',
+      'display:none',
+      'align-items:center',
+      'justify-content:center',
+      `z-index:${zIndex}`,
+    ].join(';');
+  }
+
+  if (type === 'drawer_left') {
+    return [
+      'position:fixed',
+      'top:0',
+      'left:0',
+      'bottom:0',
+      'width:280px',
+      'display:none',
+      'overflow:auto',
+      `z-index:${zIndex}`,
+    ].join(';');
+  }
+
+  if (type === 'drawer_right') {
+    return [
+      'position:fixed',
+      'top:0',
+      'right:0',
+      'bottom:0',
+      'width:280px',
+      'display:none',
+      'overflow:auto',
+      `z-index:${zIndex}`,
+    ].join(';');
+  }
+
+  if (type === 'bottom_sheet') {
+    return [
+      'position:fixed',
+      'left:0',
+      'right:0',
+      'bottom:0',
+      'display:none',
+      'overflow:auto',
+      `z-index:${zIndex}`,
+    ].join(';');
+  }
+
+  if (type === 'toast') {
+    const style = [
+      'position:fixed',
+      'left:16px',
+      'min-width:220px',
+      'display:none',
+      `z-index:${zIndex}`,
+    ];
+    if (normalizedPlacement === 'bottom') {
+      style.push('bottom:16px');
+    } else {
+      style.push('top:16px');
+    }
+    return style.join(';');
+  }
+
+  if (type === 'dropdown' || type === 'popover' || type === 'tooltip') {
+    const style = [
+      'position:absolute',
+      'display:none',
+      'z-index:' + zIndex,
+    ];
+    if (normalizedPlacement === 'top') {
+      style.push('bottom:100%');
+    } else if (normalizedPlacement === 'left') {
+      style.push('right:100%');
+    } else if (normalizedPlacement === 'right') {
+      style.push('left:100%');
+    } else {
+      style.push('top:100%');
+    }
+    return style.join(';');
+  }
+
+  return ['position:fixed', 'display:none', `z-index:${zIndex}`].join(';');
 }
 
 function renderSelectOptions(options) {
@@ -183,6 +339,28 @@ function renderSelectOptions(options) {
     }
     return '';
   }).filter(Boolean).join('');
+}
+
+function renderOverlay(node, options, childStyle) {
+  const overlayType = typeof node.type === 'string' && OVERLAY_TYPES.has(node.type) ? node.type : 'overlay';
+  const overlayPlacement = typeof node.placement === 'string' ? node.placement : '';
+  const overlayClassList = [
+    'wf-overlay',
+    `wf-overlay-${toSafeClass(overlayType)}`,
+    ...buildNodeClasses(node).split(' ').filter(Boolean),
+  ];
+  const overlayClasses = Array.from(new Set(overlayClassList.filter((value) => value !== 'wf-node'))).join(' ');
+
+  const overlayStyle = [childStyle, overlayTypeStyle(overlayType, overlayPlacement)]
+    .filter(Boolean)
+    .join(';');
+  const dataAttrs = buildNodeDataAttributes(node);
+  const children = renderChildren(node, options);
+  const backdrop = overlayTypeNeedsBackdrop(overlayType)
+    ? '<div class="wf-overlay-backdrop" aria-hidden="true" style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:none;"></div>'
+    : '';
+
+  return `<div${joinAttrs(node.id, overlayClasses, overlayStyle)}${dataAttrs}>${backdrop}<div class="wf-overlay-content" style="position:relative;display:flex;min-width:0;min-height:0;pointer-events:auto;">${children}</div></div>`;
 }
 
 function renderNode(node, options = {}) {
@@ -214,6 +392,7 @@ function renderNode(node, options = {}) {
   const headingLevel = Number.isInteger(props.level) ? props.level : 3;
   const safeHeadingLevel = Math.max(1, Math.min(6, headingLevel));
   const dataAttrs = buildNodeDataAttributes(node);
+  const isOverlayRoot = node.kind === 'overlay';
   const primitives = {
     heading: () => {
       const classes = buildNodeClasses(node, 'heading', safeHeadingLevel);
@@ -283,6 +462,10 @@ function renderNode(node, options = {}) {
       return `<div${joinAttrs(node.id, classes, spacerStyle)}${dataAttrs}></div>`;
     },
   };
+
+  if (isOverlayRoot) {
+    return renderOverlay(node, options, childStyle);
+  }
 
   const primitiveName = String(component || '');
   if (primitiveName && PRIMITIVE_COMPONENTS.has(primitiveName)) {

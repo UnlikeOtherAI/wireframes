@@ -90,6 +90,10 @@ function buildOverlayRoots(overlays, components, source) {
     list.push({
       id: overlay.id,
       kind: 'overlay',
+      type: overlay.type,
+      trigger: overlay.trigger,
+      placement: overlay.placement,
+      dismissOn: overlay.dismissOn,
       source,
       nodes: resolvedOverlay.nodes,
       wireframeStyle: isObject(overlay.wireframeStyle) ? overlay.wireframeStyle : undefined,
