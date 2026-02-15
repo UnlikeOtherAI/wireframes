@@ -7,8 +7,9 @@ const { runDoctor } = require('./commands/doctor');
 const { runValidateCommand } = require('./commands/validate');
 const { runLintCommand } = require('./commands/lint');
 const { runTemplate } = require('./commands/template');
+const { runPage } = require('./commands/page');
 
-const USAGE = `wf <command> [arguments]\n\nCommands:\n  init <project-name>   Scaffold a new wireframe project\n  info                  Show project metadata from manifest.yaml\n  doctor                Check project health and references\n  validate              Validate document schema compliance\n  lint                  Check naming conventions\n  template              Manage templates`;
+const USAGE = `wf <command> [arguments]\n\nCommands:\n  init <project-name>   Scaffold a new wireframe project\n  info                  Show project metadata from manifest.yaml\n  doctor                Check project health and references\n  validate              Validate document schema compliance\n  lint                  Check naming conventions\n  template              Manage templates\n  page                  Manage pages`;
 
 function run(args, context = {}) {
   const cwd = context.cwd || process.cwd();
@@ -46,6 +47,11 @@ function run(args, context = {}) {
 
   if (command === 'template') {
     runTemplate(commandArgs, { cwd });
+    return;
+  }
+
+  if (command === 'page') {
+    runPage(commandArgs, { cwd });
     return;
   }
 
