@@ -119,9 +119,13 @@ page:
   slots: []
 `);
 
-  const error = assert.throws(() => {
+  let error;
+  assert.throws(() => {
     loadDocumentFromFile(docPath);
-  }, (error) => error instanceof SchemaLoadError && error.code === 'SCHEMA_VALIDATION');
+  }, (thrownError) => {
+    error = thrownError;
+    return thrownError instanceof SchemaLoadError && thrownError.code === 'SCHEMA_VALIDATION';
+  });
   assert.equal(Array.isArray(error.details.errors), true);
   assert.ok(
     error.details.errors.some((issue) => issue.code === 'SCHEMA_REQUIRED' && issue.path === '$.page.wireframeStyle.border.style'),

@@ -27,7 +27,7 @@ function buildConfigDocument() {
 }
 
 function buildSitemapDocument() {
-  return `documentType: sitemap\nspecVersion: ${quote(SUPPORTED_SPEC_VERSION)}\nid: sitemap\nsitemap:\n  defaultTemplate: public_template\n  routes:\n    - id: home\n      path: /\n      page: home\n      template: public_template\n`;
+  return `documentType: sitemap\nspecVersion: ${quote(SUPPORTED_SPEC_VERSION)}\nid: sitemap\ndefaultTemplate: public_template\nroutes:\n  - id: home\n    path: /\n    page: home\n    template: public_template\n`;
 }
 
 function buildTemplatesDocument() {

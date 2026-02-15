@@ -224,18 +224,41 @@ function validateAgainstSingleSchema(value, schema, context) {
       return errors;
     }
 
-    let matches = 0;
+    const oneOfResults = [];
     for (let i = 0; i < resolvedSchema.oneOf.length; i += 1) {
       const candidate = resolvedSchema.oneOf[i];
-      const matched = validateAgainstSchema(value, candidate, {
+      const candidateContext = {
         ...context,
         schemaPath: appendSchemaPath(schemaPath, `oneOf/${i}`),
-      }).length === 0;
-      if (matched) {
-        matches += 1;
-      }
+      };
+      const candidateErrors = validateAgainstSchema(value, candidate, candidateContext);
+      oneOfResults.push({
+        candidate,
+        index: i,
+        candidateErrors,
+      });
     }
+
+    const matches = oneOfResults.reduce((count, result) => count + (result.candidateErrors.length === 0 ? 1 : 0), 0);
+
     if (matches !== 1) {
+      const valueIsDocument = context.path === '$' && value != null && typeof value === 'object' && !Array.isArray(value);
+      const documentType = valueIsDocument ? value.documentType : undefined;
+
+      if (typeof documentType === 'string') {
+        for (const result of oneOfResults) {
+          const { schema: candidateSchema } = resolveSchemaRef(result.candidate, {
+            rootSchema: context.rootSchema,
+            path: context.path,
+            schemaPath: result.candidate?.$ref == null ? appendSchemaPath(schemaPath, `oneOf/${result.index}`) : result.candidate.$ref,
+          });
+          if (candidateSchema?.properties?.documentType?.const === documentType) {
+            errors.push(...result.candidateErrors);
+            return errors;
+          }
+        }
+      }
+
       addError(
         errors,
         'SCHEMA_ONE_OF',
@@ -318,23 +341,24 @@ function validateAgainstSingleSchema(value, schema, context) {
     return errors;
   }
 
+  if (Array.isArray(resolvedSchema.required) && value != null && typeof value === 'object' && !Array.isArray(value)) {
+    const valueObject = value;
+    for (const requiredProperty of resolvedSchema.required) {
+      if (!Object.prototype.hasOwnProperty.call(valueObject, requiredProperty)) {
+        addError(
+          errors,
+          'SCHEMA_REQUIRED',
+          appendPath(context.path, requiredProperty),
+          schemaPath,
+          `Missing required property "${requiredProperty}" at ${appendPath(context.path, requiredProperty)}.`,
+        );
+      }
+    }
+  }
+
   if (resolvedSchema.properties != null && value != null && typeof value === 'object' && !Array.isArray(value)) {
     const valueObject = value;
     const properties = resolvedSchema.properties;
-
-    if (Array.isArray(resolvedSchema.required)) {
-      for (const requiredProperty of resolvedSchema.required) {
-        if (!Object.prototype.hasOwnProperty.call(valueObject, requiredProperty)) {
-          addError(
-            errors,
-            'SCHEMA_REQUIRED',
-            appendPath(context.path, requiredProperty),
-            schemaPath,
-            `Missing required property "${requiredProperty}" at ${appendPath(context.path, requiredProperty)}.`,
-          );
-        }
-      }
-    }
 
     for (const [propertyName, propertySchema] of Object.entries(properties)) {
       if (Object.prototype.hasOwnProperty.call(valueObject, propertyName)) {
