@@ -7,6 +7,7 @@ const {
   SUPPORTED_SPEC_VERSION,
 } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
 const { compareVersions, loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema'));
+const { runSemanticValidation } = require(path.resolve(__dirname, 'semantic-validator'));
 
 const PRIMITIVE_COMPONENTS = new Set([
   'heading',
@@ -496,6 +497,15 @@ function runDoctor({ projectPath } = {}) {
 
   const componentGraph = collectComponentUseGraph(componentMap, result);
   detectCircularUse(componentGraph, result);
+
+  runSemanticValidation({
+    result,
+    manifest: manifest?.document?.manifest || {},
+    sitemap: sitemap?.document?.sitemap || {},
+    templates: templates?.document?.templates || {},
+    components: componentMap,
+    pages: Array.from(pageMap.values()),
+  });
 
   result.ok = result.errors.length === 0;
 
