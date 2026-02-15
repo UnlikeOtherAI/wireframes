@@ -90,6 +90,34 @@ test('wf template remove blocks when template is in use', () => {
   assert.ok(result.details.usages.length > 0);
 });
 
+test('wf template remove blocks when template is defaultTemplate in sitemap', () => {
+  const projectPath = createTempProject('Template Remove Default Template');
+  const sitemapPath = path.join(projectPath, 'sitemap.yaml');
+
+  addTemplate({
+    projectPath,
+    templateId: 'default_shell',
+  });
+
+  const sitemap = yaml.load(fs.readFileSync(sitemapPath, 'utf8'));
+  if (sitemap.sitemap && typeof sitemap.sitemap === 'object') {
+    sitemap.sitemap.defaultTemplate = 'default_shell';
+  } else {
+    sitemap.defaultTemplate = 'default_shell';
+  }
+  fs.writeFileSync(sitemapPath, `${yaml.dump(sitemap)}\n`, 'utf8');
+
+  const result = removeTemplate({
+    projectPath,
+    templateId: 'default_shell',
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.error.includes('in use'), true);
+  assert.equal(Array.isArray(result.details.usages), true);
+  assert.equal(result.details.usages.includes('defaultTemplate'), true);
+});
+
 test('wf template remove deletes unused template', () => {
   const projectPath = createTempProject('Template Remove Unused');
 
@@ -108,4 +136,3 @@ test('wf template remove deletes unused template', () => {
   const templates = readTemplates(projectPath);
   assert.equal(templates.templates.unused_shell, undefined);
 });
-

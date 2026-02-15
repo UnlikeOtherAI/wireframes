@@ -85,11 +85,18 @@ function findTemplateUsages(projectPath, templateId) {
   const usages = [];
   const routeUsages = [];
   const pageUsages = [];
+  const defaultTemplateUsages = [];
 
   const sitemapPath = sitemapFilePath(projectPath);
   if (fs.existsSync(sitemapPath)) {
     const sitemapDoc = parseYaml(sitemapPath);
-    const routes = sitemapDoc?.sitemap?.routes;
+    const sitemap = sitemapDoc?.sitemap ?? sitemapDoc;
+    const routes = sitemap?.routes;
+    const defaultTemplate = sitemap?.defaultTemplate;
+
+    if (defaultTemplate === templateId) {
+      defaultTemplateUsages.push('defaultTemplate');
+    }
 
     if (Array.isArray(routes)) {
       for (const route of routes) {
@@ -116,7 +123,8 @@ function findTemplateUsages(projectPath, templateId) {
   return {
     routeUsages,
     pageUsages,
-    usages: [...routeUsages, ...pageUsages],
+    defaultTemplateUsages,
+    usages: [...routeUsages, ...pageUsages, ...defaultTemplateUsages],
   };
 }
 
