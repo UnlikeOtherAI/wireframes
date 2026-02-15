@@ -478,11 +478,11 @@ function collectComponentRoots(componentMap, result, defaultGridColumns) {
   }
 }
 
-function collectRootsFromPage(pageDoc, templateDoc) {
+function collectRootsFromPage(pageDoc, templateDoc, componentRoots) {
   const roots = [];
 
   const templatePage = isObject(templateDoc) && isObject(pageDoc)
-    ? resolveTemplatePage({ template: templateDoc, page: pageDoc })
+    ? resolveTemplatePage({ template: templateDoc, page: pageDoc, components: componentRoots })
     : null;
 
   if (templatePage && templatePage.ok && Array.isArray(templatePage.roots)) {
@@ -549,7 +549,7 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
     validateDepthAndNodes: true,
   });
 
-  const roots = collectRootsFromPage(pageDoc, template);
+  const roots = collectRootsFromPage(pageDoc, template, componentRoots);
   for (const root of roots) {
     validateNode(root, context, 1);
   }

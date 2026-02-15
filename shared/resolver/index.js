@@ -38,9 +38,162 @@ function buildContentMap(list, idField) {
   return map;
 }
 
-function resolveInjectableNodes(nodes, injectableMap) {
+function mergeComponentProps(instanceProps, defaults) {
+  const defaultProps = isObject(defaults) ? defaults : {};
+  const resolvedProps = isObject(instanceProps) ? instanceProps : {};
+
+  return {
+    ...defaultProps,
+    ...resolvedProps,
+  };
+}
+
+function mergeNodeProps(instanceProps, rootProps, defaults) {
+  return {
+    ...mergeComponentProps(defaults, {}),
+    ...mergeComponentProps(rootProps, {}),
+    ...mergeComponentProps(instanceProps, {}),
+  };
+}
+
+function resolveNodes(nodes, components, componentStack, injectableMap) {
   if (!Array.isArray(nodes)) {
-    return [];
+    return {
+      ok: true,
+      nodes: [],
+    };
+  }
+
+  const output = [];
+
+  for (const node of nodes) {
+    const resolved = resolveComponentNode(node, components, componentStack, injectableMap);
+    if (!resolved.ok) {
+      return resolved;
+    }
+
+    for (const resolvedNode of resolved.nodes) {
+      output.push(resolvedNode);
+    }
+  }
+
+  return {
+    ok: true,
+    nodes: output,
+  };
+}
+
+function resolveComponentNode(node, components, componentStack, injectableMap) {
+  if (!isObject(node)) {
+    return {
+      ok: true,
+      nodes: [cloneDeep(node)],
+    };
+  }
+
+  if (node.injectable === true && typeof node.id === 'string') {
+    return {
+      ok: false,
+      error: 'Component resolution cannot process injectables directly.',
+    };
+  }
+
+  if (!node.use) {
+    const resolvedNode = cloneDeep(node);
+    if (Array.isArray(resolvedNode.children)) {
+      const childResult = resolveNodes(resolvedNode.children, components, componentStack, injectableMap);
+      if (!childResult.ok) {
+        return childResult;
+      }
+      resolvedNode.children = childResult.nodes;
+    }
+    return {
+      ok: true,
+      nodes: [resolvedNode],
+    };
+  }
+
+  if (!isObject(components)) {
+    return {
+      ok: false,
+      error: `Component resolution requires components data for "${node.use}".`,
+    };
+  }
+
+  const componentDoc = components[node.use];
+  if (!isObject(componentDoc) || !isObject(componentDoc.root)) {
+    return {
+      ok: false,
+      error: `Unknown component reference "${node.use}".`,
+    };
+  }
+
+  if (componentStack.has(node.use)) {
+    return {
+      ok: false,
+      error: `Circular component reference detected for "${node.use}".`,
+    };
+  }
+
+  const { use, props, id } = node;
+  const instanceOverrides = cloneDeep({ ...node });
+  delete instanceOverrides.use;
+  delete instanceOverrides.props;
+
+  const resolvedNode = {
+    ...cloneDeep(componentDoc.root),
+    ...instanceOverrides,
+    id,
+  };
+
+  const mergedProps = mergeNodeProps(props, resolvedNode.props, componentDoc.propDefaults);
+  if (Object.keys(mergedProps).length > 0) {
+    resolvedNode.props = mergedProps;
+  }
+
+  componentStack.add(node.use);
+  if (Array.isArray(resolvedNode.children)) {
+    const childResult = resolveInjectableNodes(
+      resolvedNode.children,
+      injectableMap,
+      components,
+      componentStack,
+    );
+    if (!childResult.ok) {
+      componentStack.delete(node.use);
+      return childResult;
+    }
+    resolvedNode.children = childResult.nodes;
+  }
+
+  if (resolvedNode.use) {
+    const nestedResult = resolveComponentNode(
+      resolvedNode,
+      components,
+      componentStack,
+      injectableMap,
+    );
+    componentStack.delete(node.use);
+    if (!nestedResult.ok) {
+      return nestedResult;
+    }
+    return nestedResult;
+  }
+
+  componentStack.delete(node.use);
+
+  return {
+    ok: true,
+    nodes: [resolvedNode],
+  };
+}
+
+function resolveInjectableNodes(nodes, injectableMap, components, componentStack) {
+  if (!Array.isArray(nodes)) {
+    return {
+      ok: true,
+      nodes: [],
+    };
   }
 
   const output = [];
@@ -54,25 +207,50 @@ function resolveInjectableNodes(nodes, injectableMap) {
     if (node.injectable === true && typeof node.id === 'string') {
       const injected = injectableMap.get(node.id);
       if (Array.isArray(injected) && injected.length > 0) {
-        output.push(...resolveInjectableNodes(injected, injectableMap));
+        const injectedNodes = resolveInjectableNodes(injected, injectableMap, components, componentStack);
+        if (!injectedNodes.ok) {
+          return injectedNodes;
+        }
+        output.push(...injectedNodes.nodes);
       }
       continue;
     }
 
-    const resolvedNode = cloneDeep(node);
-    if (Array.isArray(node.children)) {
-      resolvedNode.children = resolveInjectableNodes(node.children, injectableMap);
+    const resolvedNode = resolveComponentNode(node, components, componentStack, injectableMap);
+    if (!resolvedNode.ok) {
+      return resolvedNode;
     }
 
-    output.push(resolvedNode);
+    for (const singleResolved of resolvedNode.nodes) {
+      if (!isObject(singleResolved)) {
+        output.push(singleResolved);
+        continue;
+      }
+
+      if (Array.isArray(singleResolved.children)) {
+        const childResolved = resolveInjectableNodes(singleResolved.children, injectableMap, components, componentStack);
+        if (!childResolved.ok) {
+          return childResolved;
+        }
+        singleResolved.children = childResolved.nodes;
+      }
+
+      output.push(singleResolved);
+    }
   }
 
-  return output;
+  return {
+    ok: true,
+    nodes: output,
+  };
 }
 
-function resolveRegion(region, slotMap, injectableMap) {
+function resolveRegion(region, slotMap, injectableMap, components, componentStack) {
   if (!isObject(region) || typeof region.id !== 'string' || typeof region.kind !== 'string') {
-    return null;
+    return {
+      ok: false,
+      error: 'Invalid region entry in template.',
+    };
   }
 
   const resolved = cloneDeep(region);
@@ -82,12 +260,21 @@ function resolveRegion(region, slotMap, injectableMap) {
     : (Array.isArray(region.children) ? region.children : []);
 
   delete resolved.kind;
-  resolved.children = resolveInjectableNodes(baseChildren, injectableMap);
+  const resolvedChildren = resolveInjectableNodes(baseChildren, injectableMap, components, componentStack);
+  if (!resolvedChildren.ok) {
+    return resolvedChildren;
+  }
+  resolved.children = resolvedChildren.nodes;
 
-  return resolved;
+  return {
+    ok: true,
+    region: resolved,
+  };
 }
 
 function resolveTemplatePage({ template, page }) {
+  const components = isObject(arguments[0]?.components) ? arguments[0].components : null;
+
   if (!isObject(template)) {
     return {
       ok: false,
@@ -100,11 +287,15 @@ function resolveTemplatePage({ template, page }) {
   const slotMap = buildContentMap(Array.isArray(pageDoc.slots) ? pageDoc.slots : [], 'slotId');
   const injectableMap = buildContentMap(Array.isArray(pageDoc.injectables) ? pageDoc.injectables : [], 'injectableId');
   const roots = [];
+  const componentStack = new Set();
 
   for (const region of regions) {
-    const resolvedRegion = resolveRegion(region, slotMap, injectableMap);
-    if (resolvedRegion) {
-      roots.push(resolvedRegion);
+    const resolvedRegion = resolveRegion(region, slotMap, injectableMap, components, componentStack);
+    if (!resolvedRegion.ok) {
+      return resolvedRegion;
+    }
+    if (resolvedRegion.region) {
+      roots.push(resolvedRegion.region);
     }
   }
 
