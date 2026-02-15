@@ -85,37 +85,45 @@ function loadDocument(filePath, result, expectedType) {
   }
 }
 
-function collectReferencedComponents(node, result, context, componentIds) {
+function collectReferencedComponents(node, result, context, componentIds, usage) {
   if (!node || typeof node !== 'object' || Array.isArray(node)) {
     return;
   }
 
-  if (typeof node.component === 'string' && !PRIMITIVE_COMPONENTS.has(node.component) && !componentIds.has(node.component)) {
-    addDiagnostic(
-      result,
-      'errors',
-      'BROKEN_COMPONENT_REFERENCE',
-      `Unknown component "${node.component}" in ${context}.`,
-    );
+  if (typeof node.component === 'string') {
+    if (!PRIMITIVE_COMPONENTS.has(node.component) && !componentIds.has(node.component)) {
+      addDiagnostic(
+        result,
+        'errors',
+        'BROKEN_COMPONENT_REFERENCE',
+        `Unknown component "${node.component}" in ${context}.`,
+      );
+    } else if (componentIds.has(node.component) && usage?.componentsUsed) {
+      usage.componentsUsed.add(node.component);
+    }
   }
 
-  if (typeof node.use === 'string' && !componentIds.has(node.use)) {
-    addDiagnostic(
-      result,
-      'errors',
-      'BROKEN_COMPONENT_REFERENCE',
-      `Unknown component reference "${node.use}" in ${context}.`,
-    );
+  if (typeof node.use === 'string') {
+    if (!componentIds.has(node.use)) {
+      addDiagnostic(
+        result,
+        'errors',
+        'BROKEN_COMPONENT_REFERENCE',
+        `Unknown component reference "${node.use}" in ${context}.`,
+      );
+    } else if (usage?.componentsUsed) {
+      usage.componentsUsed.add(node.use);
+    }
   }
 
   if (Array.isArray(node.children)) {
     for (const child of node.children) {
-      collectReferencedComponents(child, result, context, componentIds);
+      collectReferencedComponents(child, result, context, componentIds, usage);
     }
   }
 }
 
-function collectTemplateReferences(templateContent, result, componentIds, seenSlotIds, seenInjectableIds) {
+function collectTemplateReferences(templateContent, result, componentIds, seenSlotIds, seenInjectableIds, usage) {
   if (!templateContent || typeof templateContent !== 'object') {
     return;
   }
@@ -135,28 +143,29 @@ function collectTemplateReferences(templateContent, result, componentIds, seenSl
         if (child && typeof child === 'object' && child.injectable === true && typeof child.id === 'string') {
           seenInjectableIds.add(child.id);
         }
-        collectReferencedComponents(child, result, `template region "${region.id}"`, componentIds);
+        collectReferencedComponents(child, result, `template region "${region.id}"`, componentIds, usage);
       }
     }
 
-    collectReferencedComponents(region, result, `template region "${region.id}"`, componentIds);
+    collectReferencedComponents(region, result, `template region "${region.id}"`, componentIds, usage);
   }
 
   if (Array.isArray(templateContent.overlays)) {
     for (const overlay of templateContent.overlays) {
       if (overlay && Array.isArray(overlay.content)) {
         for (const node of overlay.content) {
-          collectReferencedComponents(node, result, `template overlay "${overlay.id}"`, componentIds);
+          collectReferencedComponents(node, result, `template overlay "${overlay.id}"`, componentIds, usage);
         }
       }
     }
   }
 }
 
-function collectPageReferences(pageDocument, result, pageTemplates, componentIds, datasetIds) {
+function collectPageReferences(pageDocument, result, pageTemplates, componentIds, datasetIds, usage) {
   const pageId = pageDocument.id;
   const page = pageDocument.document?.page || {};
   const templateId = page.template;
+  const filledSlots = new Set();
 
   const templateMeta = pageTemplates.get(templateId);
   const templateInfo = templateMeta || { slotIds: new Set(), injectableIds: new Set() };
@@ -176,19 +185,34 @@ function collectPageReferences(pageDocument, result, pageTemplates, componentIds
     if (!slot || typeof slot !== 'object') {
       continue;
     }
+    const slotId = slot.slotId;
+    const slotHasContent = Array.isArray(slot.content) && slot.content.length > 0;
 
-    if (typeof slot.slotId === 'string' && !templateInfo.slotIds.has(slot.slotId)) {
+    if (typeof slotId === 'string' && !templateInfo.slotIds.has(slotId)) {
       addDiagnostic(
         result,
         'errors',
         'MISSING_SLOT_REFERENCE',
-        `Page "${pageId}" targets unknown slot "${slot.slotId}" on template "${templateId}".`,
+        `Page "${pageId}" targets unknown slot "${slotId}" on template "${templateId}".`,
       );
     }
 
     if (Array.isArray(slot.content)) {
       for (const node of slot.content) {
-        collectReferencedComponents(node, result, `page "${pageId}" slot "${slot.slotId}"`, componentIds);
+        collectReferencedComponents(node, result, `page "${pageId}" slot "${slotId}"`, componentIds, usage);
+      }
+    }
+
+    if (typeof slotId === 'string' && templateInfo.slotIds.has(slotId)) {
+      if (!slotHasContent) {
+        addDiagnostic(
+          result,
+          'warnings',
+          'EMPTY_SLOT',
+          `Page "${pageId}" defines empty content for template slot "${slotId}" on template "${templateId}".`,
+        );
+      } else {
+        filledSlots.add(slotId);
       }
     }
   }
@@ -208,7 +232,7 @@ function collectPageReferences(pageDocument, result, pageTemplates, componentIds
       }
       if (Array.isArray(injectable.content)) {
         for (const node of injectable.content) {
-          collectReferencedComponents(node, result, `page "${pageId}" injectable "${injectable.injectableId}"`, componentIds);
+          collectReferencedComponents(node, result, `page "${pageId}" injectable "${injectable.injectableId}"`, componentIds, usage);
         }
       }
     }
@@ -218,7 +242,7 @@ function collectPageReferences(pageDocument, result, pageTemplates, componentIds
     for (const overlay of page.overlays) {
       if (overlay && Array.isArray(overlay.content)) {
         for (const node of overlay.content) {
-          collectReferencedComponents(node, result, `page "${pageId}" overlay "${overlay.id}"`, componentIds);
+          collectReferencedComponents(node, result, `page "${pageId}" overlay "${overlay.id}"`, componentIds, usage);
         }
       }
     }
@@ -235,6 +259,21 @@ function collectPageReferences(pageDocument, result, pageTemplates, componentIds
           'errors',
           'MISSING_DATASET_REFERENCE',
           `Page "${pageId}" references missing dataset "${source.dataset}".`,
+        );
+      } else if (usage) {
+        usage.datasetsUsed.add(source.dataset);
+      }
+    }
+  }
+
+  if (templateInfo.slotIds.size > 0) {
+    for (const slotId of templateInfo.slotIds) {
+      if (!filledSlots.has(slotId)) {
+        addDiagnostic(
+          result,
+          'warnings',
+          'EMPTY_SLOT',
+          `Page "${pageId}" does not define content for template slot "${slotId}" on template "${templateId}".`,
         );
       }
     }
@@ -274,6 +313,24 @@ function walkUseGraph(node, edges, componentIds) {
       walkUseGraph(child, edges, componentIds);
     }
   }
+}
+
+function collectUsedComponents(componentGraph, directUsages) {
+  const used = new Set(directUsages);
+  const queue = Array.from(directUsages);
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    const references = componentGraph[current] || [];
+    for (const reference of references) {
+      if (!used.has(reference)) {
+        used.add(reference);
+        queue.push(reference);
+      }
+    }
+  }
+
+  return used;
 }
 
 function detectCircularUse(referenceGraph, result) {
@@ -477,6 +534,11 @@ function runDoctor({ projectPath } = {}) {
   }
 
   const templateDefinitions = templates?.document?.templates || {};
+  const componentUsages = {
+    componentsUsed: new Set(),
+    datasetsUsed: new Set(),
+  };
+
   for (const [templateId, templateDocument] of Object.entries(templateDefinitions)) {
     if (!templateMap.has(templateId)) {
       templateMap.set(templateId, {
@@ -485,17 +547,48 @@ function runDoctor({ projectPath } = {}) {
       });
     }
     const templateInfo = templateMap.get(templateId);
-    collectTemplateReferences(templateDocument, result, componentIds, templateInfo.slotIds, templateInfo.injectableIds);
+    collectTemplateReferences(templateDocument, result, componentIds, templateInfo.slotIds, templateInfo.injectableIds, componentUsages);
   }
 
   const routeEntries = sitemap?.document?.sitemap?.routes || [];
   collectPageRouteDiagnostics(routeEntries, result, pageMap, templateMap);
 
   for (const pageLoaded of pageMap.values()) {
-    collectPageReferences(pageLoaded.document?.page ? pageLoaded : { id: pageLoaded.id, document: pageLoaded.document }, result, templateMap, componentIds, datasetIds);
+    collectPageReferences(
+      pageLoaded.document?.page ? pageLoaded : { id: pageLoaded.id, document: pageLoaded.document },
+      result,
+      templateMap,
+      componentIds,
+      datasetIds,
+      componentUsages,
+    );
   }
 
   const componentGraph = collectComponentUseGraph(componentMap, result);
+  const usedComponents = collectUsedComponents(componentGraph, componentUsages.componentsUsed);
+
+  for (const componentId of Object.keys(componentMap)) {
+    if (!usedComponents.has(componentId)) {
+      addDiagnostic(
+        result,
+        'warnings',
+        'UNUSED_COMPONENT',
+        `Component "${componentId}" is not referenced by any page or template.`,
+      );
+    }
+  }
+
+  for (const datasetId of datasetIds) {
+    if (!componentUsages.datasetsUsed.has(datasetId)) {
+      addDiagnostic(
+        result,
+        'warnings',
+        'UNUSED_DATASET',
+        `Dataset "${datasetId}" is not referenced by any page.`,
+      );
+    }
+  }
+
   detectCircularUse(componentGraph, result);
 
   runSemanticValidation({
