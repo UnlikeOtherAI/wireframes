@@ -77,6 +77,7 @@ Moved out of root once scaffolding begins.
 - **No over-engineering.** Solve what's needed now. No speculative abstractions.
 - **Verify every section with Playwright CLI.** Each section of the CLI that is developed must be run past Playwright to verify that generated outputs are correct. For example, after implementing `wf template add`, run Playwright tests to confirm the generated template YAML is valid and matches the expected structure. No section is considered done until its Playwright tests pass.
 - **Schema changes must be reflected everywhere.** Any change to the schema must be updated in ALL of: schema.md, schema-systems.md, schema-canonical.yaml, schema.json (formal JSON Schema), brief.md (if CLI behavior is affected), and rendering.md (if rendering behavior is affected). Never update one without the others.
+- **Save agent review output to temp files.** When running LLM agents (Codex, Gemini, Claude) for review, save their output to temp files (`/tmp/`) and read results from there. Do not stream full output back into context — it wastes tokens.
 
 ---
 

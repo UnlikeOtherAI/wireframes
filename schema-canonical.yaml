@@ -259,7 +259,7 @@ primitives:
     - image         # props: src, alt, width, height
   interactive:
     - button        # props: label
-    - input         # props: placeholder, inputType
+    - input         # props: placeholder, inputType (text|password|email|number|search)
     - textarea      # props: placeholder, rows
     - select        # props: placeholder, options
     - checkbox      # props: label

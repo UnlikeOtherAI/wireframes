@@ -246,6 +246,7 @@ button    → <div class="wf-button">
 input     → <div class="wf-input">
               <input type="{inputType}" placeholder="{placeholder}" />
             </div>
+            inputType values: text (default), password, email, number, search.
 
 textarea  → <div class="wf-textarea">
               <textarea placeholder="{placeholder}" rows="{rows}"></textarea>
@@ -478,6 +479,35 @@ all condition types:
 * `not` — inverts the inner condition
 
 If the condition evaluates to false, the interaction is skipped silently.
+
+## Condition encoding in HTML
+
+Conditions are serialized as JSON in `data-wf-condition` attributes on
+the DOM element. The interaction runtime parses these at event time.
+
+```html
+<!-- Visibility condition -->
+<div class="wf-node" data-wf-visibility='{"type":"state_equals","scope":"page","key":"show_panel","equals":true}'>
+  ...
+</div>
+
+<!-- Interaction with condition -->
+<div class="wf-button wf-interactive"
+     data-wf-interactions='[{"type":"navigation","targetRoute":"settings","condition":{"type":"state_equals","scope":"app","key":"is_admin","equals":true}}]'>
+  <button>Admin Settings</button>
+</div>
+```
+
+Visibility conditions are stored on the node element in `data-wf-visibility`.
+Interaction conditions are embedded inside the interaction object in
+`data-wf-interactions` (a JSON array of all interactions on that node).
+
+On state change, the runtime:
+
+1. Queries all elements with `data-wf-visibility`
+2. Parses each condition JSON
+3. Evaluates using the condition evaluator
+4. Shows (removes `display: none`) or hides (adds `display: none`) accordingly
 
 ## Error handling
 

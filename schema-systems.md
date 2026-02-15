@@ -374,7 +374,7 @@ or a reusable component composed from them.
 ```
 
 * `button` — clickable wireframe box. Required: `label`.
-* `input` — text input field. Optional: `placeholder`, `inputType`.
+* `input` — text input field. Optional: `placeholder`, `inputType` (text, password, email, number, search; defaults to text).
 * `textarea` — multi-line input. Optional: `placeholder`, `rows`.
 * `select` — dropdown selector. Optional: `placeholder`, `options`.
 * `checkbox` — checkbox with label. Required: `label`.
