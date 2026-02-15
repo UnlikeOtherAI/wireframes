@@ -60,6 +60,7 @@ const OVERLAY_Z_INDEX = {
 };
 
 const OVERLAY_PLACEMENTS = new Set(['top', 'bottom', 'left', 'right', 'center']);
+const PANE_SIDES = new Set(['left', 'right', 'center']);
 const BINDING_TOKEN = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z0-9_.]+)\s*\}\}/g;
 
 function isBoundSelectionValue(value) {
@@ -284,6 +285,78 @@ function normalizeChildren(node) {
   ];
 }
 
+function normalizePaneSide(value) {
+  const side = typeof value === 'string' ? value.trim() : '';
+  return PANE_SIDES.has(side) ? side : 'left';
+}
+
+function normalizePane(pane, parentLayoutType = 'stack') {
+  if (!isObject(pane)) {
+    return null;
+  }
+
+  const state = isObject(pane.state) ? pane.state : null;
+  return {
+    side: normalizePaneSide(pane.side),
+    axis: parentLayoutType === 'row' ? 'width' : 'height',
+    defaultSize: Number.isFinite(pane.defaultSize) ? pane.defaultSize : null,
+    minSize: Number.isFinite(pane.minSize) ? pane.minSize : null,
+    maxSize: Number.isFinite(pane.maxSize) ? pane.maxSize : null,
+    collapsedSize: Number.isFinite(pane.collapsedSize) ? pane.collapsedSize : 0,
+    resizable: pane.resizable === true,
+    collapsible: pane.collapsible === true,
+    state: isObject(state)
+      && typeof state.scope === 'string' && state.scope.trim() !== ''
+      && typeof state.sizeKey === 'string' && state.sizeKey.trim() !== ''
+      && typeof state.collapsedKey === 'string' && state.collapsedKey.trim() !== ''
+      ? {
+          scope: state.scope.trim(),
+          sizeKey: state.sizeKey.trim(),
+          collapsedKey: state.collapsedKey.trim(),
+        }
+      : null,
+  };
+}
+
+function paneMetaToStyle(pane) {
+  if (!isObject(pane)) {
+    return '';
+  }
+
+  const style = [];
+  const sizeAxis = pane.axis === 'width' ? 'width' : 'height';
+  const defaultSize = toPx(pane.defaultSize);
+
+  if (pane.side === 'center') {
+    style.push('flex:1 1 auto', 'min-width:0');
+  } else {
+    style.push('flex:0 0 auto');
+  }
+
+  if (pane.side === 'right') {
+    style.push('margin-left:auto');
+  }
+
+  if (pane.resizable) {
+    style.push(`resize:${sizeAxis === 'width' ? 'horizontal' : 'vertical'}`, 'overflow:auto');
+  }
+
+  if (defaultSize && pane.side !== 'center') {
+    style.push(`${sizeAxis}:${defaultSize}`);
+  }
+
+  const minSize = toPx(pane.minSize);
+  if (minSize) {
+    style.push(`min-${sizeAxis}:${minSize}`);
+  }
+  const maxSize = toPx(pane.maxSize);
+  if (maxSize) {
+    style.push(`max-${sizeAxis}:${maxSize}`);
+  }
+
+  return style.join(';');
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -317,7 +390,7 @@ function nodeComponent(node) {
 
 const wfNodeBorderStyle = 'border:var(--wf-border-width,1px) var(--wf-border-style,solid) #333;border-radius:var(--wf-corner-radius,0px)';
 
-function buildNodeDataAttributes(node, stateBindings, selectionValue) {
+function buildNodeDataAttributes(node, stateBindings, selectionValue, paneData) {
   const entries = [];
   if (Array.isArray(node.interaction) && node.interaction.length > 0) {
     entries.push(`data-wf-interactions="${escapeAttr(JSON.stringify(node.interaction))}"`);
@@ -352,10 +425,13 @@ function buildNodeDataAttributes(node, stateBindings, selectionValue) {
   if (node.selection && node.selection.selectable === false) {
     entries.push('data-selection-selectable="false"');
   }
+  if (isObject(paneData)) {
+    entries.push(`data-wf-pane="${escapeAttr(JSON.stringify(paneData))}"`);
+  }
   return entries.length > 0 ? ` ${entries.join(' ')}` : '';
 }
 
-function buildNodeClasses(node, primitive, level = null) {
+function buildNodeClasses(node, primitive, level = null, paneSide = null) {
   const classList = ['wf-node'];
 
   if (primitive === 'heading') {
@@ -379,6 +455,9 @@ function buildNodeClasses(node, primitive, level = null) {
   }
   if (node.selection && typeof node.selection === 'object') {
     classList.push('wf-selectable');
+  }
+  if (typeof paneSide === 'string' && paneSide.trim() !== '') {
+    classList.push('wf-pane', `wf-pane-${toSafeClass(paneSide)}`);
   }
 
   return classList.join(' ');
@@ -603,6 +682,7 @@ function renderNode(node, options = {}) {
   const nodeStyle = isObject(node.wireframeStyle) ? node.wireframeStyle : {};
   const nodeWireframeOverrides = wireframeNodeStyleOverrides(nodeStyle, options.pageStyle);
   const parentLayoutType = options.parentLayoutType || 'stack';
+  const paneData = normalizePane(node.pane, parentLayoutType);
   const projectPath = options.projectPath || '';
   const stateBindings = isObject(node.stateBindings) ? { ...node.stateBindings } : {};
   const selectionValue = options.selectionValue;
@@ -640,36 +720,38 @@ function renderNode(node, options = {}) {
     layoutToCss(layout, size, { defaultGridColumns }),
     layoutItemCss(gridItem),
     absoluteChildStyle(node.position, parentLayoutType),
+    paneMetaToStyle(paneData),
     wfNodeBorderStyle,
     nodeWireframeOverrides,
   ].filter(Boolean).join(';');
 
   const headingLevel = Number.isInteger(props.level) ? props.level : 3;
   const safeHeadingLevel = Math.max(1, Math.min(6, headingLevel));
-  const dataAttrs = () => buildNodeDataAttributes(node, stateBindings, selectionValue);
+  const dataAttrs = () => buildNodeDataAttributes(node, stateBindings, selectionValue, paneData);
   const isOverlayRoot = node.kind === 'overlay';
+  const paneSide = paneData ? paneData.side : null;
   const primitives = {
     heading: () => {
-      const classes = buildNodeClasses(node, 'heading', safeHeadingLevel);
+      const classes = buildNodeClasses(node, 'heading', safeHeadingLevel, paneSide);
       const body = `<h${safeHeadingLevel}>${
         renderBoundText(typeof props.text === 'string' ? props.text : 'Heading', bindingContext)
       }</h${safeHeadingLevel}>`;
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${body}${renderChildren(node, options)}</div>`;
     },
     paragraph: () => {
-      const classes = buildNodeClasses(node, 'paragraph');
+      const classes = buildNodeClasses(node, 'paragraph', null, paneSide);
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><p>${
         renderBoundText(typeof props.text === 'string' ? props.text : '', bindingContext)
       }</p>${renderChildren(node, options)}</div>`;
     },
     text: () => {
-      const classes = buildNodeClasses(node, 'text');
+      const classes = buildNodeClasses(node, 'text', null, paneSide);
       return `<span${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${
         renderBoundText(typeof props.text === 'string' ? props.text : '', bindingContext)
       }</span>${renderChildren(node, options)}`;
     },
     image: () => {
-      const classes = buildNodeClasses(node, 'image');
+      const classes = buildNodeClasses(node, 'image', null, paneSide);
       const image = renderImageElement(projectPath, props, {
         ...bindingContext,
         assetUrlPrefix: options && typeof options.assetUrlPrefix === 'string' ? options.assetUrlPrefix : '',
@@ -677,13 +759,13 @@ function renderNode(node, options = {}) {
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${image}</div>`;
     },
     button: () => {
-      const classes = buildNodeClasses(node, 'button');
+      const classes = buildNodeClasses(node, 'button', null, paneSide);
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><button>${
         renderBoundText(typeof props.label === 'string' ? props.label : 'Button', bindingContext)
       }</button>${renderChildren(node, options)}</div>`;
     },
     input: () => {
-      const classes = buildNodeClasses(node, 'input');
+      const classes = buildNodeClasses(node, 'input', null, paneSide);
       const inputType = ['text', 'password', 'email', 'number', 'search'].includes(props.inputType) ? props.inputType : 'text';
       const placeholder = resolveAttributeValue(
         typeof props.placeholder === 'string' ? props.placeholder : '',
@@ -694,7 +776,7 @@ function renderNode(node, options = {}) {
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><input type="${inputType}" placeholder="${escapeAttr(placeholder)}" /></div>`;
     },
     textarea: () => {
-      const classes = buildNodeClasses(node, 'textarea');
+      const classes = buildNodeClasses(node, 'textarea', null, paneSide);
       const rows = Number.isInteger(props.rows) && props.rows > 0 ? props.rows : 3;
       const placeholder = resolveAttributeValue(
         typeof props.placeholder === 'string' ? props.placeholder : '',
@@ -705,7 +787,7 @@ function renderNode(node, options = {}) {
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><textarea placeholder="${escapeAttr(placeholder)}" rows="${rows}"></textarea>${renderChildren(node, options)}</div>`;
     },
     select: () => {
-      const classes = buildNodeClasses(node, 'select');
+      const classes = buildNodeClasses(node, 'select', null, paneSide);
       const placeholder = resolveAttributeValue(
         typeof props.placeholder === 'string' ? props.placeholder : 'Select',
         bindingContext,
@@ -716,19 +798,19 @@ function renderNode(node, options = {}) {
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><select><option value="">${escapeHtml(placeholder)}</option>${optionsMarkup}</select>${renderChildren(node, options)}</div>`;
     },
     checkbox: () => {
-      const classes = buildNodeClasses(node, 'checkbox');
+      const classes = buildNodeClasses(node, 'checkbox', null, paneSide);
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><label><input type="checkbox" /> ${
         renderBoundText(typeof props.label === 'string' ? props.label : 'Checkbox', bindingContext)
       }</label>${renderChildren(node, options)}</div>`;
     },
     toggle: () => {
-      const classes = buildNodeClasses(node, 'toggle');
+      const classes = buildNodeClasses(node, 'toggle', null, paneSide);
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><label><span class="wf-toggle-track"><span class="wf-toggle-thumb"></span></span> ${
         renderBoundText(typeof props.label === 'string' ? props.label : 'Toggle', bindingContext)
       }</label>${renderChildren(node, options)}</div>`;
     },
     section: () => {
-      const classes = buildNodeClasses(node, 'section');
+      const classes = buildNodeClasses(node, 'section', null, paneSide);
       const children = renderChildren(node, {
         ...options,
         parentLayoutType: isObject(node.layout) ? node.layout.type || 'stack' : 'stack',
@@ -747,11 +829,11 @@ function renderNode(node, options = {}) {
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${sectionTitle}<div class="wf-section-body">${children}</div></div>`;
     },
     divider: () => {
-      const classes = buildNodeClasses(node, 'divider');
+      const classes = buildNodeClasses(node, 'divider', null, paneSide);
       return `<hr${joinAttrs(node.id, classes, childStyle)}${dataAttrs()} />`;
     },
     spacer: () => {
-      const classes = buildNodeClasses(node, 'spacer');
+      const classes = buildNodeClasses(node, 'spacer', null, paneSide);
       const size = toPx(Number.isFinite(props.size) ? Number(props.size) : Number(props.size) || 16);
       const orientation = options.parentLayoutType === 'row' ? 'width' : 'height';
       const spacerStyle = size ? `${childStyle}${childStyle ? ';' : ''}${orientation}:${size}` : childStyle;
@@ -772,7 +854,7 @@ function renderNode(node, options = {}) {
   }
 
   const childNodes = renderChildren(node, options);
-  const classes = buildNodeClasses(node, primitiveName);
+  const classes = buildNodeClasses(node, primitiveName, null, paneSide);
   return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${childNodes}</div>`;
 }
 

@@ -2,6 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const vm = require('node:vm');
 
 const { renderWireframeMarkup } = require('../shared/screenshots/renderer');
 const { renderNode } = require('../shared/renderer/primitives');
@@ -16,7 +17,7 @@ test('buildInteractionRuntime embeds route map and state defaults', () => {
     platform: 'mobile',
   });
 
-  assert.equal(script.includes('WF_ROUTE_ID = "home"'), true);
+  assert.equal(script.includes('\"routeId\":\"home\"'), true);
   assert.equal(script.includes('"home":"home.html"'), true);
   assert.equal(script.includes('"settings":"settings.html"'), true);
   assert.equal(script.includes('"theme":"light"'), true);
@@ -193,4 +194,131 @@ test('renderWireframeMarkup resolves route-bound text before runtime', () => {
   });
 
   assert.equal(html.includes('Route settings'), true);
+});
+
+test('renderNode emits pane classes and runtime metadata', () => {
+  const html = renderNode({
+    id: 'sidebar',
+    component: 'section',
+    pane: {
+      side: 'left',
+      defaultSize: 260,
+      minSize: 180,
+      maxSize: 400,
+      resizable: true,
+      collapsible: true,
+      collapsedSize: 48,
+      state: {
+        scope: 'page',
+        sizeKey: 'sidebarSize',
+        collapsedKey: 'sidebarCollapsed',
+      },
+    },
+    children: [
+      {
+        id: 'title',
+        component: 'text',
+        props: { text: 'Navigation' },
+      },
+    ],
+  }, { parentLayoutType: 'row' });
+
+  assert.equal(html.includes('wf-pane'), true);
+  assert.equal(html.includes('wf-pane-left'), true);
+  assert.equal(html.includes('data-wf-pane'), true);
+  assert.equal(html.includes('pane-left'), true);
+  assert.equal(html.includes('resize:horizontal'), true);
+  assert.equal(html.includes('width:260px'), true);
+  assert.equal(html.includes('min-width:180px'), true);
+  assert.equal(html.includes('max-width:400px'), true);
+});
+
+test('buildInteractionRuntime applies pane collapse size during initialization', () => {
+  function createFakeElement(id, attrs = {}) {
+    return {
+      id,
+      style: {},
+      _attributes: { ...attrs },
+      setAttribute(name, value) { this._attributes[name] = value; },
+      getAttribute(name) { return Object.prototype.hasOwnProperty.call(this._attributes, name) ? this._attributes[name] : null; },
+      removeAttribute(name) { delete this._attributes[name]; },
+      classList: {
+        add() {},
+        remove() {},
+        toggle() {},
+      },
+      addEventListener() {},
+      querySelector() { return null; },
+      querySelectorAll() { return []; },
+    };
+  }
+
+  function createFakeDocument() {
+    const paneNode = createFakeElement('left_pane', {
+      'data-wf-pane': JSON.stringify({
+        side: 'left',
+        axis: 'width',
+        defaultSize: 280,
+        minSize: 180,
+        maxSize: 420,
+        collapsedSize: 72,
+        resizable: true,
+        collapsible: true,
+        state: {
+          scope: 'page',
+          sizeKey: 'leftSize',
+          collapsedKey: 'leftCollapsed',
+        },
+      }),
+    });
+    return {
+      _nodes: [paneNode],
+      body: {
+        appendChild() {},
+        removeChild() {},
+      },
+      querySelectorAll(selector) {
+        if (selector === '[data-wf-pane]') {
+          return this._nodes;
+        }
+        return [];
+      },
+      getElementById(id) {
+        return this._nodes.find((node) => node.id === id) || null;
+      },
+      createTextNode() { return {}; },
+    };
+  }
+
+  const fakeDocument = createFakeDocument();
+  const fakeStorage = {
+    _values: {},
+    getItem(key) { return Object.prototype.hasOwnProperty.call(this._values, key) ? this._values[key] : null; },
+    setItem(key, value) { this._values[key] = value; },
+  };
+  const fakeWindow = {
+    sessionStorage: fakeStorage,
+    addEventListener() {},
+  };
+
+  vm.runInNewContext(buildInteractionRuntime({
+    routeId: 'home',
+    routeTable: {},
+    appStateDefaults: {},
+    pageStateDefaults: {
+      leftSize: 320,
+      leftCollapsed: true,
+    },
+    platform: 'web',
+  }), {
+    window: fakeWindow,
+    document: fakeDocument,
+    console: console,
+    setTimeout,
+    clearTimeout,
+    ResizeObserver: undefined,
+  });
+
+  assert.equal(fakeDocument._nodes[0].style.width, '72px');
+  assert.equal(fakeDocument._nodes[0].getAttribute('data-wf-pane-collapsed'), 'true');
 });
