@@ -4,8 +4,9 @@
 const { runInit } = require('./commands/init');
 const { runInfo } = require('./commands/info');
 const { runDoctor } = require('./commands/doctor');
+const { runValidateCommand } = require('./commands/validate');
 
-const USAGE = `wf <command> [arguments]\n\nCommands:\n  init <project-name>   Scaffold a new wireframe project\n  info                  Show project metadata from manifest.yaml\n  doctor                Check project health and references`;
+const USAGE = `wf <command> [arguments]\n\nCommands:\n  init <project-name>   Scaffold a new wireframe project\n  info                  Show project metadata from manifest.yaml\n  doctor                Check project health and references\n  validate              Validate document schema compliance`;
 
 function run(args, context = {}) {
   const cwd = context.cwd || process.cwd();
@@ -28,6 +29,11 @@ function run(args, context = {}) {
 
   if (command === 'doctor') {
     runDoctor(commandArgs, { cwd });
+    return;
+  }
+
+  if (command === 'validate') {
+    runValidateCommand(commandArgs, { cwd });
     return;
   }
 

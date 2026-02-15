@@ -100,3 +100,30 @@ test('validateDocument can be used directly', () => {
     validateDocument({}, '/tmp/invalid.yaml', '1.1');
   }, (error) => error instanceof SchemaLoadError && error.code === 'MISSING_DOCUMENT_TYPE');
 });
+
+test('loadDocumentFromFile validates against schema.json', () => {
+  const docPath = writeTempFile('invalid-page.yaml', `
+documentType: page
+specVersion: "1.1"
+id: invalid-page
+page:
+  id: invalid-page
+  template: missing_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      width: thin
+    corner:
+      style: rounded
+  slots: []
+`);
+
+  const error = assert.throws(() => {
+    loadDocumentFromFile(docPath);
+  }, (error) => error instanceof SchemaLoadError && error.code === 'SCHEMA_VALIDATION');
+  assert.equal(Array.isArray(error.details.errors), true);
+  assert.ok(
+    error.details.errors.some((issue) => issue.code === 'SCHEMA_REQUIRED' && issue.path === '$.page.wireframeStyle.border.style'),
+  );
+});

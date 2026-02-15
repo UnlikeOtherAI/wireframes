@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
 const { SUPPORTED_SPEC_VERSION } = require('./constants');
+const { validateDocumentAgainstSchema } = require('./validator');
 
 const SUPPORTED_DOCUMENT_TYPES = new Set([
   'manifest',
@@ -137,7 +138,9 @@ function parseDocumentText(content, filePath) {
   }
 }
 
-function validateDocument(document, filePath, supportedSpecVersion = SUPPORTED_SPEC_VERSION) {
+function validateDocument(document, filePath, supportedSpecVersion = SUPPORTED_SPEC_VERSION, options = {}) {
+  const { skipSchemaValidation = false } = options;
+
   if (document == null || typeof document !== 'object' || Array.isArray(document)) {
     throw new SchemaLoadError(`Invalid document in ${filePath}`, 'INVALID_DOCUMENT', { filePath });
   }
@@ -150,6 +153,21 @@ function validateDocument(document, filePath, supportedSpecVersion = SUPPORTED_S
     validateManifestSchemaVersion(document, filePath, supportedSpecVersion);
   }
 
+  if (!skipSchemaValidation) {
+    const schemaErrors = validateDocumentAgainstSchema(document, filePath);
+    if (schemaErrors.length > 0) {
+      throw new SchemaLoadError(
+        `Document in ${filePath} does not match schema.json`,
+        'SCHEMA_VALIDATION',
+        {
+          filePath,
+          schemaPath: '#',
+          errors: schemaErrors,
+        },
+      );
+    }
+  }
+
   return { documentType, specVersion, id };
 }
 
@@ -159,7 +177,7 @@ function loadDocumentFromFile(filePath, options = {}) {
   const content = fs.readFileSync(absolutePath, 'utf8');
   const parsedDocument = parseDocumentText(content, absolutePath);
 
-  const { documentType, specVersion, id } = validateDocument(parsedDocument, absolutePath, supportedSpecVersion);
+  const { documentType, specVersion, id } = validateDocument(parsedDocument, absolutePath, supportedSpecVersion, options);
 
   return {
     absolutePath,

@@ -62,6 +62,23 @@ function loadDocument(filePath, result, expectedType) {
 
     return loaded;
   } catch (error) {
+    if (
+      error.code === 'SCHEMA_VALIDATION'
+      && error.details != null
+      && Array.isArray(error.details.errors)
+    ) {
+      for (const schemaError of error.details.errors) {
+        const location = schemaError.path ? ` at ${schemaError.path}` : '';
+        addDiagnostic(
+          result,
+          'errors',
+          schemaError.code || 'SCHEMA_VALIDATION',
+          `Schema validation error${location}: ${schemaError.message}`,
+        );
+      }
+      return null;
+    }
+
     addDiagnostic(result, 'errors', error.code || 'DOCUMENT_LOAD_ERROR', error.message);
     return null;
   }
