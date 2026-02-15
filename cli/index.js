@@ -10,8 +10,9 @@ const { runPage } = require('./commands/page');
 const { runNode } = require('./commands/node');
 const { runComponent } = require('./commands/component');
 const { runData } = require('./commands/data');
+const { runOverlay } = require('./commands/overlay');
 
-const USAGE = `wf <command> [arguments]\n\nCommands:\n  init <project-name>   Scaffold a new wireframe project\n  info                  Show project metadata from manifest.yaml\n  doctor                Check project health and references\n  validate              Validate document schema compliance\n  lint                  Check naming conventions\n  template              Manage templates\n  page                  Manage pages\n  component             Manage reusable components\n  node                  Add, update, and remove nodes\n  data                  Manage datasets and dataset items`;
+const USAGE = `wf <command> [arguments]\n\nCommands:\n  init <project-name>   Scaffold a new wireframe project\n  info                  Show project metadata from manifest.yaml\n  doctor                Check project health and references\n  validate              Validate document schema compliance\n  lint                  Check naming conventions\n  template              Manage templates\n  page                  Manage pages\n  component             Manage reusable components\n  node                  Add, update, and remove nodes\n  overlay               Manage overlays on pages and templates\n  data                  Manage datasets and dataset items`;
 
 function run(args, context = {}) {
   const cwd = context.cwd || process.cwd();
@@ -64,6 +65,11 @@ function run(args, context = {}) {
 
   if (command === 'node') {
     runNode(commandArgs, { cwd });
+    return;
+  }
+
+  if (command === 'overlay') {
+    runOverlay(commandArgs, { cwd });
     return;
   }
 

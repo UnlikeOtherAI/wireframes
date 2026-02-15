@@ -517,11 +517,12 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
   const pageOverlayIds = new Set();
 
   for (const overlay of pageOverlays) {
+    const overlayValidationIds = new Set();
     validateOverlayDefinition(
       overlay,
       {
         result,
-        overlayIds: pageOverlayIds,
+        overlayIds: overlayValidationIds,
         overlayTriggerRefs,
       },
       `page "${pageId}"`,
