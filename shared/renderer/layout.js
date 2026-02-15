@@ -12,10 +12,16 @@ function toPx(value) {
   return null;
 }
 
-function layoutToCss(layout = {}) {
+function layoutToCss(layout = {}, size = {}, options = {}) {
   if (!isObject(layout)) {
     return '';
   }
+
+  const sizeProperties = isObject(size) ? size : {};
+  const resolvedOptions = isObject(options) ? options : {};
+  const defaultColumns = Number.isInteger(resolvedOptions.defaultGridColumns)
+    ? resolvedOptions.defaultGridColumns
+    : DEFAULT_GRID_COLUMNS;
 
   const css = [];
   const type = layout.type || 'stack';
@@ -25,7 +31,9 @@ function layoutToCss(layout = {}) {
   } else if (type === 'row') {
     css.push('display:flex', 'flex-direction:row');
   } else if (type === 'grid') {
-    const columns = Number.isInteger(layout.columns) && layout.columns > 0 ? layout.columns : DEFAULT_GRID_COLUMNS;
+    const columns = Number.isInteger(layout.columns) && layout.columns > 0
+      ? layout.columns
+      : defaultColumns;
     css.push('display:grid', `grid-template-columns:repeat(${columns},1fr)`);
   } else if (type === 'absolute') {
     css.push('position:relative');
@@ -51,38 +59,38 @@ function layoutToCss(layout = {}) {
   if (layout.justify) {
     css.push(`justify-content:${layout.justify}`);
   }
-  if (layout.width != null) {
-    const width = toPx(layout.width);
+  if (sizeProperties.width != null) {
+    const width = toPx(sizeProperties.width);
     if (width) {
       css.push(`width:${width}`);
     }
   }
-  if (layout.height != null) {
-    const height = toPx(layout.height);
+  if (sizeProperties.height != null) {
+    const height = toPx(sizeProperties.height);
     if (height) {
       css.push(`height:${height}`);
     }
   }
-  if (layout.minWidth != null) {
-    const minWidth = toPx(layout.minWidth);
+  if (sizeProperties.minWidth != null) {
+    const minWidth = toPx(sizeProperties.minWidth);
     if (minWidth) {
       css.push(`min-width:${minWidth}`);
     }
   }
-  if (layout.maxWidth != null) {
-    const maxWidth = toPx(layout.maxWidth);
+  if (sizeProperties.maxWidth != null) {
+    const maxWidth = toPx(sizeProperties.maxWidth);
     if (maxWidth) {
       css.push(`max-width:${maxWidth}`);
     }
   }
-  if (layout.minHeight != null) {
-    const minHeight = toPx(layout.minHeight);
+  if (sizeProperties.minHeight != null) {
+    const minHeight = toPx(sizeProperties.minHeight);
     if (minHeight) {
       css.push(`min-height:${minHeight}`);
     }
   }
-  if (layout.maxHeight != null) {
-    const maxHeight = toPx(layout.maxHeight);
+  if (sizeProperties.maxHeight != null) {
+    const maxHeight = toPx(sizeProperties.maxHeight);
     if (maxHeight) {
       css.push(`max-height:${maxHeight}`);
     }
@@ -91,26 +99,26 @@ function layoutToCss(layout = {}) {
   return css.join(';');
 }
 
-function layoutItemCss(layout = {}) {
-  if (!isObject(layout)) {
+function layoutItemCss(gridItem = {}) {
+  if (!isObject(gridItem)) {
     return '';
   }
 
   const css = [];
-  if (layout.span != null) {
-    css.push(`grid-column:span ${Number(layout.span)}`);
+  if (gridItem.span != null) {
+    css.push(`grid-column:span ${Number(gridItem.span)}`);
   }
-  if (layout.offset != null) {
-    const offset = Number(layout.offset);
+  if (gridItem.offset != null) {
+    const offset = Number(gridItem.offset);
     if (Number.isFinite(offset)) {
       css.push(`grid-column-start:${offset + 1}`);
     }
   }
-  if (layout.row != null) {
-    css.push(`grid-row:${layout.row}`);
+  if (gridItem.row != null) {
+    css.push(`grid-row:${gridItem.row}`);
   }
-  if (layout.column != null) {
-    css.push(`grid-column:${layout.column}`);
+  if (gridItem.column != null) {
+    css.push(`grid-column:${gridItem.column}`);
   }
   return css.join(';');
 }

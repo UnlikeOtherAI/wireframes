@@ -56,6 +56,7 @@ function renderWireframeMarkup({
   roots = [],
   pageViewport,
   pageStyle = {},
+  defaultGridColumns = 12,
   projectPath,
   frame = null,
 }) {
@@ -85,12 +86,12 @@ function renderWireframeMarkup({
   <img id="wf-frame-image" src="${frame.imageData ? escapeHtml(frame.imageData) : ''}" alt="device frame" />
   <div id="wf-wireframe-shell" style="${wireframeScreenStyle}">
     <div id="wf-wireframe-content" style="${`width:${viewportWidth}px;height:${viewportHeight}px;position:relative;`}">
-      ${renderRoots(roots, { pageStyle, projectPath })}
+    ${renderRoots(roots, { pageStyle, projectPath, defaultGridColumns })}
     </div>
   </div>
 </div>`
     : `<div id="wf-wireframe-shell" style="${pageShellStyle}">
-  ${renderRoots(roots, { pageStyle, projectPath })}
+  ${renderRoots(roots, { pageStyle, projectPath, defaultGridColumns })}
 </div>`;
 
   const styles = [

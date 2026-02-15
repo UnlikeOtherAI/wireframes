@@ -178,7 +178,12 @@ function resolvePageTargets(projectPath, pageId) {
   if (!routeMap.ok) return routeMap;
 
   const manifest = loadDocumentFromFile(path.join(projectPath, 'manifest.yaml'), { supportedSpecVersion: SUPPORTED_SPEC_VERSION });
-  const defaultWireframeStyle = manifest.document?.manifest?.defaultWireframeStyle || {};
+  const manifestData = manifest.document?.manifest || {};
+  const defaultWireframeStyle = manifestData.defaultWireframeStyle || {};
+  const parsedDefaultGridColumns = Number(manifestData.defaultGridColumns);
+  const defaultGridColumns = Number.isInteger(parsedDefaultGridColumns) && parsedDefaultGridColumns > 0
+    ? parsedDefaultGridColumns
+    : 12;
 
   const pageIds = pageId ? [pageId] : listPages(projectPath);
   if (pageId && !pageIds.includes(pageId)) return { ok: false, error: `Page "${pageId}" does not exist.` };
@@ -218,6 +223,7 @@ function resolvePageTargets(projectPath, pageId) {
         orientation: viewportResult.orientation,
       },
       wireframeStyle: page.wireframeStyle || defaultWireframeStyle,
+      defaultGridColumns,
       roots,
       projectPath,
     });
@@ -257,6 +263,7 @@ async function captureScreenshots(targets, outputPath, frame) {
         pageId: target.pageId,
         pageViewport: target.viewport,
         pageStyle: target.wireframeStyle,
+        defaultGridColumns: target.defaultGridColumns,
         projectPath: target.projectPath,
         frame,
       });

@@ -192,14 +192,19 @@ function renderNode(node, options = {}) {
   const component = node.component;
   const props = isObject(node.props) ? node.props : {};
   const layout = isObject(node.layout) ? node.layout : {};
+  const size = isObject(node.size) ? node.size : {};
+  const gridItem = isObject(node.gridItem) ? node.gridItem : {};
+  const defaultGridColumns = Number.isInteger(options.defaultGridColumns)
+    ? options.defaultGridColumns
+    : undefined;
   const nodeStyle = isObject(node.wireframeStyle) ? node.wireframeStyle : {};
   const mergedStyle = mergeWireframeStyle(options.pageStyle, nodeStyle);
   const parentLayoutType = options.parentLayoutType || 'stack';
   const projectPath = options.projectPath || '';
 
   const childStyle = [
-    layoutToCss(layout),
-    layoutItemCss(layout),
+    layoutToCss(layout, size, { defaultGridColumns }),
+    layoutItemCss(gridItem),
     absoluteChildStyle(node.position, parentLayoutType),
     wireframeBorderCss(mergedStyle),
   ].filter(Boolean).join(';');
