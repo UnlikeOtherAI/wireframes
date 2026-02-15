@@ -12,6 +12,10 @@ const {
   buildInteractionRuntimeFromWindowContext,
 } = require(path.resolve(__dirname, '..', 'renderer', 'interactions'));
 const {
+  escapeHtml,
+  escapeAttr,
+} = require(path.resolve(__dirname, '..', 'screenshots'));
+const {
   renderWireframeMarkup,
   buildWireframeStyles,
 } = require(path.resolve(__dirname, '..', 'screenshots', 'renderer'));
@@ -151,7 +155,7 @@ function buildPageRouteMap(routeTable, selectedPageIds, platform, basePath) {
 
 function buildPlatformIndexHtml(platform, pages, options = {}) {
   const rows = pages
-    .map((entry) => `<li><a href="${entry.fileName}">${entry.pageId}</a> — ${entry.route || '/'} </li>`)
+    .map((entry) => `<li><a href="${escapeAttr(entry.fileName)}">${escapeHtml(entry.pageId)}</a> — ${escapeHtml(entry.route || '/')} </li>`)
     .join('\n');
   const title = `Wireframe ${platform}`;
   const masterIndex = joinBasePath(options.basePath, 'index.html');
@@ -177,7 +181,7 @@ function buildPlatformIndexHtml(platform, pages, options = {}) {
 
 function buildMasterIndexHtml(platformEntries, options = {}) {
   const rows = platformEntries
-    .map((entry) => `<li><a href="${entry.href}">${entry.platform}</a> — ${entry.count} pages</li>`)
+    .map((entry) => `<li><a href="${escapeAttr(entry.href)}">${escapeHtml(entry.platform)}</a> — ${entry.count} pages</li>`)
     .join('\n');
 
   return `<!doctype html>

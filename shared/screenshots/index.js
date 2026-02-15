@@ -419,6 +419,8 @@ async function runScreenshots({
 }
 
 module.exports = {
+  escapeHtml,
+  escapeAttr,
   runScreenshots,
   resolveViewport,
   resolveFrame,
