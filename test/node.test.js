@@ -8,6 +8,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { addNode, updateNode, removeNode } = require('../shared/node');
+const { addComponent } = require('../shared/component');
 const { initProject } = require('../shared/init');
 
 function createTempProject(projectName) {
@@ -154,4 +155,46 @@ test('wf node add rejects duplicate node id in resolved tree', () => {
 
   const count = ids.filter((entry) => entry === 'page_title').length;
   assert.equal(count, 1);
+});
+
+test('wf node add/update/remove supports component addresses', () => {
+  const projectPath = createTempProject('Node Component Address');
+
+  const componentResult = addComponent({
+    projectPath,
+    componentId: 'metric_card',
+  });
+  assert.equal(componentResult.ok, true);
+
+  const addResult = addNode({
+    projectPath,
+    component: 'button',
+    inside: 'wf://component/metric_card#root',
+    nodeId: 'metric_button',
+    props: '{"label":"Metric"}',
+  });
+  assert.equal(addResult.ok, true);
+
+  const componentsPath = path.join(projectPath, 'components.yaml');
+  const componentsDoc = yaml.load(fs.readFileSync(componentsPath, 'utf8'));
+  const root = componentsDoc.components.metric_card.root;
+  assert.equal(root.children[0].id, 'metric_button');
+
+  const updateResult = updateNode({
+    projectPath,
+    address: 'wf://component/metric_card#metric_button',
+    props: '{"label":"Updated Metric"}',
+  });
+  assert.equal(updateResult.ok, true);
+
+  const updatedComponents = yaml.load(fs.readFileSync(componentsPath, 'utf8'));
+  const updatedRoot = updatedComponents.components.metric_card.root;
+  assert.equal(updatedRoot.children[0].props.label, 'Updated Metric');
+
+  const removeResult = removeNode({
+    projectPath,
+    address: 'wf://component/metric_card#metric_button',
+  });
+  assert.equal(removeResult.ok, true);
+  assert.equal(removeResult.nodeId, 'metric_button');
 });
