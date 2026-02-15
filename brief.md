@@ -461,6 +461,52 @@ Just zipped spec.
 
 ---
 
+## Build
+
+```bash
+wf build
+wf build --output ./wireframes/build
+wf build --platform web
+wf build --platform mobile
+wf build --clean
+```
+
+Builds a complete click-through HTML wireframe website from YAML specs.
+Each page becomes a self-contained HTML file. The output is a static site
+you can open in a browser and click through.
+
+* `--output <dir>` — output directory (default: `./wireframes/build`)
+* `--platform <value>` — build only: `web`, `mobile`, `tablet`, or `all` (default: `all`)
+* `--clean` — remove existing build directory before building
+* `--base-path <path>` — base path prefix for URLs (default: `/`)
+
+Pages are grouped by `viewport.device` into platform folders. Project must
+pass `wf validate` before building. See [rendering.md](rendering.md) for the
+full rendering specification and output structure.
+
+---
+
+## Serve
+
+```bash
+wf serve
+wf serve --port 3000
+wf serve --platform web
+wf serve --open
+```
+
+Launches a local dev server rendering wireframes in the browser.
+Same rendering pipeline as `wf build`. Watches YAML files and hot-reloads.
+
+* `--port <number>` — dev server port (default: `8080`)
+* `--platform <value>` — serve only a specific platform (default: `all`)
+* `--open` — open browser on launch
+* `--no-reload` — disable hot reload
+
+See [rendering.md](rendering.md) for rendering details.
+
+---
+
 ## Screenshots
 
 ```bash

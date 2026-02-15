@@ -648,7 +648,44 @@ export:
   noTransformation: true
 
 # ============================================================
-# 19. DESIGN PRINCIPLES
+# 19. BUILD CONTRACT
+# ============================================================
+
+build:
+  outputDirectory: wireframes/build
+  structure:
+    - index.html              # master platform index
+    - assets/                  # copied from project
+    - "{platform}/"            # one folder per device type (web, mobile, tablet)
+    -   index.html             # platform page index
+    -   "{pageId}.html"        # one file per page
+    -   _shared/
+    -     wireframe.css        # shared wireframe styles
+    -     interactions.js      # shared interaction runtime
+
+  platformGrouping:
+    source: page.viewport.device
+    values:
+      - web
+      - mobile
+      - tablet
+
+  preconditions:
+    - validation must pass
+    - all references must resolve
+    - schema version must be compatible
+
+  rules:
+    - no external dependencies in output
+    - deterministic (same input = same output)
+    - no timestamps or random values
+    - .wfrc.yaml excluded from build
+    - assets/ copied without transformation
+
+  fullSpec: rendering.md
+
+# ============================================================
+# 20. DESIGN PRINCIPLES
 # ============================================================
 
 principles:

@@ -41,6 +41,7 @@ Commands: `init`, `info`, `doctor`, `schema`, `lint`, `validate`, `export`, `tre
 `data add/remove/import/list/validate/stats/keys`,
 `data item add/update/remove/get/list`,
 `inspect`, `where-used`, `routes`, `stats`, `screenshots`,
+`build`, `serve`,
 `rename` (optional v1).
 
 ### /shared
@@ -51,7 +52,11 @@ by a web version of the app later, so it must have zero CLI dependencies.
 - **schema** — YAML loader, document type definitions, manifest handling, version checking
 - **resolver** — template inheritance, slot filling, component expansion
 - **addressing** — `wf://` URI parsing, tree walking, node lookup
-- **renderer** — layout computation, tree rendering (shared with future web app)
+- **renderer** — YAML-to-HTML rendering pipeline (shared with future web app)
+  - html-emitter: node tree to HTML string
+  - css-generator: wireframe CSS from wireframeStyle
+  - interaction-runtime: client-side JS for navigation, overlays, state
+  - data-binder: dataset iteration and expression replacement
 
 ### /docs
 
@@ -71,7 +76,7 @@ Moved out of root once scaffolding begins.
 - **Deterministic.** Same input = same output. No randomness, no timestamps in generated files.
 - **No over-engineering.** Solve what's needed now. No speculative abstractions.
 - **Verify every section with Playwright CLI.** Each section of the CLI that is developed must be run past Playwright to verify that generated outputs are correct. For example, after implementing `wf template add`, run Playwright tests to confirm the generated template YAML is valid and matches the expected structure. No section is considered done until its Playwright tests pass.
-- **Schema changes must be reflected everywhere.** Any change to the schema must be updated in ALL of: schema.md, schema-systems.md, schema-canonical.yaml, schema.json (formal JSON Schema), and brief.md (if CLI behavior is affected). Never update one without the others.
+- **Schema changes must be reflected everywhere.** Any change to the schema must be updated in ALL of: schema.md, schema-systems.md, schema-canonical.yaml, schema.json (formal JSON Schema), brief.md (if CLI behavior is affected), and rendering.md (if rendering behavior is affected). Never update one without the others.
 
 ---
 
@@ -131,3 +136,4 @@ CLI refuses to operate if `manifest.schemaVersion` exceeds CLI's supported versi
 | [schema-systems.md](schema-systems.md) | Schema: layout, state, interactions, overlays, validation, export |
 | [schema-canonical.yaml](schema-canonical.yaml) | Full canonical YAML definition of the schema |
 | [schema.json](schema.json) | Formal JSON Schema for validation |
+| [rendering.md](rendering.md) | Build, serve, and renderer specification |
