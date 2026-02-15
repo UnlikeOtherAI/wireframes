@@ -64,6 +64,35 @@ function escapeAttr(value) {
   return String(value ?? '').replaceAll('\"', '&quot;');
 }
 
+function buildPageFileName(pageId, platform) {
+  const safePageId = String(pageId || '').trim();
+  const safePlatform = String(platform || '').trim() || 'web';
+  return safePlatform === 'web' ? `${safePageId}.html` : `${safePageId}_${safePlatform}.html`;
+}
+
+function buildPageRouteMap(routeTable, pageIds, platform) {
+  const result = {};
+
+  if (!routeTable || typeof routeTable !== 'object') {
+    return result;
+  }
+
+  const selectedPages = pageIds instanceof Set ? pageIds : null;
+  const entries = routeTable instanceof Map ? Array.from(routeTable.entries()) : Object.entries(routeTable);
+  for (const [routeId, targetPageId] of entries) {
+    const pageId = typeof targetPageId === 'string' ? targetPageId.trim() : '';
+    if (!pageId) {
+      continue;
+    }
+    if (selectedPages && !selectedPages.has(pageId)) {
+      continue;
+    }
+    result[routeId] = buildPageFileName(pageId, platform);
+  }
+
+  return result;
+}
+
 function formatIndexEntry(pageId, route, fileName) {
   return `<li><a href="${escapeAttr(fileName)}">${escapeHtml(pageId)}</a> <span>${escapeHtml(route || '/')}</span></li>`;
 }
@@ -260,12 +289,6 @@ function resolvePageTargets(projectPath, pageId) {
     rootsById.set(tree.id, tree.roots || []);
   }
 
-  const routeTable = {};
-  const pageRouteIdByRouteId = routeMap.routeIdToPage || new Map();
-  for (const [routeId, targetPageId] of pageRouteIdByRouteId) {
-    routeTable[routeId] = `${targetPageId}.html`;
-  }
-
   const targets = [];
   for (const id of pageIds) {
     const pageLoaded = loadDocumentFromFile(pageFilePath(projectPath, id), { supportedSpecVersion: SUPPORTED_SPEC_VERSION });
@@ -283,7 +306,6 @@ function resolvePageTargets(projectPath, pageId) {
       pageId: id,
       route: routeInfo.path || '/',
       pageRouteId: routeInfo.id || routeMap.routeIdByPage?.get(id) || id,
-      routeTable,
       dataSources,
       appStateDefaults,
       pageStateDefaults: isObject(page.pageState) ? page.pageState : {},
@@ -298,6 +320,21 @@ function resolvePageTargets(projectPath, pageId) {
       roots,
       projectPath,
     });
+  }
+
+  for (const target of targets) {
+    const selectedPageIds = targets
+      .filter((entry) => entry.viewport?.device === target.viewport?.device)
+      .reduce((acc, entry) => {
+        acc.add(entry.pageId);
+        return acc;
+      }, new Set());
+
+    target.routeTable = buildPageRouteMap(
+      routeMap.routeIdToPage || {},
+      selectedPageIds,
+      target.viewport?.device || 'web',
+    );
   }
 
   return { ok: true, targets };

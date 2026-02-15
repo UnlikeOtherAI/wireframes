@@ -8,7 +8,12 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { initProject } = require('../shared/init');
-const { runScreenshots, resolveViewport, resolveFrame } = require('../shared/screenshots');
+const {
+  runScreenshots,
+  resolveViewport,
+  resolveFrame,
+  resolvePageTargets,
+} = require('../shared/screenshots');
 const { runScreenshotsCommand } = require('../cli/commands/screenshots');
 
 function createTempProject(projectName) {
@@ -18,6 +23,55 @@ function createTempProject(projectName) {
     projectName,
     projectPath,
   });
+
+  writeYaml(path.join(projectPath, 'components.yaml'), {
+    documentType: 'components',
+    specVersion: '1.1',
+    id: 'components',
+    components: {
+      wireframe_box: {
+        root: {
+          id: 'wireframe_box',
+          injectable: true,
+        },
+      },
+    },
+  });
+
+  writeYaml(path.join(projectPath, 'pages', 'home.yaml'), {
+    documentType: 'page',
+    specVersion: '1.1',
+    id: 'home',
+    page: {
+      id: 'home',
+      template: 'public_template',
+      viewport: {
+        device: 'web',
+      },
+      wireframeStyle: {
+        border: {
+          style: 'solid',
+          width: 'thin',
+        },
+        corner: {
+          style: 'rounded',
+          radius: 8,
+        },
+      },
+      slots: [
+        {
+          slotId: 'main',
+          content: [
+            {
+              id: 'hero',
+              use: 'wireframe_box',
+            },
+          ],
+        },
+      ],
+    },
+  });
+
   return projectPath;
 }
 
@@ -90,6 +144,63 @@ test('resolveViewport supports web and mobile/tablet presets', () => {
   assert.equal(tablet.ok, true);
   assert.equal(tablet.width, 1180);
   assert.equal(tablet.height, 820);
+});
+
+test('resolvePageTargets maps route targets using platform-specific output filenames', () => {
+  const projectPath = createTempProject('Screenshot Route Table');
+  writeYaml(path.join(projectPath, 'sitemap.yaml'), {
+    documentType: 'sitemap',
+    specVersion: '1.1',
+    id: 'sitemap',
+    defaultTemplate: 'public_template',
+    routes: [
+      { id: 'home', path: '/', page: 'home', template: 'public_template' },
+      { id: 'mobile', path: '/mobile', page: 'mobile', template: 'public_template' },
+    ],
+  });
+  writeYaml(path.join(projectPath, 'pages', 'mobile.yaml'), {
+    documentType: 'page',
+    specVersion: '1.1',
+    id: 'mobile',
+    page: {
+      id: 'mobile',
+      template: 'public_template',
+      viewport: {
+        device: 'mobile',
+        orientation: 'portrait',
+      },
+      wireframeStyle: {
+        border: {
+          style: 'solid',
+          width: 'thin',
+        },
+        corner: {
+          style: 'rounded',
+          radius: 8,
+        },
+      },
+      slots: [
+        {
+          slotId: 'main',
+          content: [
+            {
+              id: 'mobile_hero',
+              use: 'wireframe_box',
+            },
+          ],
+        },
+      ],
+    },
+  });
+
+  const result = resolvePageTargets(projectPath);
+  assert.equal(result.ok, true);
+  const home = result.targets.find((entry) => entry.pageId === 'home');
+  const mobile = result.targets.find((entry) => entry.pageId === 'mobile');
+  assert.equal(home.routeTable.home, 'home.html');
+  assert.equal(home.routeTable.mobile, undefined);
+  assert.equal(mobile.routeTable.mobile, 'mobile_mobile.html');
+  assert.equal(mobile.routeTable.home, undefined);
 });
 
 test('resolveViewport reports invalid viewport options', () => {
