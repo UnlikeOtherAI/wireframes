@@ -42,6 +42,7 @@ function renderRoot(root, options) {
   const localPageStyle = mergeWireframeStyle(rootStyleBase, root.wireframeStyle);
   const content = renderNodes(children, {
     ...options,
+    routeId: options.routeId || '',
     pageStyle: localPageStyle,
   });
   const rootStyle = [
@@ -104,12 +105,22 @@ function renderWireframeMarkup({
   <img id="wf-frame-image" src="${frame.imageData ? escapeHtml(frame.imageData) : ''}" alt="device frame" />
   <div id="wf-wireframe-shell" style="${wireframeScreenStyle}">
     <div id="wf-wireframe-content" style="${`width:${viewportWidth}px;height:${viewportHeight}px;position:relative;`}">
-    ${renderRoots(roots, { pageStyle, projectPath, defaultGridColumns })}
+    ${renderRoots(roots, {
+      pageStyle,
+      projectPath,
+      defaultGridColumns,
+      routeId: pageRouteId,
+    })}
     </div>
   </div>
     </div>`
     : `<div id="wf-wireframe-shell" style="${pageShellStyle}">
-  ${renderRoots(roots, { pageStyle, projectPath, defaultGridColumns })}
+  ${renderRoots(roots, {
+    pageStyle,
+    projectPath,
+    defaultGridColumns,
+    routeId: pageRouteId,
+  })}
 </div>`;
 
   const runtimeScript = buildInteractionRuntime({

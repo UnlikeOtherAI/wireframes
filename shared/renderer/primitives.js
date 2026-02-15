@@ -60,9 +60,115 @@ const OVERLAY_Z_INDEX = {
 };
 
 const OVERLAY_PLACEMENTS = new Set(['top', 'bottom', 'left', 'right', 'center']);
+const BINDING_TOKEN = /\{\{\s*(state|appState|route|props|item)\.([a-zA-Z0-9_.]+)\s*\}\}/g;
 
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function getPathValue(source, path) {
+  if (!isObject(source) || typeof path !== 'string' || path === '') {
+    return undefined;
+  }
+
+  const parts = path.split('.');
+  let current = source;
+
+  for (const part of parts) {
+    if (!isObject(current)) {
+      return undefined;
+    }
+    current = current[part];
+    if (current === undefined) {
+      return undefined;
+    }
+  }
+
+  return current;
+}
+
+function resolveTemplateToken(type, path, options = {}) {
+  if (type === 'route') {
+    return path === 'id' ? (options.routeId || '') : undefined;
+  }
+  if (type === 'props') {
+    return getPathValue(options.props, path);
+  }
+  if (type === 'item') {
+    return getPathValue(options.item, path);
+  }
+  return undefined;
+}
+
+function renderBoundText(value, options = {}) {
+  const source = typeof value === 'string' ? value : '';
+  if (source === '') {
+    return '';
+  }
+
+  if (!source.includes('{{')) {
+    return escapeHtml(source);
+  }
+
+  const parts = [];
+  let hasBinding = false;
+  let cursor = 0;
+  BINDING_TOKEN.lastIndex = 0;
+  let match = BINDING_TOKEN.exec(source);
+
+  while (match) {
+    hasBinding = true;
+    const before = source.slice(cursor, match.index);
+    if (before) {
+      parts.push(escapeHtml(before));
+    }
+
+    const type = match[1];
+    const path = match[2];
+    if (type === 'state' || type === 'appState') {
+      parts.push(`<span data-bind="${escapeAttr(`${type}.${path}`)}"></span>`);
+    } else {
+      const resolved = resolveTemplateToken(type, path, options);
+      parts.push(escapeHtml(resolved == null ? '' : String(resolved)));
+    }
+
+    cursor = match.index + match[0].length;
+    match = BINDING_TOKEN.exec(source);
+  }
+
+  const tail = source.slice(cursor);
+  if (tail) {
+    parts.push(escapeHtml(tail));
+  }
+
+  if (!hasBinding) {
+    return escapeHtml(source);
+  }
+
+  return parts.join('');
+}
+
+function resolveAttributeValue(value, options = {}, stateBindings = null, stateProperty = '') {
+  const source = typeof value === 'string' ? value : '';
+  if (source === '' || !source.includes('{{')) {
+    return source;
+  }
+
+  return source.replace(BINDING_TOKEN, (_match, type, path) => {
+    if (type === 'state' || type === 'appState') {
+      if (isObject(stateBindings) && stateProperty) {
+        stateBindings[stateProperty] = `{{${type}.${path}}}`;
+      }
+      return '';
+    }
+
+    if (type === 'route') {
+      return path === 'id' ? (options.routeId || '') : '';
+    }
+
+    const resolved = resolveTemplateToken(type, path, options);
+    return resolved == null ? '' : String(resolved);
+  });
 }
 
 function normalizeChildren(node) {
@@ -110,7 +216,7 @@ function nodeComponent(node) {
 
 const wfNodeBorderStyle = 'border:var(--wf-border-width,1px) var(--wf-border-style,solid) #333;border-radius:var(--wf-corner-radius,0px)';
 
-function buildNodeDataAttributes(node) {
+function buildNodeDataAttributes(node, stateBindings) {
   const entries = [];
   if (Array.isArray(node.interaction) && node.interaction.length > 0) {
     entries.push(`data-wf-interactions="${escapeAttr(JSON.stringify(node.interaction))}"`);
@@ -118,8 +224,8 @@ function buildNodeDataAttributes(node) {
   if (isObject(node.visibility)) {
     entries.push(`data-wf-visibility="${escapeAttr(JSON.stringify(node.visibility))}"`);
   }
-  if (isObject(node.stateBindings)) {
-    entries.push(`data-wf-state-bindings="${escapeAttr(JSON.stringify(node.stateBindings))}"`);
+  if (isObject(stateBindings)) {
+    entries.push(`data-wf-state-bindings="${escapeAttr(JSON.stringify(stateBindings))}"`);
   }
   if (node.kind === 'overlay' && typeof node.type === 'string' && node.type.trim() !== '') {
     entries.push(`data-wf-overlay-type="${escapeAttr(node.type)}"`);
@@ -185,9 +291,12 @@ function joinAttrs(nodeId, classes, style) {
   return attrs.length > 0 ? ` ${attrs.join(' ')}` : '';
 }
 
-function renderImageElement(projectPath, props) {
-  const rawSource = typeof props.src === 'string' ? props.src.trim() : '';
-  const alt = props.alt || 'Image';
+function renderImageElement(projectPath, props, options = {}) {
+  const rawSource = resolveAttributeValue(typeof props.src === 'string' ? props.src.trim() : '', options);
+  const alt = resolveAttributeValue(
+    typeof props.alt === 'string' ? props.alt : 'Image',
+    options,
+  ) || 'Image';
   const width = toPx(props.width);
   const height = toPx(props.height);
 
@@ -210,9 +319,11 @@ function renderImageElement(projectPath, props) {
   return `<img ${attributes.join(' ')} />`;
 }
 
-function renderSectionTitle(props) {
-  const title = props.title || 'Section';
-  return `<div class="wf-section-title">${escapeHtml(title)}</div>`;
+function renderSectionTitle(props, options = {}) {
+  const titleValue = isObject(props) && Object.prototype.hasOwnProperty.call(props, 'title')
+    ? props.title
+    : 'Section';
+  return `<div class="wf-section-title">${renderBoundText(titleValue, options)}</div>`;
 }
 
 function renderChildren(node, options) {
@@ -357,7 +468,8 @@ function renderOverlay(node, options, childStyle) {
   const overlayStyle = [childStyle, overlayTypeStyle(overlayType, overlayPlacement)]
     .filter(Boolean)
     .join(';');
-  const dataAttrs = buildNodeDataAttributes(node);
+  const stateBindings = isObject(node.stateBindings) ? { ...node.stateBindings } : {};
+  const dataAttrs = buildNodeDataAttributes(node, stateBindings);
   const children = renderChildren(node, options);
   const backdrop = overlayTypeNeedsBackdrop(overlayType)
     ? '<div class="wf-overlay-backdrop" aria-hidden="true" style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:none;"></div>'
@@ -383,6 +495,12 @@ function renderNode(node, options = {}) {
   const nodeWireframeOverrides = wireframeNodeStyleOverrides(nodeStyle, options.pageStyle);
   const parentLayoutType = options.parentLayoutType || 'stack';
   const projectPath = options.projectPath || '';
+  const stateBindings = isObject(node.stateBindings) ? { ...node.stateBindings } : {};
+  const bindingContext = {
+    routeId: options.routeId || '',
+    props,
+    item: options.itemContext || {},
+  };
 
   const childStyle = [
     layoutToCss(layout, size, { defaultGridColumns }),
@@ -394,56 +512,83 @@ function renderNode(node, options = {}) {
 
   const headingLevel = Number.isInteger(props.level) ? props.level : 3;
   const safeHeadingLevel = Math.max(1, Math.min(6, headingLevel));
-  const dataAttrs = buildNodeDataAttributes(node);
+  const dataAttrs = () => buildNodeDataAttributes(node, stateBindings);
   const isOverlayRoot = node.kind === 'overlay';
   const primitives = {
     heading: () => {
       const classes = buildNodeClasses(node, 'heading', safeHeadingLevel);
-      const body = `<h${safeHeadingLevel}>${escapeHtml(props.text || 'Heading')}</h${safeHeadingLevel}>`;
-      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs}>${body}${renderChildren(node, options)}</div>`;
+      const body = `<h${safeHeadingLevel}>${
+        renderBoundText(typeof props.text === 'string' ? props.text : 'Heading', bindingContext)
+      }</h${safeHeadingLevel}>`;
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${body}${renderChildren(node, options)}</div>`;
     },
     paragraph: () => {
       const classes = buildNodeClasses(node, 'paragraph');
-      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs}><p>${escapeHtml(props.text || '')}</p>${renderChildren(node, options)}</div>`;
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><p>${
+        renderBoundText(typeof props.text === 'string' ? props.text : '', bindingContext)
+      }</p>${renderChildren(node, options)}</div>`;
     },
     text: () => {
       const classes = buildNodeClasses(node, 'text');
-      return `<span${joinAttrs(node.id, classes, childStyle)}${dataAttrs}>${escapeHtml(props.text || '')}</span>${renderChildren(node, options)}`;
+      return `<span${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${
+        renderBoundText(typeof props.text === 'string' ? props.text : '', bindingContext)
+      }</span>${renderChildren(node, options)}`;
     },
     image: () => {
       const classes = buildNodeClasses(node, 'image');
-      const image = renderImageElement(projectPath, props);
-      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs}>${image}</div>`;
+      const image = renderImageElement(projectPath, props, bindingContext);
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${image}</div>`;
     },
     button: () => {
       const classes = buildNodeClasses(node, 'button');
-      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs}><button>${escapeHtml(props.label || 'Button')}</button>${renderChildren(node, options)}</div>`;
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><button>${
+        renderBoundText(typeof props.label === 'string' ? props.label : 'Button', bindingContext)
+      }</button>${renderChildren(node, options)}</div>`;
     },
     input: () => {
       const classes = buildNodeClasses(node, 'input');
       const inputType = ['text', 'password', 'email', 'number', 'search'].includes(props.inputType) ? props.inputType : 'text';
-      const placeholder = escapeAttr(props.placeholder || '');
-      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs}><input type="${inputType}" placeholder="${placeholder}" /></div>`;
+      const placeholder = resolveAttributeValue(
+        typeof props.placeholder === 'string' ? props.placeholder : '',
+        bindingContext,
+        stateBindings,
+        'placeholder',
+      );
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><input type="${inputType}" placeholder="${escapeAttr(placeholder)}" /></div>`;
     },
     textarea: () => {
       const classes = buildNodeClasses(node, 'textarea');
       const rows = Number.isInteger(props.rows) && props.rows > 0 ? props.rows : 3;
-      const placeholder = escapeAttr(props.placeholder || '');
-      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs}><textarea placeholder="${placeholder}" rows="${rows}"></textarea>${renderChildren(node, options)}</div>`;
+      const placeholder = resolveAttributeValue(
+        typeof props.placeholder === 'string' ? props.placeholder : '',
+        bindingContext,
+        stateBindings,
+        'placeholder',
+      );
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><textarea placeholder="${escapeAttr(placeholder)}" rows="${rows}"></textarea>${renderChildren(node, options)}</div>`;
     },
     select: () => {
       const classes = buildNodeClasses(node, 'select');
-      const placeholder = escapeHtml(props.placeholder || 'Select');
+      const placeholder = resolveAttributeValue(
+        typeof props.placeholder === 'string' ? props.placeholder : 'Select',
+        bindingContext,
+        stateBindings,
+        'placeholder',
+      );
       const optionsMarkup = renderSelectOptions(Array.isArray(props.options) ? props.options : []);
-      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs}><select><option value="">${placeholder}</option>${optionsMarkup}</select>${renderChildren(node, options)}</div>`;
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><select><option value="">${escapeHtml(placeholder)}</option>${optionsMarkup}</select>${renderChildren(node, options)}</div>`;
     },
     checkbox: () => {
       const classes = buildNodeClasses(node, 'checkbox');
-      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs}><label><input type="checkbox" /> ${escapeHtml(props.label || 'Checkbox')}</label>${renderChildren(node, options)}</div>`;
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><label><input type="checkbox" /> ${
+        renderBoundText(typeof props.label === 'string' ? props.label : 'Checkbox', bindingContext)
+      }</label>${renderChildren(node, options)}</div>`;
     },
     toggle: () => {
       const classes = buildNodeClasses(node, 'toggle');
-      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs}><label><span class="wf-toggle-track"><span class="wf-toggle-thumb"></span></span> ${escapeHtml(props.label || 'Toggle')}</label>${renderChildren(node, options)}</div>`;
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><label><span class="wf-toggle-track"><span class="wf-toggle-thumb"></span></span> ${
+        renderBoundText(typeof props.label === 'string' ? props.label : 'Toggle', bindingContext)
+      }</label>${renderChildren(node, options)}</div>`;
     },
     section: () => {
       const classes = buildNodeClasses(node, 'section');
@@ -451,18 +596,29 @@ function renderNode(node, options = {}) {
         ...options,
         parentLayoutType: isObject(node.layout) ? node.layout.type || 'stack' : 'stack',
       });
-      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs}>${renderSectionTitle(props)}<div class="wf-section-body">${children}</div></div>`;
+      const sectionTitle = renderSectionTitle(
+        {
+          title: resolveAttributeValue(
+            typeof props.title === 'string' ? props.title : 'Section',
+            bindingContext,
+            stateBindings,
+            'title',
+          ),
+        },
+        bindingContext,
+      );
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${sectionTitle}<div class="wf-section-body">${children}</div></div>`;
     },
     divider: () => {
       const classes = buildNodeClasses(node, 'divider');
-      return `<hr${joinAttrs(node.id, classes, childStyle)}${dataAttrs} />`;
+      return `<hr${joinAttrs(node.id, classes, childStyle)}${dataAttrs()} />`;
     },
     spacer: () => {
       const classes = buildNodeClasses(node, 'spacer');
       const size = toPx(Number.isFinite(props.size) ? Number(props.size) : Number(props.size) || 16);
       const orientation = options.parentLayoutType === 'row' ? 'width' : 'height';
       const spacerStyle = size ? `${childStyle}${childStyle ? ';' : ''}${orientation}:${size}` : childStyle;
-      return `<div${joinAttrs(node.id, classes, spacerStyle)}${dataAttrs}></div>`;
+      return `<div${joinAttrs(node.id, classes, spacerStyle)}${dataAttrs()}></div>`;
     },
   };
 
@@ -480,7 +636,7 @@ function renderNode(node, options = {}) {
 
   const childNodes = renderChildren(node, options);
   const classes = buildNodeClasses(node, primitiveName);
-  return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs}>${childNodes}</div>`;
+  return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${childNodes}</div>`;
 }
 
 function renderNodes(nodes, options = {}) {
