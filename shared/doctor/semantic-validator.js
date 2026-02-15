@@ -6,6 +6,7 @@ const MAX_NODES_PER_PAGE = 5000;
 const STATE_KEY_PATTERN = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/;
 
 const OVERLAYS_REQUIRING_TRIGGER = new Set(['dropdown', 'popover', 'tooltip']);
+const { resolveTemplatePage } = require('../resolver');
 
 const INTERACTION_REQUIRED_FIELDS = {
   navigation: ['targetRoute'],
@@ -480,28 +481,12 @@ function collectComponentRoots(componentMap, result, defaultGridColumns) {
 function collectRootsFromPage(pageDoc, templateDoc) {
   const roots = [];
 
-  if (isObject(templateDoc) && Array.isArray(templateDoc.regions)) {
-    for (const region of templateDoc.regions) {
-      if (region && region.kind === 'persistent' && Array.isArray(region.children)) {
-        roots.push(...region.children);
-      }
-    }
-  }
+  const templatePage = isObject(templateDoc) && isObject(pageDoc)
+    ? resolveTemplatePage({ template: templateDoc, page: pageDoc })
+    : null;
 
-  if (Array.isArray(pageDoc.slots)) {
-    for (const slot of pageDoc.slots) {
-      if (isObject(slot) && Array.isArray(slot.content)) {
-        roots.push(...slot.content);
-      }
-    }
-  }
-
-  if (Array.isArray(pageDoc.injectables)) {
-    for (const injectable of pageDoc.injectables) {
-      if (isObject(injectable) && Array.isArray(injectable.content)) {
-        roots.push(...injectable.content);
-      }
-    }
+  if (templatePage && templatePage.ok && Array.isArray(templatePage.roots)) {
+    roots.push(...templatePage.roots);
   }
 
   if (Array.isArray(pageDoc.overlays)) {
