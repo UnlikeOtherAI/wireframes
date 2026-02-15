@@ -136,6 +136,9 @@ function buildNodeDataAttributes(node) {
   if (node.selection && typeof node.selection.stateKey === 'string' && node.selection.stateKey.trim() !== '') {
     entries.push(`data-selection-key="${escapeAttr(node.selection.stateKey)}"`);
   }
+  if (node.selection && typeof node.selection.scope === 'string' && node.selection.scope.trim() !== '') {
+    entries.push(`data-selection-scope="${escapeAttr(node.selection.scope)}"`);
+  }
   return entries.length > 0 ? ` ${entries.join(' ')}` : '';
 }
 

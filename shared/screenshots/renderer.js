@@ -3,6 +3,7 @@
 const path = require('node:path');
 
 const { renderNode, renderNodes } = require(path.resolve(__dirname, '..', 'renderer', 'primitives'));
+const { buildInteractionRuntime } = require(path.resolve(__dirname, '..', 'renderer', 'interactions'));
 const {
   readLocalImage,
   mergeWireframeStyle,
@@ -68,6 +69,10 @@ function renderRoots(roots, options = {}) {
 function renderWireframeMarkup({
   roots = [],
   pageViewport,
+  pageRouteId = '',
+  routeTable = {},
+  appStateDefaults = {},
+  pageStateDefaults = {},
   pageStyle = {},
   defaultGridColumns = 12,
   projectPath,
@@ -102,10 +107,18 @@ function renderWireframeMarkup({
     ${renderRoots(roots, { pageStyle, projectPath, defaultGridColumns })}
     </div>
   </div>
-</div>`
+    </div>`
     : `<div id="wf-wireframe-shell" style="${pageShellStyle}">
   ${renderRoots(roots, { pageStyle, projectPath, defaultGridColumns })}
 </div>`;
+
+  const runtimeScript = buildInteractionRuntime({
+    routeId: pageRouteId,
+    routeTable,
+    appStateDefaults,
+    pageStateDefaults,
+    platform: pageViewport?.device || 'web',
+  });
 
   const styles = [
     '*{box-sizing:border-box}',
@@ -127,6 +140,12 @@ function renderWireframeMarkup({
     '#wf-screenshot-shell{position:relative;}',
     '#wf-frame-image{display:block;max-width:none;max-height:none;}',
     '#wf-wireframe-shell{overflow:hidden}',
+    '.wf-visible{display:block !important;}',
+    '.wf-selected{outline:2px solid #0000ff;outline-offset:1px;}',
+    '.wf-gesture-pulse{position:relative;}',
+    '.wf-gesture-pulse:after{content:"";position:absolute;inset:0;border:2px solid rgba(0,102,204,0.7);animation:wfPulse 250ms ease-out forwards;pointer-events:none;}',
+    '@keyframes wfPulse{from{transform:scale(1);opacity:0.8;}to{transform:scale(1.05);opacity:0;}}',
+    '.wf-runtime-toast{position:fixed;right:16px;top:16px;padding:8px 10px;border:1px solid #333;background:#fff;color:#000;z-index:600;font-family:Arial,sans-serif;font-size:12px;max-width:420px;word-break:break-word;box-shadow:0 2px 10px rgba(0,0,0,0.15);}',
   ].join('\n');
 
   const contentStyle = [
@@ -145,6 +164,7 @@ function renderWireframeMarkup({
     <div style="${contentStyle}">
       ${shellMarkup}
     </div>
+    <script>${runtimeScript}</script>
   </body>
 </html>`;
 }

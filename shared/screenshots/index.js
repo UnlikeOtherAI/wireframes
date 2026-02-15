@@ -163,19 +163,46 @@ function collectRouteMap(projectPath) {
   const routesResult = listRoutes(projectPath);
   if (!routesResult.ok) return { ok: false, error: routesResult.error };
 
-  const map = new Map();
+  const routeByPage = new Map();
+  const routeIdByPage = new Map();
+  const routeIdToPage = new Map();
   for (const route of routesResult.routes) {
-    if (typeof route?.page === 'string' && route.page.trim() !== '') {
-      map.set(route.page, route.path || '/');
+    const page = typeof route?.page === 'string' && route.page.trim() !== '' ? route.page.trim() : null;
+    const routeId = typeof route?.id === 'string' && route.id.trim() !== '' ? route.id.trim() : null;
+    const routePath = typeof route?.path === 'string' && route.path.trim() !== '' ? route.path.trim() : '/';
+    if (page) {
+      routeByPage.set(page, { id: routeId || routeIdByPage.get(page) || page, path: routePath });
+      if (routeId) {
+        routeIdByPage.set(page, routeId);
+      }
+    }
+    if (routeId && page) {
+      routeIdToPage.set(routeId, page);
     }
   }
 
-  return { ok: true, routeByPage: map };
+  return {
+    ok: true,
+    routeByPage,
+    routeIdByPage,
+    routeIdToPage,
+  };
+}
+
+function readSitemapStateDefaults(projectPath) {
+  const sitemap = readYaml(path.join(projectPath, 'sitemap.yaml'));
+  if (!isObject(sitemap)) {
+    return {};
+  }
+  const container = isObject(sitemap.sitemap) ? sitemap.sitemap : {};
+  return isObject(container.appState) ? container.appState : {};
 }
 
 function resolvePageTargets(projectPath, pageId) {
   const routeMap = collectRouteMap(projectPath);
   if (!routeMap.ok) return routeMap;
+  const routeEntries = routeMap.routeByPage;
+  const appStateDefaults = readSitemapStateDefaults(projectPath);
 
   const manifest = loadDocumentFromFile(path.join(projectPath, 'manifest.yaml'), { supportedSpecVersion: SUPPORTED_SPEC_VERSION });
   const manifestData = manifest.document?.manifest || {};
@@ -202,6 +229,12 @@ function resolvePageTargets(projectPath, pageId) {
     rootsById.set(tree.id, tree.roots || []);
   }
 
+  const routeTable = {};
+  const pageRouteIdByRouteId = routeMap.routeIdToPage || new Map();
+  for (const [routeId, targetPageId] of pageRouteIdByRouteId) {
+    routeTable[routeId] = `${targetPageId}.html`;
+  }
+
   const targets = [];
   for (const id of pageIds) {
     const pageLoaded = loadDocumentFromFile(pageFilePath(projectPath, id), { supportedSpecVersion: SUPPORTED_SPEC_VERSION });
@@ -212,10 +245,15 @@ function resolvePageTargets(projectPath, pageId) {
     if (!viewportResult.ok) return { ok: false, error: viewportResult.error };
     const roots = rootsById.get(id);
     if (!Array.isArray(roots)) return { ok: false, error: `Could not resolve tree for page "${id}".` };
+    const routeInfo = routeEntries.get(id) || {};
 
     targets.push({
       pageId: id,
-      route: routeMap.routeByPage.get(id) || '/',
+      route: routeInfo.path || '/',
+      pageRouteId: routeInfo.id || routeMap.routeIdByPage?.get(id) || id,
+      routeTable,
+      appStateDefaults,
+      pageStateDefaults: isObject(page.pageState) ? page.pageState : {},
       viewport: {
         width: viewportResult.width,
         height: viewportResult.height,
@@ -261,6 +299,10 @@ async function captureScreenshots(targets, outputPath, frame) {
       const content = renderWireframeMarkup({
         roots: target.roots,
         pageId: target.pageId,
+        pageRouteId: target.pageRouteId,
+        routeTable: target.routeTable,
+        appStateDefaults: target.appStateDefaults,
+        pageStateDefaults: target.pageStateDefaults,
         pageViewport: target.viewport,
         pageStyle: target.wireframeStyle,
         defaultGridColumns: target.defaultGridColumns,
