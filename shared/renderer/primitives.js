@@ -7,8 +7,7 @@ const {
   toPx,
 } = require('./layout');
 const {
-  mergeWireframeStyle,
-  wireframeBorderCss,
+  wireframeNodeStyleOverrides,
   readLocalImage,
 } = require('./wireframe-styles');
 
@@ -62,6 +61,8 @@ function nodeComponent(node) {
   }
   return 'node';
 }
+
+const wfNodeBorderStyle = 'border:var(--wf-border-width,1px) var(--wf-border-style,solid) #333;border-radius:var(--wf-corner-radius,0px)';
 
 function buildNodeDataAttributes(node) {
   const entries = [];
@@ -198,7 +199,7 @@ function renderNode(node, options = {}) {
     ? options.defaultGridColumns
     : undefined;
   const nodeStyle = isObject(node.wireframeStyle) ? node.wireframeStyle : {};
-  const mergedStyle = mergeWireframeStyle(options.pageStyle, nodeStyle);
+  const nodeWireframeOverrides = wireframeNodeStyleOverrides(nodeStyle, options.pageStyle);
   const parentLayoutType = options.parentLayoutType || 'stack';
   const projectPath = options.projectPath || '';
 
@@ -206,7 +207,8 @@ function renderNode(node, options = {}) {
     layoutToCss(layout, size, { defaultGridColumns }),
     layoutItemCss(gridItem),
     absoluteChildStyle(node.position, parentLayoutType),
-    wireframeBorderCss(mergedStyle),
+    wfNodeBorderStyle,
+    nodeWireframeOverrides,
   ].filter(Boolean).join(';');
 
   const headingLevel = Number.isInteger(props.level) ? props.level : 3;

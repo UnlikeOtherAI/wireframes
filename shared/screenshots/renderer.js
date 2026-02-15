@@ -3,7 +3,11 @@
 const path = require('node:path');
 
 const { renderNode, renderNodes } = require(path.resolve(__dirname, '..', 'renderer', 'primitives'));
-const { readLocalImage } = require(path.resolve(__dirname, '..', 'renderer', 'wireframe-styles'));
+const {
+  readLocalImage,
+  mergeWireframeStyle,
+  wireframeRootStyle,
+} = require(path.resolve(__dirname, '..', 'renderer', 'wireframe-styles'));
 
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
@@ -33,10 +37,19 @@ function renderRoot(root, options) {
 
   const rootLabel = root.kind ? `${root.kind}: ${root.id || root.injectableId || root.slotId || 'root'}` : root.id || 'root';
   const children = Array.isArray(root.nodes) ? root.nodes : [];
-  const content = renderNodes(children, options);
+  const rootStyleBase = isObject(options.pageStyle) ? options.pageStyle : {};
+  const localPageStyle = mergeWireframeStyle(rootStyleBase, root.wireframeStyle);
+  const content = renderNodes(children, {
+    ...options,
+    pageStyle: localPageStyle,
+  });
+  const rootStyle = [
+    'margin:8px;padding:8px',
+    wireframeRootStyle(options.pageStyle, root.wireframeStyle),
+  ].filter(Boolean).join(';');
 
   return `
-    <section class="wf-root wf-root-${toSafeClass(root.kind || 'container')}" style="margin:8px;padding:8px;">
+    <section class="wf-root wf-root-${toSafeClass(root.kind || 'container')}" style="${rootStyle}">
       <div class="wf-root-title">${escapeHtml(rootLabel)}</div>
       <div class="wf-root-body">
         ${content}
@@ -99,7 +112,7 @@ function renderWireframeMarkup({
     'body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;padding:16px}',
     '.wf-root-title{font-size:11px;color:#444;font-weight:700;margin-bottom:6px}',
     '.wf-root-body{display:block}',
-    '.wf-node{background:#fff;border:1px solid #333;padding:6px;margin:4px;min-height:22px}',
+    '.wf-node{background:#fff;border:var(--wf-border-width,1px) var(--wf-border-style,solid) #333;border-radius:var(--wf-corner-radius,0px);padding:6px;margin:4px;min-height:22px}',
     '.wf-section-title{font-weight:700;font-size:12px;margin-bottom:6px}',
     '.wf-divider{border:none;border-top:1px solid #666;margin:8px 0}',
     '.wf-spacer{min-height:12px;background:transparent;border-style:dashed}',

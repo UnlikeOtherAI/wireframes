@@ -92,6 +92,7 @@ function buildOverlayRoots(overlays, components, source) {
       kind: 'overlay',
       source,
       nodes: resolvedOverlay.nodes,
+      wireframeStyle: isObject(overlay.wireframeStyle) ? overlay.wireframeStyle : undefined,
     });
   }
   return { ok: true, roots: list };

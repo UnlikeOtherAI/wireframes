@@ -20,6 +20,105 @@ function wireframeBorderCss(mergedStyle = {}) {
   return `border:${width} ${borderStyle} #333; border-radius:${borderRadius}`;
 }
 
+function resolveWireframeStyle(style = {}) {
+  const border = isObject(style.border) ? style.border : {};
+  const corner = isObject(style.corner) ? style.corner : {};
+
+  const borderStyle = border.style === 'dashed' ? 'dashed' : 'solid';
+  const borderWidth = border.width === 'medium'
+    ? '2px'
+    : border.width === 'thin'
+      ? '1px'
+      : Number.isFinite(border.width)
+        ? `${border.width}px`
+        : toPx(border.width) || '1px';
+
+  const cornerStyle = corner.style === 'rounded' ? 'rounded' : 'sharp';
+  const radius = Number.isFinite(corner.radius)
+    ? `${corner.radius}px`
+    : corner.radius != null
+      ? (toPx(corner.radius) || '0px')
+      : '0px';
+
+  return {
+    borderStyle,
+    borderWidth,
+    cornerStyle,
+    cornerRadius: cornerStyle === 'sharp' ? '0px' : radius,
+  };
+}
+
+function wireframeRootStyle(pageStyle = {}, overlayStyle = {}) {
+  const base = resolveWireframeStyle(pageStyle);
+  const overrides = wireframeNodeStyleOverrides(overlayStyle, pageStyle);
+
+  const baseStyles = [
+    `--wf-border-width:${base.borderWidth}`,
+    `--wf-border-style:${base.borderStyle}`,
+    `--wf-corner-radius:${base.cornerRadius}`,
+  ].join(';');
+
+  return [baseStyles, overrides].filter(Boolean).join(';');
+}
+
+function wireframeNodeStyleOverrides(nodeStyle = {}, pageStyle = {}) {
+  const page = resolveWireframeStyle(pageStyle);
+
+  if (!isObject(nodeStyle)) {
+    return '';
+  }
+
+  const border = isObject(nodeStyle.border) ? nodeStyle.border : {};
+  const corner = isObject(nodeStyle.corner) ? nodeStyle.corner : {};
+  const overrides = {};
+
+  if (Object.prototype.hasOwnProperty.call(border, 'style')) {
+    const nextBorderStyle = border.style === 'dashed' ? 'dashed' : 'solid';
+    if (nextBorderStyle !== page.borderStyle) {
+      overrides['--wf-border-style'] = nextBorderStyle;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(border, 'width')) {
+    const nextBorderWidth = border.width === 'medium'
+      ? '2px'
+      : border.width === 'thin'
+        ? '1px'
+        : Number.isFinite(border.width)
+          ? `${border.width}px`
+          : toPx(border.width) || page.borderWidth;
+
+    if (nextBorderWidth !== page.borderWidth) {
+      overrides['--wf-border-width'] = nextBorderWidth;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(corner, 'radius')) {
+    const nextCornerRadius = Number.isFinite(corner.radius)
+      ? `${corner.radius}px`
+      : (toPx(corner.radius) || page.cornerRadius);
+
+    if (nextCornerRadius !== page.cornerRadius) {
+      overrides['--wf-corner-radius'] = nextCornerRadius;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(corner, 'style')) {
+    const nextCornerStyle = corner.style === 'rounded' ? 'rounded' : 'sharp';
+    const nextCornerRadius = nextCornerStyle === 'sharp'
+      ? '0px'
+      : (Object.prototype.hasOwnProperty.call(corner, 'radius')
+        ? overrides['--wf-corner-radius'] || page.cornerRadius
+        : page.cornerRadius);
+
+    if (nextCornerStyle !== page.cornerStyle) {
+      overrides['--wf-corner-radius'] = nextCornerRadius;
+    }
+  }
+
+  return Object.entries(overrides).map(([key, value]) => `${key}:${value}`).join(';');
+}
+
 function mergeWireframeStyle(pageStyle, nodeStyle) {
   const page = isObject(pageStyle) ? pageStyle : {};
   const node = isObject(nodeStyle) ? nodeStyle : {};
@@ -72,6 +171,9 @@ function readLocalImage(projectPath, source) {
 
 module.exports = {
   wireframeBorderCss,
+  wireframeNodeStyleOverrides,
+  wireframeRootStyle,
+  resolveWireframeStyle,
   mergeWireframeStyle,
   readLocalImage,
 };
