@@ -12,8 +12,9 @@ const { runComponent } = require('./commands/component');
 const { runData } = require('./commands/data');
 const { runOverlay } = require('./commands/overlay');
 const { runState } = require('./commands/state');
+const { runTree } = require('./commands/tree');
 
-const USAGE = `wf <command> [arguments]\n\nCommands:\n  init <project-name>   Scaffold a new wireframe project\n  info                  Show project metadata from manifest.yaml\n  doctor                Check project health and references\n  validate              Validate document schema compliance\n  lint                  Check naming conventions\n  template              Manage templates\n  page                  Manage pages\n  component             Manage reusable components\n  node                  Add, update, and remove nodes\n  overlay               Manage overlays on pages and templates\n  state                 Inspect state keys in appState and pageState\n  data                  Manage datasets and dataset items`;
+const USAGE = `wf <command> [arguments]\n\nCommands:\n  init <project-name>   Scaffold a new wireframe project\n  info                  Show project metadata from manifest.yaml\n  doctor                Check project health and references\n  validate              Validate document schema compliance\n  lint                  Check naming conventions\n  template              Manage templates\n  page                  Manage pages\n  component             Manage reusable components\n  node                  Add, update, and remove nodes\n  overlay               Manage overlays on pages and templates\n  state                 Inspect state keys in appState and pageState\n  data                  Manage datasets and dataset items\n  tree                  Print resolved trees for pages, templates, and components`;
 
 function run(args, context = {}) {
   const cwd = context.cwd || process.cwd();
@@ -81,6 +82,11 @@ function run(args, context = {}) {
 
   if (command === 'state') {
     runState(commandArgs, { cwd });
+    return;
+  }
+
+  if (command === 'tree') {
+    runTree(commandArgs, { cwd });
     return;
   }
 
