@@ -213,7 +213,42 @@ function resolveAddressInRoots(roots, segments, { allowContainerFinal = false } 
         return { ok: false, error: `Invalid node id "${segment}". Use snake_case starting with a letter.` };
       }
 
-      const rootMatch = resolveNodeBySegment(currentNodes, segment, true);
+      let rootMatch = resolveNodeBySegment(currentNodes, segment, true);
+      if (!rootMatch.ok && currentNodes.length === 1 && currentNodes[0].kind === 'root') {
+        const root = currentNodes[0];
+        const directMatchIndex = Array.isArray(root.nodes)
+          ? root.nodes.findIndex((entry) => isObject(entry) && entry.id === segment)
+          : -1;
+
+        if (directMatchIndex !== -1) {
+          const directMatchNode = root.nodes[directMatchIndex];
+          resolvedPath.push(directMatchNode.id);
+          activeOrigin = root.origin;
+          activeSourceRef = root.sourceRef;
+
+          const baseRefPrefix = String(activeSourceRef).split('#')[0];
+          if (isLast) {
+            return {
+              ok: true,
+              targetType: 'node',
+              node: directMatchNode,
+              parentNodes: root.nodes,
+              parentIndex: directMatchIndex,
+              origin: activeOrigin,
+              sourceRef: activeSourceRef,
+              resolvedAddress: `${baseRefPrefix}#${resolvedPath.join('.')}`,
+            };
+          }
+
+          if (!Array.isArray(directMatchNode.children)) {
+            return { ok: false, error: `Node "${segment}" has no children.` };
+          }
+
+          currentNodes = directMatchNode.children;
+          continue;
+        }
+      }
+
       if (!rootMatch.ok) {
         return { ok: false, error: `No root container "${segment}" found for the address.` };
       }
