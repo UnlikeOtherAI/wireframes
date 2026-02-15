@@ -1,0 +1,661 @@
+# ============================================================
+# Wireframe Schema — Full Canonical YAML Definition
+# Version: 1.1
+# Purpose: Deterministic UI Architecture Specification
+# ============================================================
+
+schema:
+  name: Wireframe Specification
+  version: "1.1"
+  description: >
+    Deterministic declarative UI architecture format designed for
+    template-based applications, reusable components, datasets,
+    overlays, and strict validation. Git-native. Machine-readable.
+    Export-safe. No runtime logic embedded.
+
+# ============================================================
+# 1. GLOBAL DOCUMENT CONTRACT
+# ============================================================
+
+document:
+  requiredFields:
+    - documentType
+    - specVersion
+    - id
+
+  documentTypes:
+    - manifest
+    - sitemap
+    - templates
+    - components
+    - page
+    - dataset
+
+  specVersionRequired: true
+
+# ============================================================
+# 2. PROJECT STRUCTURE
+# ============================================================
+
+projectStructure:
+  root: /wireframe
+  requiredFiles:
+    - manifest.yaml
+    - sitemap.yaml
+    - templates.yaml
+    - components.yaml
+  optionalFiles:
+    - .wfrc.yaml
+  requiredFolders:
+    - /pages
+    - /data
+  optionalFolders:
+    - /assets
+
+# ============================================================
+# 3. ID RULES
+# ============================================================
+
+idRules:
+  format: "^[a-z][a-z0-9_]*$"
+  globalUniqueness:
+    - route.id
+    - template.id
+    - component.id
+    - page.id
+    - dataset.id
+  treeUniqueness:
+    - node.id
+    - overlay.id
+  namingConventions:
+    - snake_case only
+    - no uppercase
+    - no ambiguous names
+    - no reserved keywords
+
+# ============================================================
+# 4. ADDRESSING MODEL
+# ============================================================
+
+addressing:
+  canonicalFormat: "wf://<doctype>/<docid>#<path>"
+  doctypeValues:
+    - page
+    - template
+    - component
+    - data
+  path:
+    separator: "."
+    segments: "node ids only"
+  datasetItem:
+    format: "wf://data/<datasetId>#items:<primaryKey>=<value>"
+  noIndexAddressing: true
+
+# ============================================================
+# 4.1 SITEMAP MODEL
+# ============================================================
+
+sitemap:
+  required:
+    - routes
+  optional:
+    - defaultTemplate
+    - appState
+    - contexts
+
+  contexts:
+    description: >
+      Named responsive breakpoints. Keys are context names,
+      values define minWidth/maxWidth ranges.
+
+# ============================================================
+# 5. STATE SYSTEM
+# ============================================================
+
+state:
+  scopes:
+    appState:
+      location: sitemap.yaml
+      persistsAcrossRoutes: true
+    pageState:
+      location: page.yaml
+      resetsOnNavigation: true
+
+  keyFormat: "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+
+  expressionFormat: >
+    {{state.key}} |
+    {{appState.key}} |
+    {{route.id}} |
+    {{event.field}} |
+    {{props.key}} |
+    {{item.field}}
+
+  noFreeformExpressions: true
+
+# ============================================================
+# 6. CONDITION SYSTEM
+# ============================================================
+
+condition:
+  allowedTypes:
+    - state_equals
+    - route_match
+    - compare
+    - and
+    - or
+    - not
+
+  requiredByType:
+    state_equals: [scope, key, equals]
+    route_match: [routeId]
+    compare: [left, op, right]
+    and: [conditions]
+    or: [conditions]
+    not: [condition]
+
+  scopeValues:
+    - page
+    - app
+
+  compareOperators:
+    - eq
+    - ne
+    - gt
+    - gte
+    - lt
+    - lte
+
+# ============================================================
+# 7. NODE MODEL
+# ============================================================
+
+node:
+  required:
+    - id
+    - component OR use OR injectable
+
+  allowedFields:
+    - id
+    - component
+    - use
+    - injectable
+    - props
+    - role
+    - layout
+    - size
+    - gridItem
+    - visibility
+    - accessibility
+    - binding
+    - interaction
+    - selection
+    - stateBindings
+    - children
+    - pane
+    - wireframeStyle
+
+# 7.1 SIZE
+size:
+  fields:
+    - width          # number or responsive string
+    - height         # number or responsive string
+    - minWidth       # number
+    - maxWidth       # number
+    - minHeight      # number
+    - maxHeight      # number
+
+# 7.2 GRID ITEM
+gridItem:
+  fields:
+    - span           # integer, columns to span
+    - offset         # integer, column offset
+    - row            # integer, explicit row
+    - column         # integer, explicit column
+
+# 7.3 VISIBILITY
+visibility:
+  required:
+    - condition      # Condition object
+
+# 7.4 ACCESSIBILITY
+accessibility:
+  fields:
+    - label          # accessible label
+    - role           # semantic role
+    - description    # longer description
+
+# 7.5 BINDING (DATA SOURCE)
+binding:
+  required:
+    - source         # Expression (e.g. {{item.field}})
+  optional:
+    - itemVar        # variable name for collection items
+
+# 7.6 SELECTION
+selection:
+  required:
+    - scope          # page | app
+    - stateKey       # StateKey
+  optional:
+    - selectable     # boolean
+
+# 7.7 STATE BINDINGS
+stateBindings:
+  description: >
+    Map of property names to Expression values.
+    Keys are property names, values are {{state.x}} expressions.
+
+# ============================================================
+# 8. PRIMITIVE COMPONENTS
+# ============================================================
+
+primitives:
+  text:
+    - heading       # props: level (1-6), text
+    - paragraph     # props: text
+    - text          # props: text
+  media:
+    - image         # props: src, alt, width, height
+  interactive:
+    - button        # props: label
+    - input         # props: placeholder, inputType
+    - textarea      # props: placeholder, rows
+    - select        # props: placeholder, options
+    - checkbox      # props: label
+    - toggle        # props: label
+  structural:
+    - section       # props: title; may have children
+    - divider       # no props
+    - spacer        # props: size
+
+# ============================================================
+# 9. LAYOUT SYSTEM
+# ============================================================
+
+layout:
+  types:
+    - stack
+    - row
+    - grid
+    - absolute
+    - overlay
+
+  fields:
+    - gap
+    - padding
+    - columns        # for grid
+    - justify
+    - align
+
+  grid:
+    defaultColumns: 12
+    rules:
+      - span must not exceed column count
+      - span cannot coexist with explicit width
+
+# ============================================================
+# 9.1 VIEWPORT
+# ============================================================
+
+viewport:
+  device:
+    values:
+      - mobile
+      - tablet
+      - web
+  orientation:
+    values:
+      - portrait
+      - landscape
+    requiredFor:
+      - mobile
+      - tablet
+    ignoredFor:
+      - web
+
+# ============================================================
+# 10. RESPONSIVE CONTEXT
+# ============================================================
+
+responsive:
+  contextsDeclaredIn: sitemap.yaml
+  allowedOverrides:
+    - width
+    - height
+    - span
+    - gap
+    - alignment
+    - visibility
+
+# ============================================================
+# 10.1 INTERACTION MODEL
+# ============================================================
+
+interaction:
+  types:
+    - navigation
+    - open_overlay
+    - close_overlay
+    - toggle
+    - set_state
+    - submit
+    - action
+    - gesture
+
+  requiredByType:
+    navigation: [targetRoute]
+    open_overlay: [targetOverlay]
+    close_overlay: [targetOverlay]
+    toggle: [scope, stateKey]
+    set_state: [scope, stateKey, value]
+    submit: [formId]          # formId references a node ID acting as form container
+    action: [actionId]
+    gesture: [gestureType]
+
+  gestureTypes:
+    - swipe_left
+    - swipe_right
+    - swipe_up
+    - swipe_down
+    - long_press
+    - pinch
+    - double_tap
+
+  optionalOnAll:
+    - condition
+
+  noRawJavascript: true
+
+# ============================================================
+# 11. OVERLAY SYSTEM
+# ============================================================
+
+overlay:
+  types:
+    - dropdown
+    - popover
+    - modal
+    - drawer_left
+    - drawer_right
+    - bottom_sheet
+    - toast
+    - alert
+    - tooltip
+
+  layeringOrder:
+    - base
+    - overlay
+    - modal
+    - toast
+
+  required:
+    - id
+    - type
+    - content
+
+  optional:
+    - trigger
+    - placement
+    - dismissOn
+    - wireframeStyle
+
+  dropdownRequires:
+    - trigger
+    - placement
+
+  dismissOptions:
+    - backdrop
+    - escape
+    - button
+    - timeout
+
+  placementValues:
+    - top
+    - bottom
+    - left
+    - right
+    - center
+
+  definedIn:
+    - page.overlays       # page-specific overlays
+    - template.overlays   # persistent overlays shared across pages
+
+  inheritFromPageStyle: true
+
+  rules:
+    - template overlays are available on every page using that template
+    - overlay IDs must be unique across template + page overlays for a given page
+
+# ============================================================
+# 12. PANE SYSTEM (RESIZABLE PANELS)
+# ============================================================
+
+pane:
+  required:
+    - resizable
+    - collapsible
+  # state is optional; required only if pane needs to persist size/collapsed state
+
+  fields:
+    - side
+    - defaultSize
+    - minSize
+    - maxSize
+    - collapsedSize
+    - state:
+        - scope
+        - sizeKey
+        - collapsedKey
+
+# ============================================================
+# 13. WIREFRAME STYLE SYSTEM
+# ============================================================
+
+wireframeStyle:
+  requiredOnPage:
+    - border.style
+
+  border:
+    style:
+      values:
+        - solid
+        - dashed
+      nonInheritable: true
+    width:
+      values:
+        - thin
+        - medium
+
+  corner:
+    style:
+      values:
+        - sharp
+        - rounded
+    radius: number
+
+  override:
+    description: >
+      Per-node and per-overlay overrides use a partial style.
+      No fields required — inherits from page wireframe style.
+      Only specify properties being overridden.
+
+# ============================================================
+# 14. DATASET MODEL
+# ============================================================
+
+dataset:
+  required:
+    - dataset.id
+    - dataset.primaryKey
+    - dataset.items
+
+  optional:
+    - dataset.fields      # array of expected field names (informational)
+
+  itemFormat:
+    description: >
+      Items are plain key-value objects passed and stored as whole objects.
+      No field-by-field construction. Supported value types: string,
+      number, boolean, array, nested object.
+
+  rules:
+    - primaryKey must exist in every item
+    - no duplicate primaryKey values
+    - no index-based referencing
+    - items are addressed by primaryKey value only
+
+# ============================================================
+# 15. TEMPLATE MODEL
+# ============================================================
+
+template:
+  required:
+    - id
+    - layout
+    - regions
+
+  region:
+    required:
+      - id
+      - kind
+    kindValues:
+      - persistent
+      - slot
+    optional:
+      - component
+      - use
+      - layout
+      - pane
+      - children
+
+  injectable:
+    description: >
+      A node within a persistent region marked injectable: true.
+      Pages supply content for it via the injectables section.
+    nodeField: "injectable: true"
+
+  optional:
+    - overlays          # array of Overlay objects (e.g. nav dropdowns, notification panels)
+
+  rules:
+    - page cannot override persistent regions
+    - page must fill only declared slots
+    - page may supply content for injectable nodes via injectables section
+    - injectable IDs referenced by page must exist in template
+    - template overlays are available on every page using that template
+    - overlay IDs must be unique across template + page overlays
+
+# ============================================================
+# 16. COMPONENT MODEL
+# ============================================================
+
+component:
+  required:
+    - id
+    - root
+
+  optional:
+    - propDefaults    # default prop values
+    - propHints       # prop type/description hints
+
+  rules:
+    - all node IDs unique within component
+    - no direct pageState references inside component
+    - props referenced via {{props.key}}
+
+# ============================================================
+# 16.1 PAGE MODEL
+# ============================================================
+
+page:
+  required:
+    - id
+    - template
+    - viewport
+    - wireframeStyle
+    - slots
+
+  optional:
+    - pageState
+    - dataSources
+    - actions
+    - overlays
+    - injectables
+
+  dataSources:
+    itemRequired:
+      - id
+      - dataset
+
+  overlays:
+    itemSchema: overlay   # uses overlay definition from section 11
+
+# ============================================================
+# 17. VALIDATION RULES
+# ============================================================
+
+validation:
+  blockingErrors:
+    - duplicate IDs
+    - missing required page border.style
+    - missing template reference
+    - slot mismatch
+    - missing injectable match
+    - missing component reference
+    - missing dataset reference
+    - missing stateKey
+    - invalid grid span
+    - invalid overlay structure
+    - circular template references
+    - component recursion
+    - tree depth exceeds limit
+    - nodes per page exceeds limit
+    - schema version incompatible
+    - invalid targetRoute reference
+    - invalid targetOverlay reference (checks page + template overlays)
+    - invalid actionId reference
+    - invalid formId reference
+
+  warnings:
+    - unused components
+    - unused datasets
+    - hidden interactive element
+    - unreachable overlay
+    - orphan routes
+    - naming convention violations
+
+  safetyLimits:
+    maxTreeDepth: 100
+    maxNodesPerPage: 5000
+
+# ============================================================
+# 18. EXPORT CONTRACT
+# ============================================================
+
+export:
+  format: zip
+  includes:
+    - manifest.yaml
+    - sitemap.yaml
+    - templates.yaml
+    - components.yaml
+    - pages/
+    - data/
+    - assets/
+  excludes:
+    - .wfrc.yaml
+  noTransformation: true
+
+# ============================================================
+# 19. DESIGN PRINCIPLES
+# ============================================================
+
+principles:
+  - explicit_over_implicit
+  - deterministic_structure
+  - git_friendly
+  - addressable_nodes
+  - no_runtime_logic
+  - no_hidden_state
+  - schema_first_design

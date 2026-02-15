@@ -1,0 +1,96 @@
+# Note: "frames" is an asset configuration document type, not a project
+# document type. It is not validated against schema.json. It follows
+# the same header convention (documentType, specVersion, id) for consistency.
+documentType: frames
+specVersion: "1.1"
+id: device_frames
+
+# ============================================================
+# Phone Frames
+# Source: source.ai
+# TODO: Export individual PNGs from source.ai and update
+# screen coordinates (top, left, width, height) for each frame.
+# Coordinates are zeroed until PNGs are exported.
+# ============================================================
+
+frames:
+  phone_bold:
+    name: "Phone — Bold"
+    type: phone
+    description: "Thick black bezel, rounded corners, simple notch"
+    file: phone_bold.png
+    source: source.ai
+    screen:
+      # Coordinates of the screen area within the frame image (pixels)
+      # Update these after exporting from the AI file
+      top: 0
+      left: 0
+      width: 0
+      height: 0
+
+  phone_wireframe:
+    name: "Phone — Wireframe"
+    type: phone
+    description: "Thin outline style, light gray lines, detailed notch with camera"
+    file: phone_wireframe.png
+    source: source.ai
+    screen:
+      top: 0
+      left: 0
+      width: 0
+      height: 0
+
+  phone_realistic:
+    name: "Phone — Realistic"
+    type: phone
+    description: "Dark bezel with side buttons, camera cutout, notch"
+    file: phone_realistic.png
+    source: source.ai
+    screen:
+      top: 0
+      left: 0
+      width: 0
+      height: 0
+
+# ============================================================
+# Browser Frames
+# Source: source_browser.ai
+# TODO: Export individual PNGs from source_browser.ai and
+# update screen coordinates. Zeroed until PNGs are exported.
+# ============================================================
+
+  browser_small:
+    name: "Browser — Small"
+    type: browser
+    description: "Small browser window frame"
+    file: browser_small.png
+    source: source_browser.ai
+    screen:
+      top: 0
+      left: 0
+      width: 0
+      height: 0
+
+  browser_medium:
+    name: "Browser — Medium"
+    type: browser
+    description: "Medium browser window frame"
+    file: browser_medium.png
+    source: source_browser.ai
+    screen:
+      top: 0
+      left: 0
+      width: 0
+      height: 0
+
+  browser_large:
+    name: "Browser — Large"
+    type: browser
+    description: "Large browser window frame"
+    file: browser_large.png
+    source: source_browser.ai
+    screen:
+      top: 0
+      left: 0
+      width: 0
+      height: 0

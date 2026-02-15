@@ -1,0 +1,4 @@
+.steroids/
+node_modules/
+dist/
+*.log
