@@ -102,10 +102,23 @@ Self-contained HTML documents rendering the resolved page tree. Each includes:
 Named by page ID: `<pageId>.html`. Route paths are recorded as data
 attributes but the file system uses flat IDs, not nested directories.
 
+### Base path
+
+When `--base-path` is set (e.g. `--base-path /demo/`), all generated URLs
+are prefixed:
+
+* Navigation links: `<basePath><platform>/<pageId>.html`
+* Asset paths: `<basePath>assets/<file>`
+* Platform index links: `<basePath><platform>/index.html`
+* Route table entries in `WF_ROUTES`: prefixed with base path
+
+Default is `/` (root). This enables hosting wireframes in a subdirectory.
+
 ### Asset handling
 
 The `assets/` folder is copied to the build root. Image `src` references
 resolve relative to the platform folder (using `../assets/` paths).
+When `--base-path` is set, asset paths use the base path prefix instead.
 
 ### Rules
 
@@ -169,6 +182,11 @@ Watching for changes...
 
 ```yaml
 cli:
+  strictValidation: true
+  failOnWarnings: false
+  export:
+    includeAssets: true
+    compressLevel: 9
   build:
     outputDir: ./wireframes/build
     clean: false
@@ -178,6 +196,9 @@ cli:
     open: false
     hotReload: true
 ```
+
+This is the same `.wfrc.yaml` documented in [brief.md](brief.md). Build and serve
+settings are additional keys under the `cli` root.
 
 ---
 
@@ -196,7 +217,7 @@ to constrain the page body (centered with a subtle shadow):
 
 These are the default rendering dimensions. Responsive contexts declared
 in `sitemap.yaml` (with `minWidth`/`maxWidth`) apply within these viewport
-dimensions — they control responsive overrides (visibility, span, gap, etc.)
+dimensions — they control responsive overrides (visibility, span, gap, align)
 but do not change the viewport size itself.
 
 ---
@@ -306,6 +327,12 @@ row       → display: flex; flex-direction: row;
 grid      → display: grid; grid-template-columns: repeat({columns}, 1fr);
              If columns is omitted, defaults to manifest.defaultGridColumns (default: 12).
 absolute  → position: relative; (children get position: absolute)
+             Children positioned via node `position` property:
+               position.top    → top: {value}px
+               position.left   → left: {value}px
+               position.right  → right: {value}px
+               position.bottom → bottom: {value}px
+             If no position is specified, child renders at (0,0).
 overlay   → position: relative; (children stack with z-index)
 ```
 
@@ -447,10 +474,12 @@ submit         → Gather values from all interactive primitives (input, textare
                  (referenced by formId). Collect as key-value pairs where
                  key = node ID, value = current input value/checked state.
                  Display as a toast showing "Form submitted: {key: value, ...}"
-                 in JSON format. No backend — wireframe-only.
+                 in JSON format. Toast appears at top-right for 3 seconds.
+                 No backend — wireframe-only.
 
 action         → Display toast: "Action: <actionId> triggered".
                  Actions are opaque in wireframe mode.
+                 Toast appears at top-right of viewport for 3 seconds.
 
 gesture        → Touch/mouse event handlers on mobile/tablet viewports.
                  Each gesture type maps to specific browser events:
@@ -605,7 +634,9 @@ When `set_state` or `toggle` changes a state value:
 2. Find all DOM elements with matching `data-bind` attribute
 3. Update their text content to the new value
 4. Re-evaluate `visibility` conditions — show/hide elements accordingly
-5. Re-evaluate `stateBindings` — update bound DOM properties:
+5. Re-evaluate `stateBindings` — stateBindings are encoded as
+   `data-wf-state-bindings='{"propName":"{{state.key}}"}'` on the element.
+   The runtime parses these and updates bound DOM properties:
    - Text props (e.g. `text`, `label`, `placeholder`) → update `textContent` or `value`
    - Boolean props (e.g. `disabled`, `checked`) → update DOM attribute
    - Style props → update inline style
@@ -640,7 +671,9 @@ The renderer:
 2. Loads dataset items from the data YAML file
 3. Clones the children template once for each item
 4. Replaces `{{product.name}}` with the actual field value from each item
-5. Generates unique IDs for cloned nodes: `product_name_0`, `product_name_1`, etc.
+5. Generates unique DOM IDs for cloned elements: `product_name_0`, `product_name_1`, etc.
+   These are runtime DOM `id` attributes only — they do not affect the YAML
+   addressing model (which prohibits index-based addressing).
 
 Each iteration renders as a bordered wireframe box. The iteration count
 matches the actual dataset item count (not a placeholder).
@@ -698,6 +731,8 @@ Nodes with `pane` metadata render as resizable panels.
 pane.side: left    → Panel anchored to left edge
 pane.side: right   → Panel anchored to right edge
 pane.side: center  → Panel centered (content area between left/right panes)
+
+If `pane.side` is omitted, defaults to `left`.
 ```
 
 Rendered with CSS `resize` handle and min/max constraints:

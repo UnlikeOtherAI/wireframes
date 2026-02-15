@@ -185,6 +185,7 @@ node:
     - layout
     - size
     - gridItem
+    - position        # for absolute layout children only
     - visibility
     - accessibility
     - binding
@@ -194,6 +195,17 @@ node:
     - children
     - pane
     - wireframeStyle
+
+# 7.x POSITION (for absolute layout children)
+position:
+  fields:
+    - top            # number (px)
+    - left           # number (px)
+    - right          # number (px)
+    - bottom         # number (px)
+  rules:
+    - only valid on children of a node with layout.type: absolute
+    - at least one of top/left/right/bottom should be specified
 
 # 7.1 SIZE
 size:
@@ -228,9 +240,9 @@ accessibility:
 # 7.5 BINDING (DATA SOURCE)
 binding:
   required:
-    - source         # Expression (e.g. {{item.field}})
+    - source         # Expression (e.g. {{item.field}}) or dataSource ID for collections
   optional:
-    - itemVar        # variable name for collection items
+    - itemVar        # variable name for collection items (required for collection binding)
 
 # 7.6 SELECTION
 selection:
@@ -325,7 +337,7 @@ responsive:
     - height
     - span
     - gap
-    - alignment
+    - align
     - visibility
 
 # ============================================================
@@ -361,6 +373,10 @@ interaction:
     - long_press
     - pinch
     - double_tap
+
+  gestureRules:
+    - gestures are only active on mobile and tablet viewports
+    - gestures are ignored on web viewport
 
   optionalOnAll:
     - condition
@@ -400,9 +416,11 @@ overlay:
     - dismissOn
     - wireframeStyle
 
-  dropdownRequires:
-    - trigger
-    - placement
+  triggerRequires:
+    appliesTo: [dropdown, popover, tooltip]
+    required:
+      - trigger
+      - placement
 
   dismissOptions:
     - backdrop
@@ -623,6 +641,7 @@ validation:
     - hidden interactive element
     - unreachable overlay
     - orphan routes
+    - empty slots
     - naming convention violations
 
   safetyLimits:

@@ -23,6 +23,11 @@ Grid:
 * spans must not exceed columns
 * span cannot coexist with explicit width
 
+Absolute:
+
+* children positioned via `position` property (top, left, right, bottom in px)
+* only valid on children of nodes with `layout.type: absolute`
+
 No arbitrary CSS.
 
 ---
@@ -37,7 +42,7 @@ Responsive values allowed for:
 * height
 * span
 * gap
-* alignment
+* align
 * visibility
 
 No implicit breakpoints.
@@ -438,6 +443,7 @@ Warnings:
 * Hidden interactive element
 * Unreachable overlay
 * Orphan routes
+* Empty slots (slot declared in template but page provides no content)
 * ID naming convention violations (uppercase, non-snake_case, reserved keywords)
 
 Safety limits:

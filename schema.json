@@ -160,7 +160,13 @@
       "additionalProperties": false,
       "required": ["source"],
       "properties": {
-        "source": { "$ref": "#/$defs/Expression" },
+        "source": {
+          "oneOf": [
+            { "$ref": "#/$defs/Expression" },
+            { "$ref": "#/$defs/Id" }
+          ],
+          "description": "Expression for single-value binding, or dataSource ID for collection binding"
+        },
         "itemVar": { "type": "string" }
       }
     },
@@ -174,8 +180,20 @@
         "stateKey": { "$ref": "#/$defs/StateKey" }
       }
     },
+    "Position": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Positioning for children of absolute layout containers",
+      "properties": {
+        "top": { "type": "number" },
+        "left": { "type": "number" },
+        "right": { "type": "number" },
+        "bottom": { "type": "number" }
+      }
+    },
     "Interaction": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["type"],
       "properties": {
         "type": {
@@ -339,7 +357,13 @@
       "required": ["id"],
       "properties": {
         "id": { "$ref": "#/$defs/Id" },
-        "component": { "type": "string" },
+        "component": {
+          "oneOf": [
+            { "$ref": "#/$defs/PrimitiveComponent" },
+            { "$ref": "#/$defs/Id" }
+          ],
+          "description": "Primitive component name or reusable component ID"
+        },
         "use": { "$ref": "#/$defs/Id" },
         "injectable": { "type": "boolean", "const": true },
         "props": { "type": "object" },
@@ -353,6 +377,7 @@
         "interaction": { "type": "array", "items": { "$ref": "#/$defs/Interaction" } },
         "selection": { "$ref": "#/$defs/Selection" },
         "stateBindings": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Expression" } },
+        "position": { "$ref": "#/$defs/Position" },
         "pane": { "$ref": "#/$defs/Pane" },
         "wireframeStyle": { "$ref": "#/$defs/WireframeStyleOverride" },
         "children": {
@@ -417,7 +442,7 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "path", "page", "template"],
+            "required": ["id", "path", "page"],
             "properties": {
               "id": { "$ref": "#/$defs/Id" },
               "path": { "type": "string" },

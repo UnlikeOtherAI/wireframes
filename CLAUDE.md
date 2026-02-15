@@ -65,6 +65,14 @@ Moved out of root once scaffolding begins.
 
 ---
 
+## Task Management
+
+When the user talks about "tasks", they mean the `steroids llm` CLI utility.
+Run `steroids llm` to get current instructions on how to manage development tasks.
+The instructions may change over time, so always refer to the command output for the latest usage.
+
+---
+
 ## Rules
 
 - **No source file bigger than 500 lines.** Break it down. YAML, JSON, and Markdown files are exempt when keeping them whole makes sense.

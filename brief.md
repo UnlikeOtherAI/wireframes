@@ -101,6 +101,18 @@ Also generates:
 * default editor template
 * one starter page
 
+### wf tree
+
+Prints the project structure as a visual tree:
+
+* All routes and their associated pages
+* Template regions (persistent, slot) with children
+* Page slot content
+* Overlay IDs
+* Component references
+
+Output is indented plain text showing the resolved hierarchy.
+
 ### wf info
 
 Prints project metadata from manifest.yaml:
@@ -688,6 +700,14 @@ cli:
   export:
     includeAssets: true
     compressLevel: 9
+  build:
+    outputDir: ./wireframes/build
+    clean: false
+    basePath: /
+  serve:
+    port: 8080
+    open: false
+    hotReload: true
 ```
 
 ---
