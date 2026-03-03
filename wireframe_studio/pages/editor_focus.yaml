@@ -1,0 +1,484 @@
+documentType: page
+specVersion: "1.1"
+id: editor_focus
+page:
+  id: editor_focus
+  template: app_shell
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+      width: thin
+    corner:
+      style: rounded
+      radius: 4
+  pageState:
+    selected_node: null
+    inspector_tab: details
+
+  injectables:
+    - injectableId: chat_messages
+      content:
+        - id: chat_area
+          component: section
+          props:
+            title: "Conversation"
+          layout:
+            type: stack
+            gap: 8
+            padding: 8
+          children:
+            - id: msg_system_1
+              component: section
+              props:
+                title: "System"
+              layout:
+                type: stack
+                gap: 4
+                padding: 8
+              children:
+                - id: msg_system_1_text
+                  component: paragraph
+                  props:
+                    text: "Welcome to Wireframe Studio. Select an element or describe what you want to build."
+            - id: msg_user_1
+              component: section
+              props:
+                title: "You"
+              layout:
+                type: stack
+                gap: 4
+                padding: 8
+              children:
+                - id: msg_user_1_text
+                  component: paragraph
+                  props:
+                    text: "Add a sidebar navigation with 5 menu items"
+            - id: msg_assistant_1
+              component: section
+              props:
+                title: "Assistant"
+              layout:
+                type: stack
+                gap: 4
+                padding: 8
+              children:
+                - id: msg_assistant_1_text
+                  component: paragraph
+                  props:
+                    text: "Done. I added a sidebar with Home, Dashboard, Settings, Users, and Reports links."
+            - id: chat_input_area
+              component: section
+              props:
+                title: "Input"
+              layout:
+                type: row
+                gap: 8
+                padding: 8
+              children:
+                - id: chat_text_input
+                  component: textarea
+                  props:
+                    placeholder: "Type your instructions..."
+                    rows: 2
+                - id: chat_send_btn
+                  component: button
+                  props:
+                    label: "Send"
+
+    - injectableId: viewport_content
+      content:
+        - id: focus_viewport
+          component: section
+          props:
+            title: "Page: Dashboard"
+          layout:
+            type: stack
+            gap: 0
+            padding: 16
+          children:
+            - id: device_frame
+              component: section
+              props:
+                title: "Desktop (1280 x 900)"
+              layout:
+                type: stack
+                gap: 0
+                padding: 8
+              children:
+                - id: preview_header
+                  component: section
+                  props:
+                    title: "Header"
+                  layout:
+                    type: row
+                    gap: 12
+                    padding: 12
+                    align: center
+                  children:
+                    - id: preview_logo
+                      component: text
+                      props:
+                        text: "[Logo]"
+                    - id: preview_nav_home
+                      component: button
+                      props:
+                        label: "Home"
+                    - id: preview_nav_dash
+                      component: button
+                      props:
+                        label: "Dashboard"
+                    - id: preview_nav_settings
+                      component: button
+                      props:
+                        label: "Settings"
+                    - id: preview_user_menu
+                      component: button
+                      props:
+                        label: "User ▾"
+                - id: preview_body
+                  component: section
+                  props:
+                    title: "Body"
+                  layout:
+                    type: row
+                    gap: 8
+                    padding: 8
+                  children:
+                    - id: preview_sidebar
+                      component: section
+                      props:
+                        title: "Sidebar"
+                      layout:
+                        type: stack
+                        gap: 4
+                        padding: 8
+                      size:
+                        width: 200
+                      children:
+                        - id: sidebar_item_1
+                          component: button
+                          props:
+                            label: "Home"
+                        - id: sidebar_item_2
+                          component: button
+                          props:
+                            label: "Dashboard"
+                        - id: sidebar_item_3
+                          component: button
+                          props:
+                            label: "Settings"
+                        - id: sidebar_item_4
+                          component: button
+                          props:
+                            label: "Users"
+                        - id: sidebar_item_5
+                          component: button
+                          props:
+                            label: "Reports"
+                    - id: preview_content
+                      component: section
+                      props:
+                        title: "Main Content"
+                      layout:
+                        type: stack
+                        gap: 12
+                        padding: 12
+                      children:
+                        - id: content_heading
+                          component: heading
+                          props:
+                            text: "Dashboard"
+                            level: 2
+                        - id: stats_row
+                          component: section
+                          props:
+                            title: "Stats"
+                          layout:
+                            type: row
+                            gap: 12
+                          children:
+                            - id: stat_card_1
+                              component: section
+                              props:
+                                title: "Users"
+                              layout:
+                                type: stack
+                                padding: 12
+                              children:
+                                - id: stat_1_value
+                                  component: heading
+                                  props:
+                                    text: "1,234"
+                                    level: 3
+                                - id: stat_1_label
+                                  component: text
+                                  props:
+                                    text: "Total Users"
+                            - id: stat_card_2
+                              component: section
+                              props:
+                                title: "Revenue"
+                              layout:
+                                type: stack
+                                padding: 12
+                              children:
+                                - id: stat_2_value
+                                  component: heading
+                                  props:
+                                    text: "$45,678"
+                                    level: 3
+                                - id: stat_2_label
+                                  component: text
+                                  props:
+                                    text: "Monthly Revenue"
+                            - id: stat_card_3
+                              component: section
+                              props:
+                                title: "Orders"
+                              layout:
+                                type: stack
+                                padding: 12
+                              children:
+                                - id: stat_3_value
+                                  component: heading
+                                  props:
+                                    text: "567"
+                                    level: 3
+                                - id: stat_3_label
+                                  component: text
+                                  props:
+                                    text: "This Month"
+                        - id: chart_placeholder
+                          component: section
+                          props:
+                            title: "Chart Area"
+                          layout:
+                            type: stack
+                            padding: 24
+                          size:
+                            height: 200
+                          children:
+                            - id: chart_label
+                              component: text
+                              props:
+                                text: "[Chart Placeholder]"
+                        - id: recent_table
+                          component: section
+                          props:
+                            title: "Recent Activity"
+                          layout:
+                            type: stack
+                            gap: 4
+                            padding: 8
+                          children:
+                            - id: table_header
+                              component: section
+                              props:
+                                title: ""
+                              layout:
+                                type: row
+                                gap: 8
+                              children:
+                                - id: th_name
+                                  component: text
+                                  props:
+                                    text: "Name"
+                                - id: th_action
+                                  component: text
+                                  props:
+                                    text: "Action"
+                                - id: th_date
+                                  component: text
+                                  props:
+                                    text: "Date"
+                            - id: table_row_1
+                              component: section
+                              props:
+                                title: ""
+                              layout:
+                                type: row
+                                gap: 8
+                              children:
+                                - id: td_1_name
+                                  component: text
+                                  props:
+                                    text: "Jane Doe"
+                                - id: td_1_action
+                                  component: text
+                                  props:
+                                    text: "Created page"
+                                - id: td_1_date
+                                  component: text
+                                  props:
+                                    text: "2 min ago"
+                            - id: table_row_2
+                              component: section
+                              props:
+                                title: ""
+                              layout:
+                                type: row
+                                gap: 8
+                              children:
+                                - id: td_2_name
+                                  component: text
+                                  props:
+                                    text: "John Smith"
+                                - id: td_2_action
+                                  component: text
+                                  props:
+                                    text: "Updated template"
+                                - id: td_2_date
+                                  component: text
+                                  props:
+                                    text: "15 min ago"
+
+    - injectableId: inspector_content
+      content:
+        - id: inspector_panel
+          component: section
+          props:
+            title: "Inspector"
+          layout:
+            type: stack
+            gap: 8
+            padding: 8
+          children:
+            - id: inspector_address
+              component: text
+              props:
+                text: "wf://page/dashboard#preview_content"
+            - id: inspector_origin
+              component: section
+              props:
+                title: "Origin"
+              layout:
+                type: stack
+                gap: 4
+                padding: 8
+              children:
+                - id: origin_type
+                  component: text
+                  props:
+                    text: "Page: dashboard"
+                - id: origin_template
+                  component: text
+                  props:
+                    text: "Template: app_shell"
+            - id: inspector_divider
+              component: divider
+            - id: inspector_tabs
+              component: section
+              props:
+                title: "Tabs"
+              layout:
+                type: row
+                gap: 4
+                padding: 4
+              children:
+                - id: tab_details
+                  component: button
+                  props:
+                    label: "Details"
+                - id: tab_layout
+                  component: button
+                  props:
+                    label: "Layout"
+                - id: tab_interaction
+                  component: button
+                  props:
+                    label: "Interaction"
+                - id: tab_data
+                  component: button
+                  props:
+                    label: "Data"
+                - id: tab_style
+                  component: button
+                  props:
+                    label: "Style"
+                - id: tab_issues
+                  component: button
+                  props:
+                    label: "Issues"
+            - id: inspector_tab_content
+              component: section
+              props:
+                title: "Details"
+              layout:
+                type: stack
+                gap: 8
+                padding: 8
+              children:
+                - id: detail_id
+                  component: section
+                  props:
+                    title: "ID"
+                  layout:
+                    type: stack
+                    padding: 4
+                  children:
+                    - id: detail_id_value
+                      component: input
+                      props:
+                        placeholder: "preview_content"
+                        inputType: text
+                - id: detail_component
+                  component: section
+                  props:
+                    title: "Component"
+                  layout:
+                    type: stack
+                    padding: 4
+                  children:
+                    - id: detail_component_value
+                      component: text
+                      props:
+                        text: "section"
+                - id: detail_layout_type
+                  component: section
+                  props:
+                    title: "Layout Type"
+                  layout:
+                    type: stack
+                    padding: 4
+                  children:
+                    - id: detail_layout_select
+                      component: select
+                      props:
+                        placeholder: "stack"
+                        options:
+                          - stack
+                          - row
+                          - grid
+                          - absolute
+                - id: detail_gap
+                  component: section
+                  props:
+                    title: "Gap"
+                  layout:
+                    type: stack
+                    padding: 4
+                  children:
+                    - id: detail_gap_input
+                      component: input
+                      props:
+                        placeholder: "12"
+                        inputType: number
+                - id: detail_padding
+                  component: section
+                  props:
+                    title: "Padding"
+                  layout:
+                    type: stack
+                    padding: 4
+                  children:
+                    - id: detail_padding_input
+                      component: input
+                      props:
+                        placeholder: "12"
+                        inputType: number
+
+  slots:
+    - slotId: page_overlays
+      content: []

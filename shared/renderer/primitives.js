@@ -27,6 +27,21 @@ const PRIMITIVE_COMPONENTS = new Set([
   'spacer',
 ]);
 
+const BORDERLESS_PRIMITIVES = new Set([
+  'heading',
+  'paragraph',
+  'text',
+  'image',
+  'button',
+  'input',
+  'textarea',
+  'select',
+  'checkbox',
+  'toggle',
+  'divider',
+  'spacer',
+]);
+
 const OVERLAY_TYPES = new Set([
   'modal',
   'alert',
@@ -672,6 +687,8 @@ function renderNode(node, options = {}) {
   }
 
   const component = node.component;
+  const primitiveName = String(component || '');
+  const isBorderless = BORDERLESS_PRIMITIVES.has(primitiveName);
   const props = isObject(node.props) ? node.props : {};
   const layout = isObject(node.layout) ? node.layout : {};
   const size = isObject(node.size) ? node.size : {};
@@ -721,7 +738,7 @@ function renderNode(node, options = {}) {
     layoutItemCss(gridItem),
     absoluteChildStyle(node.position, parentLayoutType),
     paneMetaToStyle(paneData),
-    wfNodeBorderStyle,
+    isBorderless ? '' : wfNodeBorderStyle,
     nodeWireframeOverrides,
   ].filter(Boolean).join(';');
 
@@ -811,9 +828,10 @@ function renderNode(node, options = {}) {
     },
     section: () => {
       const classes = buildNodeClasses(node, 'section', null, paneSide);
+      const sectionLayoutType = isObject(node.layout) ? node.layout.type || 'stack' : 'stack';
       const children = renderChildren(node, {
         ...options,
-        parentLayoutType: isObject(node.layout) ? node.layout.type || 'stack' : 'stack',
+        parentLayoutType: sectionLayoutType,
       });
       const sectionTitle = renderSectionTitle(
         {
@@ -826,7 +844,17 @@ function renderNode(node, options = {}) {
         },
         bindingContext,
       );
-      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${sectionTitle}<div class="wf-section-body">${children}</div></div>`;
+      const sectionOuterStyle = [
+        layoutToCss({}, size, { defaultGridColumns }),
+        layoutItemCss(gridItem),
+        absoluteChildStyle(node.position, parentLayoutType),
+        paneMetaToStyle(paneData),
+        isBorderless ? '' : wfNodeBorderStyle,
+        nodeWireframeOverrides,
+      ].filter(Boolean).join(';');
+      const bodyLayoutCss = layoutToCss(layout, {}, { defaultGridColumns });
+      const bodyStyleAttr = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
+      return `<div${joinAttrs(node.id, classes, sectionOuterStyle)}${dataAttrs()}>${sectionTitle}<div class="wf-section-body"${bodyStyleAttr}>${children}</div></div>`;
     },
     divider: () => {
       const classes = buildNodeClasses(node, 'divider', null, paneSide);
@@ -845,7 +873,6 @@ function renderNode(node, options = {}) {
     return renderOverlay(node, options, childStyle);
   }
 
-  const primitiveName = String(component || '');
   if (primitiveName && PRIMITIVE_COMPONENTS.has(primitiveName)) {
     const renderPrimitive = primitives[primitiveName];
     if (renderPrimitive) {
@@ -864,10 +891,7 @@ function renderNodes(nodes, options = {}) {
   }
 
   return nodes
-    .map((node) => {
-      const layoutType = isObject(node?.layout) ? node.layout.type || 'stack' : 'stack';
-      return renderNode(node, { ...options, parentLayoutType: layoutType });
-    })
+    .map((node) => renderNode(node, options))
     .join('\n');
 }
 

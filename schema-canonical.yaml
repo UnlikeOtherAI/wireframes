@@ -297,14 +297,21 @@ layout:
     - gap
     - padding
     - columns        # for grid
-    - justify
-    - align
+    - justify        # enum: flex-start|flex-end|center|space-between|space-around|space-evenly|stretch|start|end
+    - align          # enum: flex-start|flex-end|center|stretch|baseline|start|end
+    - separators     # none | between (draw dividers between siblings; only meaningful when gap=0)
+    - separatorStyle # solid | dashed (defaults to solid)
 
   grid:
     defaultColumns: 12
     rules:
       - span must not exceed column count
       - span cannot coexist with explicit width
+
+  separatorRules:
+    - if gap > 0, gutters act as separator; separators field is ignored
+    - if gap == 0 and separators == "between", parent dividers are rendered (one line between siblings)
+    - if gap == 0 and separators == "none", siblings are truly flush (no separator)
 
 # ============================================================
 # 9.1 VIEWPORT
@@ -337,6 +344,8 @@ responsive:
     - height
     - span
     - gap
+    - padding
+    - columns
     - align
     - visibility
 
@@ -541,11 +550,23 @@ template:
       - persistent
       - slot
     optional:
+      - sticky      # top | bottom — position: sticky on top-level regions only
       - component
       - use
       - layout
+      - size        # width/height for sidebar-style regions
       - pane
       - children
+
+  pageShell:
+    description: >
+      The rendered page is a flex column with min-height = device viewport height.
+      The browser window is the scroll container — never an inner div.
+      align-items: stretch on the body row ensures sidebars fill full height.
+    stickyRule:
+      - sticky: top renders as position: sticky; top: 0; z-index: 10
+      - sticky: bottom renders as position: sticky; bottom: 0; z-index: 10
+      - only valid on top-level template regions (direct children of template root)
 
   injectable:
     description: >
@@ -595,6 +616,7 @@ page:
     - slots
 
   optional:
+    - rendering        # { mode: line|card, density: comfortable|compact }
     - pageState
     - dataSources
     - actions

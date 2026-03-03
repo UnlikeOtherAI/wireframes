@@ -1,0 +1,339 @@
+documentType: page
+specVersion: "1.1"
+id: editor_map
+page:
+  id: editor_map
+  template: app_shell
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+      width: thin
+    corner:
+      style: rounded
+      radius: 4
+  pageState:
+    selected_page_tile: null
+
+  injectables:
+    - injectableId: chat_messages
+      content:
+        - id: map_chat_area
+          component: section
+          props:
+            title: "Conversation"
+          layout:
+            type: stack
+            gap: 8
+            padding: 8
+          children:
+            - id: map_msg_system
+              component: section
+              props:
+                title: "System"
+              layout:
+                type: stack
+                gap: 4
+                padding: 8
+              children:
+                - id: map_msg_system_text
+                  component: paragraph
+                  props:
+                    text: "Map mode active. You can see all pages in the project. Double-click a page to enter Focus mode."
+            - id: map_chat_input
+              component: section
+              props:
+                title: "Input"
+              layout:
+                type: row
+                gap: 8
+                padding: 8
+              children:
+                - id: map_chat_text
+                  component: textarea
+                  props:
+                    placeholder: "Type your instructions..."
+                    rows: 2
+                - id: map_chat_send
+                  component: button
+                  props:
+                    label: "Send"
+
+    - injectableId: viewport_content
+      content:
+        - id: map_canvas
+          component: section
+          props:
+            title: "Project Map"
+          layout:
+            type: grid
+            columns: 3
+            gap: 16
+            padding: 24
+          children:
+            - id: page_tile_home
+              component: section
+              props:
+                title: "home"
+              layout:
+                type: stack
+                gap: 4
+                padding: 12
+              children:
+                - id: tile_home_name
+                  component: heading
+                  props:
+                    text: "Home"
+                    level: 4
+                - id: tile_home_template
+                  component: text
+                  props:
+                    text: "Template: public_shell"
+                - id: tile_home_preview
+                  component: section
+                  props:
+                    title: "Preview"
+                  layout:
+                    type: stack
+                    padding: 8
+                  size:
+                    height: 120
+                  children:
+                    - id: tile_home_thumb
+                      component: text
+                      props:
+                        text: "[Page Preview]"
+              interaction:
+                - type: navigation
+                  targetRoute: editor_focus
+            - id: page_tile_dashboard
+              component: section
+              props:
+                title: "dashboard"
+              layout:
+                type: stack
+                gap: 4
+                padding: 12
+              children:
+                - id: tile_dash_name
+                  component: heading
+                  props:
+                    text: "Dashboard"
+                    level: 4
+                - id: tile_dash_template
+                  component: text
+                  props:
+                    text: "Template: app_shell"
+                - id: tile_dash_preview
+                  component: section
+                  props:
+                    title: "Preview"
+                  layout:
+                    type: stack
+                    padding: 8
+                  size:
+                    height: 120
+                  children:
+                    - id: tile_dash_thumb
+                      component: text
+                      props:
+                        text: "[Page Preview]"
+              interaction:
+                - type: navigation
+                  targetRoute: editor_focus
+            - id: page_tile_settings
+              component: section
+              props:
+                title: "settings"
+              layout:
+                type: stack
+                gap: 4
+                padding: 12
+              children:
+                - id: tile_settings_name
+                  component: heading
+                  props:
+                    text: "Settings"
+                    level: 4
+                - id: tile_settings_template
+                  component: text
+                  props:
+                    text: "Template: app_shell"
+                - id: tile_settings_preview
+                  component: section
+                  props:
+                    title: "Preview"
+                  layout:
+                    type: stack
+                    padding: 8
+                  size:
+                    height: 120
+                  children:
+                    - id: tile_settings_thumb
+                      component: text
+                      props:
+                        text: "[Page Preview]"
+              interaction:
+                - type: navigation
+                  targetRoute: editor_focus
+            - id: page_tile_profile
+              component: section
+              props:
+                title: "profile"
+              layout:
+                type: stack
+                gap: 4
+                padding: 12
+              children:
+                - id: tile_profile_name
+                  component: heading
+                  props:
+                    text: "Profile"
+                    level: 4
+                - id: tile_profile_template
+                  component: text
+                  props:
+                    text: "Template: public_shell"
+                - id: tile_profile_preview
+                  component: section
+                  props:
+                    title: "Preview"
+                  layout:
+                    type: stack
+                    padding: 8
+                  size:
+                    height: 120
+                  children:
+                    - id: tile_profile_thumb
+                      component: text
+                      props:
+                        text: "[Page Preview]"
+              interaction:
+                - type: navigation
+                  targetRoute: editor_focus
+            - id: page_tile_users
+              component: section
+              props:
+                title: "users"
+              layout:
+                type: stack
+                gap: 4
+                padding: 12
+              children:
+                - id: tile_users_name
+                  component: heading
+                  props:
+                    text: "Users"
+                    level: 4
+                - id: tile_users_template
+                  component: text
+                  props:
+                    text: "Template: app_shell"
+                - id: tile_users_preview
+                  component: section
+                  props:
+                    title: "Preview"
+                  layout:
+                    type: stack
+                    padding: 8
+                  size:
+                    height: 120
+                  children:
+                    - id: tile_users_thumb
+                      component: text
+                      props:
+                        text: "[Page Preview]"
+              interaction:
+                - type: navigation
+                  targetRoute: editor_focus
+            - id: page_tile_reports
+              component: section
+              props:
+                title: "reports"
+              layout:
+                type: stack
+                gap: 4
+                padding: 12
+              children:
+                - id: tile_reports_name
+                  component: heading
+                  props:
+                    text: "Reports"
+                    level: 4
+                - id: tile_reports_template
+                  component: text
+                  props:
+                    text: "Template: app_shell"
+                - id: tile_reports_preview
+                  component: section
+                  props:
+                    title: "Preview"
+                  layout:
+                    type: stack
+                    padding: 8
+                  size:
+                    height: 120
+                  children:
+                    - id: tile_reports_thumb
+                      component: text
+                      props:
+                        text: "[Page Preview]"
+              interaction:
+                - type: navigation
+                  targetRoute: editor_focus
+
+    - injectableId: inspector_content
+      content:
+        - id: map_inspector
+          component: section
+          props:
+            title: "Inspector"
+          layout:
+            type: stack
+            gap: 8
+            padding: 8
+          children:
+            - id: map_inspector_hint
+              component: paragraph
+              props:
+                text: "Select a page tile to view its details."
+            - id: map_inspector_divider
+              component: divider
+            - id: map_page_info
+              component: section
+              props:
+                title: "Page Info"
+              layout:
+                type: stack
+                gap: 4
+                padding: 8
+              children:
+                - id: map_page_id
+                  component: text
+                  props:
+                    text: "Page ID: dashboard"
+                - id: map_page_template
+                  component: text
+                  props:
+                    text: "Template: app_shell"
+                - id: map_page_style
+                  component: text
+                  props:
+                    text: "Style: solid / rounded"
+                - id: map_page_state
+                  component: text
+                  props:
+                    text: "State keys: 2"
+                - id: map_page_overlays
+                  component: text
+                  props:
+                    text: "Overlays: 1"
+                - id: map_page_data
+                  component: text
+                  props:
+                    text: "Data sources: 0"
+
+  slots:
+    - slotId: page_overlays
+      content: []

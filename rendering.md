@@ -3,6 +3,10 @@
 Companion to [schema.md](schema.md) and [schema-systems.md](schema-systems.md).
 Covers how YAML specs become click-through HTML wireframes.
 
+See [docs/rendering-modes.md](docs/rendering-modes.md) for the two rendering
+mode specification (line vs card): visual tokens, CSS architecture, double-border
+prevention, and component-level rendering rules per mode.
+
 ---
 
 # 1. Rendering Philosophy
@@ -202,23 +206,138 @@ settings are additional keys under the `cli` root.
 
 ---
 
-# 3. Viewport Dimensions
+# 3. Viewport Dimensions and Page Shell
 
-Each page declares a viewport. The renderer applies these default dimensions
-to constrain the page body (centered with a subtle shadow):
+Each page declares a viewport. The rendered HTML behaves like a real website
+in a browser tab:
 
-| Device | Orientation | Width | Height |
-|--------|-------------|-------|--------|
+* The page fills the browser tab at the declared width
+* The **browser window** is the scroll container — the page scrolls naturally when content exceeds the viewport height
+* The viewport height is a **minimum height**, not a constraint — content taller than the minimum simply grows the page
+* Sticky template regions use `position: sticky` and remain visible during scroll
+
+| Device | Orientation | Width | Min-Height |
+|--------|-------------|-------|------------|
 | mobile | portrait | 390px | 844px |
 | mobile | landscape | 844px | 390px |
 | tablet | portrait | 820px | 1180px |
 | tablet | landscape | 1180px | 820px |
 | web | — | 1280px | 900px |
 
-These are the default rendering dimensions. Responsive contexts declared
-in `sitemap.yaml` (with `minWidth`/`maxWidth`) apply within these viewport
-dimensions — they control responsive overrides (visibility, span, gap, align)
-but do not change the viewport size itself.
+Responsive contexts declared in `sitemap.yaml` (with `minWidth`/`maxWidth`)
+apply within these viewport dimensions — they control responsive overrides
+(visibility, span, gap, align) but do not change the viewport dimensions.
+
+## Page shell layout
+
+The outer page container is a flex column. This is what makes the sidebar
+stretch to the full page height and what allows sticky headers/footers to work.
+
+```
+<body>
+  <div class="wf-page">          ← flex column, min-height = device height, centered at device width
+    <header class="wf-region">   ← persistent region, sticky: top → position: sticky; top: 0
+      ...
+    </header>
+
+    <div class="wf-body-row">    ← flex: 1, display: flex, flex-direction: row, align-items: stretch
+      <nav class="wf-region">    ← persistent sidebar — stretches to full row height automatically
+        ...
+      </nav>
+      <main class="wf-region">   ← slot region — flex: 1, fills remaining width
+        ...
+      </main>
+    </div>
+
+    <footer class="wf-region">   ← persistent region, sticky: bottom → position: sticky; bottom: 0
+      ...
+    </footer>
+  </div>
+</body>
+```
+
+**Why the sidebar fills the full height:**
+The body row is `flex: 1` (fills space between header and footer) with
+`align-items: stretch` (flex default). All children — sidebar, main content —
+stretch to the row's height. The sidebar has only 3 nav items but its
+background and border extend to the full row height regardless.
+
+**CSS:**
+
+```css
+.wf-page {
+  width: var(--wf-viewport-width);    /* 1280px for web */
+  min-height: var(--wf-viewport-min-height); /* 900px for web */
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.wf-body-row {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;   /* sidebar fills full row height */
+  min-height: 0;          /* required for flex children to shrink correctly */
+}
+
+/* Sticky regions */
+.wf-region[data-sticky="top"] {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-shrink: 0;
+}
+.wf-region[data-sticky="bottom"] {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  flex-shrink: 0;
+}
+```
+
+## Template region sticky declaration
+
+Template regions can declare `sticky: top | bottom` to make them stick during scroll.
+
+```yaml
+templates:
+  app_shell:
+    layout: { type: stack }
+    regions:
+      - id: header_bar
+        kind: persistent
+        sticky: top           # ← renders with position: sticky; top: 0
+        children: [...]
+      - id: body
+        kind: slot            # fills flex: 1 of the page column
+      - id: bottom_nav
+        kind: persistent
+        sticky: bottom        # ← renders with position: sticky; bottom: 0
+        children: [...]
+```
+
+For templates with a sidebar, the slot region is typically a row container:
+
+```yaml
+regions:
+  - id: header_bar
+    kind: persistent
+    sticky: top
+  - id: body_row
+    kind: persistent          # contains a nested slot + sidebar
+    layout: { type: row }
+    children:
+      - id: left_nav
+        kind: persistent      # sidebar — stretches to full row height via align-items: stretch
+        size: { width: 240 }
+        children: [...]
+      - id: main_content
+        injectable: true      # pages inject into here
+```
+
+`sticky` is only valid on top-level template regions (direct children of the
+template root). It is not valid on arbitrary page nodes.
 
 ---
 

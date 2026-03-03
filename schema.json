@@ -347,8 +347,19 @@
         "gap": { "type": "number", "minimum": 0 },
         "padding": { "type": "number", "minimum": 0 },
         "columns": { "type": "integer", "minimum": 1 },
-        "justify": { "type": "string" },
-        "align": { "type": "string" }
+        "justify": { "type": "string", "enum": ["flex-start", "flex-end", "center", "space-between", "space-around", "space-evenly", "stretch", "start", "end"] },
+        "align": { "type": "string", "enum": ["flex-start", "flex-end", "center", "stretch", "baseline", "start", "end"] },
+        "separators": { "type": "string", "enum": ["none", "between"], "description": "Draw dividers between sibling children. Only effective when gap is 0." },
+        "separatorStyle": { "type": "string", "enum": ["solid", "dashed"], "description": "Line style for parent separators." }
+      }
+    },
+    "PageRendering": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["line", "card"], "description": "Rendering mode. line = blueprint/schematic. card = greyscale product mock." },
+        "density": { "type": "string", "enum": ["comfortable", "compact"], "description": "Layout density. comfortable = default spacing. compact = reduced spacing." }
       }
     },
     "Node": {
@@ -358,7 +369,7 @@
       "properties": {
         "id": { "$ref": "#/$defs/Id" },
         "component": {
-          "oneOf": [
+          "anyOf": [
             { "$ref": "#/$defs/PrimitiveComponent" },
             { "$ref": "#/$defs/Id" }
           ],
@@ -476,9 +487,11 @@
                   "properties": {
                     "id": { "$ref": "#/$defs/Id" },
                     "kind": { "type": "string", "enum": ["persistent", "slot"] },
+                    "sticky": { "type": "string", "enum": ["top", "bottom"], "description": "Makes this top-level region sticky during scroll. top = sticks to top of viewport. bottom = sticks to bottom." },
                     "component": { "type": "string" },
                     "use": { "$ref": "#/$defs/Id" },
                     "layout": { "$ref": "#/$defs/Layout" },
+                    "size": { "$ref": "#/$defs/Size" },
                     "pane": { "$ref": "#/$defs/Pane" },
                     "children": { "type": "array", "items": { "$ref": "#/$defs/Node" } }
                   }
@@ -531,6 +544,7 @@
             "template": { "$ref": "#/$defs/Id" },
             "viewport": { "$ref": "#/$defs/Viewport" },
             "wireframeStyle": { "$ref": "#/$defs/WireframeStyle" },
+            "rendering": { "$ref": "#/$defs/PageRendering" },
             "pageState": { "type": "object" },
             "dataSources": {
               "type": "array",

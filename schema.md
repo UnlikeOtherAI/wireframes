@@ -85,8 +85,10 @@ Regions must declare:
 
 * id
 * kind: persistent | slot
+* optional `sticky: top | bottom` — makes the region sticky during scroll (only valid on top-level regions)
 * optional component/use
 * optional pane (resizable/collapsible metadata)
+* optional size (width/height for sidebar regions etc.)
 * layout
 
 Persistent regions may contain `injectable` nodes:
@@ -149,6 +151,11 @@ Must contain:
 * wireframeStyle (REQUIRED)
 
   * border.style is mandatory
+* rendering (optional) — render mode configuration:
+
+  * `mode: line | card` — selects rendering mode (default: `line`)
+  * `density: comfortable | compact` — spacing density (default: `comfortable`)
+  * See [docs/rendering-modes.md](docs/rendering-modes.md) for full specification
 * pageState (optional) — page-scoped state, resets on navigation
 * dataSources (optional) — dataset bindings for this page
 * actions (optional) — named action definitions (e.g. form submissions, API calls). Keyed by action ID, referenced via `actionId` in interactions.

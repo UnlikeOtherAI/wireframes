@@ -4,6 +4,7 @@ const path = require('node:path');
 
 const { renderNode, renderNodes } = require(path.resolve(__dirname, '..', 'renderer', 'primitives'));
 const { buildInteractionRuntime } = require(path.resolve(__dirname, '..', 'renderer', 'interactions'));
+const { layoutToCss } = require(path.resolve(__dirname, '..', 'renderer', 'layout'));
 const {
   readLocalImage,
   mergeWireframeStyle,
@@ -41,24 +42,29 @@ function renderRoot(root, options) {
   }
 
   const rootLabel = root.kind ? `${root.kind}: ${root.id || root.injectableId || root.slotId || 'root'}` : root.id || 'root';
-  const children = Array.isArray(root.nodes) ? root.nodes : [];
+  const children = Array.isArray(root.nodes) ? root.nodes : Array.isArray(root.children) ? root.children : [];
   const rootStyleBase = isObject(options.pageStyle) ? options.pageStyle : {};
   const localPageStyle = mergeWireframeStyle(rootStyleBase, root.wireframeStyle);
+  const rootLayout = isObject(root.layout) ? root.layout : {};
+  const rootLayoutType = rootLayout.type || 'stack';
   const content = renderNodes(children, {
     ...options,
     routeId: options.routeId || '',
     pageStyle: localPageStyle,
     dataSources: options.dataSources || {},
+    parentLayoutType: rootLayoutType,
   });
   const rootStyle = [
     'margin:8px;padding:8px',
     wireframeRootStyle(options.pageStyle, root.wireframeStyle),
   ].filter(Boolean).join(';');
+  const bodyLayoutCss = layoutToCss(rootLayout, {});
+  const bodyStyle = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
 
   return `
     <section class="wf-root wf-root-${toSafeClass(root.kind || 'container')}" style="${rootStyle}">
       <div class="wf-root-title">${escapeHtml(rootLabel)}</div>
-      <div class="wf-root-body">
+      <div class="wf-root-body"${bodyStyle}>
         ${content}
       </div>
     </section>`.trim();
@@ -76,12 +82,15 @@ function buildWireframeStyles() {
   return [
     '*{box-sizing:border-box}',
     'body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;padding:16px}',
-    '.wf-root-title{font-size:11px;color:#444;font-weight:700;margin-bottom:6px}',
+    '.wf-root-title{display:none}',
     '.wf-root-body{display:block}',
+    '.wf-node-children{display:contents}',
     '.wf-node{background:#fff;border:var(--wf-border-width,1px) var(--wf-border-style,solid) #333;border-radius:var(--wf-corner-radius,0px);padding:6px;margin:4px;min-height:22px}',
-    '.wf-section-title{font-weight:700;font-size:12px;margin-bottom:6px}',
+    '.wf-heading,.wf-paragraph,.wf-text,.wf-image,.wf-button,.wf-input,.wf-textarea,.wf-select,.wf-checkbox,.wf-toggle{border:none;background:transparent;padding:2px 0;min-height:0}',
+    '.wf-button,.wf-checkbox,.wf-toggle{width:fit-content}',
+    '.wf-section-title{display:none}',
     '.wf-divider{border:none;border-top:1px solid #666;margin:8px 0}',
-    '.wf-spacer{min-height:12px;background:transparent;border-style:dashed}',
+    '.wf-spacer{min-height:12px;background:transparent;border:none}',
     '.wf-heading,.wf-paragraph,.wf-button,.wf-input,.wf-textarea,.wf-select,.wf-checkbox,.wf-toggle,.wf-section,.wf-text{margin:4px 0}',
     '.wf-node-section{padding:4px}',
     '.wf-section-body{min-height:10px}',
@@ -89,7 +98,7 @@ function buildWireframeStyles() {
     '.wf-image-placeholder{padding:16px;border:1px dashed #666;background:#fff;text-align:center;color:#666}',
     '.wf-toggle-track{display:inline-block;width:32px;height:16px;border:1px solid #666;border-radius:12px;position:relative;vertical-align:middle;margin-right:8px}',
     '.wf-toggle-thumb{position:absolute;left:2px;top:2px;width:10px;height:10px;border-radius:50%;background:#333}',
-    '.wf-root{border:1px dashed #aaa;padding:8px}',
+    '.wf-root{border:none;padding:0;margin:0}',
     '.wf-pane-left,.wf-pane-center,.wf-pane-right{display:block}',
     '.wf-pane-right{margin-left:auto}',
     '.wf-pane-center{flex:1 1 auto;min-width:0}',

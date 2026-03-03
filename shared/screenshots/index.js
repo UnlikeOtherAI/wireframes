@@ -254,7 +254,7 @@ function readSitemapStateDefaults(projectPath) {
   if (!isObject(sitemap)) {
     return {};
   }
-  const container = isObject(sitemap.sitemap) ? sitemap.sitemap : {};
+  const container = isObject(sitemap.sitemap) ? sitemap.sitemap : sitemap;
   return isObject(container.appState) ? container.appState : {};
 }
 

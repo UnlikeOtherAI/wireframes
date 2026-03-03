@@ -132,7 +132,7 @@ function serveReload(req, res, state) {
     'cache-control': 'no-cache',
     connection: 'keep-alive',
   });
-  res.write(`event: reload\ndata: ${JSON.stringify({ version: state.reloadVersion })}\n\n`);
+  res.write(`event: connected\ndata: ${JSON.stringify({ version: state.reloadVersion })}\n\n`);
   state.reloadClients.add(res);
   req.on('close', () => {
     state.reloadClients.delete(res);

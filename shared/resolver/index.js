@@ -101,7 +101,7 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
   if (!node.use) {
     const resolvedNode = cloneDeep(node);
     if (Array.isArray(resolvedNode.children)) {
-      const childResult = resolveNodes(resolvedNode.children, components, componentStack, injectableMap);
+      const childResult = resolveInjectableNodes(resolvedNode.children, injectableMap, components, componentStack);
       if (!childResult.ok) {
         return childResult;
       }

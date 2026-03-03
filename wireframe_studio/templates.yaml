@@ -1,0 +1,314 @@
+documentType: templates
+specVersion: "1.1"
+id: templates
+templates:
+  app_shell:
+    layout:
+      type: stack
+    regions:
+      - id: top_bar
+        kind: persistent
+        layout:
+          type: row
+          gap: 12
+          padding: 8
+          align: center
+        children:
+          - id: nav_back
+            component: button
+            props:
+              label: "← Projects"
+          - id: project_name
+            component: input
+            props:
+              placeholder: "Project Name"
+              inputType: text
+          - id: top_spacer
+            component: spacer
+            props:
+              size: 16
+          - id: autosave_top
+            component: text
+            props:
+              text: "Saved"
+      - id: main_area
+        kind: persistent
+        layout:
+          type: row
+          gap: 0
+        children:
+          - id: left_panel
+            component: section
+            props:
+              title: "Chat"
+            pane:
+              side: left
+              defaultSize: 360
+              minSize: 280
+              resizable: true
+              collapsible: true
+              collapsedSize: 64
+            layout:
+              type: stack
+              gap: 0
+            children:
+              - id: chat_header_section
+                component: section
+                props:
+                  title: "Chat"
+                layout:
+                  type: stack
+                  gap: 4
+                  padding: 8
+                children:
+                  - id: chat_context_mode
+                    component: text
+                    props:
+                      text: "Mode: Focus | Device: Desktop"
+                  - id: chat_selection_info
+                    component: text
+                    props:
+                      text: "Selected: (none)"
+                  - id: project_admin_btn
+                    component: button
+                    props:
+                      label: "Project ▾"
+                    interaction:
+                      - type: open_overlay
+                        targetOverlay: project_admin_drawer
+              - id: chat_messages
+                injectable: true
+          - id: center_viewport
+            component: section
+            props:
+              title: "Viewport"
+            pane:
+              side: center
+              resizable: false
+              collapsible: false
+            layout:
+              type: stack
+              gap: 0
+            children:
+              - id: viewport_content
+                injectable: true
+          - id: right_panel
+            component: section
+            props:
+              title: "Inspector"
+            pane:
+              side: right
+              defaultSize: 360
+              minSize: 280
+              resizable: true
+              collapsible: true
+              collapsedSize: 64
+            layout:
+              type: stack
+              gap: 0
+            children:
+              - id: inspector_content
+                injectable: true
+      - id: bottom_bar
+        kind: persistent
+        layout:
+          type: row
+          gap: 12
+          padding: 8
+          align: center
+        children:
+          - id: undo_btn
+            component: button
+            props:
+              label: Undo
+          - id: redo_btn
+            component: button
+            props:
+              label: Redo
+          - id: bar_left_spacer
+            component: spacer
+            props:
+              size: 24
+          - id: mode_focus_btn
+            component: button
+            props:
+              label: "Focus"
+            interaction:
+              - type: set_state
+                scope: app
+                stateKey: editor_mode
+                value: focus
+          - id: mode_map_btn
+            component: button
+            props:
+              label: "Map"
+            interaction:
+              - type: set_state
+                scope: app
+                stateKey: editor_mode
+                value: map
+          - id: device_select
+            component: select
+            props:
+              placeholder: "Device"
+              options:
+                - label: Desktop
+                  value: desktop
+                - label: Tablet
+                  value: tablet
+                - label: Mobile Portrait
+                  value: mobile_portrait
+                - label: Mobile Landscape
+                  value: mobile_landscape
+          - id: zoom_text
+            component: text
+            props:
+              text: "Zoom:"
+          - id: zoom_input
+            component: input
+            props:
+              placeholder: "100%"
+              inputType: text
+          - id: bar_right_spacer
+            component: spacer
+            props:
+              size: 24
+          - id: autosave_bottom
+            component: text
+            props:
+              text: "Saved"
+          - id: validation_btn
+            component: button
+            props:
+              label: "● Valid"
+            interaction:
+              - type: open_overlay
+                targetOverlay: validation_drawer
+      - id: page_overlays
+        kind: slot
+    overlays:
+      - id: project_admin_drawer
+        type: drawer_left
+        trigger: project_admin_btn
+        dismissOn:
+          - backdrop
+          - escape
+        content:
+          - id: admin_drawer_title
+            component: heading
+            props:
+              text: "Project Admin"
+              level: 3
+          - id: admin_tabs
+            component: section
+            props:
+              title: ""
+            layout:
+              type: row
+              gap: 4
+            children:
+              - id: admin_tab_pages
+                component: button
+                props:
+                  label: "Pages"
+              - id: admin_tab_templates
+                component: button
+                props:
+                  label: "Templates"
+              - id: admin_tab_components
+                component: button
+                props:
+                  label: "Components"
+              - id: admin_tab_data
+                component: button
+                props:
+                  label: "Data"
+          - id: admin_pages_list
+            component: section
+            props:
+              title: "Pages"
+            layout:
+              type: stack
+              gap: 4
+              padding: 8
+            children:
+              - id: admin_page_home
+                component: section
+                props:
+                  title: ""
+                layout:
+                  type: row
+                  gap: 8
+                  align: center
+                children:
+                  - id: admin_page_home_name
+                    component: text
+                    props:
+                      text: "home"
+                  - id: admin_page_home_route
+                    component: text
+                    props:
+                      text: "/"
+              - id: admin_page_dashboard
+                component: section
+                props:
+                  title: ""
+                layout:
+                  type: row
+                  gap: 8
+                  align: center
+                children:
+                  - id: admin_page_dash_name
+                    component: text
+                    props:
+                      text: "dashboard"
+                  - id: admin_page_dash_route
+                    component: text
+                    props:
+                      text: "/dashboard"
+              - id: admin_page_settings
+                component: section
+                props:
+                  title: ""
+                layout:
+                  type: row
+                  gap: 8
+                  align: center
+                children:
+                  - id: admin_page_settings_name
+                    component: text
+                    props:
+                      text: "settings"
+                  - id: admin_page_settings_route
+                    component: text
+                    props:
+                      text: "/settings"
+              - id: admin_add_page_btn
+                component: button
+                props:
+                  label: "+ Add Page"
+                interaction:
+                  - type: navigation
+                    targetRoute: add_page_modal
+      - id: validation_drawer
+        type: drawer_right
+        trigger: validation_btn
+        dismissOn:
+          - backdrop
+          - escape
+        content:
+          - id: validation_title
+            component: heading
+            props:
+              text: "Validation Issues"
+              level: 3
+          - id: validation_summary
+            component: text
+            props:
+              text: "0 errors, 0 warnings"
+          - id: validation_divider
+            component: divider
+          - id: validation_empty
+            component: paragraph
+            props:
+              text: "No issues found. Project is valid."

@@ -1,0 +1,164 @@
+documentType: page
+specVersion: "1.1"
+id: add_page
+page:
+  id: add_page
+  template: app_shell
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+      width: thin
+    corner:
+      style: rounded
+      radius: 4
+
+  injectables:
+    - injectableId: chat_messages
+      content:
+        - id: addpage_chat
+          component: section
+          props:
+            title: "Conversation"
+          layout:
+            type: stack
+            gap: 8
+            padding: 8
+          children:
+            - id: addpage_chat_msg
+              component: paragraph
+              props:
+                text: "Fill in the details to add a new page to the project."
+            - id: addpage_chat_input
+              component: section
+              props:
+                title: "Input"
+              layout:
+                type: row
+                gap: 8
+                padding: 8
+              children:
+                - id: addpage_chat_text
+                  component: textarea
+                  props:
+                    placeholder: "Type your instructions..."
+                    rows: 2
+                - id: addpage_chat_send
+                  component: button
+                  props:
+                    label: "Send"
+
+    - injectableId: viewport_content
+      content:
+        - id: addpage_viewport
+          component: section
+          props:
+            title: "Viewport"
+          layout:
+            type: stack
+            gap: 0
+            padding: 16
+          children:
+            - id: addpage_viewport_hint
+              component: paragraph
+              props:
+                text: "A modal is open. Fill in the form to add a new page."
+
+    - injectableId: inspector_content
+      content:
+        - id: addpage_inspector
+          component: section
+          props:
+            title: "Inspector"
+          layout:
+            type: stack
+            gap: 8
+            padding: 8
+          children:
+            - id: addpage_inspector_hint
+              component: paragraph
+              props:
+                text: "New page form is active."
+
+  overlays:
+    - id: add_page_modal_overlay
+      type: modal
+      dismissOn:
+        - backdrop
+        - escape
+      content:
+        - id: modal_title
+          component: heading
+          props:
+            text: "Add New Page"
+            level: 3
+        - id: modal_page_id
+          component: section
+          props:
+            title: "Page ID"
+          layout:
+            type: stack
+            padding: 4
+          children:
+            - id: modal_page_id_input
+              component: input
+              props:
+                placeholder: "e.g. settings, profile, users"
+                inputType: text
+        - id: modal_route_path
+          component: section
+          props:
+            title: "Route Path"
+          layout:
+            type: stack
+            padding: 4
+          children:
+            - id: modal_route_input
+              component: input
+              props:
+                placeholder: "e.g. /settings"
+                inputType: text
+        - id: modal_template
+          component: section
+          props:
+            title: "Template"
+          layout:
+            type: stack
+            padding: 4
+          children:
+            - id: modal_template_select
+              component: select
+              props:
+                placeholder: "Select template"
+                options:
+                  - label: app_shell
+                    value: app_shell
+                  - label: public_shell
+                    value: public_shell
+        - id: modal_actions
+          component: section
+          props:
+            title: ""
+          layout:
+            type: row
+            gap: 8
+          children:
+            - id: modal_cancel_btn
+              component: button
+              props:
+                label: "Cancel"
+              interaction:
+                - type: navigation
+                  targetRoute: editor_focus
+            - id: modal_create_btn
+              component: button
+              props:
+                label: "Create Page"
+              interaction:
+                - type: navigation
+                  targetRoute: editor_focus
+
+  slots:
+    - slotId: page_overlays
+      content: []

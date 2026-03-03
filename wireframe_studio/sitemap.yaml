@@ -1,0 +1,29 @@
+documentType: sitemap
+specVersion: "1.1"
+id: sitemap
+defaultTemplate: app_shell
+appState:
+  editor_mode: focus
+  selected_device: desktop
+  zoom_level: 100
+  selected_element: null
+  selected_page: home_preview
+  project_admin_open: false
+  validation_drawer_open: false
+routes:
+  - id: editor_focus
+    path: /
+    page: editor_focus
+    template: app_shell
+  - id: editor_map
+    path: /map
+    page: editor_map
+    template: app_shell
+  - id: project_admin
+    path: /admin
+    page: project_admin
+    template: app_shell
+  - id: add_page_modal
+    path: /add-page
+    page: add_page
+    template: app_shell

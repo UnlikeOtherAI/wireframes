@@ -1,0 +1,287 @@
+documentType: page
+specVersion: "1.1"
+id: project_admin
+page:
+  id: project_admin
+  template: app_shell
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+      width: thin
+    corner:
+      style: rounded
+      radius: 4
+  pageState:
+    admin_tab: pages
+
+  injectables:
+    - injectableId: chat_messages
+      content:
+        - id: admin_chat
+          component: section
+          props:
+            title: "Conversation"
+          layout:
+            type: stack
+            gap: 8
+            padding: 8
+          children:
+            - id: admin_chat_msg
+              component: paragraph
+              props:
+                text: "Project admin panel is open. Manage your pages, templates, components, and data."
+            - id: admin_chat_input
+              component: section
+              props:
+                title: "Input"
+              layout:
+                type: row
+                gap: 8
+                padding: 8
+              children:
+                - id: admin_chat_text
+                  component: textarea
+                  props:
+                    placeholder: "Type your instructions..."
+                    rows: 2
+                - id: admin_chat_send
+                  component: button
+                  props:
+                    label: "Send"
+
+    - injectableId: viewport_content
+      content:
+        - id: admin_viewport
+          component: section
+          props:
+            title: "Project Admin"
+          layout:
+            type: stack
+            gap: 12
+            padding: 16
+          children:
+            - id: admin_viewport_tabs
+              component: section
+              props:
+                title: ""
+              layout:
+                type: row
+                gap: 8
+              children:
+                - id: avt_pages
+                  component: button
+                  props:
+                    label: "Pages"
+                - id: avt_templates
+                  component: button
+                  props:
+                    label: "Templates"
+                - id: avt_components
+                  component: button
+                  props:
+                    label: "Components"
+                - id: avt_data
+                  component: button
+                  props:
+                    label: "Data"
+            - id: admin_pages_panel
+              component: section
+              props:
+                title: "Pages"
+              layout:
+                type: stack
+                gap: 8
+                padding: 12
+              children:
+                - id: ap_header
+                  component: section
+                  props:
+                    title: ""
+                  layout:
+                    type: row
+                    gap: 8
+                    align: center
+                  children:
+                    - id: ap_header_title
+                      component: heading
+                      props:
+                        text: "All Pages"
+                        level: 3
+                    - id: ap_add_btn
+                      component: button
+                      props:
+                        label: "+ Add Page"
+                      interaction:
+                        - type: navigation
+                          targetRoute: add_page_modal
+                - id: ap_list
+                  component: section
+                  props:
+                    title: ""
+                  layout:
+                    type: stack
+                    gap: 4
+                  children:
+                    - id: ap_row_home
+                      component: section
+                      props:
+                        title: ""
+                      layout:
+                        type: row
+                        gap: 12
+                        align: center
+                        padding: 8
+                      children:
+                        - id: ap_row_home_id
+                          component: text
+                          props:
+                            text: "home"
+                        - id: ap_row_home_route
+                          component: text
+                          props:
+                            text: "/"
+                        - id: ap_row_home_template
+                          component: text
+                          props:
+                            text: "public_shell"
+                    - id: ap_row_dashboard
+                      component: section
+                      props:
+                        title: ""
+                      layout:
+                        type: row
+                        gap: 12
+                        align: center
+                        padding: 8
+                      children:
+                        - id: ap_row_dash_id
+                          component: text
+                          props:
+                            text: "dashboard"
+                        - id: ap_row_dash_route
+                          component: text
+                          props:
+                            text: "/dashboard"
+                        - id: ap_row_dash_template
+                          component: text
+                          props:
+                            text: "app_shell"
+                    - id: ap_row_settings
+                      component: section
+                      props:
+                        title: ""
+                      layout:
+                        type: row
+                        gap: 12
+                        align: center
+                        padding: 8
+                      children:
+                        - id: ap_row_settings_id
+                          component: text
+                          props:
+                            text: "settings"
+                        - id: ap_row_settings_route
+                          component: text
+                          props:
+                            text: "/settings"
+                        - id: ap_row_settings_template
+                          component: text
+                          props:
+                            text: "app_shell"
+            - id: admin_templates_panel
+              component: section
+              props:
+                title: "Templates"
+              layout:
+                type: stack
+                gap: 8
+                padding: 12
+              children:
+                - id: at_row_app_shell
+                  component: section
+                  props:
+                    title: ""
+                  layout:
+                    type: row
+                    gap: 12
+                    align: center
+                    padding: 8
+                  children:
+                    - id: at_app_shell_name
+                      component: text
+                      props:
+                        text: "app_shell"
+                    - id: at_app_shell_usage
+                      component: text
+                      props:
+                        text: "Used by 2 pages"
+                - id: at_row_public
+                  component: section
+                  props:
+                    title: ""
+                  layout:
+                    type: row
+                    gap: 12
+                    align: center
+                    padding: 8
+                  children:
+                    - id: at_public_name
+                      component: text
+                      props:
+                        text: "public_shell"
+                    - id: at_public_usage
+                      component: text
+                      props:
+                        text: "Used by 1 page"
+            - id: admin_components_panel
+              component: section
+              props:
+                title: "Components"
+              layout:
+                type: stack
+                gap: 8
+                padding: 12
+              children:
+                - id: ac_empty
+                  component: paragraph
+                  props:
+                    text: "No reusable components defined yet."
+            - id: admin_data_panel
+              component: section
+              props:
+                title: "Data"
+              layout:
+                type: stack
+                gap: 8
+                padding: 12
+              children:
+                - id: ad_empty
+                  component: paragraph
+                  props:
+                    text: "No datasets imported yet."
+                - id: ad_import_btn
+                  component: button
+                  props:
+                    label: "Import Dataset"
+
+    - injectableId: inspector_content
+      content:
+        - id: admin_inspector
+          component: section
+          props:
+            title: "Inspector"
+          layout:
+            type: stack
+            gap: 8
+            padding: 8
+          children:
+            - id: admin_inspector_hint
+              component: paragraph
+              props:
+                text: "Select an item to view its details."
+
+  slots:
+    - slotId: page_overlays
+      content: []

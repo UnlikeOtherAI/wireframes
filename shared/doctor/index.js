@@ -139,10 +139,19 @@ function collectTemplateReferences(templateContent, result, componentIds, seenSl
     }
 
     if (Array.isArray(region.children)) {
-      for (const child of region.children) {
-        if (child && typeof child === 'object' && child.injectable === true && typeof child.id === 'string') {
-          seenInjectableIds.add(child.id);
+      const queue = [...region.children];
+      while (queue.length > 0) {
+        const child = queue.shift();
+        if (child && typeof child === 'object') {
+          if (child.injectable === true && typeof child.id === 'string') {
+            seenInjectableIds.add(child.id);
+          }
+          if (Array.isArray(child.children)) {
+            queue.push(...child.children);
+          }
         }
+      }
+      for (const child of region.children) {
         collectReferencedComponents(child, result, `template region "${region.id}"`, componentIds, usage);
       }
     }
@@ -550,7 +559,7 @@ function runDoctor({ projectPath } = {}) {
     collectTemplateReferences(templateDocument, result, componentIds, templateInfo.slotIds, templateInfo.injectableIds, componentUsages);
   }
 
-  const routeEntries = sitemap?.document?.sitemap?.routes || [];
+  const routeEntries = sitemap?.document?.routes || sitemap?.document?.sitemap?.routes || [];
   collectPageRouteDiagnostics(routeEntries, result, pageMap, templateMap);
 
   for (const pageLoaded of pageMap.values()) {
@@ -594,7 +603,7 @@ function runDoctor({ projectPath } = {}) {
   runSemanticValidation({
     result,
     manifest: manifest?.document?.manifest || {},
-    sitemap: sitemap?.document?.sitemap || {},
+    sitemap: sitemap?.document?.sitemap || sitemap?.document || {},
     templates: templates?.document?.templates || {},
     components: componentMap,
     pages: Array.from(pageMap.values()),

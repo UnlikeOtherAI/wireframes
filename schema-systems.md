@@ -42,6 +42,8 @@ Responsive values allowed for:
 * height
 * span
 * gap
+* padding
+* columns
 * align
 * visibility
 
@@ -254,6 +256,15 @@ Per-node and per-overlay overrides use a partial style — no fields are
 required. Only the properties being overridden need to be specified;
 everything else inherits from the page wireframe style.
 
+Rendering mode interaction:
+
+* In `line` mode, `wireframeStyle` maps to CSS `outline` on surface containers.
+  `corner.radius` is divided by 3 to preserve the schematic aesthetic.
+* In `card` mode, `wireframeStyle` maps to CSS `border` + `border-radius` on
+  surface containers. A `box-shadow` is added automatically.
+* See [docs/rendering-modes.md](docs/rendering-modes.md) for the full CSS
+  mapping per mode.
+
 ---
 
 # 14. Data Binding
@@ -418,6 +429,7 @@ Blocking errors:
 
 * Duplicate IDs
 * Missing page wireframeStyle.border.style
+* `sticky` declared on a non-top-level template region (only direct children of template root are valid)
 * Missing template reference
 * Missing slot match
 * Missing injectable match (page references injectable ID not in template)
