@@ -38,6 +38,8 @@ function toSafeClass(value) {
 
 function separatorClass(layout) {
   if (!isObject(layout) || layout.separators !== 'between') return '';
+  // Separators only meaningful when gap == 0; with gap > 0 the gutter already separates items.
+  if (Number(layout.gap) > 0) return '';
   const type = layout.type || 'stack';
   return type === 'row' ? ' wf-divide-x' : ' wf-divide-y';
 }
@@ -111,7 +113,7 @@ function buildWireframeStyles() {
 
     // --- Surface: template regions, section components ---
     // Line mode: transparent bg, single outline (outline doesn't affect box model)
-    '.wf-mode-line .wf-surface{background:transparent;outline:1px solid #4b5563}',
+    '.wf-mode-line .wf-surface{background:transparent;outline:1px solid #4b5563;border-radius:var(--wf-corner-radius,0px)}',
     // Card mode: white card with border and subtle shadow
     '.wf-mode-card .wf-surface{background:#ffffff;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.08);border-radius:var(--wf-corner-radius,4px)}',
 
@@ -136,8 +138,8 @@ function buildWireframeStyles() {
     // --- Buttons: mode-specific styling ---
     // Line mode: bordered label (schematic)
     '.wf-mode-line .wf-button button{background:transparent;border:1px solid #4b5563;color:#111827;padding:4px 10px;font-size:13px;border-radius:2px;cursor:default;font-family:inherit}',
-    // Card mode: filled grey block
-    '.wf-mode-card .wf-button button{background:#e5e7eb;border:none;color:#374151;padding:6px 12px;font-size:13px;font-weight:500;border-radius:var(--wf-corner-radius,6px);cursor:default;font-family:inherit;min-height:32px}',
+    // Card mode: filled grey block — min-height:32px, min-width:64px per spec hit-target sizing
+    '.wf-mode-card .wf-button button{background:#e5e7eb;border:none;color:#374151;padding:6px 12px;font-size:13px;font-weight:500;border-radius:var(--wf-corner-radius,6px);cursor:default;font-family:inherit;min-height:32px;min-width:64px}',
     // Fallback button (no mode)
     '.wf-button button{cursor:default;font-family:inherit}',
 
@@ -148,7 +150,7 @@ function buildWireframeStyles() {
     // --- Sections ---
     '.wf-section-title{display:none}',
     '.wf-section-body{min-height:10px}',
-    '.wf-node-section{padding:4px}',
+    '.wf-section{padding:4px}',
 
     // --- Other primitives ---
     '.wf-divider{border:none;border-top:1px solid #9ca3af;margin:8px 0}',

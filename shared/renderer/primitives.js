@@ -484,6 +484,8 @@ function buildNodeClasses(node, primitive, level = null, paneSide = null) {
 
 function sectionBodyDividerClass(layout) {
   if (!isObject(layout) || layout.separators !== 'between') return '';
+  // Separators only meaningful when gap == 0; with gap > 0 the gutter already separates items.
+  if (Number(layout.gap) > 0) return '';
   const type = layout.type || 'stack';
   return type === 'row' ? ' wf-divide-x' : ' wf-divide-y';
 }
@@ -748,7 +750,8 @@ function renderNode(node, options = {}) {
     layoutItemCss(gridItem),
     absoluteChildStyle(node.position, parentLayoutType),
     paneMetaToStyle(paneData),
-    isBorderless ? '' : wfNodeBorderStyle,
+    // In mode contexts, CSS mode rules own all border/background — skip inline border.
+    (isBorderless || options.mode) ? '' : wfNodeBorderStyle,
     nodeWireframeOverrides,
   ].filter(Boolean).join(';');
 
@@ -859,7 +862,7 @@ function renderNode(node, options = {}) {
         layoutItemCss(gridItem),
         absoluteChildStyle(node.position, parentLayoutType),
         paneMetaToStyle(paneData),
-        isBorderless ? '' : wfNodeBorderStyle,
+        (isBorderless || options.mode) ? '' : wfNodeBorderStyle,
         nodeWireframeOverrides,
       ].filter(Boolean).join(';');
       const bodyLayoutCss = layoutToCss(layout, {}, { defaultGridColumns });
