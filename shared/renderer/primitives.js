@@ -40,6 +40,8 @@ const BORDERLESS_PRIMITIVES = new Set([
   'toggle',
   'divider',
   'spacer',
+  // section gets its border from wf-surface CSS (mode-specific); no inline border
+  'section',
 ]);
 
 const OVERLAY_TYPES = new Set([
