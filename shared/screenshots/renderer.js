@@ -115,16 +115,17 @@ function buildWireframeStyles() {
     // Card mode: white card with border and subtle shadow
     '.wf-mode-card .wf-surface{background:#ffffff;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.08);border-radius:var(--wf-corner-radius,4px)}',
 
-    // --- Structural nodes (non-borderless) ---
-    // Fallback (no mode class): original behaviour
+    // --- Structural nodes ---
+    // Fallback (no mode class): retain original bordered appearance for any context without a mode
     '.wf-node{background:#fff;border:var(--wf-border-width,1px) var(--wf-border-style,solid) #333;border-radius:var(--wf-corner-radius,0px);padding:6px;margin:4px;min-height:22px}',
-    // Line mode: transparent bg, dark stroke
-    '.wf-mode-line .wf-node{background:transparent;border-color:#4b5563}',
-    // Card mode: white bg, light stroke
-    '.wf-mode-card .wf-node{background:#ffffff;border-color:#d1d5db}',
 
-    // High-specificity overrides for section nodes that are also surfaces:
-    // prevents double stroke (wf-node generic border + wf-surface outline/border)
+    // In both rendering modes, only explicit surfaces (wf-surface) show frames.
+    // Generic container nodes are transparent layout wrappers — no border, no background.
+    // This prevents frames appearing on labels, wrappers, and other non-frame containers.
+    '.wf-mode-line .wf-node:not(.wf-surface){border:none;background:transparent}',
+    '.wf-mode-card .wf-node:not(.wf-surface){border:none;background:transparent}',
+
+    // Explicit surface treatment (sections + template regions) — mode-specific borders
     '.wf-mode-line .wf-node.wf-surface{border:none;background:transparent;box-shadow:none}',
     '.wf-mode-card .wf-node.wf-surface{border:1px solid #e5e7eb;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.08);border-radius:var(--wf-corner-radius,4px)}',
 
