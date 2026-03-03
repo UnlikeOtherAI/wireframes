@@ -113,7 +113,7 @@ function buildWireframeStyles() {
     // Line mode: transparent bg, single outline (outline doesn't affect box model)
     '.wf-mode-line .wf-surface{background:transparent;outline:1px solid #4b5563}',
     // Card mode: white card with border and subtle shadow
-    '.wf-mode-card .wf-surface{background:#ffffff;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.08)}',
+    '.wf-mode-card .wf-surface{background:#ffffff;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.08);border-radius:var(--wf-corner-radius,4px)}',
 
     // --- Structural nodes (non-borderless) ---
     // Fallback (no mode class): original behaviour
@@ -122,6 +122,11 @@ function buildWireframeStyles() {
     '.wf-mode-line .wf-node{background:transparent;border-color:#4b5563}',
     // Card mode: white bg, light stroke
     '.wf-mode-card .wf-node{background:#ffffff;border-color:#d1d5db}',
+
+    // High-specificity overrides for section nodes that are also surfaces:
+    // prevents double stroke (wf-node generic border + wf-surface outline/border)
+    '.wf-mode-line .wf-node.wf-surface{border:none;background:transparent;box-shadow:none}',
+    '.wf-mode-card .wf-node.wf-surface{border:1px solid #e5e7eb;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.08);border-radius:var(--wf-corner-radius,4px)}',
 
     // --- Borderless primitives (no box) ---
     '.wf-heading,.wf-paragraph,.wf-text,.wf-image,.wf-button,.wf-input,.wf-textarea,.wf-select,.wf-checkbox,.wf-toggle{border:none;background:transparent;padding:2px 0;min-height:0}',
@@ -171,6 +176,12 @@ function buildWireframeStyles() {
     '.wf-divide-y>*+*{border-top:1px solid var(--wf-divider-color,#9ca3af)}',
     '.wf-mode-line .wf-divide-x>*+*,.wf-mode-line .wf-divide-y>*+*{--wf-divider-color:#9ca3af}',
     '.wf-mode-card .wf-divide-x>*+*,.wf-mode-card .wf-divide-y>*+*{--wf-divider-color:#e5e7eb}',
+
+    // Suppress surface borders on direct children of separator containers:
+    // the divider line IS the visual separation — individual child borders would double it.
+    // These rules must appear after the mode-specific surface rules (same specificity, source order wins).
+    '.wf-divide-x>.wf-surface,.wf-divide-y>.wf-surface{outline:none;border:none;box-shadow:none}',
+    '.wf-divide-x>.wf-node.wf-surface,.wf-divide-y>.wf-node.wf-surface{border:none;box-shadow:none}',
 
     // --- Interactions / state ---
     '.wf-visible{display:block !important;}',
@@ -239,22 +250,23 @@ function renderWireframeMarkup({
 
   let shellMarkup;
   if (frame) {
-    // Screenshot / device frame: fixed viewport, overflow:auto for Playwright capture
+    // Screenshot / device frame: fixed viewport, overflow:hidden to clip to device bounds.
+    // Use renderPageShell for correct sticky/body-row structure inside the device viewport.
+    const bgColor = mode === 'card' ? '#f3f4f6' : '#ffffff';
     const wireframeScreenStyle = [
       `width:${viewportWidth}px`,
       `height:${viewportHeight}px`,
-      'background:#fff',
-      'overflow:auto',
+      `background:${bgColor}`,
+      'overflow:hidden',
       'position:absolute',
       `left:${shellLeft}px`,
       `top:${shellTop}px`,
     ].join(';');
-    const contentStyle = `width:${viewportWidth}px;height:${viewportHeight}px;position:relative;`;
-    const rootsHtml = roots.map((r) => renderRoot(r, renderOptions)).join('\n');
+    const pageHtml = renderPageShell(roots, viewportWidth, viewportHeight, renderOptions);
     shellMarkup = `<div id="wf-screenshot-shell" style="position:relative; width:${Math.max(shellWidth, viewportWidth + shellLeft)}px; height:${Math.max(shellHeight, viewportHeight + shellTop)}px;">
   <img id="wf-frame-image" src="${frame.imageData ? escapeHtml(frame.imageData) : ''}" alt="device frame" />
   <div id="wf-wireframe-shell" style="${wireframeScreenStyle}">
-    <div id="wf-wireframe-content" style="${contentStyle}">${rootsHtml}</div>
+    ${pageHtml}
   </div>
 </div>`;
   } else {
