@@ -226,6 +226,7 @@ function writePlatformArtifacts(platformResult, outputDir, assetUrlPrefix) {
       appStateDefaults: page.appStateDefaults,
       pageStateDefaults: page.pageStateDefaults,
       pageStyle: page.wireframeStyle,
+      rendering: page.rendering || {},
       defaultGridColumns: page.defaultGridColumns,
       projectPath: platformResult.projectPath,
       dataSources: page.dataSources,
@@ -347,6 +348,7 @@ function runBuild({
         pageStateDefaults: target.pageStateDefaults,
         dataSources: target.dataSources,
         wireframeStyle: target.wireframeStyle,
+        rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
         projectPath: normalizedProjectPath,
       });

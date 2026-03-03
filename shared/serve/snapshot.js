@@ -135,6 +135,7 @@ function resolveTargets(projectPath, platform, strictValidation, failOnWarnings)
         appStateDefaults: target.appStateDefaults,
         pageStateDefaults: target.pageStateDefaults,
         pageStyle: target.wireframeStyle,
+        rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
         projectPath,
         dataSources: target.dataSources,

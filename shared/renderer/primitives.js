@@ -454,6 +454,8 @@ function buildNodeClasses(node, primitive, level = null, paneSide = null) {
     if (level && Number.isInteger(level) && level >= 1 && level <= 6) {
       classList.push(`wf-heading-${level}`);
     }
+  } else if (primitive === 'section') {
+    classList.push('wf-section', 'wf-surface');
   } else if (primitive) {
     classList.push(`wf-${toSafeClass(primitive)}`);
   } else if (node.kind === 'overlay') {
@@ -476,6 +478,12 @@ function buildNodeClasses(node, primitive, level = null, paneSide = null) {
   }
 
   return classList.join(' ');
+}
+
+function sectionBodyDividerClass(layout) {
+  if (!isObject(layout) || layout.separators !== 'between') return '';
+  const type = layout.type || 'stack';
+  return type === 'row' ? ' wf-divide-x' : ' wf-divide-y';
 }
 
 function joinAttrs(nodeId, classes, style) {
@@ -853,8 +861,10 @@ function renderNode(node, options = {}) {
         nodeWireframeOverrides,
       ].filter(Boolean).join(';');
       const bodyLayoutCss = layoutToCss(layout, {}, { defaultGridColumns });
+      const bodyDividerClass = sectionBodyDividerClass(layout);
+      const bodyClass = `wf-section-body${bodyDividerClass}`;
       const bodyStyleAttr = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
-      return `<div${joinAttrs(node.id, classes, sectionOuterStyle)}${dataAttrs()}>${sectionTitle}<div class="wf-section-body"${bodyStyleAttr}>${children}</div></div>`;
+      return `<div${joinAttrs(node.id, classes, sectionOuterStyle)}${dataAttrs()}>${sectionTitle}<div class="${bodyClass}"${bodyStyleAttr}>${children}</div></div>`;
     },
     divider: () => {
       const classes = buildNodeClasses(node, 'divider', null, paneSide);
