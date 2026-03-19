@@ -4,7 +4,10 @@ const path = require('node:path');
 
 const { renderNode, renderNodes } = require(path.resolve(__dirname, '..', 'renderer', 'primitives'));
 const { buildInteractionRuntime } = require(path.resolve(__dirname, '..', 'renderer', 'interactions'));
-const { layoutToCss } = require(path.resolve(__dirname, '..', 'renderer', 'layout'));
+const {
+  layoutToCss,
+  shouldRenderParentSeparators,
+} = require(path.resolve(__dirname, '..', 'renderer', 'layout'));
 const {
   readLocalImage,
   mergeWireframeStyle,
@@ -37,9 +40,7 @@ function toSafeClass(value) {
 }
 
 function separatorClass(layout) {
-  if (!isObject(layout) || layout.separators !== 'between') return '';
-  // Separators only meaningful when gap == 0; with gap > 0 the gutter already separates items.
-  if (Number(layout.gap) > 0) return '';
+  if (!shouldRenderParentSeparators(layout)) return '';
   const type = layout.type || 'stack';
   return type === 'row' ? ' wf-divide-x' : ' wf-divide-y';
 }
@@ -47,6 +48,25 @@ function separatorClass(layout) {
 function renderRoot(root, options) {
   if (!isObject(root)) {
     return '';
+  }
+
+  if (root.kind === 'overlay') {
+    return renderNode({
+      id: root.id,
+      kind: 'overlay',
+      type: root.type,
+      trigger: root.trigger,
+      placement: root.placement,
+      dismissOn: root.dismissOn,
+      children: Array.isArray(root.nodes) ? root.nodes : [],
+      wireframeStyle: root.wireframeStyle,
+    }, {
+      ...options,
+      routeId: options.routeId || '',
+      pageStyle: isObject(options.pageStyle) ? options.pageStyle : {},
+      dataSources: options.dataSources || {},
+      parentLayoutType: 'stack',
+    });
   }
 
   const rootLabel = root.kind
@@ -65,22 +85,24 @@ function renderRoot(root, options) {
     parentLayoutType: rootLayoutType,
   });
 
-  const rootStyle = wireframeRootStyle(options.pageStyle, root.wireframeStyle);
+  const rootStyle = wireframeRootStyle(options.pageStyle, root.wireframeStyle, options.rendering);
   const styleAttr = rootStyle ? ` style="${escapeAttr(rootStyle)}"` : '';
 
-  const bodyLayoutCss = layoutToCss(rootLayout, {});
+  const bodyLayoutCss = layoutToCss(rootLayout, {}, { density: options.density });
   const bodyDividerClass = separatorClass(rootLayout);
   const bodyStyle = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
 
   const isOverlay = root.kind === 'overlay';
+  const isSlot = root.kind === 'slot';
   const kindClass = isOverlay ? 'wf-root-overlay' : 'wf-root-container';
+  const slotClass = isSlot ? ' wf-root-slot' : '';
   const surfaceClass = isOverlay ? '' : ' wf-surface';
 
   const stickyAttr = (root.sticky === 'top' || root.sticky === 'bottom')
     ? ` data-sticky="${escapeAttr(root.sticky)}"`
     : '';
 
-  return `<section class="wf-root ${kindClass}${surfaceClass}"${styleAttr}${stickyAttr}>
+  return `<section class="wf-root ${kindClass}${slotClass}${surfaceClass}"${styleAttr}${stickyAttr}>
       <div class="wf-root-title">${escapeHtml(rootLabel)}</div>
       <div class="wf-root-body${bodyDividerClass}"${bodyStyle}>${content}</div>
     </section>`;
@@ -89,7 +111,7 @@ function renderRoot(root, options) {
 function buildWireframeStyles() {
   return [
     '*{box-sizing:border-box}',
-    'body{margin:0;font-family:Arial,sans-serif}',
+    'body{margin:0;font-family:system-ui,sans-serif}',
 
     // --- Mode: page background ---
     '.wf-mode-line{background:#ffffff}',
@@ -98,8 +120,10 @@ function buildWireframeStyles() {
     // --- Page shell ---
     // Flex column, centered at device width, min-height (not fixed height — browser scrolls it)
     '.wf-page{display:flex;flex-direction:column;margin:0 auto}',
+    '.wf-mode-card .wf-page{padding:16px;gap:16px}',
     // Body row: fill remaining height, stretch all children (sidebars fill full height)
     '.wf-body-row{flex:1;display:flex;flex-direction:row;align-items:stretch;min-height:0}',
+    '.wf-mode-card .wf-body-row{gap:16px}',
 
     // --- Sticky regions ---
     '.wf-root[data-sticky="top"]{position:sticky;top:0;z-index:10;flex-shrink:0}',
@@ -107,19 +131,20 @@ function buildWireframeStyles() {
 
     // --- Root wrappers ---
     '.wf-root{border:none;padding:0;margin:0}',
+    '.wf-root-slot{flex:1;min-width:0}',
     '.wf-root-title{display:none}',
     '.wf-root-body{display:block}',
     '.wf-node-children{display:contents}',
 
     // --- Surface: template regions, section components ---
     // Line mode: transparent bg, single outline (outline doesn't affect box model)
-    '.wf-mode-line .wf-surface{background:transparent;outline:1px solid #4b5563;border-radius:var(--wf-corner-radius,0px)}',
+    '.wf-mode-line .wf-surface{background:transparent;outline:var(--wf-border-width,1px) var(--wf-border-style,solid) #4b5563;border-radius:var(--wf-surface-radius,0px)}',
     // Card mode: white card with border and subtle shadow
-    '.wf-mode-card .wf-surface{background:#ffffff;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,0.08);border-radius:var(--wf-corner-radius,4px)}',
+    '.wf-mode-card .wf-surface{background:#ffffff;border:var(--wf-border-width,1px) var(--wf-border-style,solid) #e5e7eb;box-shadow:var(--wf-surface-shadow,0 1px 3px rgba(0,0,0,0.08));border-radius:var(--wf-surface-radius,4px)}',
 
     // --- Structural nodes ---
     // Fallback (no mode class): retain original bordered appearance for any context without a mode
-    '.wf-node{background:#fff;border:var(--wf-border-width,1px) var(--wf-border-style,solid) #333;border-radius:var(--wf-corner-radius,0px);padding:6px;margin:4px;min-height:22px}',
+    '.wf-node{background:#fff;border:var(--wf-border-width,1px) var(--wf-border-style,solid) #333;border-radius:var(--wf-surface-radius,0px);padding:6px;margin:4px;min-height:22px}',
 
     // In both rendering modes, only explicit surfaces (wf-surface) show frames.
     // Generic container nodes are transparent layout wrappers — no border, no background.
@@ -128,24 +153,53 @@ function buildWireframeStyles() {
     '.wf-mode-card .wf-node:not(.wf-surface){border:none;background:transparent}',
 
     // Explicit surface treatment (sections + template regions) — mode-specific borders
-    '.wf-mode-line .wf-node.wf-surface{border:none;background:transparent;box-shadow:none}',
-    '.wf-mode-card .wf-node.wf-surface{border:1px solid #e5e7eb;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.08);border-radius:var(--wf-corner-radius,4px)}',
+    '.wf-mode-line .wf-node.wf-surface{border:none;background:transparent;box-shadow:none;outline:var(--wf-border-width,1px) var(--wf-border-style,solid) #4b5563;border-radius:var(--wf-surface-radius,0px)}',
+    '.wf-mode-card .wf-node.wf-surface{border:var(--wf-border-width,1px) var(--wf-border-style,solid) #e5e7eb;background:#ffffff;box-shadow:var(--wf-surface-shadow,0 1px 3px rgba(0,0,0,0.08));border-radius:var(--wf-surface-radius,4px)}',
 
     // --- Borderless primitives (no box) ---
     '.wf-heading,.wf-paragraph,.wf-text,.wf-image,.wf-button,.wf-input,.wf-textarea,.wf-select,.wf-checkbox,.wf-toggle{border:none;background:transparent;padding:2px 0;min-height:0}',
     '.wf-button,.wf-checkbox,.wf-toggle{width:fit-content}',
+    '.wf-interactive{cursor:pointer}',
+    '.wf-inline-link{color:inherit;text-decoration:underline;text-underline-offset:2px}',
+    '.wf-button-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:inherit}',
 
     // --- Buttons: mode-specific styling ---
-    // Line mode: bordered label (schematic)
-    '.wf-mode-line .wf-button button{background:transparent;border:1px solid #4b5563;color:#111827;padding:4px 10px;font-size:13px;border-radius:2px;cursor:default;font-family:inherit}',
+    // Line mode: bracketed label with no box
+    '.wf-mode-line .wf-button button,.wf-mode-line .wf-button .wf-button-link{background:transparent;border:none;color:#111827;padding:0;font-size:13px;cursor:pointer;font-family:inherit}',
     // Card mode: filled grey block — min-height:32px, min-width:64px per spec hit-target sizing
-    '.wf-mode-card .wf-button button{background:#e5e7eb;border:none;color:#374151;padding:6px 12px;font-size:13px;font-weight:500;border-radius:var(--wf-corner-radius,6px);cursor:default;font-family:inherit;min-height:32px;min-width:64px}',
+    '.wf-mode-card .wf-button button,.wf-mode-card .wf-button .wf-button-link{background:#e5e7eb;border:none;color:#374151;padding:6px 12px;font-size:13px;font-weight:500;border-radius:var(--wf-corner-radius,6px);cursor:pointer;font-family:inherit;min-height:32px;min-width:64px}',
     // Fallback button (no mode)
-    '.wf-button button{cursor:default;font-family:inherit}',
+    '.wf-button button,.wf-button .wf-button-link{cursor:pointer;font-family:inherit}',
+
+    // --- Tab bars ---
+    '.wf-tab-bar{padding:0;margin:0;overflow:hidden}',
+    '.wf-tab-bar-body{min-height:0}',
+    '.wf-tab-bar .wf-node-children{display:flex;flex:1 1 auto;min-width:0}',
+    '.wf-tab-bar .wf-node-children>*{flex:1 1 0;min-width:0}',
+    '.wf-tab-bar .wf-button,.wf-tab-bar .wf-section,.wf-tab-bar .wf-text{margin:0}',
+    '.wf-tab-bar .wf-button,.wf-tab-bar .wf-button .wf-button-link,.wf-tab-bar .wf-button button{width:100%}',
+    '.wf-mode-card .wf-tab-bar .wf-button .wf-button-link,.wf-mode-card .wf-tab-bar .wf-button button{min-width:0;border-radius:0;background:#f3f4f6}',
+    '.wf-mode-line .wf-tab-bar .wf-button .wf-button-link,.wf-mode-line .wf-tab-bar .wf-button button{min-width:0}',
+
+    // --- Tables ---
+    '.wf-table{padding:0;margin:0;overflow:hidden}',
+    '.wf-table-grid{display:grid;align-items:center;min-width:0}',
+    '.wf-table-header{font-size:12px;font-weight:600;border-bottom:1px solid var(--wf-divider-color,#d1d5db)}',
+    '.wf-table-body{display:block}',
+    '.wf-table-row{min-width:0}',
+    '.wf-table-body>.wf-table-row+.wf-table-row{border-top:1px solid var(--wf-divider-color,#e5e7eb)}',
+    '.wf-table-cell{padding:10px 12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+    '.wf-table-header-cell{color:#374151}',
+    '.wf-table-body>.wf-table-row:nth-child(odd){background:#ffffff}',
+    '.wf-table-body>.wf-table-row:nth-child(even){background:#f8fafc}',
+    '.wf-mode-line .wf-table-header{background:#f9fafb}',
+    '.wf-mode-line .wf-table-body>.wf-table-row:nth-child(even){background:#f9fafb}',
+    '.wf-mode-card .wf-table-header{background:#f3f4f6}',
+    '.wf-table-row-empty .wf-table-cell{grid-column:1 / -1;color:#6b7280}',
 
     // --- Inputs: mode-specific styling ---
-    '.wf-mode-line .wf-input input,.wf-mode-line .wf-textarea textarea,.wf-mode-line .wf-select select{border:1px solid #4b5563;background:transparent;padding:4px 8px;font-family:inherit}',
-    '.wf-mode-card .wf-input input,.wf-mode-card .wf-textarea textarea,.wf-mode-card .wf-select select{border:1px solid #d1d5db;background:#ffffff;padding:6px 10px;border-radius:4px;font-family:inherit}',
+    '.wf-mode-line .wf-input input,.wf-mode-line .wf-textarea textarea,.wf-mode-line .wf-select select{border:var(--wf-border-width,1px) var(--wf-border-style,solid) #4b5563;background:transparent;padding:4px 8px;font-family:inherit}',
+    '.wf-mode-card .wf-input input,.wf-mode-card .wf-textarea textarea,.wf-mode-card .wf-select select{border:var(--wf-border-width,1px) var(--wf-border-style,solid) #d1d5db;background:#ffffff;padding:6px 10px;border-radius:var(--wf-surface-radius,4px);font-family:inherit}',
 
     // --- Sections ---
     '.wf-section-title{display:none}',
@@ -175,16 +229,18 @@ function buildWireframeStyles() {
     '#wf-wireframe-shell{overflow:hidden}',
 
     // --- Separators between siblings (layout.separators: between) ---
-    '.wf-divide-x>*+*{border-left:1px solid var(--wf-divider-color,#9ca3af)}',
-    '.wf-divide-y>*+*{border-top:1px solid var(--wf-divider-color,#9ca3af)}',
-    '.wf-mode-line .wf-divide-x>*+*,.wf-mode-line .wf-divide-y>*+*{--wf-divider-color:#9ca3af}',
-    '.wf-mode-card .wf-divide-x>*+*,.wf-mode-card .wf-divide-y>*+*{--wf-divider-color:#e5e7eb}',
+    '.wf-divide-x>*+*,.wf-divide-x>.wf-node-children>*+*{border-left:1px var(--wf-divider-style,solid) var(--wf-divider-color,#9ca3af)}',
+    '.wf-divide-y>*+*,.wf-divide-y>.wf-node-children>*+*{border-top:1px var(--wf-divider-style,solid) var(--wf-divider-color,#9ca3af)}',
+    '.wf-mode-line .wf-divide-x>*+*,.wf-mode-line .wf-divide-y>*+*,.wf-mode-line .wf-divide-x>.wf-node-children>*+*,.wf-mode-line .wf-divide-y>.wf-node-children>*+*{--wf-divider-color:#9ca3af}',
+    '.wf-mode-card .wf-divide-x>*+*,.wf-mode-card .wf-divide-y>*+*,.wf-mode-card .wf-divide-x>.wf-node-children>*+*,.wf-mode-card .wf-divide-y>.wf-node-children>*+*{--wf-divider-color:#e5e7eb}',
 
     // Suppress surface borders on direct children of separator containers:
     // the divider line IS the visual separation — individual child borders would double it.
     // These rules must appear after the mode-specific surface rules (same specificity, source order wins).
-    '.wf-divide-x>.wf-surface,.wf-divide-y>.wf-surface{outline:none;border:none;box-shadow:none}',
-    '.wf-divide-x>.wf-node.wf-surface,.wf-divide-y>.wf-node.wf-surface{border:none;box-shadow:none}',
+    '.wf-divide-x>.wf-surface,.wf-divide-y>.wf-surface,.wf-divide-x>.wf-node-children>.wf-surface,.wf-divide-y>.wf-node-children>.wf-surface{outline:none;border:none;box-shadow:none}',
+    '.wf-divide-x>.wf-node.wf-surface,.wf-divide-y>.wf-node.wf-surface,.wf-divide-x>.wf-node-children>.wf-node.wf-surface,.wf-divide-y>.wf-node-children>.wf-node.wf-surface{border:none;box-shadow:none}',
+    '.wf-divide-x>.wf-surface+.wf-surface,.wf-divide-x>.wf-node.wf-surface+.wf-node.wf-surface,.wf-divide-x>.wf-node-children>.wf-surface+.wf-surface,.wf-divide-x>.wf-node-children>.wf-node.wf-surface+.wf-node.wf-surface{border-left:1px var(--wf-divider-style,solid) var(--wf-divider-color,#9ca3af)}',
+    '.wf-divide-y>.wf-surface+.wf-surface,.wf-divide-y>.wf-node.wf-surface+.wf-node.wf-surface,.wf-divide-y>.wf-node-children>.wf-surface+.wf-surface,.wf-divide-y>.wf-node-children>.wf-node.wf-surface+.wf-node.wf-surface{border-top:1px var(--wf-divider-style,solid) var(--wf-divider-color,#9ca3af)}',
 
     // --- Interactions / state ---
     '.wf-visible{display:block !important;}',
@@ -233,6 +289,7 @@ function renderWireframeMarkup({
   rendering = {},
 }) {
   const mode = rendering?.mode === 'card' ? 'card' : 'line';
+  const density = rendering?.density === 'compact' ? 'compact' : 'comfortable';
 
   const viewportWidth = Number.isFinite(pageViewport?.width) ? pageViewport.width : 1280;
   const viewportHeight = Number.isFinite(pageViewport?.height) ? pageViewport.height : 900;
@@ -249,6 +306,8 @@ function renderWireframeMarkup({
     assetUrlPrefix,
     routeId: pageRouteId,
     mode,
+    density,
+    rendering,
   };
 
   let shellMarkup;
