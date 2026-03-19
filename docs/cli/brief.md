@@ -666,6 +666,14 @@ All editing happens:
 
 ---
 
+# 5.1 Chat Integration
+
+The admin editor includes an AI chat for wireframe editing. The chat implementation is reused from AdGoes.live (`/System/Volumes/Data/.internal/projects/Projects/AdGoes.live/`). Key reuse: session management, context-aware scope tracking, WebSocket streaming, LLM tool routing. The chat also draws ideas from the docgen project (`/System/Volumes/Data/.internal/projects/Projects/docgen/`) which uses LLM-driven patches to update only parts of files — the same pattern applies here for targeted YAML edits via chat.
+
+See [architecture.md](../architecture.md) for full chat architecture details.
+
+---
+
 # 6. Internal Architecture (Simplified)
 
 Internally required:
