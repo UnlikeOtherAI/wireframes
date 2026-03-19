@@ -121,6 +121,13 @@ page:
                     height: "100%"
                 - id: sb_div3
                   component: divider
+                - id: sb_nav_editor
+                  component: button
+                  props:
+                    label: "Editor"
+                    icon: code
+                  size:
+                    width: "100%"
                 - id: sb_nav_settings
                   component: button
                   props:
@@ -213,10 +220,12 @@ page:
                     - id: tb_undo
                       component: button
                       props:
+                        label: "Undo"
                         icon: rotate-left
                     - id: tb_redo
                       component: button
                       props:
+                        label: "Redo"
                         icon: rotate-right
                     - id: tb_divider
                       component: text
@@ -297,6 +306,7 @@ page:
                             - id: chat_history_btn
                               component: button
                               props:
+                                label: "History"
                                 icon: clock-rotate-left
 
                         - id: chat_messages
@@ -389,6 +399,7 @@ page:
                             - id: chat_send
                               component: button
                               props:
+                                label: "Send"
                                 icon: paper-plane
 
                     # --- Workspace iframe (right) ---
@@ -424,14 +435,17 @@ page:
                             - id: ws_device_web
                               component: button
                               props:
+                                label: "Web"
                                 icon: desktop
                             - id: ws_device_tablet
                               component: button
                               props:
+                                label: "Tablet"
                                 icon: tablet
                             - id: ws_device_mobile
                               component: button
                               props:
+                                label: "Mobile"
                                 icon: mobile
                             - id: ws_orient_divider
                               component: text
@@ -463,10 +477,12 @@ page:
                             - id: ws_refresh
                               component: button
                               props:
+                                label: "Refresh"
                                 icon: arrows-rotate
                             - id: ws_popout
                               component: button
                               props:
+                                label: "Open in Tab"
                                 icon: up-right-from-square
 
                         - id: ws_viewport

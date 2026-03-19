@@ -142,6 +142,7 @@ page:
                         - id: invite_email
                           component: input
                           props:
+                            label: "Email Address"
                             placeholder: "colleague@company.com"
                           size:
                             width: "100%"

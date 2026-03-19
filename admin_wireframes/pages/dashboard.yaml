@@ -68,6 +68,9 @@ page:
                   props:
                     label: "Create Project"
                     icon: plus
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_editor
   slots:
     - slotId: main_content
       content:

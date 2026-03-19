@@ -64,6 +64,9 @@ page:
                   props:
                     label: "Delete Permanently"
                     icon: trash
+                  interaction:
+                    - type: navigation
+                      targetRoute: dashboard
   slots:
     - slotId: main_content
       content:
