@@ -68,7 +68,7 @@ Bun HTTP server. RESTful JSON API.
 
 | Entity | Description |
 |--------|-------------|
-| User | Authenticated via SSO. Has projects, memberships. |
+| User | Authenticated via SSO. Has projects, memberships. Stores locale preference. |
 | Project | Wireframe project. Contains YAML documents stored as rows. |
 | Membership | User-project relationship. Role: `owner`, `editor`, `viewer`. |
 | Preview | Published snapshot of a built project. Has access control. |
@@ -110,6 +110,7 @@ DELETE /projects/:id/members/:uid   Remove member
 
 POST   /invites/:token/accept       Accept invite
 GET    /preview/:slug               View published preview
+PATCH  /users/me/locale              Update user locale preference
 POST   /preview/:slug/auth          Authenticate for preview access
 ```
 
@@ -121,6 +122,16 @@ React CSR single-page application. Online wireframe editor.
 - **Routing:** React Router
 - **State:** Zustand or similar
 - **Auth:** SSO via `authenticator.unlikeother.ai`
+
+#### Internationalization (i18n)
+
+Every UI string in the admin panel must be translatable. English is the initial (and only shipping) language, but the architecture must support adding languages without code changes.
+
+- All user-facing strings go through a translation layer (e.g. `react-i18next` or similar).
+- No hardcoded strings in components — every label, tooltip, placeholder, error message, and status text uses a translation key.
+- Language selection is per-user, stored in the platform's user profile (not SSO — SSO does not hold this data). Also persisted in a cookie for unauthenticated/pre-login hydration.
+- The API stores the user's `locale` preference (e.g. `en`, `de`, `ja`) on the User entity.
+- The admin reads the locale from the cookie on load, then syncs with the API-stored preference after login.
 
 #### Screens
 

@@ -13,6 +13,7 @@ page:
     mode: card
   pageState:
     profile_saved: false
+    language_saved: false
   overlays:
     - id: delete_account_modal
       type: modal
@@ -151,6 +152,40 @@ page:
                   interaction:
                     - type: set_state
                       stateKey: profile_saved
+                      value: true
+                      scope: page
+
+            - id: language_section
+              component: section
+              props:
+                title: "Language"
+              layout:
+                type: stack
+                gap: 12
+                padding: 16
+              children:
+                - id: lang_note
+                  component: paragraph
+                  props:
+                    label: "Choose your preferred language for the admin interface. This setting is stored in your profile and synced across devices."
+                - id: lang_select
+                  component: select
+                  props:
+                    label: "Language"
+                    options:
+                      - { value: en, label: "English" }
+                      - { value: de, label: "Deutsch" }
+                      - { value: fr, label: "Français" }
+                      - { value: es, label: "Español" }
+                      - { value: ja, label: "日本語" }
+                - id: lang_save
+                  component: button
+                  props:
+                    label: "Save Language"
+                    icon: floppy-disk
+                  interaction:
+                    - type: set_state
+                      stateKey: language_saved
                       value: true
                       scope: page
 
