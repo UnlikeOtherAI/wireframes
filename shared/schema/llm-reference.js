@@ -192,10 +192,15 @@ ${interactionTypes.map((t) => `- ${t}`).join('\n')}
 
 Types: ${overlayTypes.join(', ')}
 
+Overlays support a "size" property for width/height control. Modals and alerts are centered by default. Content scrolls automatically when it exceeds the overlay height.
+
 \`\`\`yaml
 overlays:
   - id: confirm_dialog
     type: modal
+    size:
+      width: 500              # px or string (e.g. "80%")
+      maxHeight: 600           # scrolls if content exceeds this
     content:
       - id: confirm_text
         component: paragraph

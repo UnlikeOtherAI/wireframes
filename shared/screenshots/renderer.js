@@ -58,6 +58,7 @@ function renderRoot(root, options) {
       trigger: root.trigger,
       placement: root.placement,
       dismissOn: root.dismissOn,
+      size: root.size,
       children: Array.isArray(root.nodes) ? root.nodes : [],
       wireframeStyle: root.wireframeStyle,
     }, {
@@ -243,7 +244,9 @@ function buildWireframeStyles() {
     '.wf-divide-y>.wf-surface+.wf-surface,.wf-divide-y>.wf-node.wf-surface+.wf-node.wf-surface,.wf-divide-y>.wf-node-children>.wf-surface+.wf-surface,.wf-divide-y>.wf-node-children>.wf-node.wf-surface+.wf-node.wf-surface{border-top:1px var(--wf-divider-style,solid) var(--wf-divider-color,#9ca3af)}',
 
     // --- Interactions / state ---
-    '.wf-visible{display:block !important;}',
+    '.wf-visible{display:flex !important;}',
+    '.wf-overlay-modal.wf-visible,.wf-overlay-alert.wf-visible{align-items:center;justify-content:center}',
+    '.wf-overlay-content{position:relative;display:flex;flex-direction:column;min-width:0;min-height:0;pointer-events:auto;max-height:100%;overflow:auto}',
     '.wf-selected{outline:2px solid #2563eb;outline-offset:1px;}',
     '.wf-gesture-pulse{position:relative;}',
     '.wf-gesture-pulse:after{content:"";position:absolute;inset:0;border:2px solid rgba(0,102,204,0.7);animation:wfPulse 250ms ease-out forwards;pointer-events:none;}',

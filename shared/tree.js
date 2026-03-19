@@ -4,13 +4,15 @@ const {
   SUPPORTED_SPEC_VERSION,
 } = require('./schema/constants');
 const {
-  componentsFilePath,
   pageFilePath,
   templatesFilePath,
 } = require('./addressing');
 const { listPages } = require('./page');
 const { listTemplates } = require('./template');
-const { listComponents } = require('./component');
+const {
+  loadComponentRegistryForDocuments,
+  loadProjectComponentRegistry,
+} = require('./component-registry');
 const { resolveTemplatePage } = require('./resolver');
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
@@ -36,6 +38,22 @@ function loadDocument(filePath, expectedType) {
     return { ok: false, error: error.message };
   }
 }
+
+function loadComponentsForDocuments(projectPath, entries, label) {
+  const registryResult = loadComponentRegistryForDocuments(projectPath, entries);
+  if (!registryResult.ok) {
+    return {
+      ok: false,
+      error: `Unable to load component registry${label ? ` for ${label}` : ''}: ${registryResult.error}`,
+    };
+  }
+
+  return {
+    ok: true,
+    components: registryResult.registry.components,
+  };
+}
+
 function resolveNodes(nodes, components) {
   const syntheticTemplate = {
     regions: [
@@ -94,6 +112,7 @@ function buildOverlayRoots(overlays, components, source) {
       trigger: overlay.trigger,
       placement: overlay.placement,
       dismissOn: overlay.dismissOn,
+      size: isObject(overlay.size) ? overlay.size : undefined,
       source,
       nodes: resolvedOverlay.nodes,
       wireframeStyle: isObject(overlay.wireframeStyle) ? overlay.wireframeStyle : undefined,
@@ -101,7 +120,7 @@ function buildOverlayRoots(overlays, components, source) {
   }
   return { ok: true, roots: list };
 }
-function buildPageTree(projectPath, pageId, components) {
+function buildPageTree(projectPath, pageId) {
   const pageFile = pageFilePath(projectPath, pageId);
   const pageLoaded = loadDocument(pageFile, 'page');
   if (!pageLoaded.ok) {
@@ -138,10 +157,23 @@ function buildPageTree(projectPath, pageId, components) {
       error: `Page "${pageId}" references missing template "${templateId}".`,
     };
   }
+  const componentRegistry = loadComponentsForDocuments(projectPath, [
+    {
+      documentPath: templatesLoaded.loaded.absolutePath,
+      document: templatesLoaded.loaded.document,
+    },
+    {
+      documentPath: pageLoaded.loaded.absolutePath,
+      document: pageLoaded.loaded.document,
+    },
+  ], `page "${pageId}"`);
+  if (!componentRegistry.ok) {
+    return componentRegistry;
+  }
   const resolved = resolveTemplatePage({
     template,
     page,
-    components,
+    components: componentRegistry.components,
   });
   if (!resolved.ok) {
     return {
@@ -150,11 +182,11 @@ function buildPageTree(projectPath, pageId, components) {
     };
   }
   const roots = Array.isArray(resolved.roots) ? [...resolved.roots] : [];
-  const templateOverlays = buildOverlayRoots(template.overlays, components, 'template');
+  const templateOverlays = buildOverlayRoots(template.overlays, componentRegistry.components, 'template');
   if (!templateOverlays.ok) {
     return templateOverlays;
   }
-  const pageOverlays = buildOverlayRoots(page.overlays, components, 'page');
+  const pageOverlays = buildOverlayRoots(page.overlays, componentRegistry.components, 'page');
   if (!pageOverlays.ok) {
     return pageOverlays;
   }
@@ -174,7 +206,7 @@ function buildPageTree(projectPath, pageId, components) {
     ],
   };
 }
-function buildTemplateTree(projectPath, templateId, components) {
+function buildTemplateTree(projectPath, templateId) {
   const templatesLoaded = loadDocument(templatesFilePath(projectPath), 'templates');
   if (!templatesLoaded.ok) {
     return {
@@ -189,10 +221,19 @@ function buildTemplateTree(projectPath, templateId, components) {
       error: `Template "${templateId}" does not exist.`,
     };
   }
+  const componentRegistry = loadComponentsForDocuments(projectPath, [
+    {
+      documentPath: templatesLoaded.loaded.absolutePath,
+      document: templatesLoaded.loaded.document,
+    },
+  ], `template "${templateId}"`);
+  if (!componentRegistry.ok) {
+    return componentRegistry;
+  }
   const resolved = resolveTemplatePage({
     template,
     page: {},
-    components,
+    components: componentRegistry.components,
   });
   if (!resolved.ok) {
     return {
@@ -201,7 +242,7 @@ function buildTemplateTree(projectPath, templateId, components) {
     };
   }
   const roots = Array.isArray(resolved.roots) ? [...resolved.roots] : [];
-  const templateOverlays = buildOverlayRoots(template.overlays, components, 'template');
+  const templateOverlays = buildOverlayRoots(template.overlays, componentRegistry.components, 'template');
   if (!templateOverlays.ok) {
     return templateOverlays;
   }
@@ -364,11 +405,11 @@ function buildTreeTargets(options) {
   const filter = normalizeFilter(options.filter);
   const depthLimit = Number.isInteger(options.depth) ? options.depth : null;
   const projectPath = options.projectPath;
-  const componentsLoaded = loadDocument(componentsFilePath(projectPath), 'components');
-  if (!componentsLoaded.ok) {
-    return { ok: false, error: `Unable to load components.yaml: ${componentsLoaded.error}` };
+  const projectRegistry = loadProjectComponentRegistry(projectPath);
+  if (!projectRegistry.ok) {
+    return { ok: false, error: `Unable to load project components: ${projectRegistry.error}` };
   }
-  const components = isObject(componentsLoaded.loaded.document?.components) ? componentsLoaded.loaded.document.components : {};
+  const components = projectRegistry.registry.components;
   if (!['page', 'template', 'component', 'all'].includes(targetType)) {
     return { ok: false, error: `Unknown tree target type "${targetType}".` };
   }
@@ -376,7 +417,7 @@ function buildTreeTargets(options) {
     const pageIds = options.targetId ? [options.targetId] : listPages(projectPath);
     const trees = [];
     for (const pageId of pageIds) {
-      const pageTree = buildPageTree(projectPath, pageId, components);
+      const pageTree = buildPageTree(projectPath, pageId);
       if (!pageTree.ok) {
         return pageTree;
       }
@@ -393,7 +434,7 @@ function buildTreeTargets(options) {
     const templateIds = options.targetId ? [options.targetId] : listTemplates(projectPath);
     const trees = [];
     for (const templateId of templateIds) {
-      const templateTree = buildTemplateTree(projectPath, templateId, components);
+      const templateTree = buildTemplateTree(projectPath, templateId);
       if (!templateTree.ok) {
         return templateTree;
       }
@@ -402,7 +443,7 @@ function buildTreeTargets(options) {
     return { ok: true, trees, depthLimit, filter };
   }
   if (targetType === 'component') {
-    const componentIds = options.targetId ? [options.targetId] : listComponents(projectPath);
+    const componentIds = options.targetId ? [options.targetId] : Object.keys(components).sort();
     const trees = [];
     for (const componentId of componentIds) {
       const componentTree = buildComponentTree(projectPath, componentId, components);

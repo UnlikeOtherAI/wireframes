@@ -814,6 +814,18 @@ function renderSelectOptions(options) {
   }).filter(Boolean).join('');
 }
 
+function overlaySizeStyle(size) {
+  if (!isObject(size)) return '';
+  const parts = [];
+  if (size.width != null) parts.push(`width:${toPx(size.width)}`);
+  if (size.height != null) parts.push(`height:${toPx(size.height)}`);
+  if (size.minWidth != null) parts.push(`min-width:${toPx(size.minWidth)}`);
+  if (size.maxWidth != null) parts.push(`max-width:${toPx(size.maxWidth)}`);
+  if (size.minHeight != null) parts.push(`min-height:${toPx(size.minHeight)}`);
+  if (size.maxHeight != null) parts.push(`max-height:${toPx(size.maxHeight)}`);
+  return parts.join(';');
+}
+
 function renderOverlay(node, options, childStyle) {
   const overlayType = typeof node.type === 'string' && OVERLAY_TYPES.has(node.type) ? node.type : 'overlay';
   const overlayPlacement = typeof node.placement === 'string' ? node.placement : '';
@@ -834,7 +846,10 @@ function renderOverlay(node, options, childStyle) {
     ? '<div class="wf-overlay-backdrop" aria-hidden="true" style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:none;"></div>'
     : '';
 
-  return `<div${joinAttrs(node.id, overlayClasses, overlayStyle)}${dataAttrs}>${backdrop}<div class="wf-overlay-content" style="position:relative;display:flex;min-width:0;min-height:0;pointer-events:auto;">${children}</div></div>`;
+  const contentSizeStyle = overlaySizeStyle(node.size);
+  const contentStyleAttr = contentSizeStyle ? ` style="${escapeAttr(contentSizeStyle)}"` : '';
+
+  return `<div${joinAttrs(node.id, overlayClasses, overlayStyle)}${dataAttrs}>${backdrop}<div class="wf-overlay-content"${contentStyleAttr}>${children}</div></div>`;
 }
 
 function renderNode(node, options = {}) {

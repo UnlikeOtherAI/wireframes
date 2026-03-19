@@ -16,9 +16,18 @@
       "type": "string",
       "pattern": "^[a-z][a-z0-9_]*$"
     },
+    "ComponentRef": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+    },
     "StateKey": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+    },
+    "ImportMap": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/Id" },
+      "additionalProperties": { "type": "string" }
     },
     "Expression": {
       "type": "string",
@@ -229,7 +238,7 @@
         "type": {
           "type": "string",
           "enum": [
-            "dropdown", "popover", "modal", "drawer_left", "drawer_right",
+            "dropdown", "popover", "menu", "modal", "drawer_left", "drawer_right",
             "bottom_sheet", "toast", "alert", "tooltip"
           ]
         },
@@ -237,8 +246,9 @@
         "placement": { "type": "string", "enum": ["top", "bottom", "left", "right", "center"] },
         "dismissOn": {
           "type": "array",
-          "items": { "type": "string", "enum": ["backdrop", "escape", "button", "timeout"] }
+          "items": { "type": "string", "enum": ["backdrop", "escape", "button", "timeout", "outside"] }
         },
+        "size": { "$ref": "#/$defs/Size" },
         "content": { "type": "array", "items": { "$ref": "#/$defs/Node" } },
         "wireframeStyle": { "$ref": "#/$defs/WireframeStyleOverride" }
       }
@@ -334,8 +344,8 @@
       "enum": [
         "heading", "paragraph", "text",
         "image",
-        "button", "input", "textarea", "select", "checkbox", "toggle",
-        "section", "divider", "spacer"
+        "button", "tab_bar", "input", "textarea", "select", "checkbox", "toggle",
+        "table", "section", "divider", "spacer"
       ]
     },
     "Layout": {
@@ -349,6 +359,7 @@
         "columns": { "type": "integer", "minimum": 1 },
         "justify": { "type": "string", "enum": ["flex-start", "flex-end", "center", "space-between", "space-around", "space-evenly", "stretch", "start", "end"] },
         "align": { "type": "string", "enum": ["flex-start", "flex-end", "center", "stretch", "baseline", "start", "end"] },
+        "separatorPolicy": { "type": "string", "enum": ["auto", "gutters", "divide", "none"], "description": "Shorthand separator policy. auto/divide render parent dividers only when gap is 0; gutters/no dividers win when gap is greater than 0." },
         "separators": { "type": "string", "enum": ["none", "between"], "description": "Draw dividers between sibling children. Only effective when gap is 0." },
         "separatorStyle": { "type": "string", "enum": ["solid", "dashed"], "description": "Line style for parent separators." }
       }
@@ -356,7 +367,6 @@
     "PageRendering": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["mode"],
       "properties": {
         "mode": { "type": "string", "enum": ["line", "card"], "description": "Rendering mode. line = blueprint/schematic. card = greyscale product mock." },
         "density": { "type": "string", "enum": ["comfortable", "compact"], "description": "Layout density. comfortable = default spacing. compact = reduced spacing." }
@@ -375,7 +385,7 @@
           ],
           "description": "Primitive component name or reusable component ID"
         },
-        "use": { "$ref": "#/$defs/Id" },
+        "use": { "$ref": "#/$defs/ComponentRef" },
         "injectable": { "type": "boolean", "const": true },
         "props": { "type": "object" },
         "role": { "type": "string" },
@@ -389,6 +399,8 @@
         "selection": { "$ref": "#/$defs/Selection" },
         "stateBindings": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Expression" } },
         "position": { "$ref": "#/$defs/Position" },
+        "surface": { "type": "boolean", "description": "Explicitly marks a node as a framed surface or forces it to remain content-only." },
+        "elevation": { "type": "integer", "minimum": 0, "maximum": 3, "description": "Card-mode elevation token. Ignored in line mode." },
         "pane": { "$ref": "#/$defs/Pane" },
         "wireframeStyle": { "$ref": "#/$defs/WireframeStyleOverride" },
         "children": {
@@ -472,6 +484,7 @@
         "documentType": { "const": "templates" },
         "specVersion": { "const": "1.1" },
         "id": { "$ref": "#/$defs/Id" },
+        "imports": { "$ref": "#/$defs/ImportMap" },
         "templates": {
           "type": "object",
           "additionalProperties": {
@@ -514,6 +527,7 @@
         "documentType": { "const": "components" },
         "specVersion": { "const": "1.1" },
         "id": { "$ref": "#/$defs/Id" },
+        "imports": { "$ref": "#/$defs/ImportMap" },
         "components": {
           "type": "object",
           "additionalProperties": {
@@ -536,6 +550,7 @@
         "documentType": { "const": "page" },
         "specVersion": { "const": "1.1" },
         "id": { "$ref": "#/$defs/Id" },
+        "imports": { "$ref": "#/$defs/ImportMap" },
         "page": {
           "type": "object",
           "required": ["id", "template", "viewport", "wireframeStyle", "slots"],
@@ -544,6 +559,7 @@
             "template": { "$ref": "#/$defs/Id" },
             "viewport": { "$ref": "#/$defs/Viewport" },
             "wireframeStyle": { "$ref": "#/$defs/WireframeStyle" },
+            "renderMode": { "type": "string", "enum": ["line", "card"], "description": "Shorthand alias for rendering.mode." },
             "rendering": { "$ref": "#/$defs/PageRendering" },
             "pageState": { "type": "object" },
             "dataSources": {
