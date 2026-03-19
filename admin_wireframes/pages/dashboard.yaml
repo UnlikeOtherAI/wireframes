@@ -12,7 +12,6 @@ page:
   rendering:
     mode: card
   pageState:
-    new_project_open: false
     inv1_accepted: false
     inv1_declined: false
     inv2_accepted: false

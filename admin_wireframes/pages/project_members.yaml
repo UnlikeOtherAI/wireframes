@@ -12,7 +12,6 @@ page:
   rendering:
     mode: card
   pageState:
-    transfer_confirm_open: false
     invite_sent: false
   overlays:
     - id: transfer_confirm_modal

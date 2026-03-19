@@ -12,7 +12,6 @@ page:
   rendering:
     mode: card
   pageState:
-    delete_confirm_open: false
     settings_saved: false
     style_saved: false
   overlays:

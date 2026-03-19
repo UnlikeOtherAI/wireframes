@@ -15,6 +15,8 @@ page:
     published: false
     url_copied: false
     viewer_added: false
+    download_started: false
+    access_saved: false
   slots:
     - slotId: main_content
       content:
@@ -109,7 +111,7 @@ page:
                 - id: preview_heading
                   component: heading
                   props:
-                    label: "Preview & Sharing"
+                    label: "Preview & Share"
                     level: 2
 
                 - id: publish_section
@@ -233,6 +235,16 @@ page:
                       component: paragraph
                       props:
                         label: "Preview viewers are separate from project editors. Viewing a preview never grants edit access."
+                    - id: access_save
+                      component: button
+                      props:
+                        label: "Save Access Settings"
+                        icon: floppy-disk
+                      interaction:
+                        - type: set_state
+                          stateKey: access_saved
+                          value: true
+                          scope: page
 
                 - id: viewers_section
                   component: section
@@ -307,8 +319,18 @@ page:
                           props:
                             label: "Source YAML"
                             icon: file-zipper
+                          interaction:
+                            - type: set_state
+                              stateKey: download_started
+                              value: true
+                              scope: page
                         - id: download_build
                           component: button
                           props:
                             label: "Built HTML"
                             icon: file-zipper
+                          interaction:
+                            - type: set_state
+                              stateKey: download_started
+                              value: true
+                              scope: page

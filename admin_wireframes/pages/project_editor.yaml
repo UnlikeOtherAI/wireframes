@@ -12,12 +12,12 @@ page:
   rendering:
     mode: card
   pageState:
-    add_page_open: false
-    history_open: false
-    download_open: false
     build_status: idle
     message_sent: false
     workspace_mode: preview
+    active_file: dashboard
+    active_device: web
+    active_orientation: portrait
   overlays:
     - id: history_modal
       type: modal
@@ -82,7 +82,7 @@ page:
               component: input
               props:
                 label: "Page Name"
-                placeholder: "new_page"
+                placeholder: "My New Page"
             - id: add_page_template
               component: select
               props:
@@ -140,6 +140,9 @@ page:
                 icon: file-zipper
               size:
                 width: "100%"
+              interaction:
+                - type: close_overlay
+                  targetOverlay: download_modal
             - id: dl_html
               component: button
               props:
@@ -147,6 +150,9 @@ page:
                 icon: file-zipper
               size:
                 width: "100%"
+              interaction:
+                - type: close_overlay
+                  targetOverlay: download_modal
             - id: dl_screenshots
               component: button
               props:
@@ -154,6 +160,9 @@ page:
                 icon: image
               size:
                 width: "100%"
+              interaction:
+                - type: close_overlay
+                  targetOverlay: download_modal
             - id: dl_close
               component: button
               props:
@@ -204,6 +213,11 @@ page:
                     icon: file
                   size:
                     width: "100%"
+                  interaction:
+                    - type: set_state
+                      stateKey: active_file
+                      value: dashboard
+                      scope: page
                 - id: sb_page_2
                   component: button
                   props:
@@ -211,6 +225,11 @@ page:
                     icon: file
                   size:
                     width: "100%"
+                  interaction:
+                    - type: set_state
+                      stateKey: active_file
+                      value: settings
+                      scope: page
                 - id: sb_page_3
                   component: button
                   props:
@@ -218,6 +237,11 @@ page:
                     icon: file
                   size:
                     width: "100%"
+                  interaction:
+                    - type: set_state
+                      stateKey: active_file
+                      value: profile
+                      scope: page
                 - id: sb_page_4
                   component: button
                   props:
@@ -225,6 +249,11 @@ page:
                     icon: file
                   size:
                     width: "100%"
+                  interaction:
+                    - type: set_state
+                      stateKey: active_file
+                      value: checkout
+                      scope: page
                 - id: sb_add_page
                   component: button
                   props:
@@ -248,6 +277,11 @@ page:
                     icon: layer-group
                   size:
                     width: "100%"
+                  interaction:
+                    - type: set_state
+                      stateKey: active_file
+                      value: main_template
+                      scope: page
                 - id: sb_div2
                   component: divider
                 - id: sb_comp_label
@@ -261,6 +295,11 @@ page:
                     icon: cube
                   size:
                     width: "100%"
+                  interaction:
+                    - type: set_state
+                      stateKey: active_file
+                      value: nav_item
+                      scope: page
                 - id: sb_comp_2
                   component: button
                   props:
@@ -268,6 +307,11 @@ page:
                     icon: cube
                   size:
                     width: "100%"
+                  interaction:
+                    - type: set_state
+                      stateKey: active_file
+                      value: card_widget
+                      scope: page
                 - id: sb_spacer
                   component: spacer
                   size:
@@ -623,16 +667,31 @@ page:
                               props:
                                 label: "Web"
                                 icon: desktop
+                              interaction:
+                                - type: set_state
+                                  stateKey: active_device
+                                  value: web
+                                  scope: page
                             - id: ws_device_tablet
                               component: button
                               props:
                                 label: "Tablet"
                                 icon: tablet
+                              interaction:
+                                - type: set_state
+                                  stateKey: active_device
+                                  value: tablet
+                                  scope: page
                             - id: ws_device_mobile
                               component: button
                               props:
                                 label: "Mobile"
                                 icon: mobile
+                              interaction:
+                                - type: set_state
+                                  stateKey: active_device
+                                  value: mobile
+                                  scope: page
                             - id: ws_orient_divider
                               component: text
                               props:
@@ -642,11 +701,21 @@ page:
                               props:
                                 icon: mobile
                                 label: "Portrait"
+                              interaction:
+                                - type: set_state
+                                  stateKey: active_orientation
+                                  value: portrait
+                                  scope: page
                             - id: ws_orient_landscape
                               component: button
                               props:
                                 icon: mobile
                                 label: "Landscape"
+                              interaction:
+                                - type: set_state
+                                  stateKey: active_orientation
+                                  value: landscape
+                                  scope: page
                             - id: ws_divider
                               component: text
                               props:
@@ -665,11 +734,19 @@ page:
                               props:
                                 label: "Refresh"
                                 icon: arrows-rotate
+                              interaction:
+                                - type: set_state
+                                  stateKey: build_status
+                                  value: refreshing
+                                  scope: page
                             - id: ws_popout
                               component: button
                               props:
                                 label: "Open in Tab"
                                 icon: up-right-from-square
+                              interaction:
+                                - type: navigation
+                                  targetRoute: project_preview
 
                         - id: ws_viewport
                           component: section
