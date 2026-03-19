@@ -22,11 +22,18 @@ importers:
 
   engine:
     dependencies:
+      '@fortawesome/fontawesome-free':
+        specifier: ^7.2.0
+        version: 7.2.0
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.1
 
 packages:
+
+  '@fortawesome/fontawesome-free@7.2.0':
+    resolution: {integrity: sha512-3DguDv/oUE+7vjMeTSOjCSG+KeawgVQOHrKRnvUuqYh1mfArrh7s+s8hXW3e4RerBA1+Wh+hBqf8sJNpqNrBWg==}
+    engines: {node: '>=6'}
 
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
@@ -51,6 +58,8 @@ packages:
     hasBin: true
 
 snapshots:
+
+  '@fortawesome/fontawesome-free@7.2.0': {}
 
   argparse@2.0.1: {}
 

@@ -531,13 +531,13 @@ test('renderNode renders tab_bar without stretched buttons', () => {
   assert.equal(html.includes('wf-bottom-tab-bar'), false);
 });
 
-test('renderWireframeMarkup includes Font Awesome CDN link', () => {
+test('renderWireframeMarkup includes local Font Awesome CSS link', () => {
   const html = renderWireframeMarkup({
     roots: [],
     pageViewport: { device: 'web', width: 1280, height: 900 },
     rendering: { mode: 'card' },
   });
 
-  assert.equal(html.includes('font-awesome'), true);
-  assert.equal(html.includes('cdnjs.cloudflare.com'), true);
+  assert.equal(html.includes('_shared/fa/css/all.min.css'), true);
+  assert.equal(html.includes('cdnjs.cloudflare.com'), false);
 });

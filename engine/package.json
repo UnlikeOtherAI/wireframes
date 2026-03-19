@@ -6,6 +6,7 @@
   "type": "commonjs",
   "main": "index.js",
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.2.0",
     "js-yaml": "^4.1.0"
   }
 }

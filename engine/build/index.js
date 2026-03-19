@@ -162,6 +162,21 @@ function buildMasterIndexHtml(platformEntries, options = {}) {
 </html>`;
 }
 
+function copyFontAwesomeAssets(sharedDir) {
+  const faPackageDir = path.dirname(require.resolve('@fortawesome/fontawesome-free/package.json'));
+  const faCssDir = path.join(sharedDir, 'fa', 'css');
+  const faWebfontsDir = path.join(sharedDir, 'fa', 'webfonts');
+  fs.mkdirSync(faCssDir, { recursive: true });
+  fs.mkdirSync(faWebfontsDir, { recursive: true });
+  fs.copyFileSync(path.join(faPackageDir, 'css', 'all.min.css'), path.join(faCssDir, 'all.min.css'));
+  const webfontsSource = path.join(faPackageDir, 'webfonts');
+  for (const file of fs.readdirSync(webfontsSource)) {
+    if (file.endsWith('.woff2')) {
+      fs.copyFileSync(path.join(webfontsSource, file), path.join(faWebfontsDir, file));
+    }
+  }
+}
+
 function writePlatformArtifacts(platformResult, outputDir, assetUrlPrefix) {
   const platformDir = outputDir;
   const sharedDir = path.join(platformDir, '_shared');
@@ -171,6 +186,7 @@ function writePlatformArtifacts(platformResult, outputDir, assetUrlPrefix) {
   const sharedJs = path.join(sharedDir, 'interactions.js');
   fs.writeFileSync(sharedCss, buildWireframeStyles(), 'utf8');
   fs.writeFileSync(sharedJs, buildInteractionRuntimeFromWindowContext(), 'utf8');
+  copyFontAwesomeAssets(sharedDir);
 
   const indexHtml = buildPlatformIndexHtml(platformResult.platform, platformResult.pages, {
     basePath: platformResult.basePath,
@@ -191,6 +207,7 @@ function writePlatformArtifacts(platformResult, outputDir, assetUrlPrefix) {
       projectPath: platformResult.projectPath,
       dataSources: page.dataSources,
       wireframeCssHref: './_shared/wireframe.css',
+      fontAwesomeCssHref: './_shared/fa/css/all.min.css',
       runtimeJsSrc: './_shared/interactions.js',
       runtimeContext: {
         routeId: page.routeId,

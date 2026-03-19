@@ -980,10 +980,9 @@ function renderNode(node, options = {}) {
     },
     button: () => {
       const classes = buildNodeClasses(node, 'button', null, paneSide);
-      const buttonLabel = renderBoundText(
-        typeof props.label === 'string' ? props.label : 'Button',
-        bindingContext,
-      );
+      const hasIcon = typeof props.icon === 'string' && props.icon.trim() !== '';
+      const rawLabel = typeof props.label === 'string' ? props.label : (hasIcon ? '' : 'Button');
+      const buttonLabel = renderBoundText(rawLabel, bindingContext);
       const iconName = typeof props.icon === 'string' ? props.icon.trim() : '';
       const iconStyleProp = typeof props.iconStyle === 'string' ? props.iconStyle.trim() : 'solid';
       const iconPrefix = iconStyleProp === 'regular' ? 'fa-regular' : iconStyleProp === 'brands' ? 'fa-brands' : 'fa-solid';

@@ -143,7 +143,17 @@ function serveIndex(res, method, body) {
   return sendResponse(res, method, 200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' }, body);
 }
 
+function resolveFontAwesomePath() {
+  try {
+    return path.dirname(require.resolve('@fortawesome/fontawesome-free/package.json'));
+  } catch {
+    return null;
+  }
+}
+
 function createServeRequestHandler(state, sharedAssets) {
+  const faPackageDir = resolveFontAwesomePath();
+
   return function requestHandler(req, res) {
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       return sendResponse(res, req.method, 405, { 'content-type': 'text/plain; charset=utf-8' }, 'Method not allowed.');
@@ -155,6 +165,23 @@ function createServeRequestHandler(state, sharedAssets) {
     if (requestPath === '/favicon.ico') return sendResponse(res, req.method, 404, { 'content-type': 'text/plain; charset=utf-8' }, 'Not found');
 
     if (requestPath.startsWith('/assets/')) return serveAssets(req, res, state, requestPath);
+
+    const faMatch = requestPath.match(/^\/(web|mobile|tablet)\/_shared\/fa\/(.+)$/);
+    if (faMatch && faPackageDir) {
+      const faRelative = faMatch[2];
+      const faFilePath = path.resolve(path.join(faPackageDir, faRelative));
+      if (!faFilePath.startsWith(faPackageDir + path.sep)) {
+        return sendResponse(res, req.method, 403, { 'content-type': 'text/plain; charset=utf-8' }, 'Forbidden');
+      }
+      if (fs.existsSync(faFilePath) && fs.statSync(faFilePath).isFile()) {
+        const data = fs.readFileSync(faFilePath);
+        return sendResponse(res, req.method, 200, {
+          'content-type': getContentType(faFilePath),
+          'cache-control': 'no-cache',
+        }, data);
+      }
+      return sendResponse(res, req.method, 404, { 'content-type': 'text/plain; charset=utf-8' }, 'Font asset not found');
+    }
 
     const sharedMatch = requestPath.match(/^\/(web|mobile|tablet)\/_shared\/(wireframe\.css|interactions\.js)$/);
     if (sharedMatch) {

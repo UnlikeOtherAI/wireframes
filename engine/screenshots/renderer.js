@@ -298,6 +298,7 @@ function renderWireframeMarkup({
   dataSources = {},
   frame = null,
   wireframeCssHref = null,
+  fontAwesomeCssHref = null,
   runtimeContext = null,
   runtimeJsSrc = null,
   assetUrlPrefix = '',
@@ -369,14 +370,17 @@ function renderWireframeMarkup({
     ? `<link rel="stylesheet" href="${escapeAttr(wireframeCssHref)}" />`
     : `<style>${styles}</style>`;
 
-  const fontAwesomeCdn = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />';
+  const faHref = typeof fontAwesomeCssHref === 'string' && fontAwesomeCssHref.trim() !== ''
+    ? fontAwesomeCssHref
+    : './_shared/fa/css/all.min.css';
+  const fontAwesomeLink = `<link rel="stylesheet" href="${escapeAttr(faHref)}" />`;
 
   return `<!doctype html>
 <html>
   <head>
     <meta charset="UTF-8" />
     <title>Wireframe ${escapeHtml(pageStyle?.title || 'capture')}</title>
-    ${fontAwesomeCdn}
+    ${fontAwesomeLink}
     ${styleMarkup}
   </head>
   <body class="wf wf-mode-${escapeAttr(mode)}">

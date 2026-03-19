@@ -122,6 +122,7 @@ function resolveTargets(projectPath, platform, strictValidation, failOnWarnings)
         projectPath,
         dataSources: target.dataSources,
         wireframeCssHref: './_shared/wireframe.css',
+        fontAwesomeCssHref: './_shared/fa/css/all.min.css',
         runtimeJsSrc: './_shared/interactions.js',
         runtimeContext: {
           routeId: target.pageRouteId,
