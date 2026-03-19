@@ -1,0 +1,135 @@
+documentType: page
+specVersion: "1.1"
+id: onboarding
+page:
+  id: onboarding
+  template: auth_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  slots:
+    - slotId: auth_content
+      content:
+        - id: welcome_card
+          component: section
+          layout:
+            type: stack
+            gap: 24
+            padding: 48
+            align: center
+          size:
+            width: 560
+          children:
+            - id: welcome_icon
+              component: icon
+              props:
+                name: wand-magic-sparkles
+                size: 2xl
+            - id: welcome_heading
+              component: heading
+              props:
+                label: "Welcome to Wireframes"
+                level: 1
+            - id: welcome_text
+              component: paragraph
+              props:
+                label: "You're all set. Create your first project from scratch, or start with a template to get going faster."
+            - id: welcome_divider
+              component: divider
+
+            - id: welcome_options
+              component: section
+              layout:
+                type: row
+                gap: 24
+              children:
+                - id: option_scratch
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 12
+                    padding: 24
+                    align: center
+                  size:
+                    width: "50%"
+                    height: 240
+                  children:
+                    - id: scratch_icon
+                      component: icon
+                      props:
+                        name: plus
+                        size: 2xl
+                    - id: scratch_title
+                      component: heading
+                      props:
+                        label: "Start from Scratch"
+                        level: 3
+                    - id: scratch_desc
+                      component: paragraph
+                      props:
+                        label: "Create a blank project and describe what you want to build with AI."
+                    - id: scratch_spacer
+                      component: spacer
+                      size:
+                        height: "100%"
+                    - id: scratch_btn
+                      component: button
+                      props:
+                        label: "Create Project"
+                        icon: plus
+                      size:
+                        width: "100%"
+                      interaction:
+                        - type: navigation
+                          targetRoute: project_editor
+
+                - id: option_template
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 12
+                    padding: 24
+                    align: center
+                  size:
+                    width: "50%"
+                    height: 240
+                  children:
+                    - id: template_icon
+                      component: icon
+                      props:
+                        name: layer-group
+                        size: 2xl
+                    - id: template_title
+                      component: heading
+                      props:
+                        label: "Use a Template"
+                        level: 3
+                    - id: template_desc
+                      component: paragraph
+                      props:
+                        label: "Pick a pre-built wireframe kit — SaaS dashboard, e-commerce, marketing site, and more."
+                    - id: template_spacer
+                      component: spacer
+                      size:
+                        height: "100%"
+                    - id: template_btn
+                      component: button
+                      props:
+                        label: "Browse Templates"
+                        icon: layer-group
+                      size:
+                        width: "100%"
+                      interaction:
+                        - type: navigation
+                          targetRoute: templates_gallery
+
+            - id: welcome_skip
+              component: button
+              props:
+                label: "Skip — take me to my dashboard"
+                icon: arrow-right
+              interaction:
+                - type: navigation
+                  targetRoute: dashboard

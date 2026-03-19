@@ -6,35 +6,83 @@ templates:
     layout:
       type: stack
     regions:
-      - id: page_header
+      - id: site_header
         kind: persistent
-        children:
-          - id: app_logo
-            component: image
-            props:
-              src: assets/logo.png
-              alt: App logo
-          - id: page_actions
-            injectable: true
-      - id: main
-        kind: slot
-  editor_template:
-    layout:
-      type: row
-    regions:
-      - id: editor_sidebar
-        kind: persistent
+        sticky: top
         layout:
-          type: stack
+          type: row
+          padding: 16
+          gap: 16
+          align: center
         children:
-          - id: editor_title
+          - id: logo_icon
+            component: icon
+            props:
+              name: vector-square
+              size: lg
+          - id: logo_text
             component: heading
             props:
-              text: Editor
-          - id: editor_navigation
+              label: Wireframes
+              level: 4
+          - id: nav_features
+            component: button
+            props:
+              label: "Features"
+            interaction:
+              - type: navigation
+                targetRoute: home
+          - id: nav_docs
+            component: button
+            props:
+              label: "Docs"
+            interaction:
+              - type: navigation
+                targetRoute: home
+          - id: header_spacer
+            component: spacer
+            size:
+              width: "100%"
+          - id: login_btn
+            component: button
+            props:
+              label: "Sign In"
+              icon: right-to-bracket
+            interaction:
+              - type: navigation
+                targetRoute: login
+      - id: main
+        kind: slot
+      - id: site_footer
+        kind: persistent
+        layout:
+          type: row
+          padding: 24
+          gap: 24
+          align: center
+        children:
+          - id: footer_copy
             component: text
             props:
-              text: Navigation
-      - id: editor_content
-        kind: slot
+              label: "2026 Wireframes. All rights reserved."
+          - id: footer_spacer
+            component: spacer
+            size:
+              width: "100%"
+          - id: footer_terms
+            component: button
+            props:
+              label: "Terms"
+          - id: footer_privacy
+            component: button
+            props:
+              label: "Privacy"
 
+  login_template:
+    layout:
+      type: stack
+      align: center
+      justify: center
+    regions:
+      - id: login_content
+        kind: slot

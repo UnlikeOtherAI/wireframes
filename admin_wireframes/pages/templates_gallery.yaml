@@ -1,0 +1,333 @@
+documentType: page
+specVersion: "1.1"
+id: templates_gallery
+page:
+  id: templates_gallery
+  template: app_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  slots:
+    - slotId: main_content
+      content:
+        - id: gallery_header
+          component: section
+          layout:
+            type: row
+            gap: 16
+            align: center
+            padding: 8
+          children:
+            - id: gallery_back
+              component: button
+              props:
+                label: "Back"
+                icon: arrow-left
+              interaction:
+                - type: navigation
+                  targetRoute: dashboard
+            - id: gallery_title
+              component: heading
+              props:
+                label: "Starter Templates"
+                level: 2
+            - id: gallery_spacer
+              component: spacer
+              size:
+                width: "100%"
+            - id: gallery_search
+              component: input
+              props:
+                placeholder: "Search templates..."
+              size:
+                width: 280
+            - id: gallery_filter
+              component: select
+              props:
+                placeholder: "All Categories"
+                options:
+                  - { value: all, label: "All Categories" }
+                  - { value: saas, label: "SaaS" }
+                  - { value: ecommerce, label: "E-Commerce" }
+                  - { value: marketing, label: "Marketing" }
+                  - { value: mobile, label: "Mobile App" }
+                  - { value: admin, label: "Admin Panel" }
+
+        - id: gallery_grid
+          component: section
+          layout:
+            type: grid
+            columns: 3
+            gap: 16
+            padding: 8
+          children:
+            - id: tpl_saas
+              component: section
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+              size:
+                height: 300
+              children:
+                - id: tpl_saas_preview
+                  component: section
+                  layout:
+                    type: stack
+                    padding: 16
+                    align: center
+                    justify: center
+                  size:
+                    height: 120
+                  children:
+                    - id: tpl_saas_thumb
+                      component: icon
+                      props:
+                        name: chart-line
+                        size: 2xl
+                - id: tpl_saas_name
+                  component: heading
+                  props:
+                    label: "SaaS Dashboard"
+                    level: 3
+                - id: tpl_saas_desc
+                  component: text
+                  props:
+                    label: "Sidebar nav, KPI cards, charts, data tables. 6 pages."
+                - id: tpl_saas_spacer
+                  component: spacer
+                  size:
+                    height: "100%"
+                - id: tpl_saas_btn
+                  component: button
+                  props:
+                    label: "Use Template"
+                    icon: plus
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_editor
+
+            - id: tpl_ecom
+              component: section
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+              size:
+                height: 300
+              children:
+                - id: tpl_ecom_preview
+                  component: section
+                  layout:
+                    type: stack
+                    padding: 16
+                    align: center
+                    justify: center
+                  size:
+                    height: 120
+                  children:
+                    - id: tpl_ecom_thumb
+                      component: icon
+                      props:
+                        name: cart-shopping
+                        size: 2xl
+                - id: tpl_ecom_name
+                  component: heading
+                  props:
+                    label: "E-Commerce Store"
+                    level: 3
+                - id: tpl_ecom_desc
+                  component: text
+                  props:
+                    label: "Product grid, cart, checkout flow, order confirmation. 8 pages."
+                - id: tpl_ecom_spacer
+                  component: spacer
+                  size:
+                    height: "100%"
+                - id: tpl_ecom_btn
+                  component: button
+                  props:
+                    label: "Use Template"
+                    icon: plus
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_editor
+
+            - id: tpl_marketing
+              component: section
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+              size:
+                height: 300
+              children:
+                - id: tpl_marketing_preview
+                  component: section
+                  layout:
+                    type: stack
+                    padding: 16
+                    align: center
+                    justify: center
+                  size:
+                    height: 120
+                  children:
+                    - id: tpl_marketing_thumb
+                      component: icon
+                      props:
+                        name: bullhorn
+                        size: 2xl
+                - id: tpl_marketing_name
+                  component: heading
+                  props:
+                    label: "Marketing Site"
+                    level: 3
+                - id: tpl_marketing_desc
+                  component: text
+                  props:
+                    label: "Hero, features, testimonials, pricing, footer. 4 pages."
+                - id: tpl_marketing_spacer
+                  component: spacer
+                  size:
+                    height: "100%"
+                - id: tpl_marketing_btn
+                  component: button
+                  props:
+                    label: "Use Template"
+                    icon: plus
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_editor
+
+            - id: tpl_mobile
+              component: section
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+              size:
+                height: 300
+              children:
+                - id: tpl_mobile_preview
+                  component: section
+                  layout:
+                    type: stack
+                    padding: 16
+                    align: center
+                    justify: center
+                  size:
+                    height: 120
+                  children:
+                    - id: tpl_mobile_thumb
+                      component: icon
+                      props:
+                        name: mobile-screen
+                        size: 2xl
+                - id: tpl_mobile_name
+                  component: heading
+                  props:
+                    label: "Mobile App"
+                    level: 3
+                - id: tpl_mobile_desc
+                  component: text
+                  props:
+                    label: "Tab navigation, feed, profile, settings. Mobile viewport. 5 pages."
+                - id: tpl_mobile_spacer
+                  component: spacer
+                  size:
+                    height: "100%"
+                - id: tpl_mobile_btn
+                  component: button
+                  props:
+                    label: "Use Template"
+                    icon: plus
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_editor
+
+            - id: tpl_admin
+              component: section
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+              size:
+                height: 300
+              children:
+                - id: tpl_admin_preview
+                  component: section
+                  layout:
+                    type: stack
+                    padding: 16
+                    align: center
+                    justify: center
+                  size:
+                    height: 120
+                  children:
+                    - id: tpl_admin_thumb
+                      component: icon
+                      props:
+                        name: table-columns
+                        size: 2xl
+                - id: tpl_admin_name
+                  component: heading
+                  props:
+                    label: "Admin Panel"
+                    level: 3
+                - id: tpl_admin_desc
+                  component: text
+                  props:
+                    label: "User management, roles, settings, audit log. 7 pages."
+                - id: tpl_admin_spacer
+                  component: spacer
+                  size:
+                    height: "100%"
+                - id: tpl_admin_btn
+                  component: button
+                  props:
+                    label: "Use Template"
+                    icon: plus
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_editor
+
+            - id: tpl_blank
+              component: section
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+                align: center
+                justify: center
+              size:
+                height: 300
+              children:
+                - id: tpl_blank_icon
+                  component: icon
+                  props:
+                    name: plus
+                    size: 2xl
+                - id: tpl_blank_name
+                  component: heading
+                  props:
+                    label: "Blank Project"
+                    level: 3
+                - id: tpl_blank_desc
+                  component: text
+                  props:
+                    label: "Start fresh with an empty project."
+              interaction:
+                - type: navigation
+                  targetRoute: dashboard

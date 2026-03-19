@@ -9,8 +9,7 @@ page:
   wireframeStyle:
     border:
       style: solid
-  rendering:
-    mode: card
+
   pageState:
     build_status: idle
     message_sent: false

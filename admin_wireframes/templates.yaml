@@ -37,6 +37,14 @@ templates:
             interaction:
               - type: navigation
                 targetRoute: dashboard
+          - id: nav_activity
+            component: button
+            props:
+              label: "Activity"
+              icon: clock-rotate-left
+            interaction:
+              - type: navigation
+                targetRoute: activity
           - id: nav_spacer
             component: spacer
             size:

@@ -1,0 +1,272 @@
+documentType: page
+specVersion: "1.1"
+id: activity
+page:
+  id: activity
+  template: app_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  slots:
+    - slotId: main_content
+      content:
+        - id: activity_header
+          component: section
+          layout:
+            type: row
+            gap: 16
+            align: center
+            padding: 8
+          children:
+            - id: activity_back
+              component: button
+              props:
+                label: "Back"
+                icon: arrow-left
+              interaction:
+                - type: navigation
+                  targetRoute: dashboard
+            - id: activity_title
+              component: heading
+              props:
+                label: "Activity"
+                level: 2
+            - id: activity_spacer
+              component: spacer
+              size:
+                width: "100%"
+            - id: activity_filter
+              component: select
+              props:
+                placeholder: "All Projects"
+                options:
+                  - { value: all, label: "All Projects" }
+                  - { value: p1, label: "My App Wireframe" }
+                  - { value: p2, label: "Client Portal" }
+                  - { value: p3, label: "E-commerce Checkout" }
+
+        - id: activity_content
+          component: section
+          layout:
+            type: stack
+            gap: 16
+            padding: 16
+          size:
+            maxWidth: 800
+          children:
+            - id: today_section
+              component: section
+              props:
+                title: "Today"
+              layout:
+                type: stack
+                gap: 8
+                padding: 8
+              children:
+                - id: act_1
+                  component: section
+                  layout:
+                    type: row
+                    gap: 12
+                    align: center
+                    padding: 8
+                  children:
+                    - id: act_1_icon
+                      component: icon
+                      props:
+                        name: pen
+                        size: sm
+                    - id: act_1_info
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 2
+                      children:
+                        - id: act_1_text
+                          component: text
+                          props:
+                            label: "You edited page 'dashboard' in My App Wireframe"
+                        - id: act_1_time
+                          component: text
+                          props:
+                            label: "2 minutes ago"
+                - id: act_2
+                  component: section
+                  layout:
+                    type: row
+                    gap: 12
+                    align: center
+                    padding: 8
+                  children:
+                    - id: act_2_icon
+                      component: icon
+                      props:
+                        name: user-plus
+                        size: sm
+                    - id: act_2_info
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 2
+                      children:
+                        - id: act_2_text
+                          component: text
+                          props:
+                            label: "Alice Chen accepted your invite to Client Portal"
+                        - id: act_2_time
+                          component: text
+                          props:
+                            label: "1 hour ago"
+                - id: act_3
+                  component: section
+                  layout:
+                    type: row
+                    gap: 12
+                    align: center
+                    padding: 8
+                  children:
+                    - id: act_3_icon
+                      component: icon
+                      props:
+                        name: rocket
+                        size: sm
+                    - id: act_3_info
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 2
+                      children:
+                        - id: act_3_text
+                          component: text
+                          props:
+                            label: "You published a preview of E-commerce Checkout"
+                        - id: act_3_time
+                          component: text
+                          props:
+                            label: "3 hours ago"
+                - id: act_4
+                  component: section
+                  layout:
+                    type: row
+                    gap: 12
+                    align: center
+                    padding: 8
+                  children:
+                    - id: act_4_icon
+                      component: icon
+                      props:
+                        name: plus
+                        size: sm
+                    - id: act_4_info
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 2
+                      children:
+                        - id: act_4_text
+                          component: text
+                          props:
+                            label: "You created page 'checkout_confirm' in E-commerce Checkout"
+                        - id: act_4_time
+                          component: text
+                          props:
+                            label: "4 hours ago"
+
+            - id: yesterday_section
+              component: section
+              props:
+                title: "Yesterday"
+              layout:
+                type: stack
+                gap: 8
+                padding: 8
+              children:
+                - id: act_5
+                  component: section
+                  layout:
+                    type: row
+                    gap: 12
+                    align: center
+                    padding: 8
+                  children:
+                    - id: act_5_icon
+                      component: icon
+                      props:
+                        name: paper-plane
+                        size: sm
+                    - id: act_5_info
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 2
+                      children:
+                        - id: act_5_text
+                          component: text
+                          props:
+                            label: "You sent an invite to designer@agency.com for My App Wireframe"
+                        - id: act_5_time
+                          component: text
+                          props:
+                            label: "Yesterday at 4:30 PM"
+                - id: act_6
+                  component: section
+                  layout:
+                    type: row
+                    gap: 12
+                    align: center
+                    padding: 8
+                  children:
+                    - id: act_6_icon
+                      component: icon
+                      props:
+                        name: pen
+                        size: sm
+                    - id: act_6_info
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 2
+                      children:
+                        - id: act_6_text
+                          component: text
+                          props:
+                            label: "Bob Smith edited page 'settings' in Client Portal"
+                        - id: act_6_time
+                          component: text
+                          props:
+                            label: "Yesterday at 2:15 PM"
+                - id: act_7
+                  component: section
+                  layout:
+                    type: row
+                    gap: 12
+                    align: center
+                    padding: 8
+                  children:
+                    - id: act_7_icon
+                      component: icon
+                      props:
+                        name: trash
+                        size: sm
+                    - id: act_7_info
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 2
+                      children:
+                        - id: act_7_text
+                          component: text
+                          props:
+                            label: "You removed page 'old_landing' from My App Wireframe"
+                        - id: act_7_time
+                          component: text
+                          props:
+                            label: "Yesterday at 11:00 AM"
+
+            - id: load_more
+              component: button
+              props:
+                label: "Load More Activity"
+                icon: clock-rotate-left

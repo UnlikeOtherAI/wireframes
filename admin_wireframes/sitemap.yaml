@@ -9,12 +9,37 @@ routes:
     path: /login
     page: login
     template: auth_template
+  - id: onboarding
+    path: /welcome
+    page: onboarding
+    template: auth_template
+  - id: accept_invite
+    path: /invite/accept
+    page: accept_invite
+    template: auth_template
+  - id: not_found
+    path: /404
+    page: not_found
+    template: auth_template
+  - id: preview_viewer
+    path: /preview/view
+    page: preview_viewer
+    template: auth_template
   - id: dashboard
     path: /
     page: dashboard
   - id: account
     path: /account
     page: account
+  - id: api_keys
+    path: /api-keys
+    page: api_keys
+  - id: activity
+    path: /activity
+    page: activity
+  - id: templates_gallery
+    path: /templates
+    page: templates_gallery
   - id: project_editor
     path: /projects/edit
     page: project_editor

@@ -9,22 +9,404 @@ page:
   wireframeStyle:
     border:
       style: solid
-      width: thin
-    corner:
-      style: rounded
-      radius: 8
   slots:
     - slotId: main
       content:
+        # Hero
         - id: hero
           component: section
+          layout:
+            type: stack
+            gap: 16
+            padding: 48
+            align: center
           children:
-            - id: page_title
+            - id: hero_badge
+              component: text
+              props:
+                label: "AI-Powered Wireframing"
+            - id: hero_heading
               component: heading
               props:
-                text: Welcome
-            - id: page_intro
+                label: "Design clickable wireframes with AI"
+                level: 1
+            - id: hero_subheading
               component: paragraph
               props:
-                text: Your starter page is ready.
+                label: "Describe what you want to build. The AI generates production-quality wireframe prototypes you can click through, share with stakeholders, and iterate on in seconds."
+            - id: hero_actions
+              component: section
+              layout:
+                type: row
+                gap: 12
+                align: center
+                justify: center
+              children:
+                - id: hero_cta
+                  component: button
+                  props:
+                    label: "Get Started Free"
+                    icon: rocket
+                  interaction:
+                    - type: navigation
+                      targetRoute: login
+                - id: hero_demo
+                  component: button
+                  props:
+                    label: "Watch Demo"
+                    icon: circle-play
 
+        - id: hero_divider
+          component: divider
+
+        # Features
+        - id: features_section
+          component: section
+          layout:
+            type: stack
+            gap: 24
+            padding: 48
+            align: center
+          children:
+            - id: features_heading
+              component: heading
+              props:
+                label: "Everything you need to wireframe fast"
+                level: 2
+            - id: features_grid
+              component: section
+              layout:
+                type: grid
+                columns: 3
+                gap: 24
+              children:
+                - id: feat_ai
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 8
+                    padding: 24
+                    align: center
+                  children:
+                    - id: feat_ai_icon
+                      component: icon
+                      props:
+                        name: wand-magic-sparkles
+                        size: xl
+                    - id: feat_ai_title
+                      component: heading
+                      props:
+                        label: "AI Generation"
+                        level: 3
+                    - id: feat_ai_desc
+                      component: paragraph
+                      props:
+                        label: "Describe your page in plain English. The AI builds the wireframe structure, layout, and interactions automatically."
+
+                - id: feat_click
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 8
+                    padding: 24
+                    align: center
+                  children:
+                    - id: feat_click_icon
+                      component: icon
+                      props:
+                        name: hand-pointer
+                        size: xl
+                    - id: feat_click_title
+                      component: heading
+                      props:
+                        label: "Clickable Prototypes"
+                        level: 3
+                    - id: feat_click_desc
+                      component: paragraph
+                      props:
+                        label: "Every button, link, and menu works. Navigate between pages, open modals, toggle states — all from YAML definitions."
+
+                - id: feat_collab
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 8
+                    padding: 24
+                    align: center
+                  children:
+                    - id: feat_collab_icon
+                      component: icon
+                      props:
+                        name: users
+                        size: xl
+                    - id: feat_collab_title
+                      component: heading
+                      props:
+                        label: "Team Collaboration"
+                        level: 3
+                    - id: feat_collab_desc
+                      component: paragraph
+                      props:
+                        label: "Invite editors and viewers. Share published previews with stakeholders via link, password, or SSO-restricted access."
+
+                - id: feat_devices
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 8
+                    padding: 24
+                    align: center
+                  children:
+                    - id: feat_devices_icon
+                      component: icon
+                      props:
+                        name: display
+                        size: xl
+                    - id: feat_devices_title
+                      component: heading
+                      props:
+                        label: "Multi-Device Preview"
+                        level: 3
+                    - id: feat_devices_desc
+                      component: paragraph
+                      props:
+                        label: "Preview wireframes on desktop, tablet, and mobile viewports. Layouts adapt automatically based on device presets."
+
+                - id: feat_templates
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 8
+                    padding: 24
+                    align: center
+                  children:
+                    - id: feat_templates_icon
+                      component: icon
+                      props:
+                        name: layer-group
+                        size: xl
+                    - id: feat_templates_title
+                      component: heading
+                      props:
+                        label: "Templates & Components"
+                        level: 3
+                    - id: feat_templates_desc
+                      component: paragraph
+                      props:
+                        label: "Reuse layouts with templates. Build once, slot content per page. Create reusable components for consistent patterns."
+
+                - id: feat_export
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 8
+                    padding: 24
+                    align: center
+                  children:
+                    - id: feat_export_icon
+                      component: icon
+                      props:
+                        name: file-export
+                        size: xl
+                    - id: feat_export_title
+                      component: heading
+                      props:
+                        label: "Export & Share"
+                        level: 3
+                    - id: feat_export_desc
+                      component: paragraph
+                      props:
+                        label: "Export as static HTML or download YAML source. Publish to a shareable preview URL with configurable access controls."
+
+        - id: features_divider
+          component: divider
+
+        # How It Works
+        - id: how_section
+          component: section
+          layout:
+            type: stack
+            gap: 24
+            padding: 48
+            align: center
+          children:
+            - id: how_heading
+              component: heading
+              props:
+                label: "How it works"
+                level: 2
+            - id: how_steps
+              component: section
+              layout:
+                type: row
+                gap: 32
+              children:
+                - id: step_1
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 8
+                    padding: 16
+                    align: center
+                  children:
+                    - id: step_1_num
+                      component: heading
+                      props:
+                        label: "1"
+                        level: 2
+                    - id: step_1_title
+                      component: heading
+                      props:
+                        label: "Describe"
+                        level: 4
+                    - id: step_1_text
+                      component: paragraph
+                      props:
+                        label: "Tell the AI what you want. A dashboard with a sidebar, a settings page with forms, a checkout flow."
+                - id: step_2
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 8
+                    padding: 16
+                    align: center
+                  children:
+                    - id: step_2_num
+                      component: heading
+                      props:
+                        label: "2"
+                        level: 2
+                    - id: step_2_title
+                      component: heading
+                      props:
+                        label: "Generate"
+                        level: 4
+                    - id: step_2_text
+                      component: paragraph
+                      props:
+                        label: "The AI builds the full wireframe structure — pages, templates, components, navigation, and state interactions."
+                - id: step_3
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 8
+                    padding: 16
+                    align: center
+                  children:
+                    - id: step_3_num
+                      component: heading
+                      props:
+                        label: "3"
+                        level: 2
+                    - id: step_3_title
+                      component: heading
+                      props:
+                        label: "Iterate & Share"
+                        level: 4
+                    - id: step_3_text
+                      component: paragraph
+                      props:
+                        label: "Refine with natural language. Click through the prototype. Share with your team and stakeholders for feedback."
+
+        - id: how_divider
+          component: divider
+
+        # Social Proof
+        - id: proof_section
+          component: section
+          layout:
+            type: stack
+            gap: 24
+            padding: 48
+            align: center
+          children:
+            - id: proof_heading
+              component: heading
+              props:
+                label: "Trusted by product teams"
+                level: 2
+            - id: proof_stats
+              component: section
+              layout:
+                type: row
+                gap: 32
+                justify: center
+              children:
+                - id: stat_projects
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 4
+                    align: center
+                  children:
+                    - id: stat_projects_num
+                      component: heading
+                      props:
+                        label: "2,400+"
+                        level: 2
+                    - id: stat_projects_label
+                      component: text
+                      props:
+                        label: "Projects Created"
+                - id: stat_pages
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 4
+                    align: center
+                  children:
+                    - id: stat_pages_num
+                      component: heading
+                      props:
+                        label: "18,000+"
+                        level: 2
+                    - id: stat_pages_label
+                      component: text
+                      props:
+                        label: "Pages Designed"
+                - id: stat_teams
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 4
+                    align: center
+                  children:
+                    - id: stat_teams_num
+                      component: heading
+                      props:
+                        label: "350+"
+                        level: 2
+                    - id: stat_teams_label
+                      component: text
+                      props:
+                        label: "Teams"
+
+        - id: proof_divider
+          component: divider
+
+        # Bottom CTA
+        - id: bottom_cta
+          component: section
+          layout:
+            type: stack
+            gap: 16
+            padding: 48
+            align: center
+          children:
+            - id: cta_heading
+              component: heading
+              props:
+                label: "Start wireframing in seconds"
+                level: 2
+            - id: cta_text
+              component: paragraph
+              props:
+                label: "No credit card required. Sign in with SSO and create your first project."
+            - id: cta_btn
+              component: button
+              props:
+                label: "Get Started Free"
+                icon: rocket
+              interaction:
+                - type: navigation
+                  targetRoute: login

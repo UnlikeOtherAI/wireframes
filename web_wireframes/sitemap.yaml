@@ -6,5 +6,7 @@ routes:
   - id: home
     path: /
     page: home
-    template: public_template
-
+  - id: login
+    path: /login
+    page: login
+    template: login_template

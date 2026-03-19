@@ -1,0 +1,60 @@
+documentType: page
+specVersion: "1.1"
+id: not_found
+page:
+  id: not_found
+  template: auth_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  slots:
+    - slotId: auth_content
+      content:
+        - id: error_card
+          component: section
+          layout:
+            type: stack
+            gap: 24
+            padding: 48
+            align: center
+          size:
+            width: 480
+          children:
+            - id: error_code
+              component: heading
+              props:
+                label: "404"
+                level: 1
+            - id: error_heading
+              component: heading
+              props:
+                label: "Page not found"
+                level: 2
+            - id: error_text
+              component: paragraph
+              props:
+                label: "The page you are looking for does not exist or has been moved. Check the URL or head back to your dashboard."
+            - id: error_divider
+              component: divider
+            - id: error_actions
+              component: section
+              layout:
+                type: row
+                gap: 12
+                justify: center
+              children:
+                - id: error_dashboard_btn
+                  component: button
+                  props:
+                    label: "Go to Dashboard"
+                    icon: house
+                  interaction:
+                    - type: navigation
+                      targetRoute: dashboard
+                - id: error_back_btn
+                  component: button
+                  props:
+                    label: "Go Back"
+                    icon: arrow-left

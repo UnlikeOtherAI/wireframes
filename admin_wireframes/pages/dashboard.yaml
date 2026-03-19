@@ -9,8 +9,7 @@ page:
   wireframeStyle:
     border:
       style: solid
-  rendering:
-    mode: card
+
   pageState:
     has_projects: true
     inv1_accepted: false
@@ -60,6 +59,14 @@ page:
                 gap: 8
                 justify: flex-end
               children:
+                - id: modal_browse_templates
+                  component: button
+                  props:
+                    label: "Browse Templates"
+                    icon: layer-group
+                  interaction:
+                    - type: navigation
+                      targetRoute: templates_gallery
                 - id: modal_cancel
                   component: button
                   props:

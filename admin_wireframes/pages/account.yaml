@@ -9,8 +9,7 @@ page:
   wireframeStyle:
     border:
       style: solid
-  rendering:
-    mode: card
+
   pageState:
     profile_saved: false
     language_saved: false
@@ -232,6 +231,30 @@ page:
                   interaction:
                     - type: navigation
                       targetRoute: login
+
+            - id: developer_section
+              component: section
+              props:
+                title: "Developer"
+              layout:
+                type: stack
+                gap: 12
+                padding: 16
+              children:
+                - id: dev_note
+                  component: paragraph
+                  props:
+                    label: "Manage API keys for programmatic access to your projects."
+                - id: dev_api_keys_btn
+                  component: button
+                  props:
+                    label: "Manage API Keys"
+                    icon: key
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: api_keys
 
             - id: acct_danger
               component: section

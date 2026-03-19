@@ -9,8 +9,7 @@ page:
   wireframeStyle:
     border:
       style: solid
-  rendering:
-    mode: card
+
   pageState:
     invite_sent: false
   overlays:

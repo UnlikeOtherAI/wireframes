@@ -1,0 +1,300 @@
+documentType: page
+specVersion: "1.1"
+id: api_keys
+page:
+  id: api_keys
+  template: app_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  pageState:
+    key_created: false
+    key_copied: false
+    key_revoked: false
+  overlays:
+    - id: create_key_modal
+      type: modal
+      content:
+        - id: ck_card
+          component: section
+          layout:
+            type: stack
+            gap: 16
+            padding: 24
+          size:
+            width: 480
+          children:
+            - id: ck_heading
+              component: heading
+              props:
+                label: "Create API Key"
+                level: 3
+            - id: ck_note
+              component: paragraph
+              props:
+                label: "API keys allow programmatic access to your projects. Keep your keys secret — they grant the same access as your account."
+            - id: ck_name
+              component: input
+              props:
+                label: "Key Name"
+                placeholder: "e.g. CI Pipeline, Local Dev"
+            - id: ck_scope
+              component: select
+              props:
+                label: "Scope"
+                options:
+                  - { value: read, label: "Read Only" }
+                  - { value: readwrite, label: "Read & Write" }
+            - id: ck_actions
+              component: section
+              layout:
+                type: row
+                gap: 8
+                justify: flex-end
+              children:
+                - id: ck_cancel
+                  component: button
+                  props:
+                    label: "Cancel"
+                  interaction:
+                    - type: close_overlay
+                      targetOverlay: create_key_modal
+                - id: ck_create
+                  component: button
+                  props:
+                    label: "Create Key"
+                    icon: key
+                  interaction:
+                    - type: set_state
+                      stateKey: key_created
+                      value: true
+                      scope: page
+                    - type: close_overlay
+                      targetOverlay: create_key_modal
+
+    - id: revoke_key_modal
+      type: modal
+      content:
+        - id: rk_card
+          component: section
+          layout:
+            type: stack
+            gap: 16
+            padding: 24
+          size:
+            width: 420
+          children:
+            - id: rk_icon
+              component: icon
+              props:
+                name: triangle-exclamation
+                size: xl
+            - id: rk_heading
+              component: heading
+              props:
+                label: "Revoke API Key?"
+                level: 3
+            - id: rk_text
+              component: paragraph
+              props:
+                label: "This will immediately invalidate the key 'CI Pipeline' (wf_sk_abc1...). Any integrations using this key will stop working."
+            - id: rk_actions
+              component: section
+              layout:
+                type: row
+                gap: 8
+                justify: flex-end
+              children:
+                - id: rk_cancel
+                  component: button
+                  props:
+                    label: "Cancel"
+                  interaction:
+                    - type: close_overlay
+                      targetOverlay: revoke_key_modal
+                - id: rk_confirm
+                  component: button
+                  props:
+                    label: "Revoke Key"
+                    icon: trash
+                  interaction:
+                    - type: set_state
+                      stateKey: key_revoked
+                      value: true
+                      scope: page
+
+  slots:
+    - slotId: main_content
+      content:
+        - id: keys_header
+          component: section
+          layout:
+            type: row
+            gap: 16
+            align: center
+            padding: 8
+          children:
+            - id: keys_back
+              component: button
+              props:
+                label: "Back"
+                icon: arrow-left
+              interaction:
+                - type: navigation
+                  targetRoute: account
+            - id: keys_title
+              component: heading
+              props:
+                label: "API Keys"
+                level: 2
+            - id: keys_spacer
+              component: spacer
+              size:
+                width: "100%"
+            - id: keys_create_btn
+              component: button
+              props:
+                label: "Create Key"
+                icon: plus
+              interaction:
+                - type: open_overlay
+                  targetOverlay: create_key_modal
+
+        - id: keys_content
+          component: section
+          layout:
+            type: stack
+            gap: 24
+            padding: 16
+          size:
+            maxWidth: 800
+          children:
+            - id: keys_notice
+              component: section
+              layout:
+                type: row
+                gap: 8
+                align: center
+                padding: 12
+              children:
+                - id: keys_notice_icon
+                  component: icon
+                  props:
+                    name: circle-info
+                    size: sm
+                - id: keys_notice_text
+                  component: paragraph
+                  props:
+                    label: "API keys grant access to all projects you own or have edit access to. Use scoped keys (read-only) for CI pipelines and integrations that only need to read project data."
+
+            - id: new_key_banner
+              component: section
+              visibility:
+                condition:
+                  type: state_equals
+                  scope: page
+                  key: key_created
+                  equals: true
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+              children:
+                - id: new_key_label
+                  component: heading
+                  props:
+                    label: "New Key Created"
+                    level: 4
+                - id: new_key_warning
+                  component: paragraph
+                  props:
+                    label: "Copy this key now. You will not be able to see it again."
+                - id: new_key_value
+                  component: input
+                  props:
+                    placeholder: "wf_sk_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
+                  size:
+                    width: "100%"
+                - id: new_key_copy
+                  component: button
+                  props:
+                    label: "Copy to Clipboard"
+                    icon: copy
+                  interaction:
+                    - type: set_state
+                      stateKey: key_copied
+                      value: true
+                      scope: page
+
+            - id: keys_table_section
+              component: section
+              props:
+                title: "Active Keys"
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+              children:
+                - id: keys_table
+                  component: table
+                  props:
+                    columns:
+                      - { key: name, label: "Name" }
+                      - { key: prefix, label: "Key Prefix" }
+                      - { key: scope, label: "Scope" }
+                      - { key: created, label: "Created" }
+                      - { key: last_used, label: "Last Used" }
+                      - { key: actions, label: "" }
+                    rows:
+                      - { name: "CI Pipeline", prefix: "wf_sk_abc1...", scope: "Read Only", created: "Mar 1, 2026", last_used: "2 hours ago", actions: "Revoke" }
+                      - { name: "Local Dev", prefix: "wf_sk_xyz9...", scope: "Read & Write", created: "Feb 15, 2026", last_used: "5 days ago", actions: "Revoke" }
+
+            - id: revoked_section
+              component: section
+              props:
+                title: "Revoked Keys"
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+              children:
+                - id: revoked_table
+                  component: table
+                  props:
+                    columns:
+                      - { key: name, label: "Name" }
+                      - { key: prefix, label: "Key Prefix" }
+                      - { key: revoked, label: "Revoked" }
+                    rows:
+                      - { name: "Old Deploy Key", prefix: "wf_sk_old1...", revoked: "Jan 20, 2026" }
+
+            - id: keys_docs
+              component: section
+              props:
+                title: "API Documentation"
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+              children:
+                - id: docs_text
+                  component: paragraph
+                  props:
+                    label: "Use the API to programmatically manage projects, trigger builds, and retrieve wireframe data. All endpoints require an API key in the Authorization header."
+                - id: docs_example
+                  component: section
+                  layout:
+                    type: stack
+                    padding: 12
+                  children:
+                    - id: docs_code
+                      component: text
+                      props:
+                        label: "curl -H 'Authorization: Bearer wf_sk_...' https://api.wireframes.app/projects"
+                - id: docs_link
+                  component: button
+                  props:
+                    label: "View Full API Docs"
+                    icon: book

@@ -1,0 +1,110 @@
+documentType: page
+specVersion: "1.1"
+id: login
+page:
+  id: login
+  template: login_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  pageState:
+    sso_redirecting: false
+  slots:
+    - slotId: login_content
+      content:
+        - id: login_card
+          component: section
+          layout:
+            type: stack
+            gap: 24
+            padding: 48
+            align: center
+          size:
+            width: 420
+          children:
+            - id: wf_login_logo
+              component: icon
+              props:
+                name: vector-square
+                size: 2xl
+            - id: wf_login_heading
+              component: heading
+              props:
+                label: Wireframes
+                level: 1
+            - id: wf_login_tagline
+              component: paragraph
+              props:
+                label: "Design clickable wireframe prototypes"
+            - id: wf_login_divider
+              component: divider
+
+            # Pre-SSO state
+            - id: wf_login_form
+              component: section
+              visibility:
+                condition:
+                  type: state_equals
+                  scope: page
+                  key: sso_redirecting
+                  equals: false
+              layout:
+                type: stack
+                gap: 16
+                align: center
+              children:
+                - id: wf_login_prompt
+                  component: text
+                  props:
+                    label: "Sign in to get started"
+                - id: wf_login_sso_btn
+                  component: button
+                  props:
+                    label: "Sign in with SSO"
+                    icon: right-to-bracket
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: set_state
+                      stateKey: sso_redirecting
+                      value: true
+                      scope: page
+                - id: wf_login_sso_note
+                  component: text
+                  props:
+                    label: "Authenticates via authenticator.unlikeother.ai"
+                - id: wf_login_terms
+                  component: paragraph
+                  props:
+                    label: "By signing in, you agree to our Terms of Service."
+
+            # SSO redirect state
+            - id: wf_login_redirect
+              component: section
+              visibility:
+                condition:
+                  type: state_equals
+                  scope: page
+                  key: sso_redirecting
+                  equals: true
+              layout:
+                type: stack
+                gap: 16
+                align: center
+              children:
+                - id: redirect_icon
+                  component: icon
+                  props:
+                    name: spinner
+                    size: xl
+                - id: redirect_text
+                  component: heading
+                  props:
+                    label: "Redirecting to SSO..."
+                    level: 3
+                - id: redirect_note
+                  component: paragraph
+                  props:
+                    label: "You are being redirected to authenticator.unlikeother.ai. After authentication, you will land in the Wireframes dashboard."

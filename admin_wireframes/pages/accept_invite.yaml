@@ -1,0 +1,229 @@
+documentType: page
+specVersion: "1.1"
+id: accept_invite
+page:
+  id: accept_invite
+  template: auth_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  pageState:
+    invite_accepted: false
+    invite_declined: false
+  slots:
+    - slotId: auth_content
+      content:
+        - id: invite_card
+          component: section
+          layout:
+            type: stack
+            gap: 24
+            padding: 48
+            align: center
+          size:
+            width: 480
+          children:
+            - id: invite_logo_icon
+              component: icon
+              props:
+                name: vector-square
+                size: 2xl
+            - id: invite_heading
+              component: heading
+              props:
+                label: "You've been invited"
+                level: 2
+            - id: invite_divider
+              component: divider
+
+            - id: invite_details
+              component: section
+              layout:
+                type: stack
+                gap: 12
+                padding: 16
+              children:
+                - id: invite_project_row
+                  component: section
+                  layout:
+                    type: row
+                    gap: 8
+                    align: center
+                  children:
+                    - id: invite_project_icon
+                      component: icon
+                      props:
+                        name: pen-ruler
+                        size: lg
+                    - id: invite_project_info
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 2
+                      children:
+                        - id: invite_project_name
+                          component: heading
+                          props:
+                            label: "Acme Dashboard"
+                            level: 3
+                        - id: invite_project_desc
+                          component: text
+                          props:
+                            label: "A wireframe project with 12 pages"
+                - id: invite_from
+                  component: section
+                  layout:
+                    type: row
+                    gap: 8
+                    align: center
+                  children:
+                    - id: invite_from_icon
+                      component: icon
+                      props:
+                        name: circle-user
+                        size: sm
+                    - id: invite_from_text
+                      component: text
+                      props:
+                        label: "Invited by alice@acme.com"
+                - id: invite_role_row
+                  component: section
+                  layout:
+                    type: row
+                    gap: 8
+                    align: center
+                  children:
+                    - id: invite_role_icon
+                      component: icon
+                      props:
+                        name: pen
+                        size: sm
+                    - id: invite_role_text
+                      component: text
+                      props:
+                        label: "Role: Editor"
+                - id: invite_role_desc
+                  component: paragraph
+                  props:
+                    label: "As an Editor you can view the project, edit pages, templates, and components, build previews, and publish."
+
+            - id: invite_divider_2
+              component: divider
+
+            # Accept state
+            - id: invite_accepted_msg
+              component: section
+              visibility:
+                condition:
+                  type: state_equals
+                  scope: page
+                  key: invite_accepted
+                  equals: true
+              layout:
+                type: stack
+                gap: 12
+                align: center
+              children:
+                - id: accepted_icon
+                  component: icon
+                  props:
+                    name: circle-check
+                    size: xl
+                - id: accepted_text
+                  component: heading
+                  props:
+                    label: "Invite accepted!"
+                    level: 3
+                - id: accepted_go
+                  component: button
+                  props:
+                    label: "Open Project"
+                    icon: arrow-right
+                  interaction:
+                    - type: navigation
+                      targetRoute: dashboard
+
+            # Declined state
+            - id: invite_declined_msg
+              component: section
+              visibility:
+                condition:
+                  type: state_equals
+                  scope: page
+                  key: invite_declined
+                  equals: true
+              layout:
+                type: stack
+                gap: 12
+                align: center
+              children:
+                - id: declined_icon
+                  component: icon
+                  props:
+                    name: circle-xmark
+                    size: xl
+                - id: declined_text
+                  component: heading
+                  props:
+                    label: "Invite declined"
+                    level: 3
+                - id: declined_note
+                  component: paragraph
+                  props:
+                    label: "You can ask the project owner to send a new invite if you change your mind."
+                - id: declined_go
+                  component: button
+                  props:
+                    label: "Go to Dashboard"
+                    icon: arrow-left
+                  interaction:
+                    - type: navigation
+                      targetRoute: dashboard
+
+            # Actions (visible when neither accepted nor declined)
+            - id: invite_actions
+              component: section
+              visibility:
+                condition:
+                  type: and
+                  conditions:
+                    - type: state_equals
+                      scope: page
+                      key: invite_accepted
+                      equals: false
+                    - type: state_equals
+                      scope: page
+                      key: invite_declined
+                      equals: false
+              layout:
+                type: row
+                gap: 12
+                justify: center
+              children:
+                - id: invite_decline_btn
+                  component: button
+                  props:
+                    label: "Decline"
+                    icon: xmark
+                  interaction:
+                    - type: set_state
+                      stateKey: invite_declined
+                      value: true
+                      scope: page
+                - id: invite_accept_btn
+                  component: button
+                  props:
+                    label: "Accept Invite"
+                    icon: check
+                  interaction:
+                    - type: set_state
+                      stateKey: invite_accepted
+                      value: true
+                      scope: page
+
+            - id: invite_sso_note
+              component: text
+              props:
+                label: "You will be authenticated via SSO to join this project."

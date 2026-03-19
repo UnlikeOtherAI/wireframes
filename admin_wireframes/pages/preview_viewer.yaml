@@ -1,0 +1,217 @@
+documentType: page
+specVersion: "1.1"
+id: preview_viewer
+page:
+  id: preview_viewer
+  template: auth_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  slots:
+    - slotId: auth_content
+      content:
+        - id: viewer_shell
+          component: section
+          layout:
+            type: stack
+            gap: 0
+          size:
+            width: "100%"
+            maxWidth: 1280
+          children:
+            - id: viewer_bar
+              component: section
+              layout:
+                type: row
+                gap: 12
+                padding: 12
+                align: center
+              children:
+                - id: viewer_logo_icon
+                  component: icon
+                  props:
+                    name: vector-square
+                    size: sm
+                - id: viewer_logo
+                  component: text
+                  props:
+                    label: "Wireframes Preview"
+                - id: viewer_divider_v
+                  component: divider
+                - id: viewer_project_name
+                  component: heading
+                  props:
+                    label: "My App Wireframe"
+                    level: 4
+                - id: viewer_spacer
+                  component: spacer
+                  size:
+                    width: "100%"
+                - id: viewer_page_select
+                  component: select
+                  props:
+                    placeholder: "Page"
+                    options:
+                      - { value: home, label: "Home" }
+                      - { value: dashboard, label: "Dashboard" }
+                      - { value: settings, label: "Settings" }
+                      - { value: profile, label: "Profile" }
+                - id: viewer_device_select
+                  component: select
+                  props:
+                    placeholder: "Device"
+                    options:
+                      - { value: desktop, label: "Desktop" }
+                      - { value: tablet, label: "Tablet" }
+                      - { value: mobile, label: "Mobile" }
+
+            - id: viewer_divider
+              component: divider
+
+            - id: viewer_viewport
+              component: section
+              layout:
+                type: stack
+                gap: 0
+                padding: 16
+              size:
+                height: 600
+              children:
+                - id: viewport_mock_header
+                  component: section
+                  layout:
+                    type: row
+                    gap: 12
+                    padding: 12
+                    align: center
+                  children:
+                    - id: mock_logo
+                      component: text
+                      props:
+                        label: "[Logo]"
+                    - id: mock_nav_1
+                      component: button
+                      props:
+                        label: "Home"
+                    - id: mock_nav_2
+                      component: button
+                      props:
+                        label: "Dashboard"
+                    - id: mock_nav_3
+                      component: button
+                      props:
+                        label: "Settings"
+                - id: viewport_mock_body
+                  component: section
+                  layout:
+                    type: row
+                    gap: 8
+                    padding: 8
+                  children:
+                    - id: mock_sidebar
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 4
+                        padding: 8
+                      size:
+                        width: 200
+                      children:
+                        - id: mock_sb_1
+                          component: button
+                          props:
+                            label: "Overview"
+                        - id: mock_sb_2
+                          component: button
+                          props:
+                            label: "Analytics"
+                        - id: mock_sb_3
+                          component: button
+                          props:
+                            label: "Reports"
+                    - id: mock_content
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 12
+                        padding: 12
+                      children:
+                        - id: mock_heading
+                          component: heading
+                          props:
+                            label: "Dashboard"
+                            level: 2
+                        - id: mock_stats
+                          component: section
+                          layout:
+                            type: row
+                            gap: 12
+                          children:
+                            - id: mock_stat_1
+                              component: section
+                              layout:
+                                type: stack
+                                padding: 12
+                              children:
+                                - id: mock_s1_val
+                                  component: heading
+                                  props:
+                                    label: "1,234"
+                                    level: 3
+                                - id: mock_s1_label
+                                  component: text
+                                  props:
+                                    label: "Total Users"
+                            - id: mock_stat_2
+                              component: section
+                              layout:
+                                type: stack
+                                padding: 12
+                              children:
+                                - id: mock_s2_val
+                                  component: heading
+                                  props:
+                                    label: "$45.6K"
+                                    level: 3
+                                - id: mock_s2_label
+                                  component: text
+                                  props:
+                                    label: "Revenue"
+                            - id: mock_stat_3
+                              component: section
+                              layout:
+                                type: stack
+                                padding: 12
+                              children:
+                                - id: mock_s3_val
+                                  component: heading
+                                  props:
+                                    label: "567"
+                                    level: 3
+                                - id: mock_s3_label
+                                  component: text
+                                  props:
+                                    label: "Orders"
+
+            - id: viewer_footer
+              component: section
+              layout:
+                type: row
+                gap: 8
+                padding: 12
+                align: center
+                justify: center
+              children:
+                - id: viewer_footer_text
+                  component: text
+                  props:
+                    label: "Preview powered by Wireframes"
+                - id: viewer_footer_link
+                  component: button
+                  props:
+                    label: "Create your own"
+                  interaction:
+                    - type: navigation
+                      targetRoute: login
