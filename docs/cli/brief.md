@@ -18,7 +18,7 @@ Everything renders as skeleton frames you can click through:
 * An input is a framed placeholder field
 
 Built-in primitives: `heading`, `paragraph`, `text`, `image`, `button`,
-`input`, `textarea`, `select`, `checkbox`, `toggle`, `section`, `divider`, `spacer`.
+`input`, `textarea`, `select`, `checkbox`, `radio`, `toggle`, `section`, `divider`, `spacer`.
 
 Every element is a bordered rectangle (solid or dashed) with text labels or content.
 Images can reference a URL or a file in `assets/` (e.g. a client logo).

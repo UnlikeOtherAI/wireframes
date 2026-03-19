@@ -454,6 +454,10 @@ checkbox  → <div class="wf-checkbox">
               <label><input type="checkbox" /> {label}</label>
             </div>
 
+radio     → <div class="wf-radio">
+              <label><input type="radio" /> {label}</label>
+            </div>
+
 toggle    → <div class="wf-toggle">
               <label>
                 <span class="wf-toggle-track">
@@ -667,7 +671,7 @@ set_state      → Set state key to specific value.
                  Triggers DOM update for all bound elements.
 
 submit         → Gather values from all interactive primitives (input, textarea,
-                 select, checkbox, toggle) within the form container node
+                 select, checkbox, radio, toggle) within the form container node
                  (referenced by formId). Collect as key-value pairs where
                  key = node ID, value = current input value/checked state.
                  Display as a toast showing "Form submitted: {key: value, ...}"
@@ -816,7 +820,7 @@ state changes.
 render time. They provide access to the triggering event's context:
 
 * `{{event.value}}` — current value of the input/select/textarea that triggered the interaction
-* `{{event.checked}}` — boolean checked state for checkbox/toggle
+* `{{event.checked}}` — boolean checked state for checkbox/radio/toggle
 * `{{event.targetId}}` — ID of the node that triggered the interaction
 
 Event bindings are only valid inside `interaction` definitions (e.g. as

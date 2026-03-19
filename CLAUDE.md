@@ -56,7 +56,7 @@ SSR landing page. Marketing, docs, pricing.
 - **Engine has zero CLI/API deps.** No process.exit, no console.log, no framework imports.
 - **Schema-first.** The schema contract in docs/cli/schema.md and engine/schema/schema.json is authoritative.
 - **Schema changes must be reflected everywhere.** schema.md, schema-systems.md, schema-canonical.yaml, schema.json, brief.md, rendering.md.
-- **Wireframes and briefs stay in sync.** Any UI change must update wireframes; any wireframe change must be checked against the brief.
+- **Wireframes and briefs stay in sync.** Any functionality change must update wireframes. Any wireframe change must be checked against the brief. These are never out of sync — a single instruction updates both.
 - **Verify with Playwright.** Renderer changes require visual layout fixtures verified in Playwright.
 - **Deterministic.** Same input = same output.
 - **Save agent review output to temp files.** Use `/tmp/`, don't stream into context.

@@ -26,6 +26,7 @@ const PRIMITIVE_COMPONENTS = new Set([
   'textarea',
   'select',
   'checkbox',
+  'radio',
   'toggle',
   'table',
   'section',
@@ -44,6 +45,7 @@ const BORDERLESS_PRIMITIVES = new Set([
   'textarea',
   'select',
   'checkbox',
+  'radio',
   'toggle',
   'table',
   'divider',
@@ -1081,6 +1083,12 @@ function renderNode(node, options = {}) {
       const classes = buildNodeClasses(node, 'checkbox', null, paneSide);
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><label><input type="checkbox" /> ${
         renderBoundText(typeof props.label === 'string' ? props.label : 'Checkbox', bindingContext)
+      }</label>${renderChildren(node, options)}</div>`;
+    },
+    radio: () => {
+      const classes = buildNodeClasses(node, 'radio', null, paneSide);
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><label><input type="radio" /> ${
+        renderBoundText(typeof props.label === 'string' ? props.label : 'Option', bindingContext)
       }</label>${renderChildren(node, options)}</div>`;
     },
     toggle: () => {

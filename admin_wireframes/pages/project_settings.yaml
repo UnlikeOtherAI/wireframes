@@ -183,6 +183,10 @@ page:
                       props:
                         label: "Slug"
                         placeholder: "my-app-wireframe"
+                    - id: slug_hint
+                      component: text
+                      props:
+                        label: "URL-safe identifier used in preview links. Lowercase, numbers, hyphens only."
                     - id: settings_desc
                       component: textarea
                       props:

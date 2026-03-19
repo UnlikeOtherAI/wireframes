@@ -1,0 +1,17 @@
+documentType: manifest
+specVersion: "1.1"
+id: manifest
+manifest:
+  projectId: "web_wireframes"
+  name: "web_wireframes"
+  schemaVersion: "1.1"
+  createdWithCLI: "wf 0.1.0"
+  defaultGridColumns: 12
+  defaultWireframeStyle:
+    border:
+      style: solid
+      width: thin
+    corner:
+      style: rounded
+      radius: 8
+

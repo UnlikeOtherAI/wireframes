@@ -26,6 +26,7 @@ const PRIMITIVE_COMPONENTS = new Set([
   'textarea',
   'select',
   'checkbox',
+  'radio',
   'toggle',
   'table',
   'section',

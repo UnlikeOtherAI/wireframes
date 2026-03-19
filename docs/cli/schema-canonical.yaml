@@ -297,6 +297,7 @@ primitives:
     - textarea      # props: placeholder, rows
     - select        # props: placeholder, options
     - checkbox      # props: label
+    - radio         # props: label
     - toggle        # props: label
   structural:
     - table         # props: columns[{key,label,width?}], rows?; also supports binding.source for dataset-backed rows

@@ -534,6 +534,7 @@ the intrinsic form control appearance is sufficient at wireframe fidelity.
 
 ```css
 .wf-checkbox input[type="checkbox"],
+.wf-radio input[type="radio"],
 .wf-toggle-track {
   accent-color: #6b7280;
 }
@@ -850,7 +851,7 @@ A node gets the `wf-surface` class if ANY of the following is true:
 A node does NOT get `wf-surface` if:
 
 - `component` is any text primitive (`heading`, `paragraph`, `text`)
-- `component: button`, `input`, `textarea`, `select`, `checkbox`, `toggle`
+- `component: button`, `input`, `textarea`, `select`, `checkbox`, `radio`, `toggle`
 - `component: divider` or `component: spacer`
 - The node is a pure layout wrapper with `use` referencing a component
   (the component's root handles its own surface class)

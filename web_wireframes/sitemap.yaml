@@ -1,0 +1,10 @@
+documentType: sitemap
+specVersion: "1.1"
+id: sitemap
+defaultTemplate: public_template
+routes:
+  - id: home
+    path: /
+    page: home
+    template: public_template
+

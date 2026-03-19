@@ -1,0 +1,40 @@
+documentType: templates
+specVersion: "1.1"
+id: templates
+templates:
+  public_template:
+    layout:
+      type: stack
+    regions:
+      - id: page_header
+        kind: persistent
+        children:
+          - id: app_logo
+            component: image
+            props:
+              src: assets/logo.png
+              alt: App logo
+          - id: page_actions
+            injectable: true
+      - id: main
+        kind: slot
+  editor_template:
+    layout:
+      type: row
+    regions:
+      - id: editor_sidebar
+        kind: persistent
+        layout:
+          type: stack
+        children:
+          - id: editor_title
+            component: heading
+            props:
+              text: Editor
+          - id: editor_navigation
+            component: text
+            props:
+              text: Navigation
+      - id: editor_content
+        kind: slot
+

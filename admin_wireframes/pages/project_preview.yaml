@@ -127,7 +127,7 @@ page:
                         - id: pub_status_icon
                           component: icon
                           props:
-                            name: circle
+                            name: circle-xmark
                             size: sm
                         - id: pub_status_text
                           component: text
@@ -202,19 +202,20 @@ page:
                       props:
                         label: "Who can view this preview?"
                     - id: access_public
-                      component: checkbox
+                      component: radio
                       props:
                         label: "Public — anyone with the link can view"
                     - id: access_password
-                      component: checkbox
+                      component: radio
                       props:
                         label: "Password protected"
                     - id: access_pw_field
                       component: input
                       props:
+                        label: "Preview Password"
                         placeholder: "Set a preview password"
                     - id: access_sso
-                      component: checkbox
+                      component: radio
                       props:
                         label: "SSO restricted — only specific email addresses"
                     - id: access_note
@@ -245,6 +246,7 @@ page:
                         - id: viewer_email
                           component: input
                           props:
+                            label: "Email Address"
                             placeholder: "viewer@example.com"
                           size:
                             width: "100%"

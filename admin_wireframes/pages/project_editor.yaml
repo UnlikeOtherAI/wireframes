@@ -13,7 +13,51 @@ page:
     mode: card
   pageState:
     add_page_open: false
+    history_open: false
+    download_open: false
   overlays:
+    - id: history_modal
+      type: modal
+      content:
+        - id: history_card
+          component: section
+          layout:
+            type: stack
+            gap: 16
+            padding: 24
+          size:
+            width: 560
+          children:
+            - id: history_heading
+              component: heading
+              props:
+                label: "Change History"
+                level: 3
+            - id: history_note
+              component: paragraph
+              props:
+                label: "All changes to this project, including who made them and when."
+            - id: history_table
+              component: table
+              props:
+                columns:
+                  - { key: time, label: "Time" }
+                  - { key: user, label: "User" }
+                  - { key: action, label: "Action" }
+                  - { key: page, label: "Page" }
+                rows:
+                  - { time: "2 min ago", user: "You", action: "Added stats row", page: "dashboard" }
+                  - { time: "15 min ago", user: "You", action: "Created page", page: "settings" }
+                  - { time: "1 hour ago", user: "Alice Chen", action: "Updated heading", page: "dashboard" }
+                  - { time: "2 hours ago", user: "You", action: "Added sidebar nav", page: "dashboard" }
+                  - { time: "Yesterday", user: "Alice Chen", action: "Created page", page: "profile" }
+            - id: history_close
+              component: button
+              props:
+                label: "Close"
+              interaction:
+                - type: close_overlay
+                  targetOverlay: history_modal
     - id: add_page_modal
       type: modal
       content:
@@ -65,6 +109,55 @@ page:
                   interaction:
                     - type: close_overlay
                       targetOverlay: add_page_modal
+    - id: download_modal
+      type: modal
+      content:
+        - id: dl_card
+          component: section
+          layout:
+            type: stack
+            gap: 16
+            padding: 24
+          size:
+            width: 420
+          children:
+            - id: dl_heading
+              component: heading
+              props:
+                label: "Download Project"
+                level: 3
+            - id: dl_note
+              component: paragraph
+              props:
+                label: "Download the full project as a ZIP archive."
+            - id: dl_source
+              component: button
+              props:
+                label: "Source YAML"
+                icon: file-zipper
+              size:
+                width: "100%"
+            - id: dl_html
+              component: button
+              props:
+                label: "Built HTML"
+                icon: file-zipper
+              size:
+                width: "100%"
+            - id: dl_screenshots
+              component: button
+              props:
+                label: "Screenshots (PNG)"
+                icon: image
+              size:
+                width: "100%"
+            - id: dl_close
+              component: button
+              props:
+                label: "Close"
+              interaction:
+                - type: close_overlay
+                  targetOverlay: download_modal
   slots:
     - slotId: main_content
       content:
@@ -293,11 +386,17 @@ page:
                       props:
                         label: "History"
                         icon: clock-rotate-left
+                      interaction:
+                        - type: open_overlay
+                          targetOverlay: history_modal
                     - id: tb_download
                       component: button
                       props:
                         label: "Download"
                         icon: download
+                      interaction:
+                        - type: open_overlay
+                          targetOverlay: download_modal
                     - id: tb_build
                       component: button
                       props:
@@ -365,6 +464,9 @@ page:
                               props:
                                 label: "History"
                                 icon: clock-rotate-left
+                              interaction:
+                                - type: open_overlay
+                                  targetOverlay: history_modal
 
                         - id: chat_messages
                           component: section

@@ -421,6 +421,11 @@ or a reusable component composed from them.
   props:
     label: "I agree to terms"
 
+- id: access_mode
+  component: radio
+  props:
+    label: "Public access"
+
 - id: plan_toggle
   component: toggle
   props:
@@ -434,6 +439,7 @@ or a reusable component composed from them.
 * `textarea` — multi-line input. Optional: `placeholder`, `rows`.
 * `select` — dropdown selector. Optional: `placeholder`, `options`.
 * `checkbox` — checkbox with label. Required: `label`.
+* `radio` — radio button with label. Required: `label`.
 * `toggle` — on/off switch. Required: `label`.
 
 ## Structural Primitives

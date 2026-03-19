@@ -77,6 +77,7 @@ page:
             - id: acct_back
               component: button
               props:
+                label: "Back"
                 icon: arrow-left
               interaction:
                 - type: navigation

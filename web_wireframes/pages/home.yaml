@@ -1,0 +1,30 @@
+documentType: page
+specVersion: "1.1"
+id: home
+page:
+  id: home
+  template: public_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+      width: thin
+    corner:
+      style: rounded
+      radius: 8
+  slots:
+    - slotId: main
+      content:
+        - id: hero
+          component: section
+          children:
+            - id: page_title
+              component: heading
+              props:
+                text: Welcome
+            - id: page_intro
+              component: paragraph
+              props:
+                text: Your starter page is ready.
+

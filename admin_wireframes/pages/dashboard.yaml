@@ -114,6 +114,38 @@ page:
                 - type: open_overlay
                   targetOverlay: new_project_modal
 
+        # Empty state — shown when user has no projects yet
+        - id: empty_state
+          component: section
+          layout:
+            type: stack
+            gap: 16
+            padding: 48
+            align: center
+          children:
+            - id: empty_icon
+              component: icon
+              props:
+                name: pen-ruler
+                size: 2xl
+            - id: empty_heading
+              component: heading
+              props:
+                label: "No projects yet"
+                level: 3
+            - id: empty_text
+              component: paragraph
+              props:
+                label: "Create your first wireframe project to start designing clickable prototypes. Use the AI chat to describe your pages and the system will generate them automatically."
+            - id: empty_cta
+              component: button
+              props:
+                label: "Create Your First Project"
+                icon: plus
+              interaction:
+                - type: open_overlay
+                  targetOverlay: new_project_modal
+
         - id: invites_banner
           component: section
           layout:

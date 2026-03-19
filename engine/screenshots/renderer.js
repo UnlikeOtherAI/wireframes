@@ -158,9 +158,9 @@ function buildWireframeStyles() {
     '.wf-mode-card .wf-node.wf-surface{border:var(--wf-border-width,1px) var(--wf-border-style,solid) #e5e7eb;background:#ffffff;box-shadow:var(--wf-surface-shadow,0 1px 3px rgba(0,0,0,0.08));border-radius:var(--wf-surface-radius,4px)}',
 
     // --- Borderless primitives (no box) ---
-    '.wf-heading,.wf-paragraph,.wf-text,.wf-image,.wf-icon,.wf-button,.wf-input,.wf-textarea,.wf-select,.wf-checkbox,.wf-toggle{border:none;background:transparent;padding:2px 0;min-height:0}',
+    '.wf-heading,.wf-paragraph,.wf-text,.wf-image,.wf-icon,.wf-button,.wf-input,.wf-textarea,.wf-select,.wf-checkbox,.wf-radio,.wf-toggle{border:none;background:transparent;padding:2px 0;min-height:0}',
     '.wf-icon{display:inline-flex;align-items:center;justify-content:center;color:#374151}',
-    '.wf-button,.wf-checkbox,.wf-toggle{width:fit-content}',
+    '.wf-button,.wf-checkbox,.wf-radio,.wf-toggle{width:fit-content}',
     '.wf-button i.fa-solid,.wf-button i.fa-regular,.wf-button i.fa-brands{margin-right:4px}',
     '.wf-interactive{cursor:pointer}',
     '.wf-inline-link{color:inherit;text-decoration:underline;text-underline-offset:2px}',
@@ -224,7 +224,7 @@ function buildWireframeStyles() {
     '.wf-mode-line .wf-divider{border-top-color:#4b5563}',
     '.wf-mode-card .wf-divider{border-top-color:#e5e7eb}',
     '.wf-spacer{min-height:12px;background:transparent;border:none}',
-    '.wf-heading,.wf-paragraph,.wf-button,.wf-input,.wf-textarea,.wf-select,.wf-checkbox,.wf-toggle,.wf-section,.wf-text{margin:4px 0}',
+    '.wf-heading,.wf-paragraph,.wf-button,.wf-input,.wf-textarea,.wf-select,.wf-checkbox,.wf-radio,.wf-toggle,.wf-section,.wf-text{margin:4px 0}',
     '.wf-img,.wf-image img{max-width:100%;max-height:100%;display:block}',
     '.wf-image-placeholder{padding:16px;border:1px dashed #9ca3af;background:#f9fafb;text-align:center;color:#9ca3af}',
     '.wf-toggle-track{display:inline-block;width:32px;height:16px;border:1px solid #666;border-radius:12px;position:relative;vertical-align:middle;margin-right:8px}',
