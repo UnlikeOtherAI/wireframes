@@ -1,0 +1,82 @@
+---
+const adminUrl = import.meta.env.PUBLIC_ADMIN_URL ?? "https://app.wireframes.dev";
+---
+
+<header class="site-header">
+  <nav class="container header-nav" aria-label="Main navigation">
+    <a href="/" class="logo" aria-label="Wireframes home">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+        <rect x="2" y="2" width="24" height="24" rx="4" stroke="currentColor" stroke-width="2.5" />
+        <line x1="2" y1="9" x2="26" y2="9" stroke="currentColor" stroke-width="2" />
+        <line x1="10" y1="9" x2="10" y2="26" stroke="currentColor" stroke-width="2" />
+      </svg>
+      <span>Wireframes</span>
+    </a>
+    <div class="header-links">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#pricing">Pricing</a>
+      <a href={adminUrl} class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .header-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .logo:hover {
+    text-decoration: none;
+  }
+
+  .header-links {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+  }
+
+  .header-links a {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+
+  .header-links a:hover {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    min-height: 44px;
+  }
+
+  @media (max-width: 640px) {
+    .header-links a:not(.btn) {
+      display: none;
+    }
+  }
+</style>

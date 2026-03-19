@@ -1,0 +1,123 @@
+---
+const adminUrl = import.meta.env.PUBLIC_ADMIN_URL ?? "https://app.wireframes.dev";
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <p class="footer-logo">Wireframes</p>
+      <p class="footer-tagline">Declarative wireframe prototyping.</p>
+    </div>
+    <nav class="footer-links" aria-label="Footer navigation">
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#how-it-works">How It Works</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="/docs">Documentation</a></li>
+          <li><a href="https://www.npmjs.com/package/@wireframes/cli">CLI on npm</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Get Started</h4>
+        <ul>
+          <li><a href={adminUrl}>Sign Up</a></li>
+          <li><a href={adminUrl}>Log In</a></li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+  <div class="footer-bottom container">
+    <p>&copy; {currentYear} Wireframes. All rights reserved.</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: auto;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    padding: var(--space-3xl) 0 var(--space-xl);
+  }
+
+  .footer-inner {
+    display: grid;
+    grid-template-columns: 1.5fr 2fr;
+    gap: var(--space-3xl);
+  }
+
+  .footer-logo {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .footer-tagline {
+    color: var(--color-text-muted);
+    margin-top: var(--space-xs);
+  }
+
+  .footer-links {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-xl);
+  }
+
+  .footer-col h4 {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-md);
+  }
+
+  .footer-col ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .footer-col a {
+    color: var(--color-text);
+    font-size: 0.9375rem;
+  }
+
+  .footer-col a:hover {
+    color: var(--color-primary);
+  }
+
+  .footer-bottom {
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .footer-bottom p {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 768px) {
+    .footer-inner {
+      grid-template-columns: 1fr;
+      gap: var(--space-2xl);
+    }
+
+    .footer-links {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .footer-links {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,129 @@
+---
+const adminUrl = import.meta.env.PUBLIC_ADMIN_URL ?? "https://app.wireframes.dev";
+---
+
+<section id="pricing" class="pricing" aria-labelledby="pricing-heading">
+  <div class="container">
+    <h2 id="pricing-heading">Simple, transparent pricing</h2>
+    <p class="pricing-sub">Get started for free. Upgrade when you need more.</p>
+    <div class="pricing-cards">
+      <div class="pricing-card">
+        <h3>Free</h3>
+        <p class="price">$0 <span>/ month</span></p>
+        <ul>
+          <li>Unlimited local projects (CLI)</li>
+          <li>Full engine features</li>
+          <li>Community support</li>
+        </ul>
+        <a href="https://www.npmjs.com/package/@wireframes/cli" class="btn btn-outline">Install CLI</a>
+      </div>
+      <div class="pricing-card featured">
+        <h3>Pro</h3>
+        <p class="price">Coming soon</p>
+        <ul>
+          <li>Online editor with AI chat</li>
+          <li>Unlimited cloud projects</li>
+          <li>Team collaboration</li>
+          <li>Preview sharing with access control</li>
+          <li>Priority support</li>
+        </ul>
+        <a href={adminUrl} class="btn btn-primary">Get Started</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .pricing {
+    padding: var(--space-4xl) 0;
+    background: var(--color-surface);
+  }
+
+  h2 {
+    font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+    text-align: center;
+  }
+
+  .pricing-sub {
+    text-align: center;
+    color: var(--color-text-muted);
+    margin-top: var(--space-md);
+    font-size: 1.0625rem;
+  }
+
+  .pricing-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-xl);
+    margin-top: var(--space-2xl);
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .pricing-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-2xl);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pricing-card.featured {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
+  }
+
+  .pricing-card h3 {
+    font-size: 1.25rem;
+  }
+
+  .price {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: var(--space-md) 0;
+  }
+
+  .price span {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--color-text-muted);
+  }
+
+  .pricing-card ul {
+    list-style: none;
+    margin: var(--space-lg) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    flex: 1;
+  }
+
+  .pricing-card li {
+    position: relative;
+    padding-left: 1.5rem;
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+  }
+
+  .pricing-card li::before {
+    content: "\2713";
+    position: absolute;
+    left: 0;
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+
+  .pricing-card .btn {
+    width: 100%;
+    margin-top: auto;
+  }
+
+  @media (max-width: 640px) {
+    .pricing-cards {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,16 @@
+{
+  "name": "@wireframes/web",
+  "version": "1.0.0",
+  "description": "Wireframes landing page — SSR with Astro",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.1",
+    "astro": "^5.7.10"
+  }
+}

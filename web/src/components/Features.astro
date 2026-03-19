@@ -1,0 +1,106 @@
+---
+import FeatureCard from "./FeatureCard.astro";
+
+const features = [
+  {
+    icon: "\u{1F4DD}",
+    title: "Declarative YAML Specs",
+    description:
+      "Define pages, templates, and components in clean, readable YAML. No drag-and-drop, no GUI lock-in.",
+  },
+  {
+    icon: "\u{1F4C4}",
+    title: "Template + Page System",
+    description:
+      "Reuse layouts with persistent regions, injectable slots, and page-level overrides.",
+  },
+  {
+    icon: "\u{1F9E9}",
+    title: "Component Reuse",
+    description:
+      "Build a library of reusable components with props and slot-based composition.",
+  },
+  {
+    icon: "\u{1F4CA}",
+    title: "Data Binding",
+    description:
+      "Populate wireframes with datasets. Iterate over collections to render realistic, data-driven views.",
+  },
+  {
+    icon: "\u{1F517}",
+    title: "Interactive Prototypes",
+    description:
+      "Add navigation links, modal overlays, tab switching, and stateful interactions — all from YAML.",
+  },
+  {
+    icon: "\u{1F3A8}",
+    title: "Two Rendering Modes",
+    description:
+      "Switch between line-art wireframes and polished card layouts. Same spec, different fidelity.",
+  },
+  {
+    icon: "\u{1F4F1}",
+    title: "Multi-Device Support",
+    description:
+      "Define viewports for web, tablet, and mobile. Preview how your design adapts across screens.",
+  },
+  {
+    icon: "\u{2328}\u{FE0F}",
+    title: "CLI Tooling",
+    description:
+      "Build, validate, preview, and export from the command line. Integrates into any dev workflow.",
+  },
+  {
+    icon: "\u{1F4AC}",
+    title: "Online Editor with AI Chat",
+    description:
+      "Edit wireframes in the browser. Use AI chat to generate and modify pages conversationally.",
+  },
+  {
+    icon: "\u{1F30D}",
+    title: "Preview Sharing",
+    description:
+      "Publish previews with public links, password protection, or SSO-restricted access.",
+  },
+];
+---
+
+<section id="features" class="features" aria-labelledby="features-heading">
+  <div class="container">
+    <h2 id="features-heading">Everything you need to prototype fast</h2>
+    <p class="features-sub">
+      From YAML specs to clickable prototypes in seconds. No design background required.
+    </p>
+    <div class="features-grid">
+      {features.map((f) => (
+        <FeatureCard title={f.title} description={f.description} icon={f.icon} />
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .features {
+    padding: var(--space-4xl) 0;
+    background: var(--color-surface);
+  }
+
+  h2 {
+    font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+    text-align: center;
+  }
+
+  .features-sub {
+    text-align: center;
+    color: var(--color-text-muted);
+    margin-top: var(--space-md);
+    font-size: 1.0625rem;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-lg);
+    margin-top: var(--space-2xl);
+  }
+</style>

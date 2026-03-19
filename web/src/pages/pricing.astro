@@ -1,0 +1,39 @@
+---
+import Base from "../layouts/Base.astro";
+import Header from "../components/Header.astro";
+import Pricing from "../components/Pricing.astro";
+import Cta from "../components/Cta.astro";
+import Footer from "../components/Footer.astro";
+---
+
+<Base title="Pricing" description="Wireframes pricing plans. Get started for free with the CLI. Upgrade for cloud features and collaboration.">
+  <Header />
+  <main>
+    <section class="pricing-hero">
+      <div class="container">
+        <h1>Pricing</h1>
+        <p>Start free with the CLI. Upgrade when you need cloud collaboration.</p>
+      </div>
+    </section>
+    <Pricing />
+    <Cta />
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  .pricing-hero {
+    padding: var(--space-3xl) 0 var(--space-xl);
+    text-align: center;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+  }
+
+  p {
+    color: var(--color-text-muted);
+    margin-top: var(--space-md);
+    font-size: 1.125rem;
+  }
+</style>

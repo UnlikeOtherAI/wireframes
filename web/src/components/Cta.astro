@@ -1,0 +1,39 @@
+---
+const adminUrl = import.meta.env.PUBLIC_ADMIN_URL ?? "https://app.wireframes.dev";
+---
+
+<section class="cta" aria-labelledby="cta-heading">
+  <div class="container cta-inner">
+    <h2 id="cta-heading">Ready to prototype faster?</h2>
+    <p>Start building clickable wireframes in minutes.</p>
+    <div class="cta-actions">
+      <a href={adminUrl} class="btn btn-primary btn-lg">Get Started Free</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta {
+    padding: var(--space-4xl) 0;
+    text-align: center;
+  }
+
+  h2 {
+    font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  }
+
+  p {
+    color: var(--color-text-muted);
+    margin-top: var(--space-md);
+    font-size: 1.0625rem;
+  }
+
+  .cta-actions {
+    margin-top: var(--space-xl);
+  }
+
+  .btn-lg {
+    padding: 0.875rem 2rem;
+    font-size: 1.0625rem;
+  }
+</style>

@@ -1,0 +1,102 @@
+---
+const steps = [
+  {
+    number: "1",
+    title: "Define",
+    description:
+      "Write your wireframe specs in YAML. Describe pages, templates, components, and interactions declaratively.",
+  },
+  {
+    number: "2",
+    title: "Preview",
+    description:
+      "Build and preview your wireframes instantly. See clickable prototypes with navigation, overlays, and responsive layouts.",
+  },
+  {
+    number: "3",
+    title: "Share",
+    description:
+      "Publish previews with a link. Control access with public sharing, passwords, or SSO restrictions.",
+  },
+];
+---
+
+<section id="how-it-works" class="how-it-works" aria-labelledby="how-heading">
+  <div class="container">
+    <h2 id="how-heading">How it works</h2>
+    <p class="how-sub">Three steps from idea to shared prototype.</p>
+    <div class="steps">
+      {steps.map((step) => (
+        <div class="step">
+          <div class="step-number" aria-hidden="true">{step.number}</div>
+          <h3>{step.title}</h3>
+          <p>{step.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .how-it-works {
+    padding: var(--space-4xl) 0;
+  }
+
+  h2 {
+    font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+    text-align: center;
+  }
+
+  .how-sub {
+    text-align: center;
+    color: var(--color-text-muted);
+    margin-top: var(--space-md);
+    font-size: 1.0625rem;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-xl);
+    margin-top: var(--space-2xl);
+  }
+
+  .step {
+    text-align: center;
+    padding: var(--space-xl) var(--space-lg);
+  }
+
+  .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: var(--space-lg);
+  }
+
+  .step h3 {
+    font-size: 1.25rem;
+    margin-bottom: var(--space-sm);
+  }
+
+  .step p {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 768px) {
+    .steps {
+      grid-template-columns: 1fr;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+</style>
