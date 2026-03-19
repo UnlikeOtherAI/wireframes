@@ -293,8 +293,12 @@ function resolvePageTargets(projectPath, pageId) {
   if (!trees.ok) return trees;
 
   const rootsById = new Map();
+  const bodyLayoutById = new Map();
   for (const tree of trees.trees) {
     rootsById.set(tree.id, tree.roots || []);
+    if (tree.bodyLayoutType) {
+      bodyLayoutById.set(tree.id, tree.bodyLayoutType);
+    }
   }
 
   const targets = [];
@@ -326,6 +330,7 @@ function resolvePageTargets(projectPath, pageId) {
       wireframeStyle: page.wireframeStyle || defaultWireframeStyle,
       rendering: resolvePageRendering(page),
       defaultGridColumns,
+      bodyLayoutType: bodyLayoutById.get(id) || 'row',
       roots,
       projectPath,
     });
@@ -387,6 +392,7 @@ async function captureScreenshots(targets, outputPath, frame) {
         pageStyle: target.wireframeStyle,
         rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
+        bodyLayoutType: target.bodyLayoutType || 'row',
         projectPath: target.projectPath,
         frame,
       });

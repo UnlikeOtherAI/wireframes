@@ -151,7 +151,7 @@ function resolveFontAwesomePath() {
   }
 }
 
-function createServeRequestHandler(state, sharedAssets) {
+function createServeRequestHandler(state) {
   const faPackageDir = resolveFontAwesomePath();
 
   return function requestHandler(req, res) {
@@ -174,7 +174,10 @@ function createServeRequestHandler(state, sharedAssets) {
         return sendResponse(res, req.method, 403, { 'content-type': 'text/plain; charset=utf-8' }, 'Forbidden');
       }
       if (fs.existsSync(faFilePath) && fs.statSync(faFilePath).isFile()) {
-        const data = fs.readFileSync(faFilePath);
+        let data = fs.readFileSync(faFilePath);
+        if (faFilePath.endsWith('.css')) {
+          data = data.toString('utf8').replaceAll('font-display:block', 'font-display:swap');
+        }
         return sendResponse(res, req.method, 200, {
           'content-type': getContentType(faFilePath),
           'cache-control': 'no-cache',
@@ -186,7 +189,7 @@ function createServeRequestHandler(state, sharedAssets) {
     const sharedMatch = requestPath.match(/^\/(web|mobile|tablet)\/_shared\/(wireframe\.css|interactions\.js)$/);
     if (sharedMatch) {
       const name = sharedMatch[2];
-      const body = sharedAssets[name];
+      const body = state.sharedAssets?.[name];
       if (body === undefined) {
         return sendResponse(res, req.method, 404, { 'content-type': 'text/plain; charset=utf-8' }, 'Shared asset not found');
       }

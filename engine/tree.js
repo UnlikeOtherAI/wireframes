@@ -1,8 +1,6 @@
 'use strict';
 const { loadDocumentFromFile } = require('./schema');
-const {
-  SUPPORTED_SPEC_VERSION,
-} = require('./schema/constants');
+const { SUPPORTED_SPEC_VERSION } = require('./schema/constants');
 const {
   pageFilePath,
   templatesFilePath,
@@ -182,6 +180,8 @@ function buildPageTree(projectPath, pageId) {
     };
   }
   const roots = Array.isArray(resolved.roots) ? [...resolved.roots] : [];
+  const templateLayout = isObject(template.layout) ? template.layout : {};
+  const bodyLayoutType = templateLayout.type === 'row' ? 'row' : 'stack';
   const templateOverlays = buildOverlayRoots(template.overlays, componentRegistry.components, 'template');
   if (!templateOverlays.ok) {
     return templateOverlays;
@@ -197,6 +197,7 @@ function buildPageTree(projectPath, pageId) {
         type: 'page',
         id: pageId,
         templateId,
+        bodyLayoutType,
         roots: [
           ...roots,
           ...templateOverlays.roots,

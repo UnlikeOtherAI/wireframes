@@ -13,10 +13,12 @@ const { buildInteractionRuntimeFromWindowContext } = require(path.resolve(__dirn
 const VALID_PLATFORMS = new Set(['all', 'web', 'mobile', 'tablet']);
 const VALID_HOST = '127.0.0.1';
 
-const SHARED_ASSETS = {
-  'wireframe.css': buildWireframeStyles(),
-  'interactions.js': buildInteractionRuntimeFromWindowContext(),
-};
+function buildSharedAssets() {
+  return {
+    'wireframe.css': buildWireframeStyles(),
+    'interactions.js': buildInteractionRuntimeFromWindowContext(),
+  };
+}
 
 function openBrowser(url) {
   const command = process.platform === 'darwin'
@@ -58,6 +60,7 @@ function toStringErrors(parseError, errors) {
 function applySnapshot(state, projectPath, platform, config) {
   const result = resolveTargets(projectPath, platform, config.strictValidation, config.failOnWarnings);
   state.reloadVersion += 1;
+  state.sharedAssets = buildSharedAssets();
   if (!result.ok) {
     state.snapshot = null;
     state.validationErrors = toStringErrors(config.parseError, result.errors || []);
@@ -109,7 +112,7 @@ function runServe({
 
     let rebuildTimer = null;
     let stopWatch = () => {};
-    const server = http.createServer(createServeRequestHandler(state, SHARED_ASSETS));
+    const server = http.createServer(createServeRequestHandler(state));
 
     function maybeLogWarnings() {
       if (!Array.isArray(state.warnings) || state.warnings.length === 0) return;

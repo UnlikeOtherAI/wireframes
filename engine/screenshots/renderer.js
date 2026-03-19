@@ -124,7 +124,9 @@ function buildWireframeStyles() {
     '.wf-mode-card .wf-page{padding:16px;gap:16px}',
     // Body row: fill remaining height, stretch all children (sidebars fill full height)
     '.wf-body-row{flex:1;display:flex;flex-direction:row;align-items:stretch;min-height:0}',
-    '.wf-mode-card .wf-body-row{gap:16px}',
+    // Body column: stack template — regions stack vertically
+    '.wf-body-column{flex:1;display:flex;flex-direction:column;min-height:0}',
+    '.wf-mode-card .wf-body-row,.wf-mode-card .wf-body-column{gap:16px}',
 
     // --- Sticky regions ---
     '.wf-root[data-sticky="top"]{position:sticky;top:0;z-index:10;flex-shrink:0}',
@@ -270,7 +272,7 @@ function buildWireframeStyles() {
   ].join('\n');
 }
 
-function renderPageShell(roots, viewportWidth, viewportHeight, renderOptions) {
+function renderPageShell(roots, viewportWidth, viewportHeight, renderOptions, bodyLayoutType) {
   const stickyTop = roots.filter((r) => r.sticky === 'top');
   const stickyBottom = roots.filter((r) => r.sticky === 'bottom');
   const bodyRoots = roots.filter((r) => r.sticky !== 'top' && r.sticky !== 'bottom');
@@ -279,9 +281,11 @@ function renderPageShell(roots, viewportWidth, viewportHeight, renderOptions) {
   const bottomHtml = stickyBottom.map((r) => renderRoot(r, renderOptions)).join('\n');
   const bodyHtml = bodyRoots.map((r) => renderRoot(r, renderOptions)).join('\n');
 
+  const bodyClass = bodyLayoutType === 'stack' ? 'wf-body-column' : 'wf-body-row';
+
   return `<div class="wf-page" style="width:${viewportWidth}px;min-height:${viewportHeight}px;">
   ${topHtml}
-  <div class="wf-body-row">
+  <div class="${bodyClass}">
     ${bodyHtml}
   </div>
   ${bottomHtml}
@@ -306,6 +310,7 @@ function renderWireframeMarkup({
   runtimeJsSrc = null,
   assetUrlPrefix = '',
   rendering = {},
+  bodyLayoutType = 'row',
 }) {
   const mode = rendering?.mode === 'card' ? 'card' : 'line';
   const density = rendering?.density === 'compact' ? 'compact' : 'comfortable';
@@ -343,7 +348,7 @@ function renderWireframeMarkup({
       `left:${shellLeft}px`,
       `top:${shellTop}px`,
     ].join(';');
-    const pageHtml = renderPageShell(roots, viewportWidth, viewportHeight, renderOptions);
+    const pageHtml = renderPageShell(roots, viewportWidth, viewportHeight, renderOptions, bodyLayoutType);
     shellMarkup = `<div id="wf-screenshot-shell" style="position:relative; width:${Math.max(shellWidth, viewportWidth + shellLeft)}px; height:${Math.max(shellHeight, viewportHeight + shellTop)}px;">
   <img id="wf-frame-image" src="${frame.imageData ? escapeHtml(frame.imageData) : ''}" alt="device frame" />
   <div id="wf-wireframe-shell" style="${wireframeScreenStyle}">
@@ -352,7 +357,7 @@ function renderWireframeMarkup({
 </div>`;
   } else {
     // Browser mode: natural scroll, min-height, sticky header/footer support
-    shellMarkup = renderPageShell(roots, viewportWidth, viewportHeight, renderOptions);
+    shellMarkup = renderPageShell(roots, viewportWidth, viewportHeight, renderOptions, bodyLayoutType);
   }
 
   const runtimeContextPayload = runtimeContext && typeof runtimeContext === 'object' && !Array.isArray(runtimeContext)

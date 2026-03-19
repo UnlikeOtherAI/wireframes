@@ -168,7 +168,10 @@ function copyFontAwesomeAssets(sharedDir) {
   const faWebfontsDir = path.join(sharedDir, 'fa', 'webfonts');
   fs.mkdirSync(faCssDir, { recursive: true });
   fs.mkdirSync(faWebfontsDir, { recursive: true });
-  fs.copyFileSync(path.join(faPackageDir, 'css', 'all.min.css'), path.join(faCssDir, 'all.min.css'));
+  const faCssDest = path.join(faCssDir, 'all.min.css');
+  fs.copyFileSync(path.join(faPackageDir, 'css', 'all.min.css'), faCssDest);
+  const faCssContent = fs.readFileSync(faCssDest, 'utf8');
+  fs.writeFileSync(faCssDest, faCssContent.replaceAll('font-display:block', 'font-display:swap'), 'utf8');
   const webfontsSource = path.join(faPackageDir, 'webfonts');
   for (const file of fs.readdirSync(webfontsSource)) {
     if (file.endsWith('.woff2')) {
@@ -204,6 +207,7 @@ function writePlatformArtifacts(platformResult, outputDir, assetUrlPrefix) {
       pageStyle: page.wireframeStyle,
       rendering: page.rendering || {},
       defaultGridColumns: page.defaultGridColumns,
+      bodyLayoutType: page.bodyLayoutType || 'row',
       projectPath: platformResult.projectPath,
       dataSources: page.dataSources,
       wireframeCssHref: './_shared/wireframe.css',
@@ -324,6 +328,7 @@ function runBuild({
         wireframeStyle: target.wireframeStyle,
         rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
+        bodyLayoutType: target.bodyLayoutType || 'row',
         projectPath: normalizedProjectPath,
       });
     }
