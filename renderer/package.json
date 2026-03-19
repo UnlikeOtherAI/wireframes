@@ -1,0 +1,23 @@
+{
+  "name": "@wireframes/renderer",
+  "version": "1.0.0",
+  "description": "Client-side wireframe renderer — browser ESM bundle",
+  "private": true,
+  "type": "module",
+  "main": "bundle/wireframe-renderer.min.js",
+  "module": "bundle/wireframe-renderer.min.js",
+  "exports": {
+    ".": "./bundle/wireframe-renderer.min.js"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "build:dev": "node build.mjs --dev",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

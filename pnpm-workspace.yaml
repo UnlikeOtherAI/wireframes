@@ -4,3 +4,4 @@ packages:
   - api
   - web
   - admin
+  - renderer
