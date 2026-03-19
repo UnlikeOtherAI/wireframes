@@ -31,7 +31,24 @@
 | 5 | admin_wireframes | `activity.yaml` | Global activity feed across projects |
 | 6 | admin_wireframes | `templates_gallery.yaml` | Browse starter templates for new projects |
 | 7 | admin_wireframes | `api_keys.yaml` | Developer API key management |
-| 8 | All projects | Cleanup | Remove redundant `rendering: mode: card` (now default) |
+| 8 | admin_wireframes | `preview_viewer.yaml` | What external viewers see when opening a shared preview |
+| 9 | admin_wireframes | `not_found.yaml` | 404 error page |
+| 10 | All projects | Cleanup | Remove redundant `rendering: mode: card` (now default) |
+
+### Review Fixes Applied
+
+Dual-agent review (Claude + Codex) identified critical and important issues. All fixes below are incorporated into the tasks:
+
+- **FIX-1 (CRITICAL):** API Keys page unreachable — Task 7 now modifies `account.yaml` to add an API Keys link
+- **FIX-2 (CRITICAL):** Create key modal never closes — Task 7 now includes `close_overlay` in the create interaction
+- **FIX-3 (CRITICAL):** Onboarding is an orphan — Task 4 now modifies `login.yaml` to route new users through onboarding
+- **FIX-4 (CRITICAL):** Web login loops to home — Task 1 now uses an SSO redirect interstitial with `pageState` instead of looping
+- **FIX-5 (IMPORTANT):** Templates gallery unreachable — Task 6 now modifies `dashboard.yaml` new_project_modal to add a "Browse Templates" link
+- **FIX-6 (IMPORTANT):** `editor_template` silently dropped — Task 1 explicitly notes the intentional removal
+- **FIX-7 (IMPORTANT):** Redundant wireframeStyle on home.yaml — Task 2 removes corner overrides (inherited from manifest)
+- **FIX-8 (IMPORTANT):** Dead header links — Task 1 adds anchor-style scroll interactions for Features/Docs
+- **FIX-9 (IMPORTANT):** Missing preview viewer page — New Task 8
+- **FIX-10 (IMPORTANT):** Missing 404 page — New Task 9
 
 ---
 
@@ -76,10 +93,16 @@ templates:
             component: button
             props:
               label: "Features"
+            interaction:
+              - type: navigation
+                targetRoute: home
           - id: nav_docs
             component: button
             props:
               label: "Docs"
+            interaction:
+              - type: navigation
+                targetRoute: home
           - id: header_spacer
             component: spacer
             size:
@@ -157,6 +180,8 @@ Append `login_template` to the templates file (centered auth layout, same patter
 
 **Step 4: Create web_wireframes/pages/login.yaml**
 
+This is the marketing site's login page. Since SSO is external (redirects to `authenticator.unlikeother.ai`), this page shows the SSO button and then transitions to a "Redirecting..." interstitial state via `pageState`. It does NOT loop back to home. The `editor_template` from the old templates.yaml is intentionally removed — no pages reference it.
+
 ```yaml
 documentType: page
 specVersion: "1.1"
@@ -169,6 +194,8 @@ page:
   wireframeStyle:
     border:
       style: solid
+  pageState:
+    sso_redirecting: false
   slots:
     - slotId: login_content
       content:
@@ -198,31 +225,75 @@ page:
                 label: "Design clickable wireframe prototypes"
             - id: wf_login_divider
               component: divider
-            - id: wf_login_prompt
-              component: text
-              props:
-                label: "Sign in to get started"
-            - id: wf_login_sso_btn
-              component: button
-              props:
-                label: "Sign in with SSO"
-                icon: right-to-bracket
-              size:
-                width: "100%"
-              interaction:
-                - type: navigation
-                  targetRoute: home
-            - id: wf_login_sso_note
-              component: text
-              props:
-                label: "Authenticates via authenticator.unlikeother.ai"
-            - id: wf_login_terms
-              component: paragraph
-              props:
-                label: "By signing in, you agree to our Terms of Service."
-```
 
-Note: The SSO button navigates back to `home` in the web project. In reality it would redirect to the admin app's dashboard via SSO. Within the wireframe, this demonstrates the flow.
+            # Pre-SSO state
+            - id: wf_login_form
+              component: section
+              visibility:
+                condition:
+                  type: state_equals
+                  scope: page
+                  key: sso_redirecting
+                  equals: false
+              layout:
+                type: stack
+                gap: 16
+                align: center
+              children:
+                - id: wf_login_prompt
+                  component: text
+                  props:
+                    label: "Sign in to get started"
+                - id: wf_login_sso_btn
+                  component: button
+                  props:
+                    label: "Sign in with SSO"
+                    icon: right-to-bracket
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: set_state
+                      stateKey: sso_redirecting
+                      value: true
+                      scope: page
+                - id: wf_login_sso_note
+                  component: text
+                  props:
+                    label: "Authenticates via authenticator.unlikeother.ai"
+                - id: wf_login_terms
+                  component: paragraph
+                  props:
+                    label: "By signing in, you agree to our Terms of Service."
+
+            # SSO redirect state
+            - id: wf_login_redirect
+              component: section
+              visibility:
+                condition:
+                  type: state_equals
+                  scope: page
+                  key: sso_redirecting
+                  equals: true
+              layout:
+                type: stack
+                gap: 16
+                align: center
+              children:
+                - id: redirect_icon
+                  component: icon
+                  props:
+                    name: spinner
+                    size: xl
+                - id: redirect_text
+                  component: heading
+                  props:
+                    label: "Redirecting to SSO..."
+                    level: 3
+                - id: redirect_note
+                  component: paragraph
+                  props:
+                    label: "You are being redirected to authenticator.unlikeother.ai. After authentication, you will land in the Wireframes dashboard."
+```
 
 **Step 5: Validate**
 
@@ -262,9 +333,6 @@ page:
   wireframeStyle:
     border:
       style: solid
-    corner:
-      style: rounded
-      radius: 8
   slots:
     - slotId: main
       content:
@@ -961,9 +1029,22 @@ First-time user experience after SSO login. Shows a welcome screen with two path
 
 **Files:**
 - Create: `admin_wireframes/pages/onboarding.yaml`
+- Modify: `admin_wireframes/pages/login.yaml` (change SSO targetRoute to onboarding)
 - Modify: `admin_wireframes/sitemap.yaml` (add route)
 
-**Step 1: Create onboarding.yaml**
+**Step 1: Modify admin login.yaml to route new users to onboarding**
+
+In `admin_wireframes/pages/login.yaml`, change the SSO button's `targetRoute` from `dashboard` to `onboarding`:
+
+```yaml
+              interaction:
+                - type: navigation
+                  targetRoute: onboarding
+```
+
+This means: SSO login -> onboarding (first time) -> dashboard. The onboarding page has a "Skip" button that goes directly to dashboard for returning users who somehow land there again.
+
+**Step 2: Create onboarding.yaml**
 
 ```yaml
 documentType: page
@@ -1051,7 +1132,7 @@ page:
                         width: "100%"
                       interaction:
                         - type: navigation
-                          targetRoute: dashboard
+                          targetRoute: project_editor
 
                 - id: option_template
                   component: section
@@ -1103,7 +1184,7 @@ page:
                   targetRoute: dashboard
 ```
 
-**Step 2: Add route to sitemap.yaml**
+**Step 3: Add route to sitemap.yaml**
 
 ```yaml
   - id: onboarding
@@ -1112,7 +1193,7 @@ page:
     template: auth_template
 ```
 
-**Step 3: Validate**
+**Step 4: Validate**
 
 ```bash
 cd admin_wireframes && npx wf validate
@@ -1120,11 +1201,11 @@ cd admin_wireframes && npx wf validate
 
 Expected: 0 errors.
 
-**Step 4: Commit**
+**Step 5: Commit**
 
 ```bash
-git add admin_wireframes/pages/onboarding.yaml admin_wireframes/sitemap.yaml
-git commit -m "feat(admin): add onboarding welcome page for new users"
+git add admin_wireframes/pages/onboarding.yaml admin_wireframes/pages/login.yaml admin_wireframes/sitemap.yaml
+git commit -m "feat(admin): add onboarding welcome page, route new users through it"
 ```
 
 ---
@@ -1463,9 +1544,25 @@ Browse starter templates when creating a new project. Grid of template cards wit
 
 **Files:**
 - Create: `admin_wireframes/pages/templates_gallery.yaml`
+- Modify: `admin_wireframes/pages/dashboard.yaml` (add "Browse Templates" link to new_project_modal)
 - Modify: `admin_wireframes/sitemap.yaml` (add route)
 
-**Step 1: Create templates_gallery.yaml**
+**Step 1: Add "Browse Templates" link to dashboard new_project_modal**
+
+In `admin_wireframes/pages/dashboard.yaml`, in the `new_project_modal` overlay's `modal_actions` section, add a "Browse Templates" button before the Cancel button:
+
+```yaml
+                - id: modal_browse_templates
+                  component: button
+                  props:
+                    label: "Browse Templates"
+                    icon: layer-group
+                  interaction:
+                    - type: navigation
+                      targetRoute: templates_gallery
+```
+
+**Step 2: Create templates_gallery.yaml**
 
 ```yaml
 documentType: page
@@ -1803,7 +1900,7 @@ page:
                   targetRoute: dashboard
 ```
 
-**Step 2: Add route to sitemap.yaml**
+**Step 3: Add route to sitemap.yaml**
 
 ```yaml
   - id: templates_gallery
@@ -1811,7 +1908,7 @@ page:
     page: templates_gallery
 ```
 
-**Step 3: Validate**
+**Step 4: Validate**
 
 ```bash
 cd admin_wireframes && npx wf validate
@@ -1819,11 +1916,11 @@ cd admin_wireframes && npx wf validate
 
 Expected: 0 errors.
 
-**Step 4: Commit**
+**Step 5: Commit**
 
 ```bash
-git add admin_wireframes/pages/templates_gallery.yaml admin_wireframes/sitemap.yaml
-git commit -m "feat(admin): add starter templates gallery page"
+git add admin_wireframes/pages/templates_gallery.yaml admin_wireframes/pages/dashboard.yaml admin_wireframes/sitemap.yaml
+git commit -m "feat(admin): add starter templates gallery with link from dashboard"
 ```
 
 ---
@@ -1834,9 +1931,40 @@ Developer settings page for API key management. Create, copy, revoke keys. Shows
 
 **Files:**
 - Create: `admin_wireframes/pages/api_keys.yaml`
+- Modify: `admin_wireframes/pages/account.yaml` (add API Keys nav link)
 - Modify: `admin_wireframes/sitemap.yaml` (add route)
 
-**Step 1: Create api_keys.yaml**
+**Step 1: Add API Keys link to account.yaml**
+
+In `admin_wireframes/pages/account.yaml`, add a new section between `session_section` and `acct_danger` (the Danger Zone). Insert after `session_section`:
+
+```yaml
+            - id: developer_section
+              component: section
+              props:
+                title: "Developer"
+              layout:
+                type: stack
+                gap: 12
+                padding: 16
+              children:
+                - id: dev_note
+                  component: paragraph
+                  props:
+                    label: "Manage API keys for programmatic access to your projects."
+                - id: dev_api_keys_btn
+                  component: button
+                  props:
+                    label: "Manage API Keys"
+                    icon: key
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: api_keys
+```
+
+**Step 2: Create api_keys.yaml**
 
 ```yaml
 documentType: page
@@ -1912,6 +2040,8 @@ page:
                       stateKey: key_created
                       value: true
                       scope: page
+                    - type: close_overlay
+                      targetOverlay: create_key_modal
 
     - id: revoke_key_modal
       type: modal
@@ -2140,12 +2270,273 @@ page:
                     icon: book
 ```
 
-**Step 2: Add route to sitemap.yaml**
+**Step 3: Add route to sitemap.yaml**
 
 ```yaml
   - id: api_keys
     path: /api-keys
     page: api_keys
+```
+
+**Step 4: Validate**
+
+```bash
+cd admin_wireframes && npx wf validate
+```
+
+Expected: 0 errors.
+
+**Step 5: Commit**
+
+```bash
+git add admin_wireframes/pages/api_keys.yaml admin_wireframes/pages/account.yaml admin_wireframes/sitemap.yaml
+git commit -m "feat(admin): add API keys management page with link from account"
+```
+
+---
+
+### Task 8: admin_wireframes — Add preview_viewer.yaml
+
+What external viewers see when they open a published preview link. Shows the rendered wireframe in a simple chrome with project name and page navigation. This is distinct from the admin's preview settings page — this is the public-facing viewer experience.
+
+**Files:**
+- Create: `admin_wireframes/pages/preview_viewer.yaml`
+- Modify: `admin_wireframes/sitemap.yaml` (add route)
+
+**Step 1: Create preview_viewer.yaml**
+
+```yaml
+documentType: page
+specVersion: "1.1"
+id: preview_viewer
+page:
+  id: preview_viewer
+  template: auth_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  pageState:
+    password_entered: false
+  slots:
+    - slotId: auth_content
+      content:
+        - id: viewer_shell
+          component: section
+          layout:
+            type: stack
+            gap: 0
+          size:
+            width: "100%"
+            maxWidth: 1280
+          children:
+            # Viewer header bar
+            - id: viewer_bar
+              component: section
+              layout:
+                type: row
+                gap: 12
+                padding: 12
+                align: center
+              children:
+                - id: viewer_logo_icon
+                  component: icon
+                  props:
+                    name: vector-square
+                    size: sm
+                - id: viewer_logo
+                  component: text
+                  props:
+                    label: "Wireframes Preview"
+                - id: viewer_divider_v
+                  component: divider
+                - id: viewer_project_name
+                  component: heading
+                  props:
+                    label: "My App Wireframe"
+                    level: 4
+                - id: viewer_spacer
+                  component: spacer
+                  size:
+                    width: "100%"
+                - id: viewer_page_select
+                  component: select
+                  props:
+                    placeholder: "Page"
+                    options:
+                      - { value: home, label: "Home" }
+                      - { value: dashboard, label: "Dashboard" }
+                      - { value: settings, label: "Settings" }
+                      - { value: profile, label: "Profile" }
+                - id: viewer_device_select
+                  component: select
+                  props:
+                    placeholder: "Device"
+                    options:
+                      - { value: desktop, label: "Desktop" }
+                      - { value: tablet, label: "Tablet" }
+                      - { value: mobile, label: "Mobile" }
+
+            - id: viewer_divider
+              component: divider
+
+            # Preview viewport area
+            - id: viewer_viewport
+              component: section
+              layout:
+                type: stack
+                gap: 0
+                padding: 16
+              size:
+                height: 600
+              children:
+                - id: viewport_mock_header
+                  component: section
+                  layout:
+                    type: row
+                    gap: 12
+                    padding: 12
+                    align: center
+                  children:
+                    - id: mock_logo
+                      component: text
+                      props:
+                        label: "[Logo]"
+                    - id: mock_nav_1
+                      component: button
+                      props:
+                        label: "Home"
+                    - id: mock_nav_2
+                      component: button
+                      props:
+                        label: "Dashboard"
+                    - id: mock_nav_3
+                      component: button
+                      props:
+                        label: "Settings"
+                - id: viewport_mock_body
+                  component: section
+                  layout:
+                    type: row
+                    gap: 8
+                    padding: 8
+                  children:
+                    - id: mock_sidebar
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 4
+                        padding: 8
+                      size:
+                        width: 200
+                      children:
+                        - id: mock_sb_1
+                          component: button
+                          props:
+                            label: "Overview"
+                        - id: mock_sb_2
+                          component: button
+                          props:
+                            label: "Analytics"
+                        - id: mock_sb_3
+                          component: button
+                          props:
+                            label: "Reports"
+                    - id: mock_content
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 12
+                        padding: 12
+                      children:
+                        - id: mock_heading
+                          component: heading
+                          props:
+                            label: "Dashboard"
+                            level: 2
+                        - id: mock_stats
+                          component: section
+                          layout:
+                            type: row
+                            gap: 12
+                          children:
+                            - id: mock_stat_1
+                              component: section
+                              layout:
+                                type: stack
+                                padding: 12
+                              children:
+                                - id: mock_s1_val
+                                  component: heading
+                                  props:
+                                    label: "1,234"
+                                    level: 3
+                                - id: mock_s1_label
+                                  component: text
+                                  props:
+                                    label: "Total Users"
+                            - id: mock_stat_2
+                              component: section
+                              layout:
+                                type: stack
+                                padding: 12
+                              children:
+                                - id: mock_s2_val
+                                  component: heading
+                                  props:
+                                    label: "$45.6K"
+                                    level: 3
+                                - id: mock_s2_label
+                                  component: text
+                                  props:
+                                    label: "Revenue"
+                            - id: mock_stat_3
+                              component: section
+                              layout:
+                                type: stack
+                                padding: 12
+                              children:
+                                - id: mock_s3_val
+                                  component: heading
+                                  props:
+                                    label: "567"
+                                    level: 3
+                                - id: mock_s3_label
+                                  component: text
+                                  props:
+                                    label: "Orders"
+
+            # Footer
+            - id: viewer_footer
+              component: section
+              layout:
+                type: row
+                gap: 8
+                padding: 12
+                align: center
+                justify: center
+              children:
+                - id: viewer_footer_text
+                  component: text
+                  props:
+                    label: "Preview powered by Wireframes"
+                - id: viewer_footer_link
+                  component: button
+                  props:
+                    label: "Create your own"
+                  interaction:
+                    - type: navigation
+                      targetRoute: login
+```
+
+**Step 2: Add route to sitemap.yaml**
+
+```yaml
+  - id: preview_viewer
+    path: /preview/view
+    page: preview_viewer
+    template: auth_template
 ```
 
 **Step 3: Validate**
@@ -2159,13 +2550,112 @@ Expected: 0 errors.
 **Step 4: Commit**
 
 ```bash
-git add admin_wireframes/pages/api_keys.yaml admin_wireframes/sitemap.yaml
-git commit -m "feat(admin): add API keys management page"
+git add admin_wireframes/pages/preview_viewer.yaml admin_wireframes/sitemap.yaml
+git commit -m "feat(admin): add preview viewer page (what external viewers see)"
 ```
 
 ---
 
-### Task 8: Cleanup — Remove redundant rendering mode declarations
+### Task 9: admin_wireframes — Add not_found.yaml
+
+404 error page for invalid routes. Centered layout with icon, message, and link back to dashboard.
+
+**Files:**
+- Create: `admin_wireframes/pages/not_found.yaml`
+- Modify: `admin_wireframes/sitemap.yaml` (add route)
+
+**Step 1: Create not_found.yaml**
+
+```yaml
+documentType: page
+specVersion: "1.1"
+id: not_found
+page:
+  id: not_found
+  template: auth_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  slots:
+    - slotId: auth_content
+      content:
+        - id: error_card
+          component: section
+          layout:
+            type: stack
+            gap: 24
+            padding: 48
+            align: center
+          size:
+            width: 480
+          children:
+            - id: error_code
+              component: heading
+              props:
+                label: "404"
+                level: 1
+            - id: error_heading
+              component: heading
+              props:
+                label: "Page not found"
+                level: 2
+            - id: error_text
+              component: paragraph
+              props:
+                label: "The page you are looking for does not exist or has been moved. Check the URL or head back to your dashboard."
+            - id: error_divider
+              component: divider
+            - id: error_actions
+              component: section
+              layout:
+                type: row
+                gap: 12
+                justify: center
+              children:
+                - id: error_dashboard_btn
+                  component: button
+                  props:
+                    label: "Go to Dashboard"
+                    icon: house
+                  interaction:
+                    - type: navigation
+                      targetRoute: dashboard
+                - id: error_back_btn
+                  component: button
+                  props:
+                    label: "Go Back"
+                    icon: arrow-left
+```
+
+**Step 2: Add route to sitemap.yaml**
+
+```yaml
+  - id: not_found
+    path: /404
+    page: not_found
+    template: auth_template
+```
+
+**Step 3: Validate**
+
+```bash
+cd admin_wireframes && npx wf validate
+```
+
+Expected: 0 errors.
+
+**Step 4: Commit**
+
+```bash
+git add admin_wireframes/pages/not_found.yaml admin_wireframes/sitemap.yaml
+git commit -m "feat(admin): add 404 not found page"
+```
+
+---
+
+### Task 10: Cleanup — Remove redundant rendering mode declarations
 
 Card mode is now the engine default (commit `b36a5c9`). Remove explicit `rendering: mode: card` from all page YAMLs across all three projects.
 
@@ -2208,7 +2698,7 @@ git commit -m "chore: remove redundant rendering mode declarations (card is defa
 
 ---
 
-### Task 9: Serve and Playwright-verify all three projects
+### Task 11: Serve and Playwright-verify all three projects
 
 Build and serve all three projects to verify the new pages render correctly.
 
@@ -2219,13 +2709,16 @@ cd admin_wireframes && npx wf serve --platform all --port 8081
 ```
 
 Manually verify in browser:
-- `/login` — centered SSO login card
-- `/` — dashboard with project grid
+- `/login` — centered SSO login card (SSO button now routes to `/welcome`)
+- `/` — dashboard with project grid (new project modal has "Browse Templates" link)
 - `/invite/accept` — centered invite card with accept/decline
-- `/welcome` — onboarding with two option cards
+- `/welcome` — onboarding with two option cards (Create → editor, Templates → gallery)
 - `/activity` — activity feed with today/yesterday sections
 - `/templates` — 6-card template gallery grid
-- `/api-keys` — API keys table with create/revoke modals
+- `/api-keys` — API keys table with create/revoke modals (create modal closes on confirm)
+- `/preview/view` — external viewer chrome with mock wireframe
+- `/404` — error page with dashboard link
+- `/account` — now has "Developer" section with API Keys link
 
 **Step 2: Serve web_wireframes**
 
@@ -2262,14 +2755,16 @@ After completing all tasks:
 | Project | Before | After |
 |---------|--------|-------|
 | web_wireframes | 1 stub page | 2 pages (full landing + login) |
-| admin_wireframes | 7 pages | 12 pages (+accept_invite, onboarding, activity, templates_gallery, api_keys) |
+| admin_wireframes | 7 pages | 14 pages (+accept_invite, onboarding, activity, templates_gallery, api_keys, preview_viewer, not_found) |
 | wireframe_studio | 4 pages | 4 pages (unchanged, already complete) |
-| **Total** | **12 pages** | **18 pages** |
+| **Total** | **12 pages** | **20 pages** |
 
 New navigation flows enabled:
-- **Marketing → Login → Dashboard**: web home → sign in → admin login → SSO → dashboard
+- **Marketing → Login → SSO redirect**: web home → sign in → SSO interstitial (no dead-end loop)
 - **Email invite → Accept → Dashboard**: invite email link → accept invite page → project
 - **First-time user → Onboarding → Project**: SSO → onboarding → create/template → editor
 - **Dashboard → Activity**: global activity feed across projects
-- **Dashboard → Templates Gallery**: browse and pick starter templates
-- **Account → API Keys**: developer key management
+- **Dashboard → Templates Gallery**: new project modal → browse templates → editor
+- **Account → API Keys**: account settings → developer section → API key management
+- **Preview → External Viewer**: published preview URL → viewer chrome with page/device selection
+- **Invalid route → 404**: any bad URL → 404 page → dashboard
