@@ -73,10 +73,16 @@ templates:
             component: button
             props:
               label: "Terms"
+            interaction:
+              - type: navigation
+                targetRoute: home
           - id: footer_privacy
             component: button
             props:
               label: "Privacy"
+            interaction:
+              - type: navigation
+                targetRoute: home
 
   login_template:
     layout:

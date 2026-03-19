@@ -21,6 +21,10 @@ routes:
     path: /404
     page: not_found
     template: auth_template
+  - id: preview_auth
+    path: /preview/auth
+    page: preview_auth
+    template: auth_template
   - id: preview_viewer
     path: /preview/view
     page: preview_viewer

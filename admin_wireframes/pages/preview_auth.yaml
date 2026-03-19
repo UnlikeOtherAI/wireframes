@@ -1,0 +1,122 @@
+documentType: page
+specVersion: "1.1"
+id: preview_auth
+page:
+  id: preview_auth
+  template: auth_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+
+  pageState:
+    auth_method: password
+    auth_error: false
+  slots:
+    - slotId: auth_content
+      content:
+        - id: auth_gate
+          component: section
+          layout:
+            type: stack
+            gap: 24
+            padding: 32
+            align: center
+          size:
+            maxWidth: 420
+          children:
+            - id: gate_icon
+              component: icon
+              props:
+                name: lock
+                size: 2xl
+            - id: gate_heading
+              component: heading
+              props:
+                label: "This preview is protected"
+                level: 2
+            - id: gate_project
+              component: text
+              props:
+                label: "My App Wireframe"
+
+            # Password auth section
+            - id: pw_section
+              component: section
+              visibility:
+                condition:
+                  type: state_equals
+                  scope: page
+                  key: auth_method
+                  equals: password
+              layout:
+                type: stack
+                gap: 12
+              size:
+                width: "100%"
+              children:
+                - id: pw_note
+                  component: paragraph
+                  props:
+                    label: "Enter the password provided by the project owner to view this preview."
+                - id: pw_input
+                  component: input
+                  props:
+                    label: "Password"
+                    placeholder: "Enter preview password"
+                - id: pw_error
+                  component: text
+                  props:
+                    label: "Incorrect password. Please try again."
+                  visibility:
+                    condition:
+                      type: state_equals
+                      scope: page
+                      key: auth_error
+                      equals: true
+                - id: pw_submit
+                  component: button
+                  props:
+                    label: "View Preview"
+                    icon: eye
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: preview_viewer
+
+            # SSO auth section
+            - id: sso_section
+              component: section
+              visibility:
+                condition:
+                  type: state_equals
+                  scope: page
+                  key: auth_method
+                  equals: sso
+              layout:
+                type: stack
+                gap: 12
+              size:
+                width: "100%"
+              children:
+                - id: sso_note
+                  component: paragraph
+                  props:
+                    label: "This preview is restricted to authorized email addresses. Sign in with SSO to verify your access."
+                - id: sso_btn
+                  component: button
+                  props:
+                    label: "Sign in with SSO"
+                    icon: right-to-bracket
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: preview_viewer
+
+            - id: gate_footer
+              component: text
+              props:
+                label: "Don't have access? Contact the project owner."

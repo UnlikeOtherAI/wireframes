@@ -18,6 +18,9 @@ templates:
             component: button
             props:
               label: "← Projects"
+            interaction:
+              - type: navigation
+                targetRoute: editor_focus
           - id: project_name
             component: input
             props:
@@ -138,6 +141,8 @@ templates:
                 scope: app
                 stateKey: editor_mode
                 value: focus
+              - type: navigation
+                targetRoute: editor_focus
           - id: mode_map_btn
             component: button
             props:
@@ -147,6 +152,8 @@ templates:
                 scope: app
                 stateKey: editor_mode
                 value: map
+              - type: navigation
+                targetRoute: editor_map
           - id: device_select
             component: select
             props:
