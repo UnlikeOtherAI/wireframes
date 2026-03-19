@@ -1,9 +1,5 @@
 'use strict';
 
-const path = require('node:path');
-const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
-const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema'));
-
 const ADDRESS_PREFIX = 'wf://';
 const WF_ID_REGEX = /^[a-z][a-z0-9_]*$/;
 
@@ -323,97 +319,12 @@ function resolveAddressInRoots(roots, segments, { allowContainerFinal = false } 
   return { ok: false, error: 'Unable to resolve address.' };
 }
 
-function resolveAddress(projectPath, address) {
-  const parsed = parseAddress(address);
-  if (!parsed.ok) return parsed;
-
-  if (!SUPPORTED_DOCTYPES.has(parsed.doctype)) {
-    return { ok: false, error: `Unsupported address doctype "${parsed.doctype}".` };
-  }
-
-  if (parsed.doctype === 'page') {
-    const pagePath = pageFilePath(projectPath, parsed.documentId);
-    const loaded = loadDocumentFromFile(pagePath, { supportedSpecVersion: SUPPORTED_SPEC_VERSION });
-    const rootsResult = buildPageRoots(loaded.document, loaded.id);
-    if (!rootsResult.ok) return rootsResult;
-
-    return {
-      ok: true,
-      documentPath: pagePath,
-      document: loaded.document,
-      roots: rootsResult.roots,
-      segments: parsed.pathSegments,
-      rawAddress: parsed.raw,
-      documentType: 'page',
-      documentId: parsed.documentId,
-    };
-  }
-
-  if (parsed.doctype === 'template') {
-    const templatesPath = templatesFilePath(projectPath);
-    const loaded = loadDocumentFromFile(templatesPath, { supportedSpecVersion: SUPPORTED_SPEC_VERSION });
-    const template = loaded.document?.templates?.[parsed.documentId];
-
-    if (!isObject(template)) {
-      return { ok: false, error: `Template "${parsed.documentId}" does not exist.` };
-    }
-
-    const rootsResult = buildTemplateRoots(template, parsed.documentId);
-    if (!rootsResult.ok) return rootsResult;
-
-    return {
-      ok: true,
-      documentPath: templatesPath,
-      document: loaded.document,
-      roots: rootsResult.roots,
-      segments: parsed.pathSegments,
-      rawAddress: parsed.raw,
-      documentType: 'template',
-      documentId: parsed.documentId,
-    };
-  }
-
-  const componentsPath = componentsFilePath(projectPath);
-  const loaded = loadDocumentFromFile(componentsPath, {
-    supportedSpecVersion: SUPPORTED_SPEC_VERSION,
-  });
-  const componentsResult = buildComponentRootsFromMap(loaded.document?.components, parsed.documentId);
-  if (!componentsResult.ok) return componentsResult;
-
-  return {
-    ok: true,
-    documentPath: componentsPath,
-    document: loaded.document,
-    roots: componentsResult.roots,
-    segments: parsed.pathSegments,
-    rawAddress: parsed.raw,
-    documentType: 'component',
-    documentId: parsed.documentId,
-  };
-}
-
-function resolveTarget(projectPath, address) {
-  return resolveAddress(projectPath, address);
-}
-
-function pageFilePath(projectPath, pageId) {
-  return path.join(projectPath, 'pages', `${pageId}.yaml`);
-}
-
-function templatesFilePath(projectPath) {
-  return path.join(projectPath, 'templates.yaml');
-}
-
-function componentsFilePath(projectPath) {
-  return path.join(projectPath, 'components.yaml');
-}
-
 module.exports = {
-  componentsFilePath,
+  isObject,
   parseAddress,
-  resolveAddress,
   resolveAddressInRoots,
-  resolveTarget,
-  templatesFilePath,
-  pageFilePath,
+  buildPageRoots,
+  buildTemplateRoots,
+  buildComponentRootsFromMap,
+  SUPPORTED_DOCTYPES,
 };

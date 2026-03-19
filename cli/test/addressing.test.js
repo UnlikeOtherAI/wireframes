@@ -14,8 +14,10 @@ const {
 const {
   parseAddress,
   resolveAddressInRoots,
-  resolveTarget,
 } = require('../../engine/addressing');
+const {
+  resolveTarget,
+} = require('../../engine/addressing/fs-resolver');
 
 function createTempProject(projectName) {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'wireframe-addressing-'));

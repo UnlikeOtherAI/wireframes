@@ -5,7 +5,7 @@ const path = require('node:path');
 const yaml = require('js-yaml');
 const { runValidate } = require(path.resolve(__dirname, '..', 'validate'));
 const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
-const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema'));
+const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 
 const OVERLAY_ID_REGEX = /^[a-z][a-z0-9_]*$/;
 const OVERLAY_TYPES = new Set([

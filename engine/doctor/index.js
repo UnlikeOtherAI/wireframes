@@ -6,7 +6,8 @@ const yaml = require('js-yaml');
 const {
   SUPPORTED_SPEC_VERSION,
 } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
-const { compareVersions, loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema'));
+const { compareVersions } = require(path.resolve(__dirname, '..', 'schema'));
+const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 const {
   loadComponentRegistryForDocuments,
   loadProjectComponentRegistry,

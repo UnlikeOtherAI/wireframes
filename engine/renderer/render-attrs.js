@@ -178,6 +178,7 @@ function renderImageElement(projectPath, props, options = {}) {
 
   const resolvedSource = readLocalImage(projectPath, rawSource, {
     assetUrlPrefix: options && typeof options.assetUrlPrefix === 'string' ? options.assetUrlPrefix : '',
+    imageResolver: options?.imageResolver,
   }) || (rawSource ? rawSource : null);
   if (!resolvedSource) {
     return `<div class="wf-image wf-image-placeholder">${escapeHtml(alt)}</div>`;

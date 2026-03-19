@@ -2,15 +2,18 @@
 
 module.exports = {
   schema: require('./schema'),
+  schemaLoader: require('./schema/loader'),
   resolver: require('./resolver'),
   renderer: {
     primitives: require('./renderer/primitives'),
     layout: require('./renderer/layout'),
     interactions: require('./renderer/interactions'),
     wireframeStyles: require('./renderer/wireframe-styles'),
+    fsImageResolver: require('./renderer/fs-image-resolver'),
   },
   screenshots: require('./screenshots'),
   build: require('./build'),
+  buildFs: require('./build/fs-writer'),
   serve: require('./serve'),
   validate: require('./validate'),
   lint: require('./lint'),

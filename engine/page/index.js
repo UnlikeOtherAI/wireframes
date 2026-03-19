@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
 const { SUPPORTED_SPEC_VERSION } = require('../schema/constants');
-const { loadDocumentFromFile } = require('../schema');
+const { loadDocumentFromFile } = require('../schema/loader');
 
 const PAGE_ID_REGEX = /^[a-z][a-z0-9_]*$/;
 const DEVICE_VALUES = new Set(['mobile', 'tablet', 'web']);

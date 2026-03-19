@@ -1,10 +1,10 @@
 'use strict';
-const { loadDocumentFromFile } = require('./schema');
+const { loadDocumentFromFile } = require('./schema/loader');
 const { SUPPORTED_SPEC_VERSION } = require('./schema/constants');
 const {
   pageFilePath,
   templatesFilePath,
-} = require('./addressing');
+} = require('./addressing/fs-resolver');
 const { listPages } = require('./page');
 const { listTemplates } = require('./template');
 const {

@@ -1,7 +1,5 @@
 'use strict';
 
-const fs = require('node:fs');
-const path = require('node:path');
 const { toPx } = require('./layout');
 const CARD_SHADOWS = {
   0: 'none',
@@ -171,6 +169,14 @@ function normalizeAssetUrlPrefix(prefix) {
   return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`;
 }
 
+function extname(filePath) {
+  const lastDot = filePath.lastIndexOf('.');
+  if (lastDot === -1 || lastDot === filePath.length - 1) {
+    return '';
+  }
+  return filePath.slice(lastDot);
+}
+
 function readLocalImage(projectPath, source, options = {}) {
   if (typeof source !== 'string') {
     return null;
@@ -185,29 +191,16 @@ function readLocalImage(projectPath, source, options = {}) {
     return trimmed;
   }
 
-  const assetPath = path.join(projectPath, 'assets', trimmed.replace(/^\/+/, ''));
-  if (!fs.existsSync(assetPath)) {
-    return null;
-  }
-
   const assetUrlPrefix = normalizeAssetUrlPrefix(options.assetUrlPrefix);
   if (assetUrlPrefix) {
     return `${assetUrlPrefix}${trimmed.replace(/^\/+/, '')}`;
   }
 
-  const buffer = fs.readFileSync(assetPath);
-  const extension = path.extname(assetPath).toLowerCase();
-  const mime = extension === '.svg'
-    ? 'image/svg+xml'
-    : extension === '.jpg' || extension === '.jpeg'
-      ? 'image/jpeg'
-      : extension === '.gif'
-        ? 'image/gif'
-        : extension === '.webp'
-          ? 'image/webp'
-          : 'image/png';
+  if (typeof options.imageResolver === 'function') {
+    return options.imageResolver(projectPath, trimmed);
+  }
 
-  return `data:${mime};base64,${buffer.toString('base64')}`;
+  return null;
 }
 
 module.exports = {
@@ -220,4 +213,5 @@ module.exports = {
   mergeWireframeStyle,
   surfaceElevationOverride,
   readLocalImage,
+  extname,
 };

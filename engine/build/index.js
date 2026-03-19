@@ -1,32 +1,20 @@
 'use strict';
 
-const fs = require('node:fs');
-const path = require('node:path');
-const yaml = require('js-yaml');
-
-const { runValidate } = require(path.resolve(__dirname, '..', 'validate'));
-const {
-  resolvePageTargets,
-} = require(path.resolve(__dirname, '..', 'screenshots'));
-const {
-  buildInteractionRuntimeFromWindowContext,
-} = require(path.resolve(__dirname, '..', 'renderer', 'interactions'));
-const {
-  escapeHtml,
-  escapeAttr,
-} = require(path.resolve(__dirname, '..', 'screenshots'));
+const { resolveTemplatePage } = require('../resolver');
 const {
   renderWireframeMarkup,
   buildWireframeStyles,
-} = require(path.resolve(__dirname, '..', 'screenshots', 'renderer'));
+} = require('../screenshots/renderer');
+const {
+  buildInteractionRuntimeFromWindowContext,
+} = require('../renderer/interactions');
 const {
   normalizeBasePath,
   joinBasePath,
   buildPageFileName,
   buildRouteTableFromTargets,
-} = require(path.resolve(__dirname, '..', 'routes'));
+} = require('../routes');
 
-const DEFAULT_OUTPUT_DIR = './wireframes/build';
 const VALID_PLATFORM_FILTERS = new Set(['all', 'web', 'mobile', 'tablet']);
 const DEFAULT_BASE_PATH = '/';
 
@@ -34,10 +22,12 @@ function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function normalizeOutput(value) {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
+function escapeHtml(value) {
+  return String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+}
+
+function escapeAttr(value) {
+  return String(value ?? '').replaceAll('"', '&quot;');
 }
 
 function normalizePlatform(value) {
@@ -46,71 +36,158 @@ function normalizePlatform(value) {
   return VALID_PLATFORM_FILTERS.has(normalized) ? normalized : null;
 }
 
-function parseBoolean(value, fallback) {
-  return typeof value === 'boolean' ? value : fallback;
-}
-
-function loadWfrcConfig(projectPath) {
-  const wfrcPath = path.join(projectPath, '.wfrc.yaml');
-  if (!fs.existsSync(wfrcPath)) {
-    return {
-      strictValidation: true,
-      failOnWarnings: false,
-      build: {
-        outputDir: DEFAULT_OUTPUT_DIR,
-        clean: false,
-        basePath: DEFAULT_BASE_PATH,
-      },
-      parseError: null,
-    };
-  }
-
-  let parsed;
-  try {
-    parsed = yaml.load(fs.readFileSync(wfrcPath, 'utf8')) || {};
-    if (!isObject(parsed)) {
-      return {
-        strictValidation: true,
-        failOnWarnings: false,
-        build: {
-          outputDir: DEFAULT_OUTPUT_DIR,
-          clean: false,
-          basePath: DEFAULT_BASE_PATH,
-        },
-        parseError: 'Invalid .wfrc.yaml payload: expected object.',
-      };
-    }
-  } catch (error) {
-    return {
-      strictValidation: true,
-      failOnWarnings: false,
-      build: {
-        outputDir: DEFAULT_OUTPUT_DIR,
-        clean: false,
-        basePath: DEFAULT_BASE_PATH,
-      },
-      parseError: `Invalid .wfrc.yaml: ${error.message}`,
-    };
-  }
-
-  const cliConfig = isObject(parsed.cli) ? parsed.cli : {};
-  const buildConfig = isObject(cliConfig.build) ? cliConfig.build : {};
-
-  return {
-    strictValidation: parseBoolean(cliConfig.strictValidation, true),
-    failOnWarnings: parseBoolean(cliConfig.failOnWarnings, false),
-    build: {
-      outputDir: normalizeOutput(buildConfig.outputDir) || DEFAULT_OUTPUT_DIR,
-      clean: parseBoolean(buildConfig.clean, false),
-      basePath: normalizeOutput(buildConfig.basePath) || DEFAULT_BASE_PATH,
-    },
-    parseError: null,
-  };
-}
-
 function normalizeAssetPrefix(basePath) {
   const joined = joinBasePath(basePath, 'assets');
   return joined.endsWith('/') ? joined : `${joined}/`;
+}
+
+function resolveViewport(viewport = {}) {
+  const VIEWPORT_PRESETS = {
+    web: { width: 1280, height: 900 },
+    mobile: {
+      portrait: { width: 390, height: 844 },
+      landscape: { width: 844, height: 390 },
+    },
+    tablet: {
+      portrait: { width: 820, height: 1180 },
+      landscape: { width: 1180, height: 820 },
+    },
+  };
+
+  if (!viewport || typeof viewport !== 'object') {
+    return { ok: false, error: 'Page viewport is missing.' };
+  }
+
+  if (viewport.device === 'web') {
+    return { ok: true, width: VIEWPORT_PRESETS.web.width, height: VIEWPORT_PRESETS.web.height, device: 'web' };
+  }
+
+  const preset = VIEWPORT_PRESETS[viewport.device]?.[viewport.orientation];
+  if (!preset) {
+    return { ok: false, error: viewport.device ? `Unsupported device "${viewport.device}".` : 'Page viewport missing device.' };
+  }
+
+  return { ok: true, width: preset.width, height: preset.height, device: viewport.device, orientation: viewport.orientation };
+}
+
+function resolvePageRendering(page) {
+  const rendering = isObject(page?.rendering) ? { ...page.rendering } : {};
+  if (!rendering.mode && (page?.renderMode === 'line' || page?.renderMode === 'card')) {
+    rendering.mode = page.renderMode;
+  }
+  return rendering;
+}
+
+function resolvePageTree(documentMap, pageId) {
+  const pageDoc = documentMap.pages instanceof Map
+    ? documentMap.pages.get(pageId)
+    : documentMap.pages?.[pageId];
+
+  if (!isObject(pageDoc)) {
+    return { ok: false, error: `Page "${pageId}" not found in document map.` };
+  }
+
+  const page = isObject(pageDoc.page) ? pageDoc.page : null;
+  if (!page) {
+    return { ok: false, error: `Page "${pageId}" has no page payload.` };
+  }
+
+  const templateId = page.template;
+  if (typeof templateId !== 'string' || templateId.trim() === '') {
+    return { ok: false, error: `Page "${pageId}" does not define a template.` };
+  }
+
+  const templates = isObject(documentMap.templates?.templates)
+    ? documentMap.templates.templates
+    : isObject(documentMap.templates)
+      ? documentMap.templates
+      : {};
+  const template = templates[templateId];
+  if (!isObject(template)) {
+    return { ok: false, error: `Page "${pageId}" references missing template "${templateId}".` };
+  }
+
+  const components = isObject(documentMap.components?.components)
+    ? documentMap.components.components
+    : isObject(documentMap.components)
+      ? documentMap.components
+      : {};
+
+  const resolved = resolveTemplatePage({ template, page, components });
+  if (!resolved.ok) {
+    return { ok: false, error: resolved.error };
+  }
+
+  const templateLayout = isObject(template.layout) ? template.layout : {};
+  const bodyLayoutType = templateLayout.type === 'row' ? 'row' : 'stack';
+
+  return {
+    ok: true,
+    roots: Array.isArray(resolved.roots) ? resolved.roots : [],
+    bodyLayoutType,
+    page,
+    templateId,
+  };
+}
+
+function resolveDocumentMapRoutes(documentMap) {
+  const sitemap = isObject(documentMap.sitemap?.sitemap)
+    ? documentMap.sitemap.sitemap
+    : isObject(documentMap.sitemap)
+      ? documentMap.sitemap
+      : {};
+  const routes = Array.isArray(sitemap.routes) ? sitemap.routes : [];
+  const routeByPage = new Map();
+  const routeIdByPage = new Map();
+  const routeIdToPage = new Map();
+
+  for (const route of routes) {
+    const page = typeof route?.page === 'string' && route.page.trim() !== '' ? route.page.trim() : null;
+    const routeId = typeof route?.id === 'string' && route.id.trim() !== '' ? route.id.trim() : null;
+    const routePath = typeof route?.path === 'string' && route.path.trim() !== '' ? route.path.trim() : '/';
+    if (page) {
+      routeByPage.set(page, { id: routeId || routeIdByPage.get(page) || page, path: routePath });
+      if (routeId) {
+        routeIdByPage.set(page, routeId);
+      }
+    }
+    if (routeId && page) {
+      routeIdToPage.set(routeId, page);
+    }
+  }
+
+  return { routeByPage, routeIdByPage, routeIdToPage };
+}
+
+function resolveDataSources(documentMap, page) {
+  const sourceMap = {};
+  const dataSources = Array.isArray(page?.dataSources) ? page.dataSources : [];
+
+  for (const entry of dataSources) {
+    if (!isObject(entry) || typeof entry.id !== 'string' || typeof entry.dataset !== 'string') {
+      continue;
+    }
+    const sourceId = entry.id.trim();
+    const datasetId = entry.dataset.trim();
+    if (!sourceId || !datasetId) {
+      continue;
+    }
+
+    const datasetDoc = documentMap.datasets instanceof Map
+      ? documentMap.datasets.get(datasetId)
+      : documentMap.datasets?.[datasetId];
+    if (!isObject(datasetDoc)) {
+      continue;
+    }
+    const dataset = isObject(datasetDoc.dataset) ? datasetDoc.dataset : datasetDoc;
+    const items = Array.isArray(dataset.items) ? dataset.items : [];
+    sourceMap[sourceId] = {
+      items,
+      primaryKey: typeof dataset.primaryKey === 'string' ? dataset.primaryKey : null,
+    };
+  }
+
+  return sourceMap;
 }
 
 function buildPlatformIndexHtml(platform, pages, options = {}) {
@@ -162,220 +239,214 @@ function buildMasterIndexHtml(platformEntries, options = {}) {
 </html>`;
 }
 
-function copyFontAwesomeAssets(sharedDir) {
-  const faPackageDir = path.dirname(require.resolve('@fortawesome/fontawesome-free/package.json'));
-  const faCssDir = path.join(sharedDir, 'fa', 'css');
-  const faWebfontsDir = path.join(sharedDir, 'fa', 'webfonts');
-  fs.mkdirSync(faCssDir, { recursive: true });
-  fs.mkdirSync(faWebfontsDir, { recursive: true });
-  const faCssDest = path.join(faCssDir, 'all.min.css');
-  fs.copyFileSync(path.join(faPackageDir, 'css', 'all.min.css'), faCssDest);
-  const faCssContent = fs.readFileSync(faCssDest, 'utf8');
-  fs.writeFileSync(faCssDest, faCssContent.replaceAll('font-display:block', 'font-display:swap'), 'utf8');
-  const webfontsSource = path.join(faPackageDir, 'webfonts');
-  for (const file of fs.readdirSync(webfontsSource)) {
-    if (file.endsWith('.woff2')) {
-      fs.copyFileSync(path.join(webfontsSource, file), path.join(faWebfontsDir, file));
-    }
+function renderPage(documentMap, pageId, options = {}) {
+  const treeResult = resolvePageTree(documentMap, pageId);
+  if (!treeResult.ok) {
+    return { ok: false, error: treeResult.error };
   }
+
+  const page = treeResult.page;
+  const viewportResult = resolveViewport(page.viewport);
+  if (!viewportResult.ok) {
+    return { ok: false, error: viewportResult.error };
+  }
+
+  const routeMap = resolveDocumentMapRoutes(documentMap);
+  const routeInfo = routeMap.routeByPage.get(pageId) || {};
+
+  const manifest = isObject(documentMap.manifest?.manifest)
+    ? documentMap.manifest.manifest
+    : isObject(documentMap.manifest)
+      ? documentMap.manifest
+      : {};
+  const defaultWireframeStyle = manifest.defaultWireframeStyle || {};
+  const parsedDefaultGridColumns = Number(manifest.defaultGridColumns);
+  const defaultGridColumns = Number.isInteger(parsedDefaultGridColumns) && parsedDefaultGridColumns > 0
+    ? parsedDefaultGridColumns
+    : 12;
+
+  const sitemap = isObject(documentMap.sitemap?.sitemap)
+    ? documentMap.sitemap.sitemap
+    : isObject(documentMap.sitemap)
+      ? documentMap.sitemap
+      : {};
+  const appStateDefaults = isObject(sitemap.appState) ? sitemap.appState : {};
+  const dataSources = resolveDataSources(documentMap, page);
+
+  const html = renderWireframeMarkup({
+    roots: treeResult.roots,
+    pageViewport: {
+      width: viewportResult.width,
+      height: viewportResult.height,
+      device: viewportResult.device,
+      orientation: viewportResult.orientation,
+    },
+    pageRouteId: routeInfo.id || pageId,
+    routeTable: options.routeTable || {},
+    appStateDefaults,
+    pageStateDefaults: isObject(page.pageState) ? page.pageState : {},
+    pageStyle: page.wireframeStyle || defaultWireframeStyle,
+    rendering: resolvePageRendering(page),
+    defaultGridColumns,
+    bodyLayoutType: treeResult.bodyLayoutType,
+    dataSources,
+    assetUrlPrefix: options.assetUrlPrefix || '',
+    imageResolver: options.imageResolver || null,
+  });
+
+  return { ok: true, html, pageId };
 }
 
-function writePlatformArtifacts(platformResult, outputDir, assetUrlPrefix) {
-  const platformDir = outputDir;
-  const sharedDir = path.join(platformDir, '_shared');
-  fs.mkdirSync(sharedDir, { recursive: true });
-
-  const sharedCss = path.join(sharedDir, 'wireframe.css');
-  const sharedJs = path.join(sharedDir, 'interactions.js');
-  fs.writeFileSync(sharedCss, buildWireframeStyles(), 'utf8');
-  fs.writeFileSync(sharedJs, buildInteractionRuntimeFromWindowContext(), 'utf8');
-  copyFontAwesomeAssets(sharedDir);
-
-  const indexHtml = buildPlatformIndexHtml(platformResult.platform, platformResult.pages, {
-    basePath: platformResult.basePath,
-  });
-  fs.writeFileSync(path.join(platformDir, 'index.html'), indexHtml, 'utf8');
-
-  for (const page of platformResult.pages) {
-    const html = renderWireframeMarkup({
-      roots: page.roots,
-      pageViewport: page.viewport,
-      pageRouteId: page.routeId,
-      routeTable: page.routeTable,
-      appStateDefaults: page.appStateDefaults,
-      pageStateDefaults: page.pageStateDefaults,
-      pageStyle: page.wireframeStyle,
-      rendering: page.rendering || {},
-      defaultGridColumns: page.defaultGridColumns,
-      bodyLayoutType: page.bodyLayoutType || 'row',
-      projectPath: platformResult.projectPath,
-      dataSources: page.dataSources,
-      wireframeCssHref: './_shared/wireframe.css',
-      fontAwesomeCssHref: './_shared/fa/css/all.min.css',
-      runtimeJsSrc: './_shared/interactions.js',
-      runtimeContext: {
-        routeId: page.routeId,
-        routeTable: page.routeTable,
-        appStateDefaults: page.appStateDefaults,
-        pageStateDefaults: page.pageStateDefaults,
-        platform: platformResult.platform,
-      },
-      assetUrlPrefix,
-    });
-    fs.writeFileSync(path.join(platformDir, page.fileName), html, 'utf8');
-  }
-}
-
-function copyAssets(projectPath, outputDir) {
-  const sourceAssets = path.join(projectPath, 'assets');
-  const targetAssets = path.join(outputDir, 'assets');
-
-  if (!fs.existsSync(sourceAssets)) return;
-
-  fs.cpSync(sourceAssets, targetAssets, {
-    recursive: true,
-    force: true,
-  });
-}
-
-function runBuild({
-  projectPath = process.cwd(),
-  output = null,
-  platform = 'all',
-  clean = null,
-  basePath = null,
-} = {}) {
-  const normalizedProjectPath = path.resolve(projectPath);
-  const config = loadWfrcConfig(normalizedProjectPath);
-  if (config.parseError) {
-    return {
-      ok: false,
-      error: config.parseError,
-    };
+function buildProject(documentMap, options = {}) {
+  const basePath = normalizeBasePath(options.basePath || DEFAULT_BASE_PATH);
+  const platform = normalizePlatform(options.platform || 'all');
+  if (!platform) {
+    return { ok: false, error: `Unsupported platform "${options.platform}".` };
   }
 
-  const resolvedPlatform = normalizePlatform(platform);
-  if (!resolvedPlatform) {
-    return {
-      ok: false,
-      error: `Unsupported platform "${platform}".`,
-    };
-  }
-
-  const selectedOutput = normalizeOutput(output) || config.build.outputDir;
-  const selectedBasePath = normalizeBasePath(normalizeOutput(basePath) || config.build.basePath);
-  const shouldClean = parseBoolean(clean, config.build.clean);
-  const shouldFailOnWarnings = Boolean(config.strictValidation) || Boolean(config.failOnWarnings);
-
-  const validationResult = runValidate({
-    projectPath: normalizedProjectPath,
-    strict: shouldFailOnWarnings,
-  });
-  if (!validationResult.ok) {
-    return {
-      ok: false,
-      error: 'Project validation failed. Run wf validate before building.',
-      details: validationResult,
-    };
-  }
-
-  const targetsResult = resolvePageTargets(normalizedProjectPath, null);
-  if (!targetsResult.ok) return targetsResult;
-
-  const outputDir = path.resolve(normalizedProjectPath, selectedOutput);
-  if (shouldClean && fs.existsSync(outputDir)) {
-    fs.rmSync(outputDir, { recursive: true, force: true });
-  }
-
-  fs.mkdirSync(outputDir, { recursive: true });
-  copyAssets(normalizedProjectPath, outputDir);
-
-  const requestedPlatforms = resolvedPlatform === 'all'
+  const requestedPlatforms = platform === 'all'
     ? ['web', 'mobile', 'tablet']
-    : [resolvedPlatform];
-  const targets = targetsResult.targets;
+    : [platform];
+
+  const manifest = isObject(documentMap.manifest?.manifest)
+    ? documentMap.manifest.manifest
+    : isObject(documentMap.manifest)
+      ? documentMap.manifest
+      : {};
+  const defaultWireframeStyle = manifest.defaultWireframeStyle || {};
+  const parsedDefaultGridColumns = Number(manifest.defaultGridColumns);
+  const defaultGridColumns = Number.isInteger(parsedDefaultGridColumns) && parsedDefaultGridColumns > 0
+    ? parsedDefaultGridColumns
+    : 12;
+
+  const sitemap = isObject(documentMap.sitemap?.sitemap)
+    ? documentMap.sitemap.sitemap
+    : isObject(documentMap.sitemap)
+      ? documentMap.sitemap
+      : {};
+  const appStateDefaults = isObject(sitemap.appState) ? sitemap.appState : {};
+  const routeMap = resolveDocumentMapRoutes(documentMap);
+
+  const pageIds = documentMap.pages instanceof Map
+    ? [...documentMap.pages.keys()]
+    : Object.keys(documentMap.pages || {});
+
+  const targets = [];
+  for (const pageId of pageIds) {
+    const treeResult = resolvePageTree(documentMap, pageId);
+    if (!treeResult.ok) {
+      return { ok: false, error: treeResult.error };
+    }
+
+    const page = treeResult.page;
+    const viewportResult = resolveViewport(page.viewport);
+    if (!viewportResult.ok) {
+      return { ok: false, error: viewportResult.error };
+    }
+
+    const routeInfo = routeMap.routeByPage.get(pageId) || {};
+    const dataSources = resolveDataSources(documentMap, page);
+
+    targets.push({
+      pageId,
+      route: routeInfo.path || '/',
+      pageRouteId: routeInfo.id || routeMap.routeIdByPage.get(pageId) || pageId,
+      dataSources,
+      appStateDefaults,
+      pageStateDefaults: isObject(page.pageState) ? page.pageState : {},
+      viewport: {
+        width: viewportResult.width,
+        height: viewportResult.height,
+        device: viewportResult.device,
+        orientation: viewportResult.orientation,
+      },
+      wireframeStyle: page.wireframeStyle || defaultWireframeStyle,
+      rendering: resolvePageRendering(page),
+      defaultGridColumns,
+      bodyLayoutType: treeResult.bodyLayoutType,
+      roots: treeResult.roots,
+    });
+  }
+
   const runtimeRouteTable = buildRouteTableFromTargets(targets, {
-    basePath: selectedBasePath,
+    basePath,
     platforms: new Set(requestedPlatforms),
   });
 
-  const platformResults = [];
-  const writtenPages = [];
+  const assetUrlPrefix = normalizeAssetPrefix(basePath);
+  const builtPages = [];
+  const platformIndexes = {};
+  const platformEntries = [];
 
   for (const platformName of requestedPlatforms) {
-    const platformTargets = targets.filter((target) => target.viewport?.device === platformName);
-    if (platformTargets.length === 0) {
-      continue;
-    }
+    const platformTargets = targets.filter((t) => t.viewport?.device === platformName);
+    if (platformTargets.length === 0) continue;
 
-    const platformDir = path.join(outputDir, platformName);
-    fs.mkdirSync(platformDir, { recursive: true });
-
-    const pages = [];
+    const platformPages = [];
     for (const target of platformTargets) {
       const fileName = buildPageFileName(target.pageId, platformName);
-      pages.push({
-        pageId: target.pageId,
-        route: target.route || '/',
-        routeId: target.pageRouteId,
-        fileName,
-        routeTable: runtimeRouteTable,
+      const html = renderWireframeMarkup({
         roots: target.roots,
-        viewport: target.viewport,
+        pageViewport: target.viewport,
+        pageRouteId: target.pageRouteId,
+        routeTable: runtimeRouteTable,
         appStateDefaults: target.appStateDefaults,
         pageStateDefaults: target.pageStateDefaults,
-        dataSources: target.dataSources,
-        wireframeStyle: target.wireframeStyle,
+        pageStyle: target.wireframeStyle,
         rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
         bodyLayoutType: target.bodyLayoutType || 'row',
-        projectPath: normalizedProjectPath,
+        dataSources: target.dataSources,
+        wireframeCssHref: './_shared/wireframe.css',
+        fontAwesomeCssHref: './_shared/fa/css/all.min.css',
+        runtimeJsSrc: './_shared/interactions.js',
+        runtimeContext: {
+          routeId: target.pageRouteId,
+          routeTable: runtimeRouteTable,
+          appStateDefaults: target.appStateDefaults,
+          pageStateDefaults: target.pageStateDefaults,
+          platform: platformName,
+        },
+        assetUrlPrefix,
+        imageResolver: options.imageResolver || null,
       });
+
+      builtPages.push({ pageId: target.pageId, platform: platformName, html, fileName });
+      platformPages.push({ pageId: target.pageId, route: target.route, fileName });
     }
 
-    const assetUrlPrefix = normalizeAssetPrefix(selectedBasePath);
-    writePlatformArtifacts({
+    const platformIndexHtml = buildPlatformIndexHtml(platformName, platformPages, { basePath });
+    platformIndexes[platformName] = platformIndexHtml;
+    platformEntries.push({
       platform: platformName,
-      basePath: selectedBasePath,
-      pages,
-      projectPath: normalizedProjectPath,
-    }, platformDir, assetUrlPrefix);
-    platformResults.push({
-      platform: platformName,
-      count: pages.length,
-      href: joinBasePath(selectedBasePath, platformName, 'index.html'),
-      indexPath: path.join(platformDir, 'index.html'),
-      pages,
-      outputDir: platformDir,
+      count: platformPages.length,
+      href: joinBasePath(basePath, platformName, 'index.html'),
     });
-
-    for (const page of pages) {
-      writtenPages.push(path.join(platformName, page.fileName));
-    }
   }
 
-  const masterIndex = buildMasterIndexHtml(platformResults, {
-    basePath: selectedBasePath,
-  });
-  fs.writeFileSync(path.join(outputDir, 'index.html'), masterIndex, 'utf8');
+  const css = buildWireframeStyles();
+  const js = buildInteractionRuntimeFromWindowContext();
+  const indexHtml = buildMasterIndexHtml(platformEntries, { basePath });
 
   return {
     ok: true,
-    outputDir,
-    output: outputDir,
-    projectPath: normalizedProjectPath,
-    platform: resolvedPlatform,
-    basePath: selectedBasePath,
-    pages: writtenPages,
-    platforms: platformResults,
-    warnings: validationResult.warnings || [],
+    pages: builtPages,
+    css,
+    js,
+    routeTable: runtimeRouteTable,
+    indexHtml,
+    platformIndexes,
+    basePath,
+    platform,
   };
 }
 
 module.exports = {
-  runBuild,
-  buildPageFileName,
+  buildProject,
+  renderPage,
   buildMasterIndexHtml,
   buildPlatformIndexHtml,
-  DEFAULT_OUTPUT_DIR,
+  buildPageFileName,
+  resolvePageTree,
+  DEFAULT_BASE_PATH,
 };

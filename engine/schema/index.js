@@ -1,8 +1,5 @@
 'use strict';
 
-const fs = require('node:fs');
-const path = require('node:path');
-const yaml = require('js-yaml');
 const { SUPPORTED_SPEC_VERSION } = require('./constants');
 const { validateDocumentAgainstSchema } = require('./validator');
 
@@ -130,14 +127,6 @@ function validateManifestSchemaVersion(document, filePath, supportedSpecVersion 
   return normalized;
 }
 
-function parseDocumentText(content, filePath) {
-  try {
-    return yaml.load(content);
-  } catch (error) {
-    throw new SchemaLoadError(`Invalid YAML in ${filePath}: ${error.message}`, 'INVALID_YAML', { filePath });
-  }
-}
-
 function validateDocument(document, filePath, supportedSpecVersion = SUPPORTED_SPEC_VERSION, options = {}) {
   const { skipSchemaValidation = false } = options;
 
@@ -171,33 +160,9 @@ function validateDocument(document, filePath, supportedSpecVersion = SUPPORTED_S
   return { documentType, specVersion, id };
 }
 
-function loadDocumentFromFile(filePath, options = {}) {
-  const { supportedSpecVersion = SUPPORTED_SPEC_VERSION } = options;
-  const absolutePath = path.resolve(filePath);
-  const content = fs.readFileSync(absolutePath, 'utf8');
-  const parsedDocument = parseDocumentText(content, absolutePath);
-
-  const { documentType, specVersion, id } = validateDocument(parsedDocument, absolutePath, supportedSpecVersion, options);
-
-  return {
-    absolutePath,
-    documentType,
-    specVersion,
-    id,
-    document: parsedDocument,
-  };
-}
-
-function detectDocumentTypeFromFile(filePath, options = {}) {
-  const { documentType } = loadDocumentFromFile(filePath, options);
-  return documentType;
-}
-
 module.exports = {
   SchemaLoadError,
   SUPPORTED_DOCUMENT_TYPES,
   compareVersions,
-  detectDocumentTypeFromFile,
-  loadDocumentFromFile,
   validateDocument,
 };

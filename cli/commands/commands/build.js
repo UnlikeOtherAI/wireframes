@@ -1,7 +1,7 @@
 'use strict';
 
 const path = require('node:path');
-const { runBuild } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'build'));
+const { runBuild } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'build', 'fs-writer'));
 
 const VALID_PLATFORMS = new Set(['all', 'web', 'mobile', 'tablet']);
 const SUBCOMMAND_USAGE = 'Usage: wf build [--output <path>] [--platform <all|web|mobile|tablet>] [--clean] [--base-path <path>]';

@@ -1,9 +1,7 @@
 'use strict';
 
-const path = require('node:path');
-
-const screenshotsRenderer = require(path.resolve(__dirname, '..', 'screenshots', 'renderer'));
-const { buildInteractionRuntime } = require(path.resolve(__dirname, 'interactions'));
+const screenshotsRenderer = require('../screenshots/renderer');
+const { buildInteractionRuntime } = require('./interactions');
 
 module.exports = {
   renderWireframeMarkup: screenshotsRenderer.renderWireframeMarkup,

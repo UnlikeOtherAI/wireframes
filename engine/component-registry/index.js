@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema'));
+const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
 
 const { PRIMITIVE_COMPONENTS } = require(path.resolve(__dirname, '..', 'schema', 'primitives'));

@@ -2,15 +2,17 @@
 
 const path = require('node:path');
 const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
-const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema'));
+const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
+const {
+  parseAddress,
+  resolveAddressInRoots,
+} = require(path.resolve(__dirname, '..', 'addressing'));
 const {
   componentsFilePath,
-  parseAddress,
   pageFilePath,
-  resolveAddressInRoots,
   resolveTarget: resolveTargetWithMetadata,
   templatesFilePath,
-} = require(path.resolve(__dirname, '..', 'addressing'));
+} = require(path.resolve(__dirname, '..', 'addressing', 'fs-resolver'));
 
 const { PRIMITIVE_COMPONENTS } = require(path.resolve(__dirname, '..', 'schema', 'primitives'));
 

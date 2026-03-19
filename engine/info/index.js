@@ -1,7 +1,7 @@
 'use strict';
 
 const path = require('node:path');
-const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema'));
+const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 
 function getProjectInfo(projectPath) {
   const manifestPath = path.resolve(projectPath, 'manifest.yaml');

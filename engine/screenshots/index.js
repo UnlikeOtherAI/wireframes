@@ -4,12 +4,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
 const { renderWireframeMarkup } = require(path.resolve(__dirname, 'renderer'));
+const { fsImageResolver } = require(path.resolve(__dirname, '..', 'renderer', 'fs-image-resolver'));
 
 const { runValidate } = require(path.resolve(__dirname, '..', 'validate'));
 const { listPages } = require(path.resolve(__dirname, '..', 'page'));
-const { pageFilePath } = require(path.resolve(__dirname, '..', 'addressing'));
+const { pageFilePath } = require(path.resolve(__dirname, '..', 'addressing', 'fs-resolver'));
 const { listRoutes } = require(path.resolve(__dirname, '..', 'introspection', 'routes'));
-const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema'));
+const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
 const { buildTreeTargets } = require(path.resolve(__dirname, '..', 'tree'));
 const { getDatasetDocument } = require(path.resolve(__dirname, '..', 'data', 'utils'));
@@ -395,6 +396,7 @@ async function captureScreenshots(targets, outputPath, frame) {
         bodyLayoutType: target.bodyLayoutType || 'row',
         projectPath: target.projectPath,
         frame,
+        imageResolver: fsImageResolver,
       });
 
       await browserPage.setContent(content, { waitUntil: 'networkidle' });

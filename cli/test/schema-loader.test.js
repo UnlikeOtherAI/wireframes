@@ -6,7 +6,8 @@ const path = require('node:path');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { SchemaLoadError, loadDocumentFromFile, validateDocument } = require('../../engine/schema');
+const { SchemaLoadError, validateDocument } = require('../../engine/schema');
+const { loadDocumentFromFile } = require('../../engine/schema/loader');
 
 function writeTempFile(name, content) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wireframe-loader-'));

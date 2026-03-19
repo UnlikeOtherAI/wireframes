@@ -311,6 +311,7 @@ function renderWireframeMarkup({
   assetUrlPrefix = '',
   rendering = {},
   bodyLayoutType = 'row',
+  imageResolver = null,
 }) {
   const mode = rendering?.mode === 'line' ? 'line' : 'card';
   const density = rendering?.density === 'compact' ? 'compact' : 'comfortable';
@@ -332,6 +333,7 @@ function renderWireframeMarkup({
     mode,
     density,
     rendering,
+    imageResolver,
   };
 
   let shellMarkup;

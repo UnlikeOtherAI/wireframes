@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
 const yaml = require('js-yaml');
 
 const { initProject } = require('../../engine/init');
-const { runBuild } = require('../../engine/build');
+const { runBuild } = require('../../engine/build/fs-writer');
 
 function createTempProject(projectName) {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'wireframe-build-'));

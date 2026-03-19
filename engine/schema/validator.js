@@ -1,18 +1,8 @@
 'use strict';
 
-const fs = require('node:fs');
-const path = require('node:path');
-
-const SCHEMA_PATH = path.resolve(__dirname, 'schema.json');
-let cachedSchema = null;
+const cachedSchema = require('./schema.json');
 
 function loadSchema() {
-  if (cachedSchema != null) {
-    return cachedSchema;
-  }
-
-  const raw = fs.readFileSync(SCHEMA_PATH, 'utf8');
-  cachedSchema = JSON.parse(raw);
   return cachedSchema;
 }
 

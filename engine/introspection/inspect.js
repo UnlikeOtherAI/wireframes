@@ -1,7 +1,8 @@
 'use strict';
 
 const path = require('node:path');
-const { resolveAddressInRoots, resolveTarget } = require(path.resolve(__dirname, '..', 'addressing'));
+const { resolveAddressInRoots } = require(path.resolve(__dirname, '..', 'addressing'));
+const { resolveTarget } = require(path.resolve(__dirname, '..', 'addressing', 'fs-resolver'));
 const { isObject } = require('./helpers');
 
 function inspectAddress({ projectPath, address }) {
