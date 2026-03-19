@@ -13,6 +13,8 @@ page:
     mode: card
   pageState:
     delete_confirm_open: false
+    settings_saved: false
+    style_saved: false
   overlays:
     - id: delete_confirm_modal
       type: modal
@@ -205,6 +207,11 @@ page:
                       props:
                         label: "Save Changes"
                         icon: floppy-disk
+                      interaction:
+                        - type: set_state
+                          stateKey: settings_saved
+                          value: true
+                          scope: page
 
                 - id: style_section
                   component: section
@@ -241,6 +248,11 @@ page:
                       props:
                         label: "Save Style"
                         icon: floppy-disk
+                      interaction:
+                        - type: set_state
+                          stateKey: style_saved
+                          value: true
+                          scope: page
 
                 - id: danger_section
                   component: section

@@ -13,6 +13,10 @@ page:
     mode: card
   pageState:
     new_project_open: false
+    inv1_accepted: false
+    inv1_declined: false
+    inv2_accepted: false
+    inv2_declined: false
   overlays:
     - id: new_project_modal
       type: modal
@@ -225,11 +229,21 @@ page:
                           props:
                             label: "Accept"
                             icon: check
+                          interaction:
+                            - type: set_state
+                              stateKey: inv1_accepted
+                              value: true
+                              scope: page
                         - id: inv1_decline
                           component: button
                           props:
                             label: "Decline"
                             icon: xmark
+                          interaction:
+                            - type: set_state
+                              stateKey: inv1_declined
+                              value: true
+                              scope: page
                 - id: inv_2
                   component: section
                   layout:
@@ -275,11 +289,21 @@ page:
                           props:
                             label: "Accept"
                             icon: check
+                          interaction:
+                            - type: set_state
+                              stateKey: inv2_accepted
+                              value: true
+                              scope: page
                         - id: inv2_decline
                           component: button
                           props:
                             label: "Decline"
                             icon: xmark
+                          interaction:
+                            - type: set_state
+                              stateKey: inv2_declined
+                              value: true
+                              scope: page
 
         - id: projects_grid
           component: section

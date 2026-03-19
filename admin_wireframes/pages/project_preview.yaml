@@ -11,6 +11,10 @@ page:
       style: solid
   rendering:
     mode: card
+  pageState:
+    published: false
+    url_copied: false
+    viewer_added: false
   slots:
     - slotId: main_content
       content:
@@ -137,24 +141,22 @@ page:
                       component: paragraph
                       props:
                         label: "Build and publish your wireframes to a shareable URL. Anyone with access can view the rendered wireframes in their browser."
-                    - id: pub_actions
-                      component: section
-                      layout:
-                        type: row
-                        gap: 8
-                      children:
-                        - id: pub_btn
-                          component: button
-                          props:
-                            label: "Publish Preview"
-                            icon: rocket
-                          size:
-                            width: "100%"
-                        - id: unpub_btn
-                          component: button
-                          props:
-                            label: "Unpublish"
-                            icon: ban
+                    - id: pub_btn
+                      component: button
+                      props:
+                        label: "Publish Preview"
+                        icon: rocket
+                      size:
+                        width: "100%"
+                      interaction:
+                        - type: set_state
+                          stateKey: published
+                          value: true
+                          scope: page
+                    - id: pub_hint
+                      component: text
+                      props:
+                        label: "After publishing, an Unpublish button will appear here to take down the preview."
 
                 - id: url_section
                   component: section
@@ -183,6 +185,11 @@ page:
                           props:
                             label: "Copy"
                             icon: copy
+                          interaction:
+                            - type: set_state
+                              stateKey: url_copied
+                              value: true
+                              scope: page
                     - id: url_hint
                       component: text
                       props:
@@ -197,6 +204,10 @@ page:
                     gap: 12
                     padding: 16
                   children:
+                    - id: access_pre_note
+                      component: text
+                      props:
+                        label: "Configure access before publishing. Settings take effect when the preview goes live."
                     - id: access_label
                       component: text
                       props:
@@ -255,6 +266,11 @@ page:
                           props:
                             label: "Add"
                             icon: plus
+                          interaction:
+                            - type: set_state
+                              stateKey: viewer_added
+                              value: true
+                              scope: page
                     - id: viewers_table
                       component: table
                       props:

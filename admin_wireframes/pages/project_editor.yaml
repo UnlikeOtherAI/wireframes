@@ -15,6 +15,8 @@ page:
     add_page_open: false
     history_open: false
     download_open: false
+    build_status: idle
+    message_sent: false
   overlays:
     - id: history_modal
       type: modal
@@ -384,7 +386,7 @@ page:
                     - id: tb_history
                       component: button
                       props:
-                        label: "History"
+                        label: "Change Log"
                         icon: clock-rotate-left
                       interaction:
                         - type: open_overlay
@@ -402,6 +404,11 @@ page:
                       props:
                         label: "Build"
                         icon: hammer
+                      interaction:
+                        - type: set_state
+                          stateKey: build_status
+                          value: building
+                          scope: page
 
                 # Split: Chat + Workspace
                 - id: editor_split
@@ -462,7 +469,7 @@ page:
                             - id: chat_history_btn
                               component: button
                               props:
-                                label: "History"
+                                label: "Chat Log"
                                 icon: clock-rotate-left
                               interaction:
                                 - type: open_overlay
@@ -560,6 +567,11 @@ page:
                               props:
                                 label: "Send"
                                 icon: paper-plane
+                              interaction:
+                                - type: set_state
+                                  stateKey: message_sent
+                                  value: true
+                                  scope: page
 
                     # --- Workspace iframe (right) ---
                     - id: workspace_panel

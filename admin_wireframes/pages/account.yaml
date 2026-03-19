@@ -13,6 +13,7 @@ page:
     mode: card
   pageState:
     delete_account_open: false
+    profile_saved: false
   overlays:
     - id: delete_account_modal
       type: modal
@@ -64,6 +65,9 @@ page:
                   props:
                     label: "Delete Permanently"
                     icon: trash
+                  interaction:
+                    - type: navigation
+                      targetRoute: login
   slots:
     - slotId: main_content
       content:
@@ -145,6 +149,11 @@ page:
                   props:
                     label: "Save Changes"
                     icon: floppy-disk
+                  interaction:
+                    - type: set_state
+                      stateKey: profile_saved
+                      value: true
+                      scope: page
 
             - id: session_section
               component: section

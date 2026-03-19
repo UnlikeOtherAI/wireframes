@@ -11,6 +11,58 @@ page:
       style: solid
   rendering:
     mode: card
+  pageState:
+    transfer_confirm_open: false
+    invite_sent: false
+  overlays:
+    - id: transfer_confirm_modal
+      type: modal
+      content:
+        - id: xfer_card
+          component: section
+          layout:
+            type: stack
+            gap: 16
+            padding: 24
+          size:
+            width: 420
+          children:
+            - id: xfer_icon
+              component: icon
+              props:
+                name: triangle-exclamation
+                size: xl
+            - id: xfer_heading
+              component: heading
+              props:
+                label: "Transfer Ownership?"
+                level: 3
+            - id: xfer_text
+              component: paragraph
+              props:
+                label: "You are about to transfer ownership of this project. You will become an Editor. Only the new owner can transfer it back."
+            - id: xfer_actions
+              component: section
+              layout:
+                type: row
+                gap: 8
+                justify: flex-end
+              children:
+                - id: xfer_cancel
+                  component: button
+                  props:
+                    label: "Cancel"
+                  interaction:
+                    - type: close_overlay
+                      targetOverlay: transfer_confirm_modal
+                - id: xfer_confirm
+                  component: button
+                  props:
+                    label: "Transfer Now"
+                    icon: arrow-right-arrow-left
+                  interaction:
+                    - type: close_overlay
+                      targetOverlay: transfer_confirm_modal
   slots:
     - slotId: main_content
       content:
@@ -158,6 +210,11 @@ page:
                           props:
                             label: "Send Invite"
                             icon: paper-plane
+                          interaction:
+                            - type: set_state
+                              stateKey: invite_sent
+                              value: true
+                              scope: page
 
                 - id: pending_section
                   component: section
@@ -235,6 +292,9 @@ page:
                           props:
                             label: "Transfer Ownership"
                             icon: arrow-right-arrow-left
+                          interaction:
+                            - type: open_overlay
+                              targetOverlay: transfer_confirm_modal
 
                 - id: roles_section
                   component: section
