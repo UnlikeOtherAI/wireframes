@@ -153,10 +153,33 @@ describe('Internal links', () => {
 });
 
 describe('Determinism', () => {
-  it('does not contain runtime-computed year references', () => {
-    const indexHtml = readPage('index.html');
-    const pricingHtml = readPage('pricing.html');
-    assert.ok(!indexHtml.includes('getFullYear'), 'Found getFullYear in index.html output');
-    assert.ok(!pricingHtml.includes('getFullYear'), 'Found getFullYear in pricing.html output');
+  const htmlPages = ['index.html', 'pricing.html'];
+  const nonDeterministicPatterns = [
+    { pattern: 'getFullYear', label: 'runtime year computation' },
+    { pattern: 'Date.now', label: 'Date.now() call' },
+    { pattern: 'Math.random', label: 'Math.random() call' },
+    { pattern: 'crypto.randomUUID', label: 'crypto.randomUUID() call' },
+  ];
+
+  for (const page of htmlPages) {
+    const html = readPage(page);
+
+    for (const { pattern, label } of nonDeterministicPatterns) {
+      it(`${page} does not contain ${label}`, () => {
+        assert.ok(!html.includes(pattern), `Found ${label} in ${page} output`);
+      });
+    }
+  }
+
+  it('sitemap contains no lastmod timestamps', () => {
+    const sitemap = readPage('sitemap-0.xml');
+    assert.ok(!sitemap.includes('<lastmod>'), 'Sitemap contains lastmod timestamp');
+  });
+
+  it('build output contains no runtime date construction in scripts', () => {
+    for (const page of htmlPages) {
+      const html = readPage(page);
+      assert.ok(!/<script[^>]*>[\s\S]*?new Date\b/.test(html), `Found new Date() in script in ${page}`);
+    }
   });
 });

@@ -153,7 +153,7 @@ function runDoctor({ projectPath } = {}) {
 
   const pagesDir = path.join(root, 'pages');
   if (fs.existsSync(pagesDir) && fs.statSync(pagesDir).isDirectory()) {
-    const pageFiles = fs.readdirSync(pagesDir).filter((name) => isYamlFile(name));
+    const pageFiles = fs.readdirSync(pagesDir).filter((name) => isYamlFile(name)).sort();
     for (const pageFile of pageFiles) {
       const abs = path.join(pagesDir, pageFile);
       const loaded = loadDocument(abs, result, 'page');
@@ -177,7 +177,7 @@ function runDoctor({ projectPath } = {}) {
 
   const dataDir = path.join(root, 'data');
   if (fs.existsSync(dataDir) && fs.statSync(dataDir).isDirectory()) {
-    const datasetFiles = fs.readdirSync(dataDir).filter((name) => isYamlFile(name));
+    const datasetFiles = fs.readdirSync(dataDir).filter((name) => isYamlFile(name)).sort();
     for (const datasetFile of datasetFiles) {
       const abs = path.join(dataDir, datasetFile);
       const loaded = loadDocument(abs, result, 'dataset');

@@ -207,7 +207,7 @@ function findPagesByTemplate(projectPath, templateId) {
     return [];
   }
 
-  const pageFiles = fs.readdirSync(pagesPath).filter((entry) => entry.endsWith('.yaml') || entry.endsWith('.yml'));
+  const pageFiles = fs.readdirSync(pagesPath).filter((entry) => entry.endsWith('.yaml') || entry.endsWith('.yml')).sort();
   const pageIds = [];
   for (const fileName of pageFiles) {
     const doc = parseYaml(path.join(pagesPath, fileName));

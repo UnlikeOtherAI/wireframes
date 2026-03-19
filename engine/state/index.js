@@ -104,7 +104,7 @@ function readPageState(projectPath, pageId) {
 function listAllPageStateKeys(projectPath) {
   const pagesPath = pagesDirectory(projectPath);
   const pageEntries = fs.existsSync(pagesPath) && fs.statSync(pagesPath).isDirectory()
-    ? fs.readdirSync(pagesPath).filter((entry) => entry.endsWith('.yaml') || entry.endsWith('.yml'))
+    ? fs.readdirSync(pagesPath).filter((entry) => entry.endsWith('.yaml') || entry.endsWith('.yml')).sort()
     : [];
 
   const allKeys = new Set();

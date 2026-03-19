@@ -109,7 +109,7 @@ function findTemplateUsages(projectPath, templateId) {
 
   const pagesPath = pagesDirPath(projectPath);
   if (fs.existsSync(pagesPath) && fs.statSync(pagesPath).isDirectory()) {
-    const files = fs.readdirSync(pagesPath).filter((fileName) => fileName.endsWith('.yaml') || fileName.endsWith('.yml'));
+    const files = fs.readdirSync(pagesPath).filter((fileName) => fileName.endsWith('.yaml') || fileName.endsWith('.yml')).sort();
 
     for (const pageFile of files) {
       const pageDoc = parseYaml(path.join(pagesPath, pageFile));

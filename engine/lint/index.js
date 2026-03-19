@@ -209,7 +209,7 @@ function collectLintTargets(projectPath, result) {
     }
   }
 
-  const datasetFiles = fs.existsSync(dataPath) ? fs.readdirSync(dataPath).filter(isYamlFile) : [];
+  const datasetFiles = fs.existsSync(dataPath) ? fs.readdirSync(dataPath).filter(isYamlFile).sort() : [];
   for (const datasetFile of datasetFiles) {
     const datasetDoc = loadYamlSafe(path.join(dataPath, datasetFile), result);
     if (!datasetDoc) {
@@ -220,7 +220,7 @@ function collectLintTargets(projectPath, result) {
     }
   }
 
-  const pageFiles = fs.existsSync(pagesPath) ? fs.readdirSync(pagesPath).filter(isYamlFile) : [];
+  const pageFiles = fs.existsSync(pagesPath) ? fs.readdirSync(pagesPath).filter(isYamlFile).sort() : [];
   for (const pageFile of pageFiles) {
     const pageDoc = loadYamlSafe(path.join(pagesPath, pageFile), result);
     if (!pageDoc?.page || !isObject(pageDoc.page)) {

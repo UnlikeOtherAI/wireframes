@@ -117,7 +117,7 @@ function collectPageUsages(projectPath, componentId, usages) {
     return;
   }
 
-  const pageFiles = fs.readdirSync(pagesPath).filter((fileName) => fileName.endsWith('.yaml') || fileName.endsWith('.yml'));
+  const pageFiles = fs.readdirSync(pagesPath).filter((fileName) => fileName.endsWith('.yaml') || fileName.endsWith('.yml')).sort();
 
   for (const pageFile of pageFiles) {
     const pageDoc = parseYaml(path.join(pagesPath, pageFile));

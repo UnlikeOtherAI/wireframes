@@ -180,7 +180,7 @@ function listDataUsages(projectPath, datasetId) {
     return usages;
   }
 
-  const pageFiles = fs.readdirSync(pagesPath).filter((fileName) => fileName.endsWith('.yaml') || fileName.endsWith('.yml'));
+  const pageFiles = fs.readdirSync(pagesPath).filter((fileName) => fileName.endsWith('.yaml') || fileName.endsWith('.yml')).sort();
   for (const pageFile of pageFiles) {
     const pagePath = path.join(pagesPath, pageFile);
     const pageDoc = readYamlFile(pagePath);
@@ -204,7 +204,7 @@ function collectPagesWithStateMatches(projectPath, targetValue) {
     return matches;
   }
 
-  const pageFiles = fs.readdirSync(pagesPath).filter((fileName) => fileName.endsWith('.yaml') || fileName.endsWith('.yml'));
+  const pageFiles = fs.readdirSync(pagesPath).filter((fileName) => fileName.endsWith('.yaml') || fileName.endsWith('.yml')).sort();
   for (const pageFile of pageFiles) {
     const pagePath = path.join(pagesPath, pageFile);
     const pageDoc = readYamlFile(pagePath);
