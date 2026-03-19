@@ -137,13 +137,24 @@ page:
                       component: paragraph
                       props:
                         label: "Build and publish your wireframes to a shareable URL. Anyone with access can view the rendered wireframes in their browser."
-                    - id: pub_btn
-                      component: button
-                      props:
-                        label: "Publish Preview"
-                        icon: rocket
-                      size:
-                        width: "100%"
+                    - id: pub_actions
+                      component: section
+                      layout:
+                        type: row
+                        gap: 8
+                      children:
+                        - id: pub_btn
+                          component: button
+                          props:
+                            label: "Publish Preview"
+                            icon: rocket
+                          size:
+                            width: "100%"
+                        - id: unpub_btn
+                          component: button
+                          props:
+                            label: "Unpublish"
+                            icon: ban
 
                 - id: url_section
                   component: section

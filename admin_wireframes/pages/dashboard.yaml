@@ -116,8 +116,6 @@ page:
 
         - id: invites_banner
           component: section
-          props:
-            title: "Pending Invites"
           layout:
             type: stack
             gap: 12

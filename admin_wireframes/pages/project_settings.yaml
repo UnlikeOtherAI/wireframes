@@ -232,6 +232,11 @@ page:
                         options:
                           - { value: sharp, label: "Sharp" }
                           - { value: rounded, label: "Rounded" }
+                    - id: style_save
+                      component: button
+                      props:
+                        label: "Save Style"
+                        icon: floppy-disk
 
                 - id: danger_section
                   component: section

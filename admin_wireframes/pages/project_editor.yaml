@@ -11,6 +11,60 @@ page:
       style: solid
   rendering:
     mode: card
+  pageState:
+    add_page_open: false
+  overlays:
+    - id: add_page_modal
+      type: modal
+      content:
+        - id: add_page_card
+          component: section
+          layout:
+            type: stack
+            gap: 16
+            padding: 24
+          size:
+            width: 420
+          children:
+            - id: add_page_heading
+              component: heading
+              props:
+                label: "Add Page"
+                level: 3
+            - id: add_page_name
+              component: input
+              props:
+                label: "Page Name"
+                placeholder: "new_page"
+            - id: add_page_template
+              component: select
+              props:
+                label: "Template"
+                options:
+                  - { value: main_template, label: "main_template" }
+                  - { value: none, label: "No template" }
+            - id: add_page_actions
+              component: section
+              layout:
+                type: row
+                gap: 8
+                justify: flex-end
+              children:
+                - id: add_page_cancel
+                  component: button
+                  props:
+                    label: "Cancel"
+                  interaction:
+                    - type: close_overlay
+                      targetOverlay: add_page_modal
+                - id: add_page_create
+                  component: button
+                  props:
+                    label: "Create Page"
+                    icon: plus
+                  interaction:
+                    - type: close_overlay
+                      targetOverlay: add_page_modal
   slots:
     - slotId: main_content
       content:
@@ -82,6 +136,9 @@ page:
                     icon: plus
                   size:
                     width: "100%"
+                  interaction:
+                    - type: open_overlay
+                      targetOverlay: add_page_modal
                 - id: sb_div1
                   component: divider
                 - id: sb_tpl_label
