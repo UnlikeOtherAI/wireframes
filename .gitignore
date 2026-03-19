@@ -1,6 +1,7 @@
 .steroids/
 node_modules/
 dist/
+.astro/
 *.log
 .env
 .env.*
