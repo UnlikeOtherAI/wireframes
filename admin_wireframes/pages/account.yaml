@@ -11,6 +11,59 @@ page:
       style: solid
   rendering:
     mode: card
+  pageState:
+    delete_account_open: false
+  overlays:
+    - id: delete_account_modal
+      type: modal
+      content:
+        - id: del_acct_card
+          component: section
+          layout:
+            type: stack
+            gap: 16
+            padding: 24
+          size:
+            width: 420
+          children:
+            - id: del_acct_icon
+              component: icon
+              props:
+                name: triangle-exclamation
+                size: xl
+            - id: del_acct_heading
+              component: heading
+              props:
+                label: "Delete Account?"
+                level: 3
+            - id: del_acct_text
+              component: paragraph
+              props:
+                label: "This will permanently delete your account, all owned projects, and revoke all memberships. This action cannot be undone."
+            - id: del_acct_confirm_input
+              component: input
+              props:
+                label: "Type your email to confirm"
+                placeholder: "user@company.com"
+            - id: del_acct_actions
+              component: section
+              layout:
+                type: row
+                gap: 8
+                justify: flex-end
+              children:
+                - id: del_acct_cancel
+                  component: button
+                  props:
+                    label: "Cancel"
+                  interaction:
+                    - type: close_overlay
+                      targetOverlay: delete_account_modal
+                - id: del_acct_confirm
+                  component: button
+                  props:
+                    label: "Delete Permanently"
+                    icon: trash
   slots:
     - slotId: main_content
       content:
@@ -112,6 +165,9 @@ page:
                     icon: right-from-bracket
                   size:
                     width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: login
 
             - id: acct_danger
               component: section
@@ -131,3 +187,6 @@ page:
                   props:
                     label: "Delete Account"
                     icon: trash
+                  interaction:
+                    - type: open_overlay
+                      targetOverlay: delete_account_modal

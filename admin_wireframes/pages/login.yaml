@@ -51,6 +51,9 @@ page:
                 icon: right-to-bracket
               size:
                 width: "100%"
+              interaction:
+                - type: navigation
+                  targetRoute: dashboard
             - id: login_sso_note
               component: text
               props:
