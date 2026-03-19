@@ -45,7 +45,7 @@ templates:
             component: button
             props:
               label: Account
-              icon: user-circle
+              icon: circle-user
             interaction:
               - type: navigation
                 targetRoute: account

@@ -514,7 +514,7 @@ page:
                             - id: chat_history_btn
                               component: button
                               props:
-                                label: "Chat Log"
+                                label: "Change Log"
                                 icon: clock-rotate-left
                               interaction:
                                 - type: open_overlay
@@ -831,6 +831,11 @@ page:
                                     gap: 6
                                     align: center
                                     padding: 4
+                                  interaction:
+                                    - type: set_state
+                                      stateKey: active_file
+                                      value: dashboard
+                                      scope: page
                                   children:
                                     - id: sm_p_dash_indent
                                       component: spacer
@@ -852,6 +857,11 @@ page:
                                     gap: 6
                                     align: center
                                     padding: 4
+                                  interaction:
+                                    - type: set_state
+                                      stateKey: active_file
+                                      value: settings
+                                      scope: page
                                   children:
                                     - id: sm_p_set_indent
                                       component: spacer
@@ -873,6 +883,11 @@ page:
                                     gap: 6
                                     align: center
                                     padding: 4
+                                  interaction:
+                                    - type: set_state
+                                      stateKey: active_file
+                                      value: profile
+                                      scope: page
                                   children:
                                     - id: sm_p_prof_indent
                                       component: spacer
@@ -894,6 +909,11 @@ page:
                                     gap: 6
                                     align: center
                                     padding: 4
+                                  interaction:
+                                    - type: set_state
+                                      stateKey: active_file
+                                      value: checkout
+                                      scope: page
                                   children:
                                     - id: sm_p_chk_indent
                                       component: spacer
@@ -1073,7 +1093,7 @@ page:
                     - id: st_pages
                       component: text
                       props:
-                        label: "5 pages"
+                        label: "4 pages"
                     - id: st_sep3
                       component: text
                       props:
