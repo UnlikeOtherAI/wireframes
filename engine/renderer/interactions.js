@@ -1,6 +1,9 @@
 'use strict';
 
-function buildInteractionRuntime({
+const { buildPaneRuntimeCode } = require('./interactions-panes');
+const { buildOverlayRuntimeCode } = require('./interactions-overlays');
+
+function sanitizeOptions({
   routeId = '',
   routeTable = {},
   appStateDefaults = {},
@@ -16,67 +19,27 @@ function buildInteractionRuntime({
   const safePageState = pageStateDefaults && typeof pageStateDefaults === 'object' && !Array.isArray(pageStateDefaults)
     ? pageStateDefaults
     : {};
-
-  return buildInteractionRuntimeFromContext({
+  return {
     routeId: String(routeId || '').trim(),
     routeTable: safeRouteTable,
     appStateDefaults: safeAppState,
     pageStateDefaults: safePageState,
     platform: platform || 'web',
-  });
+  };
 }
 
-function buildInteractionRuntimeFromContext({
-  routeId = '',
-  routeTable = {},
-  appStateDefaults = {},
-  pageStateDefaults = {},
-  platform = 'web',
-} = {}) {
-  const safeRouteTable = routeTable && typeof routeTable === 'object' && !Array.isArray(routeTable)
-    ? routeTable
-    : {};
-  const safeAppState = appStateDefaults && typeof appStateDefaults === 'object' && !Array.isArray(appStateDefaults)
-    ? appStateDefaults
-    : {};
-  const safePageState = pageStateDefaults && typeof pageStateDefaults === 'object' && !Array.isArray(pageStateDefaults)
-    ? pageStateDefaults
-    : {};
-
-  return buildInteractionRuntimeFromContextExpression({
-    routeId: String(routeId || '').trim(),
-    routeTable: safeRouteTable,
-    appStateDefaults: safeAppState,
-    pageStateDefaults: safePageState,
-    platform: platform || 'web',
-  });
+function buildInteractionRuntime(opts) {
+  return buildInteractionRuntimeFromContextExpression(sanitizeOptions(opts));
 }
 
-function buildInteractionRuntimeFromWindowContext({
-  routeId = '',
-  routeTable = {},
-  appStateDefaults = {},
-  pageStateDefaults = {},
-  platform = 'web',
-} = {}) {
-  const safeRouteTable = routeTable && typeof routeTable === 'object' && !Array.isArray(routeTable)
-    ? routeTable
-    : {};
-  const safeAppState = appStateDefaults && typeof appStateDefaults === 'object' && !Array.isArray(appStateDefaults)
-    ? appStateDefaults
-    : {};
-  const safePageState = pageStateDefaults && typeof pageStateDefaults === 'object' && !Array.isArray(pageStateDefaults)
-    ? pageStateDefaults
-    : {};
+function buildInteractionRuntimeFromContext(opts) {
+  return buildInteractionRuntimeFromContextExpression(sanitizeOptions(opts));
+}
 
-  return buildInteractionRuntimeFromContextExpression({
-    routeId: String(routeId || '').trim(),
-    routeTable: safeRouteTable,
-    appStateDefaults: safeAppState,
-    pageStateDefaults: safePageState,
-    platform: platform || 'web',
-    useWindowContext: true,
-  });
+function buildInteractionRuntimeFromWindowContext(opts) {
+  const sanitized = sanitizeOptions(opts);
+  sanitized.useWindowContext = true;
+  return buildInteractionRuntimeFromContextExpression(sanitized);
 }
 
 function buildInteractionRuntimeFromContextExpression({
@@ -148,116 +111,7 @@ function eachLeaf(obj, visit, prefix) {
     else visit(next, value);
   }
 }
-function paneState(scope, key) {
-  if (typeof key !== 'string' || !key.trim()) return undefined;
-  var state = scope === 'app' ? WF_APP_STATE : WF_PAGE_STATE;
-  return getAtPath(state, key);
-}
-function paneStateAt(scope, key) {
-  var value = paneState(scope, key);
-  if (typeof value === 'number' && isFinite(value)) return value;
-  if (typeof value === 'string') {
-    var parsed = parseFloat(value);
-    return isFinite(parsed) ? parsed : undefined;
-  }
-  return undefined;
-}
-function clampPaneSize(value, minSize, maxSize) {
-  if (!isFinite(value)) return value;
-  if (isFinite(minSize) && value < minSize) return minSize;
-  if (isFinite(maxSize) && value > maxSize) return maxSize;
-  return value;
-}
-function applyPaneState(node, config, setPersistenceMarker) {
-  if (!node || !isObj(config)) return;
-  var axis = config.axis === 'height' ? 'height' : 'width';
-  var stateSet = false;
-  var size = undefined;
-  if (config.state && isObj(config.state)) {
-    var collapsed = paneState(config.state.scope, config.state.collapsedKey);
-    var collapsedBoolean = !!(collapsed === true || collapsed === 1 || collapsed === 'true');
-    stateSet = true;
-    node.setAttribute('data-wf-pane-collapsed', collapsedBoolean ? 'true' : 'false');
-    if (collapsedBoolean && isFinite(config.collapsedSize)) {
-      size = config.collapsedSize;
-    } else if (!collapsedBoolean && config.state.sizeKey) {
-      size = paneStateAt(config.state.scope, config.state.sizeKey);
-      if (!isFinite(size) && isFinite(config.defaultSize)) {
-        size = config.defaultSize;
-      }
-    }
-  }
-
-  if (!stateSet && isFinite(config.defaultSize)) {
-    size = config.defaultSize;
-  }
-
-  if (config.collapsible === true && !stateSet && isFinite(config.collapsedSize)) {
-    node.setAttribute('data-wf-pane-collapsed', 'false');
-  }
-  if (isFinite(size) && axis === 'width') {
-    if (config.state && config.collapsedSize === size) node.style.width = Math.max(0, Math.round(size)) + 'px';
-    else node.style.width = clampPaneSize(Math.round(size), config.minSize, config.maxSize) + 'px';
-  } else if (isFinite(size) && axis === 'height') {
-    if (config.state && config.collapsedSize === size) node.style.height = Math.max(0, Math.round(size)) + 'px';
-    else node.style.height = clampPaneSize(Math.round(size), config.minSize, config.maxSize) + 'px';
-  }
-  if (setPersistenceMarker && isFinite(size)) {
-    if (config.state && config.collapsedSize === size) {
-      node._wfPanePersistedSize = Math.max(0, Math.round(size));
-    } else {
-      node._wfPanePersistedSize = clampPaneSize(Math.round(size), config.minSize, config.maxSize);
-    }
-  }
-}
-function refreshPanes() {
-  if (!WF_PANES.length) return;
-  for (var i = 0; i < WF_PANES.length; i++) {
-    applyPaneState(WF_PANES[i].node, WF_PANES[i].config, false);
-  }
-}
-function parsePane(node) {
-  if (!node) return null;
-  var raw = node.getAttribute('data-wf-pane');
-  if (!raw) return null;
-  try {
-    var parsed = JSON.parse(raw);
-    return isObj(parsed) ? parsed : null;
-  } catch (_err) {
-    return null;
-  }
-}
-function bindPaneResizePersistence(entry) {
-  if (!entry || !entry.config || !entry.config.state || !entry.config.state.sizeKey) return;
-  if (typeof ResizeObserver === 'undefined') return;
-  if (entry._wfPaneObserver) return;
-  var axis = entry.config.axis === 'height' ? 'height' : 'width';
-  var scope = entry.config.state.scope;
-  var key = entry.config.state.sizeKey;
-  entry._wfPaneObserver = new ResizeObserver(function (entries) {
-    var candidate = entries && entries[0];
-    if (!candidate || !candidate.contentRect) return;
-    var value = axis === 'height' ? candidate.contentRect.height : candidate.contentRect.width;
-    if (!isFinite(value)) return;
-    var nextSize = clampPaneSize(Math.round(value), entry.config.minSize, entry.config.maxSize);
-    if (entry._wfPanePersistedSize === nextSize) return;
-    entry._wfPanePersistedSize = nextSize;
-    setState(scope, key, nextSize);
-  });
-  entry._wfPaneObserver.observe(entry.node);
-}
-function initPanes() {
-  var nodes = document.querySelectorAll('[data-wf-pane]');
-  WF_PANES = [];
-  for (var i = 0; i < nodes.length; i++) {
-    var node = nodes[i];
-    var config = parsePane(node);
-    if (!isObj(config)) continue;
-    WF_PANES.push({ node: node, config: config, _wfPanePersistedSize: undefined });
-    bindPaneResizePersistence(WF_PANES[WF_PANES.length - 1]);
-    applyPaneState(node, config, true);
-  }
-}
+` + buildPaneRuntimeCode() + `
 function getAtPath(obj, path) {
   if (!isObj(obj) || typeof path !== 'string' || path === '') return undefined;
   var parts = path.split('.');
@@ -422,169 +276,7 @@ function refreshVisibility() {
     } catch (_err) { node.style.display = ''; }
   });
 }
-function overlayDismissList(node) {
-  if (!node) return [];
-  try {
-    var d = JSON.parse(node.getAttribute('data-wf-overlay-dismiss') || '[]');
-    return Array.isArray(d) ? d : [];
-  } catch (_err) { return []; }
-}
-function overlayType(node) {
-  return node && node.getAttribute ? String(node.getAttribute('data-wf-overlay-type') || '') : '';
-}
-function overlayPlacement(node) {
-  return node && node.getAttribute ? String(node.getAttribute('data-wf-overlay-placement') || '') : '';
-}
-function overlayTriggerNode(node) {
-  if (!node || !node.getAttribute) return null;
-  var triggerId = String(node.getAttribute('data-wf-overlay-trigger') || '');
-  return triggerId ? document.getElementById(triggerId) : null;
-}
-function isAnchoredOverlayType(type) {
-  return type === 'dropdown' || type === 'popover' || type === 'menu' || type === 'tooltip';
-}
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-function positionAnchoredOverlay(node) {
-  if (!node) return;
-  var type = overlayType(node);
-  if (!isAnchoredOverlayType(type)) return;
-  var trigger = overlayTriggerNode(node);
-  if (!trigger) return;
-
-  var prevVisibility = node.style.visibility;
-  node.style.visibility = 'hidden';
-  node.style.left = '0px';
-  node.style.top = '0px';
-  node.style.right = 'auto';
-  node.style.bottom = 'auto';
-
-  var triggerRect = trigger.getBoundingClientRect();
-  var overlayRect = node.getBoundingClientRect();
-  var width = overlayRect.width || 0;
-  var height = overlayRect.height || 0;
-  var gap = 8;
-  var placement = overlayPlacement(node) || 'bottom';
-  var left = triggerRect.left;
-  var top = triggerRect.bottom + gap;
-
-  if (placement === 'top') {
-    top = triggerRect.top - height - gap;
-    if (top < gap) top = triggerRect.bottom + gap;
-  } else if (placement === 'left') {
-    left = triggerRect.left - width - gap;
-    top = triggerRect.top;
-    if (left < gap) left = triggerRect.right + gap;
-  } else if (placement === 'right') {
-    left = triggerRect.right + gap;
-    top = triggerRect.top;
-    if (left + width > window.innerWidth - gap) left = triggerRect.left - width - gap;
-  } else if (placement === 'center') {
-    left = triggerRect.left + ((triggerRect.width - width) / 2);
-    top = triggerRect.top + ((triggerRect.height - height) / 2);
-  } else {
-    top = triggerRect.bottom + gap;
-    left = triggerRect.left;
-    if (top + height > window.innerHeight - gap) top = triggerRect.top - height - gap;
-  }
-
-  left = clamp(left, gap, Math.max(gap, window.innerWidth - width - gap));
-  top = clamp(top, gap, Math.max(gap, window.innerHeight - height - gap));
-
-  node.style.left = Math.round(left) + 'px';
-  node.style.top = Math.round(top) + 'px';
-  if (type === 'menu' || type === 'dropdown') {
-    node.style.minWidth = Math.max(Math.round(triggerRect.width), 160) + 'px';
-  }
-  node.style.visibility = prevVisibility || '';
-}
-function setOverlayVisible(node, show) {
-  if (!node) return;
-  node.classList.toggle('wf-visible', !!show);
-  var backdrop = node.querySelector('.wf-overlay-backdrop');
-  if (backdrop) {
-    backdrop.style.display = show ? 'block' : 'none';
-    backdrop.style.pointerEvents = show ? 'auto' : 'none';
-  }
-}
-function bindOverlayDismiss(node, overlayId, list) {
-  if (list.indexOf('backdrop') >= 0) {
-    var backdrop = node.querySelector('.wf-overlay-backdrop');
-    if (backdrop && !node._wfBackdropHandler) {
-      node._wfBackdropHandler = function (event) {
-        event.stopPropagation();
-        closeOverlay(overlayId);
-      };
-      backdrop.addEventListener('click', node._wfBackdropHandler);
-    }
-  }
-  if (list.indexOf('escape') >= 0 && !node._wfEscHandler) {
-    node._wfEscHandler = function (event) {
-      if (event.key === 'Escape') closeOverlay(overlayId);
-    };
-    document.addEventListener('keydown', node._wfEscHandler);
-  }
-  if (list.indexOf('outside') >= 0 && !node._wfOutsideHandler) {
-    node._wfOutsideHandler = function (event) {
-      var trigger = overlayTriggerNode(node);
-      var target = event && event.target ? event.target : null;
-      if (!target) return;
-      if (node.contains(target)) return;
-      if (trigger && trigger.contains && trigger.contains(target)) return;
-      closeOverlay(overlayId);
-    };
-    document.addEventListener('mousedown', node._wfOutsideHandler);
-  }
-  if (isAnchoredOverlayType(overlayType(node)) && !node._wfPositionHandler) {
-    node._wfPositionHandler = function () {
-      if (node.classList.contains('wf-visible')) positionAnchoredOverlay(node);
-    };
-    window.addEventListener('resize', node._wfPositionHandler);
-    window.addEventListener('scroll', node._wfPositionHandler, true);
-  }
-}
-function unbindOverlayDismiss(node, overlayId) {
-  var backdrop = node ? node.querySelector('.wf-overlay-backdrop') : null;
-  if (node._wfBackdropHandler && backdrop) {
-    backdrop.removeEventListener('click', node._wfBackdropHandler);
-    node._wfBackdropHandler = null;
-  }
-  if (node._wfEscHandler) {
-    document.removeEventListener('keydown', node._wfEscHandler);
-    node._wfEscHandler = null;
-  }
-  if (node._wfOutsideHandler) {
-    document.removeEventListener('mousedown', node._wfOutsideHandler);
-    node._wfOutsideHandler = null;
-  }
-  if (node._wfPositionHandler) {
-    window.removeEventListener('resize', node._wfPositionHandler);
-    window.removeEventListener('scroll', node._wfPositionHandler, true);
-    node._wfPositionHandler = null;
-  }
-  if (node._wfDismissTimer) {
-    clearTimeout(node._wfDismissTimer);
-    node._wfDismissTimer = null;
-  }
-}
-function openOverlay(id) {
-  var node = document.getElementById(id);
-  if (!node) { console.warn('Missing overlay:', id); return; }
-  var dismiss = overlayDismissList(node);
-  setOverlayVisible(node, true);
-  positionAnchoredOverlay(node);
-  if (dismiss.indexOf('timeout') >= 0) {
-    node._wfDismissTimer = setTimeout(function () { closeOverlay(id); }, 3000);
-  }
-  bindOverlayDismiss(node, id, dismiss);
-}
-function closeOverlay(id) {
-  var node = document.getElementById(id);
-  if (!node) { console.warn('Missing overlay:', id); return; }
-  setOverlayVisible(node, false);
-  unbindOverlayDismiss(node, id);
-}
+` + buildOverlayRuntimeCode() + `
 function wfNavigate(id) {
   var target = WF_ROUTES[id];
   if (!target) { console.warn('Missing target route:', id); return; }
