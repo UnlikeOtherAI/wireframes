@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Wireframe capture</title>
+    <link rel="stylesheet" href="./_shared/fa/css/all.min.css" />
+    <link rel="stylesheet" href="./_shared/wireframe.css" />
+  </head>
+  <body class="wf wf-mode-card">
+    <div class="wf-page" style="width:1280px;min-height:900px;">
+  <section class="wf-root wf-root-container wf-surface" style="--wf-border-width:1px;--wf-border-style:solid;--wf-corner-radius:0px;--wf-surface-radius:0px;--wf-surface-shadow:0 1px 3px rgba(0,0,0,0.08)" data-sticky="top">
+      <div class="wf-root-title">persistent: top_bar</div>
+      <div class="wf-root-body" style="display:flex;flex-direction:row;gap:12px;padding:12px;align-items:center"><span id="app_logo_icon" class="wf-node wf-icon" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><i class="fa-solid fa-vector-square fa-lg"></i></span>
+<div id="app_logo" class="wf-node wf-heading wf-heading-4 wf-interactive" style="display:flex;flex-direction:column" data-wf-interactions="[{&quot;type&quot;:&quot;navigation&quot;,&quot;targetRoute&quot;:&quot;dashboard&quot;}]" data-wf-state-bindings="{}"><h4>Heading</h4></div>
+<div id="nav_spacer" class="wf-node wf-spacer" style="display:flex;flex-direction:column;width:100%;width:16px" data-wf-state-bindings="{}"></div>
+<div id="nav_account" class="wf-node wf-button wf-interactive" style="display:flex;flex-direction:column" data-wf-interactions="[{&quot;type&quot;:&quot;navigation&quot;,&quot;targetRoute&quot;:&quot;account&quot;}]" data-wf-state-bindings="{}"><button><i class="fa-solid fa-user-circle"></i> Account</button></div></div>
+    </section>
+  <div class="wf-body-row">
+    <section class="wf-root wf-root-container wf-root-slot wf-surface" style="--wf-border-width:1px;--wf-border-style:solid;--wf-corner-radius:0px;--wf-surface-radius:0px;--wf-surface-shadow:0 1px 3px rgba(0,0,0,0.08)">
+      <div class="wf-root-title">slot: main_content</div>
+      <div class="wf-root-body" style="display:flex;flex-direction:column"><div id="acct_header" class="wf-node wf-section wf-surface" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><div class="wf-section-title">Section</div><div class="wf-section-body" style="display:flex;flex-direction:row;gap:16px;align-items:center"><div class="wf-node-children"><div id="acct_back" class="wf-node wf-button wf-interactive" style="display:flex;flex-direction:column" data-wf-interactions="[{&quot;type&quot;:&quot;navigation&quot;,&quot;targetRoute&quot;:&quot;dashboard&quot;}]" data-wf-state-bindings="{}"><button><i class="fa-solid fa-arrow-left"></i> </button></div>
+<div id="acct_title" class="wf-node wf-heading wf-heading-2" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><h2>Heading</h2></div></div></div></div>
+<div id="acct_content" class="wf-node wf-section wf-surface" style="display:flex;flex-direction:column;max-width:600px" data-wf-state-bindings="{}"><div class="wf-section-title">Section</div><div class="wf-section-body" style="display:flex;flex-direction:column;gap:24px;padding:24px"><div class="wf-node-children"><div id="profile_section" class="wf-node wf-section wf-surface" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><div class="wf-section-title">Profile</div><div class="wf-section-body" style="display:flex;flex-direction:column;gap:12px;padding:16px"><div class="wf-node-children"><div id="profile_row" class="wf-node wf-section wf-surface" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><div class="wf-section-title">Section</div><div class="wf-section-body" style="display:flex;flex-direction:row;gap:16px;align-items:center"><div class="wf-node-children"><span id="profile_avatar" class="wf-node wf-icon" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><i class="fa-solid fa-circle-user fa-2xl"></i></span>
+<div id="profile_info" class="wf-node wf-section wf-surface" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><div class="wf-section-title">Section</div><div class="wf-section-body" style="display:flex;flex-direction:column;gap:4px"><div class="wf-node-children"><div id="profile_email" class="wf-node wf-heading wf-heading-4" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><h4>Heading</h4></div>
+<span id="profile_provider" class="wf-node wf-text" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"></span></div></div></div></div></div></div>
+<hr id="profile_divider" class="wf-node wf-divider" style="display:flex;flex-direction:column" data-wf-state-bindings="{}" />
+<div id="profile_name_field" class="wf-node wf-input" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><input type="text" placeholder="Your name" /></div>
+<div id="profile_save" class="wf-node wf-button" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><button><i class="fa-solid fa-floppy-disk"></i> Save Changes</button></div></div></div></div>
+<div id="session_section" class="wf-node wf-section wf-surface" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><div class="wf-section-title">Session</div><div class="wf-section-body" style="display:flex;flex-direction:column;gap:12px;padding:16px"><div class="wf-node-children"><div id="session_note" class="wf-node wf-paragraph" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><p></p></div>
+<div id="signout_btn" class="wf-node wf-button" style="display:flex;flex-direction:column;width:100%" data-wf-state-bindings="{}"><button><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button></div></div></div></div>
+<div id="acct_danger" class="wf-node wf-section wf-surface" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><div class="wf-section-title">Danger Zone</div><div class="wf-section-body" style="display:flex;flex-direction:column;gap:12px;padding:16px"><div class="wf-node-children"><div id="acct_danger_text" class="wf-node wf-paragraph" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><p></p></div>
+<div id="acct_delete_btn" class="wf-node wf-button" style="display:flex;flex-direction:column" data-wf-state-bindings="{}"><button><i class="fa-solid fa-trash"></i> Delete Account</button></div></div></div></div></div></div></div></div>
+    </section>
+  </div>
+  
+</div>
+    <script>window.WF_RUNTIME_CONTEXT = {"routeId":"account","routeTable":{"account":"/web/account.html","dashboard":"/web/dashboard.html","login":"/web/login.html","project_editor":"/web/project_editor.html","project_members":"/web/project_members.html","project_preview":"/web/project_preview.html","project_settings":"/web/project_settings.html"},"appStateDefaults":{"authenticated":false},"pageStateDefaults":{},"platform":"web"};</script>
+<script src="./_shared/interactions.js"></script>
+  </body>
+</html>

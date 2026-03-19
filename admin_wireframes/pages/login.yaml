@@ -1,0 +1,61 @@
+documentType: page
+specVersion: "1.1"
+id: login
+page:
+  id: login
+  template: auth_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  rendering:
+    mode: card
+  slots:
+    - slotId: auth_content
+      content:
+        - id: login_card
+          component: section
+          layout:
+            type: stack
+            gap: 24
+            padding: 48
+            align: center
+          size:
+            width: 420
+          children:
+            - id: login_logo_icon
+              component: icon
+              props:
+                name: vector-square
+                size: 2xl
+            - id: login_heading
+              component: heading
+              props:
+                label: Wireframes
+                level: 1
+            - id: login_tagline
+              component: paragraph
+              props:
+                label: "Design clickable wireframe prototypes"
+            - id: login_divider
+              component: divider
+            - id: login_prompt
+              component: text
+              props:
+                label: "Sign in to get started"
+            - id: login_sso_btn
+              component: button
+              props:
+                label: "Sign in with SSO"
+                icon: right-to-bracket
+              size:
+                width: "100%"
+            - id: login_sso_note
+              component: text
+              props:
+                label: "Authenticates via authenticator.unlikeother.ai"
+            - id: login_terms
+              component: paragraph
+              props:
+                label: "By signing in, you agree to our Terms of Service."

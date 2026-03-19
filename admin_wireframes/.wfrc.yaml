@@ -1,0 +1,15 @@
+cli:
+  strictValidation: true
+  failOnWarnings: false
+  export:
+    includeAssets: true
+    compressLevel: 9
+  build:
+    outputDir: ./wireframes/build
+    clean: false
+    basePath: /
+  serve:
+    port: 8080
+    open: false
+    hotReload: true
+

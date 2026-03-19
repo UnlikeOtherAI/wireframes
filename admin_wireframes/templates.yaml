@@ -1,0 +1,53 @@
+documentType: templates
+specVersion: "1.1"
+id: templates
+templates:
+  auth_template:
+    layout:
+      type: stack
+      align: center
+      justify: center
+    regions:
+      - id: auth_content
+        kind: slot
+
+  app_template:
+    layout:
+      type: stack
+    regions:
+      - id: top_bar
+        kind: persistent
+        sticky: top
+        layout:
+          type: row
+          padding: 12
+          gap: 12
+          align: center
+        children:
+          - id: app_logo_icon
+            component: icon
+            props:
+              name: vector-square
+              size: lg
+          - id: app_logo
+            component: heading
+            props:
+              label: Wireframes
+              level: 4
+            interaction:
+              - type: navigation
+                targetRoute: dashboard
+          - id: nav_spacer
+            component: spacer
+            size:
+              width: "100%"
+          - id: nav_account
+            component: button
+            props:
+              label: Account
+              icon: user-circle
+            interaction:
+              - type: navigation
+                targetRoute: account
+      - id: main_content
+        kind: slot

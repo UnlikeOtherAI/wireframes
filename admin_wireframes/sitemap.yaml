@@ -1,0 +1,29 @@
+documentType: sitemap
+specVersion: "1.1"
+id: sitemap
+defaultTemplate: app_template
+appState:
+  authenticated: false
+routes:
+  - id: login
+    path: /login
+    page: login
+    template: auth_template
+  - id: dashboard
+    path: /
+    page: dashboard
+  - id: account
+    path: /account
+    page: account
+  - id: project_editor
+    path: /projects/edit
+    page: project_editor
+  - id: project_settings
+    path: /projects/settings
+    page: project_settings
+  - id: project_members
+    path: /projects/members
+    page: project_members
+  - id: project_preview
+    path: /projects/preview
+    page: project_preview

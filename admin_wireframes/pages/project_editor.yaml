@@ -1,0 +1,543 @@
+documentType: page
+specVersion: "1.1"
+id: project_editor
+page:
+  id: project_editor
+  template: app_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  rendering:
+    mode: card
+  slots:
+    - slotId: main_content
+      content:
+        - id: editor_layout
+          component: section
+          layout:
+            type: row
+            gap: 0
+          size:
+            height: "100%"
+          children:
+            # --- Project sidebar (navigation) ---
+            - id: editor_sidebar
+              component: section
+              layout:
+                type: stack
+                gap: 4
+                padding: 12
+              size:
+                width: 220
+              children:
+                - id: sb_project
+                  component: heading
+                  props:
+                    label: "My App Wireframe"
+                    level: 4
+                - id: sb_search
+                  component: input
+                  props:
+                    placeholder: "Search files..."
+                  size:
+                    width: "100%"
+                - id: sb_pages_label
+                  component: text
+                  props:
+                    label: "PAGES"
+                - id: sb_page_1
+                  component: button
+                  props:
+                    label: "dashboard"
+                    icon: file
+                  size:
+                    width: "100%"
+                - id: sb_page_2
+                  component: button
+                  props:
+                    label: "settings"
+                    icon: file
+                  size:
+                    width: "100%"
+                - id: sb_page_3
+                  component: button
+                  props:
+                    label: "profile"
+                    icon: file
+                  size:
+                    width: "100%"
+                - id: sb_page_4
+                  component: button
+                  props:
+                    label: "checkout"
+                    icon: file
+                  size:
+                    width: "100%"
+                - id: sb_add_page
+                  component: button
+                  props:
+                    label: "Add Page"
+                    icon: plus
+                  size:
+                    width: "100%"
+                - id: sb_div1
+                  component: divider
+                - id: sb_tpl_label
+                  component: text
+                  props:
+                    label: "TEMPLATES"
+                - id: sb_tpl_1
+                  component: button
+                  props:
+                    label: "main_template"
+                    icon: layer-group
+                  size:
+                    width: "100%"
+                - id: sb_div2
+                  component: divider
+                - id: sb_comp_label
+                  component: text
+                  props:
+                    label: "COMPONENTS"
+                - id: sb_comp_1
+                  component: button
+                  props:
+                    label: "nav_item"
+                    icon: cube
+                  size:
+                    width: "100%"
+                - id: sb_comp_2
+                  component: button
+                  props:
+                    label: "card_widget"
+                    icon: cube
+                  size:
+                    width: "100%"
+                - id: sb_spacer
+                  component: spacer
+                  size:
+                    height: "100%"
+                - id: sb_div3
+                  component: divider
+                - id: sb_nav_settings
+                  component: button
+                  props:
+                    label: "Settings"
+                    icon: gear
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_settings
+                - id: sb_nav_members
+                  component: button
+                  props:
+                    label: "Members"
+                    icon: users
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_members
+                - id: sb_nav_preview
+                  component: button
+                  props:
+                    label: "Preview & Share"
+                    icon: share-nodes
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_preview
+                - id: sb_nav_dashboard
+                  component: button
+                  props:
+                    label: "Dashboard"
+                    icon: arrow-left
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: dashboard
+
+            # --- Main workspace ---
+            - id: editor_main
+              component: section
+              layout:
+                type: stack
+                gap: 0
+              size:
+                width: "100%"
+              children:
+                # Toolbar
+                - id: editor_toolbar
+                  component: section
+                  layout:
+                    type: row
+                    gap: 8
+                    align: center
+                    padding: 8
+                  children:
+                    - id: tb_page_icon
+                      component: icon
+                      props:
+                        name: file
+                        size: sm
+                    - id: tb_page_name
+                      component: heading
+                      props:
+                        label: "dashboard.yaml"
+                        level: 3
+                    - id: tb_status
+                      component: section
+                      layout:
+                        type: row
+                        gap: 4
+                        align: center
+                      children:
+                        - id: tb_status_dot
+                          component: icon
+                          props:
+                            name: circle-check
+                            size: sm
+                        - id: tb_status_text
+                          component: text
+                          props:
+                            label: "Valid"
+                    - id: tb_spacer
+                      component: spacer
+                      size:
+                        width: "100%"
+                    - id: tb_undo
+                      component: button
+                      props:
+                        icon: rotate-left
+                    - id: tb_redo
+                      component: button
+                      props:
+                        icon: rotate-right
+                    - id: tb_divider
+                      component: text
+                      props:
+                        label: "|"
+                    - id: tb_history
+                      component: button
+                      props:
+                        label: "History"
+                        icon: clock-rotate-left
+                    - id: tb_download
+                      component: button
+                      props:
+                        label: "Download"
+                        icon: download
+                    - id: tb_build
+                      component: button
+                      props:
+                        label: "Build"
+                        icon: hammer
+
+                # Split: Chat + Workspace
+                - id: editor_split
+                  component: section
+                  layout:
+                    type: row
+                    gap: 0
+                  size:
+                    height: "100%"
+                  children:
+                    # --- Chat panel (left) ---
+                    - id: chat_panel
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 0
+                      size:
+                        width: 400
+                      children:
+                        - id: chat_header
+                          component: section
+                          layout:
+                            type: row
+                            gap: 8
+                            padding: 8
+                            align: center
+                          children:
+                            - id: chat_header_icon
+                              component: icon
+                              props:
+                                name: comments
+                                size: sm
+                            - id: chat_header_title
+                              component: heading
+                              props:
+                                label: "Chat"
+                                level: 4
+                            - id: chat_header_spacer
+                              component: spacer
+                              size:
+                                width: "100%"
+                            - id: chat_context_badge
+                              component: section
+                              layout:
+                                type: row
+                                gap: 4
+                                align: center
+                              children:
+                                - id: chat_ctx_icon
+                                  component: icon
+                                  props:
+                                    name: location-dot
+                                    size: sm
+                                - id: chat_ctx_page
+                                  component: text
+                                  props:
+                                    label: "dashboard.yaml"
+                            - id: chat_history_btn
+                              component: button
+                              props:
+                                icon: clock-rotate-left
+
+                        - id: chat_messages
+                          component: section
+                          layout:
+                            type: stack
+                            gap: 12
+                            padding: 12
+                          size:
+                            height: "100%"
+                          children:
+                            - id: msg_system
+                              component: section
+                              layout:
+                                type: stack
+                                gap: 4
+                                padding: 8
+                              children:
+                                - id: msg_sys_label
+                                  component: text
+                                  props:
+                                    label: "System"
+                                - id: msg_sys_text
+                                  component: paragraph
+                                  props:
+                                    label: "Project loaded. You are editing dashboard.yaml. Ask me to add components, modify layouts, or generate new pages."
+
+                            - id: msg_user_1
+                              component: section
+                              layout:
+                                type: stack
+                                gap: 4
+                                padding: 8
+                              children:
+                                - id: msg_u1_label
+                                  component: text
+                                  props:
+                                    label: "You"
+                                - id: msg_u1_text
+                                  component: paragraph
+                                  props:
+                                    label: "Add a stats row with 4 metric cards at the top showing Users, Revenue, Orders, and Conversion Rate"
+
+                            - id: msg_ai_1
+                              component: section
+                              layout:
+                                type: stack
+                                gap: 4
+                                padding: 8
+                              children:
+                                - id: msg_a1_label
+                                  component: text
+                                  props:
+                                    label: "Assistant"
+                                - id: msg_a1_text
+                                  component: paragraph
+                                  props:
+                                    label: "I've added a stats row with 4 metric cards to the top of dashboard.yaml. Each card shows an icon, the metric value, and a label. The preview has been updated."
+                                - id: msg_a1_changes
+                                  component: section
+                                  layout:
+                                    type: row
+                                    gap: 4
+                                    align: center
+                                  children:
+                                    - id: msg_a1_diff_icon
+                                      component: icon
+                                      props:
+                                        name: code-compare
+                                        size: sm
+                                    - id: msg_a1_diff_text
+                                      component: text
+                                      props:
+                                        label: "4 nodes added to dashboard.yaml"
+
+                        - id: chat_input_area
+                          component: section
+                          layout:
+                            type: row
+                            gap: 8
+                            padding: 8
+                            align: center
+                          children:
+                            - id: chat_input
+                              component: input
+                              props:
+                                placeholder: "Describe changes to the current page..."
+                              size:
+                                width: "100%"
+                            - id: chat_send
+                              component: button
+                              props:
+                                icon: paper-plane
+
+                    # --- Workspace iframe (right) ---
+                    - id: workspace_panel
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 0
+                      size:
+                        width: "100%"
+                      children:
+                        - id: ws_toolbar
+                          component: section
+                          layout:
+                            type: row
+                            gap: 8
+                            padding: 8
+                            align: center
+                          children:
+                            - id: ws_icon
+                              component: icon
+                              props:
+                                name: desktop
+                                size: sm
+                            - id: ws_label
+                              component: text
+                              props:
+                                label: "Live Preview"
+                            - id: ws_spacer
+                              component: spacer
+                              size:
+                                width: "100%"
+                            - id: ws_device_web
+                              component: button
+                              props:
+                                icon: desktop
+                            - id: ws_device_tablet
+                              component: button
+                              props:
+                                icon: tablet
+                            - id: ws_device_mobile
+                              component: button
+                              props:
+                                icon: mobile
+                            - id: ws_orient_divider
+                              component: text
+                              props:
+                                label: "|"
+                            - id: ws_orient_portrait
+                              component: button
+                              props:
+                                icon: mobile
+                                label: "Portrait"
+                            - id: ws_orient_landscape
+                              component: button
+                              props:
+                                icon: mobile
+                                label: "Landscape"
+                            - id: ws_divider
+                              component: text
+                              props:
+                                label: "|"
+                            - id: ws_zoom
+                              component: select
+                              props:
+                                placeholder: "100%"
+                                options:
+                                  - { value: "50", label: "50%" }
+                                  - { value: "75", label: "75%" }
+                                  - { value: "100", label: "100%" }
+                                  - { value: "150", label: "150%" }
+                            - id: ws_refresh
+                              component: button
+                              props:
+                                icon: arrows-rotate
+                            - id: ws_popout
+                              component: button
+                              props:
+                                icon: up-right-from-square
+
+                        - id: ws_viewport
+                          component: section
+                          layout:
+                            type: stack
+                            padding: 24
+                            align: center
+                          size:
+                            height: "100%"
+                          children:
+                            - id: ws_frame
+                              component: section
+                              layout:
+                                type: stack
+                                padding: 16
+                                gap: 16
+                              children:
+                                - id: ws_preview_heading
+                                  component: heading
+                                  props:
+                                    label: "[Rendered wireframe preview]"
+                                    level: 3
+                                - id: ws_preview_note
+                                  component: paragraph
+                                  props:
+                                    label: "The workspace shows a live, interactive preview of the current page. Click through navigation links to move between pages. The chat panel tracks which page you are viewing."
+                                - id: ws_preview_hint
+                                  component: text
+                                  props:
+                                    label: "Use the chat to describe changes. Generation happens automatically."
+
+                # Status bar
+                - id: editor_status
+                  component: section
+                  layout:
+                    type: row
+                    gap: 16
+                    padding: 8
+                    align: center
+                  children:
+                    - id: st_valid_icon
+                      component: icon
+                      props:
+                        name: circle-check
+                        size: sm
+                    - id: st_valid_text
+                      component: text
+                      props:
+                        label: "No errors"
+                    - id: st_sep1
+                      component: text
+                      props:
+                        label: "·"
+                    - id: st_nodes
+                      component: text
+                      props:
+                        label: "42 nodes"
+                    - id: st_sep2
+                      component: text
+                      props:
+                        label: "·"
+                    - id: st_pages
+                      component: text
+                      props:
+                        label: "5 pages"
+                    - id: st_sep3
+                      component: text
+                      props:
+                        label: "·"
+                    - id: st_user
+                      component: text
+                      props:
+                        label: "Last edit: You, 2 min ago"

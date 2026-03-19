@@ -1,0 +1,285 @@
+documentType: page
+specVersion: "1.1"
+id: project_preview
+page:
+  id: project_preview
+  template: app_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  rendering:
+    mode: card
+  slots:
+    - slotId: main_content
+      content:
+        - id: preview_layout
+          component: section
+          layout:
+            type: row
+            gap: 0
+          size:
+            height: "100%"
+          children:
+            # Sidebar
+            - id: preview_sidebar
+              component: section
+              layout:
+                type: stack
+                gap: 4
+                padding: 12
+              size:
+                width: 220
+              children:
+                - id: ps_project
+                  component: heading
+                  props:
+                    label: "My App Wireframe"
+                    level: 4
+                - id: ps_div
+                  component: divider
+                - id: ps_nav_editor
+                  component: button
+                  props:
+                    label: "Editor"
+                    icon: code
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_editor
+                - id: ps_nav_settings
+                  component: button
+                  props:
+                    label: "Settings"
+                    icon: gear
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_settings
+                - id: ps_nav_members
+                  component: button
+                  props:
+                    label: "Members"
+                    icon: users
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_members
+                - id: ps_nav_preview
+                  component: button
+                  props:
+                    label: "Preview & Share"
+                    icon: share-nodes
+                  size:
+                    width: "100%"
+                - id: ps_spacer
+                  component: spacer
+                  size:
+                    height: "100%"
+                - id: ps_nav_dashboard
+                  component: button
+                  props:
+                    label: "Dashboard"
+                    icon: arrow-left
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: dashboard
+
+            # Main
+            - id: preview_main
+              component: section
+              layout:
+                type: stack
+                gap: 24
+                padding: 24
+              size:
+                width: "100%"
+                maxWidth: 640
+              children:
+                - id: preview_heading
+                  component: heading
+                  props:
+                    label: "Preview & Sharing"
+                    level: 2
+
+                - id: publish_section
+                  component: section
+                  props:
+                    title: "Publish Preview"
+                  layout:
+                    type: stack
+                    gap: 12
+                    padding: 16
+                  children:
+                    - id: pub_status
+                      component: section
+                      layout:
+                        type: row
+                        gap: 8
+                        align: center
+                      children:
+                        - id: pub_status_icon
+                          component: icon
+                          props:
+                            name: circle
+                            size: sm
+                        - id: pub_status_text
+                          component: text
+                          props:
+                            label: "Not published"
+                    - id: pub_note
+                      component: paragraph
+                      props:
+                        label: "Build and publish your wireframes to a shareable URL. Anyone with access can view the rendered wireframes in their browser."
+                    - id: pub_btn
+                      component: button
+                      props:
+                        label: "Publish Preview"
+                        icon: rocket
+                      size:
+                        width: "100%"
+
+                - id: url_section
+                  component: section
+                  props:
+                    title: "Preview URL"
+                  layout:
+                    type: stack
+                    gap: 12
+                    padding: 16
+                  children:
+                    - id: url_row
+                      component: section
+                      layout:
+                        type: row
+                        gap: 8
+                        align: center
+                      children:
+                        - id: url_input
+                          component: input
+                          props:
+                            placeholder: "https://preview.wireframes.app/abc123"
+                          size:
+                            width: "100%"
+                        - id: url_copy
+                          component: button
+                          props:
+                            label: "Copy"
+                            icon: copy
+                    - id: url_hint
+                      component: text
+                      props:
+                        label: "Share this link with stakeholders to preview your wireframes."
+
+                - id: access_section
+                  component: section
+                  props:
+                    title: "Access Control"
+                  layout:
+                    type: stack
+                    gap: 12
+                    padding: 16
+                  children:
+                    - id: access_label
+                      component: text
+                      props:
+                        label: "Who can view this preview?"
+                    - id: access_public
+                      component: checkbox
+                      props:
+                        label: "Public — anyone with the link can view"
+                    - id: access_password
+                      component: checkbox
+                      props:
+                        label: "Password protected"
+                    - id: access_pw_field
+                      component: input
+                      props:
+                        placeholder: "Set a preview password"
+                    - id: access_sso
+                      component: checkbox
+                      props:
+                        label: "SSO restricted — only specific email addresses"
+                    - id: access_note
+                      component: paragraph
+                      props:
+                        label: "Preview viewers are separate from project editors. Viewing a preview never grants edit access."
+
+                - id: viewers_section
+                  component: section
+                  props:
+                    title: "Allowed Viewers (SSO)"
+                  layout:
+                    type: stack
+                    gap: 12
+                    padding: 16
+                  children:
+                    - id: viewers_note
+                      component: paragraph
+                      props:
+                        label: "When SSO-restricted, only listed email addresses can access the preview. They authenticate via the same SSO provider."
+                    - id: viewers_add_row
+                      component: section
+                      layout:
+                        type: row
+                        gap: 8
+                        align: center
+                      children:
+                        - id: viewer_email
+                          component: input
+                          props:
+                            placeholder: "viewer@example.com"
+                          size:
+                            width: "100%"
+                        - id: viewer_add
+                          component: button
+                          props:
+                            label: "Add"
+                            icon: plus
+                    - id: viewers_table
+                      component: table
+                      props:
+                        columns:
+                          - { key: email, label: "Email" }
+                          - { key: added, label: "Added" }
+                          - { key: actions, label: "" }
+                        rows:
+                          - { email: "client@acme.com", added: "Mar 10, 2026", actions: "Remove" }
+                          - { email: "stakeholder@corp.io", added: "Mar 12, 2026", actions: "Remove" }
+                          - { email: "product@agency.co", added: "Mar 15, 2026", actions: "Remove" }
+
+                - id: download_section
+                  component: section
+                  props:
+                    title: "Download"
+                  layout:
+                    type: stack
+                    gap: 12
+                    padding: 16
+                  children:
+                    - id: download_note
+                      component: paragraph
+                      props:
+                        label: "Download the full project as a ZIP archive containing all YAML source files and the built HTML wireframes."
+                    - id: download_row
+                      component: section
+                      layout:
+                        type: row
+                        gap: 8
+                      children:
+                        - id: download_source
+                          component: button
+                          props:
+                            label: "Source YAML"
+                            icon: file-zipper
+                        - id: download_build
+                          component: button
+                          props:
+                            label: "Built HTML"
+                            icon: file-zipper

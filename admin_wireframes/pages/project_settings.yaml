@@ -1,0 +1,253 @@
+documentType: page
+specVersion: "1.1"
+id: project_settings
+page:
+  id: project_settings
+  template: app_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  rendering:
+    mode: card
+  pageState:
+    delete_confirm_open: false
+  overlays:
+    - id: delete_confirm_modal
+      type: modal
+      content:
+        - id: del_card
+          component: section
+          layout:
+            type: stack
+            gap: 16
+            padding: 24
+          size:
+            width: 420
+          children:
+            - id: del_warn_icon
+              component: icon
+              props:
+                name: triangle-exclamation
+                size: xl
+            - id: del_heading
+              component: heading
+              props:
+                label: "Delete Project?"
+                level: 3
+            - id: del_text
+              component: paragraph
+              props:
+                label: "This will permanently delete My App Wireframe and all its pages, templates, components, and build history. This action cannot be undone."
+            - id: del_confirm_input
+              component: input
+              props:
+                label: "Type the project name to confirm"
+                placeholder: "My App Wireframe"
+            - id: del_actions
+              component: section
+              layout:
+                type: row
+                gap: 8
+                justify: flex-end
+              children:
+                - id: del_cancel
+                  component: button
+                  props:
+                    label: "Cancel"
+                  interaction:
+                    - type: close_overlay
+                      targetOverlay: delete_confirm_modal
+                - id: del_confirm
+                  component: button
+                  props:
+                    label: "Delete Permanently"
+                    icon: trash
+  slots:
+    - slotId: main_content
+      content:
+        - id: settings_layout
+          component: section
+          layout:
+            type: row
+            gap: 0
+          size:
+            height: "100%"
+          children:
+            # Sidebar
+            - id: settings_sidebar
+              component: section
+              layout:
+                type: stack
+                gap: 4
+                padding: 12
+              size:
+                width: 220
+              children:
+                - id: ss_project
+                  component: heading
+                  props:
+                    label: "My App Wireframe"
+                    level: 4
+                - id: ss_div
+                  component: divider
+                - id: ss_nav_editor
+                  component: button
+                  props:
+                    label: "Editor"
+                    icon: code
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_editor
+                - id: ss_nav_settings
+                  component: button
+                  props:
+                    label: "Settings"
+                    icon: gear
+                  size:
+                    width: "100%"
+                - id: ss_nav_members
+                  component: button
+                  props:
+                    label: "Members"
+                    icon: users
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_members
+                - id: ss_nav_preview
+                  component: button
+                  props:
+                    label: "Preview & Share"
+                    icon: share-nodes
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_preview
+                - id: ss_spacer
+                  component: spacer
+                  size:
+                    height: "100%"
+                - id: ss_nav_dashboard
+                  component: button
+                  props:
+                    label: "Dashboard"
+                    icon: arrow-left
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: dashboard
+
+            # Main content
+            - id: settings_main
+              component: section
+              layout:
+                type: stack
+                gap: 24
+                padding: 24
+              size:
+                width: "100%"
+                maxWidth: 640
+              children:
+                - id: settings_heading
+                  component: heading
+                  props:
+                    label: "Project Settings"
+                    level: 2
+
+                - id: general_section
+                  component: section
+                  props:
+                    title: "General"
+                  layout:
+                    type: stack
+                    gap: 12
+                    padding: 16
+                  children:
+                    - id: settings_name
+                      component: input
+                      props:
+                        label: "Project Name"
+                        placeholder: "My App Wireframe"
+                    - id: settings_slug
+                      component: input
+                      props:
+                        label: "Slug"
+                        placeholder: "my-app-wireframe"
+                    - id: settings_desc
+                      component: textarea
+                      props:
+                        label: "Description"
+                        placeholder: "Describe this wireframe project..."
+                    - id: settings_device
+                      component: select
+                      props:
+                        label: "Default Device"
+                        options:
+                          - { value: web, label: "Web (1280x900)" }
+                          - { value: mobile, label: "Mobile (390x844)" }
+                          - { value: tablet, label: "Tablet (1024x768)" }
+                    - id: settings_save
+                      component: button
+                      props:
+                        label: "Save Changes"
+                        icon: floppy-disk
+
+                - id: style_section
+                  component: section
+                  props:
+                    title: "Wireframe Style"
+                  layout:
+                    type: stack
+                    gap: 12
+                    padding: 16
+                  children:
+                    - id: style_border
+                      component: select
+                      props:
+                        label: "Border Style"
+                        options:
+                          - { value: solid, label: "Solid" }
+                          - { value: dashed, label: "Dashed" }
+                    - id: style_mode
+                      component: select
+                      props:
+                        label: "Rendering Mode"
+                        options:
+                          - { value: line, label: "Line (minimal)" }
+                          - { value: card, label: "Card (filled)" }
+                    - id: style_corners
+                      component: select
+                      props:
+                        label: "Corner Style"
+                        options:
+                          - { value: sharp, label: "Sharp" }
+                          - { value: rounded, label: "Rounded" }
+
+                - id: danger_section
+                  component: section
+                  props:
+                    title: "Danger Zone"
+                  layout:
+                    type: stack
+                    gap: 12
+                    padding: 16
+                  children:
+                    - id: danger_text
+                      component: paragraph
+                      props:
+                        label: "Deleting a project is permanent. All pages, templates, components, and build artifacts will be destroyed."
+                    - id: danger_delete
+                      component: button
+                      props:
+                        label: "Delete Project"
+                        icon: trash
+                      interaction:
+                        - type: open_overlay
+                          targetOverlay: delete_confirm_modal

@@ -1,0 +1,133 @@
+documentType: page
+specVersion: "1.1"
+id: account
+page:
+  id: account
+  template: app_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  rendering:
+    mode: card
+  slots:
+    - slotId: main_content
+      content:
+        - id: acct_header
+          component: section
+          layout:
+            type: row
+            gap: 16
+            align: center
+          children:
+            - id: acct_back
+              component: button
+              props:
+                icon: arrow-left
+              interaction:
+                - type: navigation
+                  targetRoute: dashboard
+            - id: acct_title
+              component: heading
+              props:
+                label: "Account"
+                level: 2
+
+        - id: acct_content
+          component: section
+          layout:
+            type: stack
+            gap: 24
+            padding: 24
+          size:
+            maxWidth: 600
+          children:
+            - id: profile_section
+              component: section
+              props:
+                title: "Profile"
+              layout:
+                type: stack
+                gap: 12
+                padding: 16
+              children:
+                - id: profile_row
+                  component: section
+                  layout:
+                    type: row
+                    gap: 16
+                    align: center
+                  children:
+                    - id: profile_avatar
+                      component: icon
+                      props:
+                        name: circle-user
+                        size: 2xl
+                    - id: profile_info
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 4
+                      children:
+                        - id: profile_email
+                          component: heading
+                          props:
+                            label: "user@company.com"
+                            level: 4
+                        - id: profile_provider
+                          component: text
+                          props:
+                            label: "SSO via authenticator.unlikeother.ai"
+                - id: profile_divider
+                  component: divider
+                - id: profile_name_field
+                  component: input
+                  props:
+                    label: "Display Name"
+                    placeholder: "Your name"
+                - id: profile_save
+                  component: button
+                  props:
+                    label: "Save Changes"
+                    icon: floppy-disk
+
+            - id: session_section
+              component: section
+              props:
+                title: "Session"
+              layout:
+                type: stack
+                gap: 12
+                padding: 16
+              children:
+                - id: session_note
+                  component: paragraph
+                  props:
+                    label: "You are signed in via SSO. Your session expires when your SSO token expires."
+                - id: signout_btn
+                  component: button
+                  props:
+                    label: "Sign Out"
+                    icon: right-from-bracket
+                  size:
+                    width: "100%"
+
+            - id: acct_danger
+              component: section
+              props:
+                title: "Danger Zone"
+              layout:
+                type: stack
+                gap: 12
+                padding: 16
+              children:
+                - id: acct_danger_text
+                  component: paragraph
+                  props:
+                    label: "Deleting your account removes all owned projects and revokes all memberships. This cannot be undone."
+                - id: acct_delete_btn
+                  component: button
+                  props:
+                    label: "Delete Account"
+                    icon: trash

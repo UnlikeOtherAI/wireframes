@@ -1,0 +1,517 @@
+documentType: page
+specVersion: "1.1"
+id: dashboard
+page:
+  id: dashboard
+  template: app_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  rendering:
+    mode: card
+  pageState:
+    new_project_open: false
+  overlays:
+    - id: new_project_modal
+      type: modal
+      content:
+        - id: modal_card
+          component: section
+          layout:
+            type: stack
+            gap: 16
+            padding: 24
+          size:
+            width: 480
+          children:
+            - id: modal_heading
+              component: heading
+              props:
+                label: "Create New Project"
+                level: 3
+            - id: modal_name
+              component: input
+              props:
+                label: "Project Name"
+                placeholder: "My New Wireframe"
+            - id: modal_desc
+              component: textarea
+              props:
+                label: "Description (optional)"
+                placeholder: "What are you wireframing?"
+            - id: modal_device
+              component: select
+              props:
+                label: "Default Device"
+                options:
+                  - { value: web, label: "Web (1280x900)" }
+                  - { value: mobile, label: "Mobile (390x844)" }
+                  - { value: tablet, label: "Tablet (1024x768)" }
+            - id: modal_actions
+              component: section
+              layout:
+                type: row
+                gap: 8
+                justify: flex-end
+              children:
+                - id: modal_cancel
+                  component: button
+                  props:
+                    label: Cancel
+                  interaction:
+                    - type: close_overlay
+                      targetOverlay: new_project_modal
+                - id: modal_create
+                  component: button
+                  props:
+                    label: "Create Project"
+                    icon: plus
+  slots:
+    - slotId: main_content
+      content:
+        - id: dash_toolbar
+          component: section
+          layout:
+            type: row
+            gap: 16
+            align: center
+            padding: 8
+          children:
+            - id: dash_title
+              component: heading
+              props:
+                label: "My Projects"
+                level: 2
+            - id: dash_search
+              component: input
+              props:
+                placeholder: "Search projects..."
+              size:
+                width: 280
+            - id: dash_spacer
+              component: spacer
+              size:
+                width: "100%"
+            - id: dash_sort
+              component: select
+              props:
+                placeholder: "Sort by"
+                options:
+                  - { value: recent, label: "Recently Updated" }
+                  - { value: name, label: "Name A-Z" }
+                  - { value: created, label: "Newest First" }
+            - id: dash_new_btn
+              component: button
+              props:
+                label: "New Project"
+                icon: plus
+              interaction:
+                - type: open_overlay
+                  targetOverlay: new_project_modal
+
+        - id: invites_banner
+          component: section
+          props:
+            title: "Pending Invites"
+          layout:
+            type: stack
+            gap: 12
+            padding: 16
+          children:
+            - id: invites_header
+              component: section
+              layout:
+                type: row
+                gap: 8
+                align: center
+              children:
+                - id: invites_icon
+                  component: icon
+                  props:
+                    name: envelope
+                    size: lg
+                - id: invites_title
+                  component: heading
+                  props:
+                    label: "Pending Invites"
+                    level: 4
+                - id: invites_count
+                  component: text
+                  props:
+                    label: "2"
+            - id: invites_row
+              component: section
+              layout:
+                type: row
+                gap: 12
+              children:
+                - id: inv_1
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 8
+                    padding: 16
+                  size:
+                    width: 280
+                  children:
+                    - id: inv1_name
+                      component: heading
+                      props:
+                        label: "Acme Dashboard"
+                        level: 4
+                    - id: inv1_from
+                      component: text
+                      props:
+                        label: "From: alice@acme.com"
+                    - id: inv1_role
+                      component: section
+                      layout:
+                        type: row
+                        gap: 4
+                        align: center
+                      children:
+                        - id: inv1_role_icon
+                          component: icon
+                          props:
+                            name: eye
+                            size: sm
+                        - id: inv1_role_text
+                          component: text
+                          props:
+                            label: "Viewer"
+                    - id: inv1_actions
+                      component: section
+                      layout:
+                        type: row
+                        gap: 8
+                      children:
+                        - id: inv1_accept
+                          component: button
+                          props:
+                            label: "Accept"
+                            icon: check
+                        - id: inv1_decline
+                          component: button
+                          props:
+                            label: "Decline"
+                            icon: xmark
+                - id: inv_2
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 8
+                    padding: 16
+                  size:
+                    width: 280
+                  children:
+                    - id: inv2_name
+                      component: heading
+                      props:
+                        label: "Marketing Site"
+                        level: 4
+                    - id: inv2_from
+                      component: text
+                      props:
+                        label: "From: bob@startup.io"
+                    - id: inv2_role
+                      component: section
+                      layout:
+                        type: row
+                        gap: 4
+                        align: center
+                      children:
+                        - id: inv2_role_icon
+                          component: icon
+                          props:
+                            name: pen
+                            size: sm
+                        - id: inv2_role_text
+                          component: text
+                          props:
+                            label: "Editor"
+                    - id: inv2_actions
+                      component: section
+                      layout:
+                        type: row
+                        gap: 8
+                      children:
+                        - id: inv2_accept
+                          component: button
+                          props:
+                            label: "Accept"
+                            icon: check
+                        - id: inv2_decline
+                          component: button
+                          props:
+                            label: "Decline"
+                            icon: xmark
+
+        - id: projects_grid
+          component: section
+          props:
+            title: "All Projects"
+          layout:
+            type: grid
+            columns: 4
+            gap: 16
+          children:
+            - id: proj_1
+              component: section
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+              size:
+                height: 220
+              children:
+                - id: p1_icon
+                  component: icon
+                  props:
+                    name: pen-ruler
+                    size: xl
+                - id: p1_name
+                  component: heading
+                  props:
+                    label: "My App Wireframe"
+                    level: 4
+                - id: p1_meta
+                  component: text
+                  props:
+                    label: "5 pages · 2h ago"
+                - id: p1_spacer
+                  component: spacer
+                  size:
+                    height: "100%"
+                - id: p1_footer
+                  component: section
+                  layout:
+                    type: row
+                    gap: 4
+                    align: center
+                  children:
+                    - id: p1_role_icon
+                      component: icon
+                      props:
+                        name: crown
+                        size: sm
+                    - id: p1_role
+                      component: text
+                      props:
+                        label: "Owner"
+              interaction:
+                - type: navigation
+                  targetRoute: project_editor
+
+            - id: proj_2
+              component: section
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+              size:
+                height: 220
+              children:
+                - id: p2_icon
+                  component: icon
+                  props:
+                    name: pen-ruler
+                    size: xl
+                - id: p2_name
+                  component: heading
+                  props:
+                    label: "Client Portal"
+                    level: 4
+                - id: p2_meta
+                  component: text
+                  props:
+                    label: "12 pages · 1d ago"
+                - id: p2_spacer
+                  component: spacer
+                  size:
+                    height: "100%"
+                - id: p2_footer
+                  component: section
+                  layout:
+                    type: row
+                    gap: 4
+                    align: center
+                  children:
+                    - id: p2_role_icon
+                      component: icon
+                      props:
+                        name: pen
+                        size: sm
+                    - id: p2_role
+                      component: text
+                      props:
+                        label: "Editor"
+              interaction:
+                - type: navigation
+                  targetRoute: project_editor
+
+            - id: proj_3
+              component: section
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+              size:
+                height: 220
+              children:
+                - id: p3_icon
+                  component: icon
+                  props:
+                    name: pen-ruler
+                    size: xl
+                - id: p3_name
+                  component: heading
+                  props:
+                    label: "E-commerce Checkout"
+                    level: 4
+                - id: p3_meta
+                  component: text
+                  props:
+                    label: "8 pages · 3d ago"
+                - id: p3_spacer
+                  component: spacer
+                  size:
+                    height: "100%"
+                - id: p3_footer
+                  component: section
+                  layout:
+                    type: row
+                    gap: 4
+                    align: center
+                  children:
+                    - id: p3_role_icon
+                      component: icon
+                      props:
+                        name: crown
+                        size: sm
+                    - id: p3_role
+                      component: text
+                      props:
+                        label: "Owner"
+              interaction:
+                - type: navigation
+                  targetRoute: project_editor
+
+            - id: proj_4
+              component: section
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+              size:
+                height: 220
+              children:
+                - id: p4_icon
+                  component: icon
+                  props:
+                    name: pen-ruler
+                    size: xl
+                - id: p4_name
+                  component: heading
+                  props:
+                    label: "Internal Tools"
+                    level: 4
+                - id: p4_meta
+                  component: text
+                  props:
+                    label: "3 pages · 1w ago"
+                - id: p4_spacer
+                  component: spacer
+                  size:
+                    height: "100%"
+                - id: p4_footer
+                  component: section
+                  layout:
+                    type: row
+                    gap: 4
+                    align: center
+                  children:
+                    - id: p4_role_icon
+                      component: icon
+                      props:
+                        name: eye
+                        size: sm
+                    - id: p4_role
+                      component: text
+                      props:
+                        label: "Viewer"
+              interaction:
+                - type: navigation
+                  targetRoute: project_editor
+
+            - id: proj_5
+              component: section
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+              size:
+                height: 220
+              children:
+                - id: p5_icon
+                  component: icon
+                  props:
+                    name: pen-ruler
+                    size: xl
+                - id: p5_name
+                  component: heading
+                  props:
+                    label: "Admin Dashboard"
+                    level: 4
+                - id: p5_meta
+                  component: text
+                  props:
+                    label: "15 pages · 5d ago"
+                - id: p5_spacer
+                  component: spacer
+                  size:
+                    height: "100%"
+                - id: p5_footer
+                  component: section
+                  layout:
+                    type: row
+                    gap: 4
+                    align: center
+                  children:
+                    - id: p5_role_icon
+                      component: icon
+                      props:
+                        name: crown
+                        size: sm
+                    - id: p5_role
+                      component: text
+                      props:
+                        label: "Owner"
+              interaction:
+                - type: navigation
+                  targetRoute: project_editor
+
+            - id: proj_new
+              component: section
+              layout:
+                type: stack
+                gap: 8
+                padding: 16
+                align: center
+                justify: center
+              size:
+                height: 220
+              children:
+                - id: pn_icon
+                  component: icon
+                  props:
+                    name: plus
+                    size: 2xl
+                - id: pn_label
+                  component: text
+                  props:
+                    label: "Create New Project"
+              interaction:
+                - type: open_overlay
+                  targetOverlay: new_project_modal

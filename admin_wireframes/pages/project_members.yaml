@@ -1,0 +1,227 @@
+documentType: page
+specVersion: "1.1"
+id: project_members
+page:
+  id: project_members
+  template: app_template
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+  rendering:
+    mode: card
+  slots:
+    - slotId: main_content
+      content:
+        - id: members_layout
+          component: section
+          layout:
+            type: row
+            gap: 0
+          size:
+            height: "100%"
+          children:
+            # Sidebar
+            - id: members_sidebar
+              component: section
+              layout:
+                type: stack
+                gap: 4
+                padding: 12
+              size:
+                width: 220
+              children:
+                - id: ms_project
+                  component: heading
+                  props:
+                    label: "My App Wireframe"
+                    level: 4
+                - id: ms_div
+                  component: divider
+                - id: ms_nav_editor
+                  component: button
+                  props:
+                    label: "Editor"
+                    icon: code
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_editor
+                - id: ms_nav_settings
+                  component: button
+                  props:
+                    label: "Settings"
+                    icon: gear
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_settings
+                - id: ms_nav_members
+                  component: button
+                  props:
+                    label: "Members"
+                    icon: users
+                  size:
+                    width: "100%"
+                - id: ms_nav_preview
+                  component: button
+                  props:
+                    label: "Preview & Share"
+                    icon: share-nodes
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: project_preview
+                - id: ms_spacer
+                  component: spacer
+                  size:
+                    height: "100%"
+                - id: ms_nav_dashboard
+                  component: button
+                  props:
+                    label: "Dashboard"
+                    icon: arrow-left
+                  size:
+                    width: "100%"
+                  interaction:
+                    - type: navigation
+                      targetRoute: dashboard
+
+            # Main
+            - id: members_main
+              component: section
+              layout:
+                type: stack
+                gap: 24
+                padding: 24
+              size:
+                width: "100%"
+                maxWidth: 800
+              children:
+                - id: members_header
+                  component: section
+                  layout:
+                    type: row
+                    gap: 16
+                    align: center
+                  children:
+                    - id: members_title
+                      component: heading
+                      props:
+                        label: "Members"
+                        level: 2
+                    - id: members_count
+                      component: text
+                      props:
+                        label: "3 members"
+
+                - id: invite_section
+                  component: section
+                  props:
+                    title: "Invite New Member"
+                  layout:
+                    type: stack
+                    gap: 12
+                    padding: 16
+                  children:
+                    - id: invite_note
+                      component: paragraph
+                      props:
+                        label: "Send an invitation by email. The recipient will receive a link to join this project."
+                    - id: invite_form
+                      component: section
+                      layout:
+                        type: row
+                        gap: 8
+                        align: center
+                      children:
+                        - id: invite_email
+                          component: input
+                          props:
+                            placeholder: "colleague@company.com"
+                          size:
+                            width: "100%"
+                        - id: invite_role
+                          component: select
+                          props:
+                            placeholder: "Role"
+                            options:
+                              - { value: editor, label: "Editor" }
+                              - { value: viewer, label: "Viewer" }
+                        - id: invite_send
+                          component: button
+                          props:
+                            label: "Send Invite"
+                            icon: paper-plane
+
+                - id: pending_section
+                  component: section
+                  props:
+                    title: "Pending Invites"
+                  layout:
+                    type: stack
+                    gap: 8
+                    padding: 16
+                  children:
+                    - id: pending_table
+                      component: table
+                      props:
+                        columns:
+                          - { key: email, label: "Email" }
+                          - { key: role, label: "Role" }
+                          - { key: sent, label: "Sent" }
+                          - { key: actions, label: "" }
+                        rows:
+                          - { email: "designer@agency.com", role: "Editor", sent: "2 hours ago", actions: "Revoke" }
+
+                - id: current_section
+                  component: section
+                  props:
+                    title: "Current Members"
+                  layout:
+                    type: stack
+                    gap: 8
+                    padding: 16
+                  children:
+                    - id: members_table
+                      component: table
+                      props:
+                        columns:
+                          - { key: member, label: "Member" }
+                          - { key: email, label: "Email" }
+                          - { key: role, label: "Role" }
+                          - { key: joined, label: "Joined" }
+                          - { key: actions, label: "" }
+                        rows:
+                          - { member: "You", email: "me@company.com", role: "Owner", joined: "Jan 15, 2026", actions: "—" }
+                          - { member: "Alice Chen", email: "alice@acme.com", role: "Editor", joined: "Feb 3, 2026", actions: "Change Role · Remove" }
+                          - { member: "Bob Smith", email: "bob@acme.com", role: "Viewer", joined: "Mar 1, 2026", actions: "Change Role · Remove" }
+
+                - id: roles_section
+                  component: section
+                  props:
+                    title: "Role Permissions"
+                  layout:
+                    type: stack
+                    gap: 8
+                    padding: 16
+                  children:
+                    - id: roles_table
+                      component: table
+                      props:
+                        columns:
+                          - { key: capability, label: "Capability" }
+                          - { key: owner, label: "Owner" }
+                          - { key: editor, label: "Editor" }
+                          - { key: viewer, label: "Viewer" }
+                        rows:
+                          - { capability: "View project", owner: "Yes", editor: "Yes", viewer: "Yes" }
+                          - { capability: "Edit pages & templates", owner: "Yes", editor: "Yes", viewer: "No" }
+                          - { capability: "Build & preview", owner: "Yes", editor: "Yes", viewer: "Read-only" }
+                          - { capability: "Manage members", owner: "Yes", editor: "No", viewer: "No" }
+                          - { capability: "Publish preview", owner: "Yes", editor: "Yes", viewer: "No" }
+                          - { capability: "Delete project", owner: "Yes", editor: "No", viewer: "No" }
