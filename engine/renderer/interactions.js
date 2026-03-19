@@ -735,7 +735,8 @@ function refreshSelection() {
   each('.wf-selectable[data-selection-key]', function (node) {
     var scope = node.getAttribute('data-selection-scope') || 'page';
     var key = node.getAttribute('data-selection-key') || '';
-    var current = resolveExpr('{{' + scope + '.' + key + '}}', null, WF_PAGE_STATE);
+    var exprScope = (scope === 'app' || scope === 'appState') ? 'appState' : 'state';
+    var current = resolveExpr('{{' + exprScope + '.' + key + '}}', null, WF_PAGE_STATE);
     var expected = selectionValueForNode(node);
     if (current === expected) node.classList.add('wf-selected');
     else node.classList.remove('wf-selected');
@@ -760,8 +761,10 @@ function init() {
   bindSelection();
   bindInteractions();
 }
-init();
-window.addEventListener('load', init);
+var _wfInitDone = false;
+function safeInit() { if (_wfInitDone) return; _wfInitDone = true; init(); }
+safeInit();
+window.addEventListener('load', safeInit);
 })();`;
 }
 

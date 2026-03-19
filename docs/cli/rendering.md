@@ -3,7 +3,7 @@
 Companion to [schema.md](schema.md) and [schema-systems.md](schema-systems.md).
 Covers how YAML specs become click-through HTML wireframes.
 
-See [docs/rendering-modes.md](docs/rendering-modes.md) for the two rendering
+See [rendering-modes.md](rendering-modes.md) for the two rendering
 mode specification (line vs card): visual tokens, CSS architecture, double-border
 prevention, and component-level rendering rules per mode.
 

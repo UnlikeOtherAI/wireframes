@@ -213,9 +213,6 @@ page:
                     icon: file
                   size:
                     width: "100%"
-                  selection:
-                    scope: page
-                    stateKey: active_file
                   interaction:
                     - type: set_state
                       stateKey: active_file
@@ -228,9 +225,6 @@ page:
                     icon: file
                   size:
                     width: "100%"
-                  selection:
-                    scope: page
-                    stateKey: active_file
                   interaction:
                     - type: set_state
                       stateKey: active_file
@@ -243,9 +237,6 @@ page:
                     icon: file
                   size:
                     width: "100%"
-                  selection:
-                    scope: page
-                    stateKey: active_file
                   interaction:
                     - type: set_state
                       stateKey: active_file
@@ -258,9 +249,6 @@ page:
                     icon: file
                   size:
                     width: "100%"
-                  selection:
-                    scope: page
-                    stateKey: active_file
                   interaction:
                     - type: set_state
                       stateKey: active_file
@@ -289,9 +277,6 @@ page:
                     icon: layer-group
                   size:
                     width: "100%"
-                  selection:
-                    scope: page
-                    stateKey: active_file
                   interaction:
                     - type: set_state
                       stateKey: active_file
@@ -310,9 +295,6 @@ page:
                     icon: cube
                   size:
                     width: "100%"
-                  selection:
-                    scope: page
-                    stateKey: active_file
                   interaction:
                     - type: set_state
                       stateKey: active_file
@@ -325,9 +307,6 @@ page:
                     icon: cube
                   size:
                     width: "100%"
-                  selection:
-                    scope: page
-                    stateKey: active_file
                   interaction:
                     - type: set_state
                       stateKey: active_file

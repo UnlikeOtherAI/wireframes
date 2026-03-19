@@ -1,7 +1,7 @@
 # Wireframe Rendering Modes Specification
 
-Companion to [rendering.md](../rendering.md), [schema.md](../schema.md), and
-[schema-systems.md](../schema-systems.md).
+Companion to [rendering.md](rendering.md), [schema.md](schema.md), and
+[schema-systems.md](schema-systems.md).
 
 Source research:
 [wireframe-rendering-research.md](wireframe-rendering-research.md),
@@ -630,7 +630,7 @@ in either mode. Charts render as a grey title label above a placeholder SVG.
 }
 ```
 
-Six chart types: `line`, `bar` (alias `vertical`), `horizontal`, `gauge`,
+Five chart types: `line`, `bar` (alias `vertical`), `horizontal`, `gauge`,
 `donut`. All render as simple grayscale SVG shapes (strokes in `#9ca3af`,
 fills in `#e5e7eb`). No mode difference — charts look the same in both line
 and card mode.
@@ -880,6 +880,7 @@ A node does NOT get `wf-surface` if:
 
 - `component` is any text primitive (`heading`, `paragraph`, `text`)
 - `component: button`, `input`, `textarea`, `select`, `checkbox`, `radio`, `toggle`
+- `component: chart` (borderless placeholder — see Section 6.10)
 - `component: divider` or `component: spacer`
 - The node is a pure layout wrapper with `use` referencing a component
   (the component's root handles its own surface class)
@@ -984,9 +985,9 @@ between Left and Right. No double line.
 
 | File                                          | Contents                                      |
 |-----------------------------------------------|-----------------------------------------------|
-| [rendering.md](../rendering.md)               | Build/serve pipeline, viewport dimensions, HTML primitives |
-| [schema.md](../schema.md)                     | Document types, core node model               |
-| [schema-systems.md](../schema-systems.md)     | Layout, state, interactions, overlays, validation |
-| [schema-canonical.yaml](../schema-canonical.yaml) | Canonical YAML definition               |
-| [schema.json](../schema.json)                 | Formal JSON Schema                            |
+| [rendering.md](rendering.md)                  | Build/serve pipeline, viewport dimensions, HTML primitives |
+| [schema.md](schema.md)                        | Document types, core node model               |
+| [schema-systems.md](schema-systems.md)        | Layout, state, interactions, overlays, validation |
+| [schema-canonical.yaml](schema-canonical.yaml) | Canonical YAML definition                    |
+| [schema.json](schema.json)                    | Formal JSON Schema                            |
 | [wireframe-rendering-research.md](wireframe-rendering-research.md) | Source research document |

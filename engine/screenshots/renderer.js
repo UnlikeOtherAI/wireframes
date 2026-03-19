@@ -158,7 +158,7 @@ function buildWireframeStyles() {
     '.wf-mode-card .wf-node.wf-surface{border:var(--wf-border-width,1px) var(--wf-border-style,solid) #e5e7eb;background:#ffffff;box-shadow:var(--wf-surface-shadow,0 1px 3px rgba(0,0,0,0.08));border-radius:var(--wf-surface-radius,4px)}',
 
     // --- Borderless primitives (no box) ---
-    '.wf-heading,.wf-paragraph,.wf-text,.wf-image,.wf-icon,.wf-button,.wf-input,.wf-textarea,.wf-select,.wf-checkbox,.wf-radio,.wf-toggle,.wf-chart{border:none;background:transparent;padding:2px 0;min-height:0}',
+    '.wf-heading,.wf-paragraph,.wf-text,.wf-image,.wf-icon,.wf-button,.wf-input,.wf-textarea,.wf-select,.wf-checkbox,.wf-radio,.wf-toggle{border:none;background:transparent;padding:2px 0;min-height:0}',
     '.wf-icon{display:inline-flex;align-items:center;justify-content:center;color:#374151}',
     '.wf-button,.wf-checkbox,.wf-radio,.wf-toggle{width:fit-content}',
     '.wf-button i.fa-solid,.wf-button i.fa-regular,.wf-button i.fa-brands{margin-right:4px}',

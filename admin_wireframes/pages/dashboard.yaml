@@ -194,10 +194,16 @@ page:
                   component: section
                   visibility:
                     condition:
-                      type: state_equals
-                      scope: page
-                      key: inv1_accepted
-                      equals: false
+                      type: and
+                      conditions:
+                        - type: state_equals
+                          scope: page
+                          key: inv1_accepted
+                          equals: false
+                        - type: state_equals
+                          scope: page
+                          key: inv1_declined
+                          equals: false
                   layout:
                     type: stack
                     gap: 8
@@ -260,10 +266,16 @@ page:
                   component: section
                   visibility:
                     condition:
-                      type: state_equals
-                      scope: page
-                      key: inv2_accepted
-                      equals: false
+                      type: and
+                      conditions:
+                        - type: state_equals
+                          scope: page
+                          key: inv2_accepted
+                          equals: false
+                        - type: state_equals
+                          scope: page
+                          key: inv2_declined
+                          equals: false
                   layout:
                     type: stack
                     gap: 8
