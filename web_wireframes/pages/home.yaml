@@ -55,6 +55,9 @@ page:
                   props:
                     label: "Watch Demo"
                     icon: circle-play
+                  interaction:
+                    - type: navigation
+                      targetRoute: home
 
         - id: hero_divider
           component: divider

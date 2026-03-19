@@ -58,3 +58,6 @@ page:
                   props:
                     label: "Go Back"
                     icon: arrow-left
+                  interaction:
+                    - type: navigation
+                      targetRoute: dashboard

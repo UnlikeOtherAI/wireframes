@@ -298,3 +298,6 @@ page:
                   props:
                     label: "View Full API Docs"
                     icon: book
+                  interaction:
+                    - type: navigation
+                      targetRoute: dashboard

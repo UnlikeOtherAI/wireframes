@@ -330,4 +330,4 @@ page:
                     label: "Start fresh with an empty project."
               interaction:
                 - type: navigation
-                  targetRoute: dashboard
+                  targetRoute: project_editor

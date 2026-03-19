@@ -453,6 +453,16 @@ page:
                           stateKey: build_status
                           value: building
                           scope: page
+                    - id: tb_building_indicator
+                      component: text
+                      props:
+                        label: "Building..."
+                      visibility:
+                        condition:
+                          type: state_equals
+                          scope: page
+                          key: build_status
+                          equals: building
 
                 # Split: Chat + Workspace
                 - id: editor_split

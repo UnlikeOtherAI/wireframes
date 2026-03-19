@@ -155,10 +155,24 @@ page:
                           stateKey: published
                           value: true
                           scope: page
-                    - id: pub_hint
-                      component: text
+                    - id: pub_unpublish
+                      component: button
                       props:
-                        label: "After publishing, an Unpublish button will appear here to take down the preview."
+                        label: "Unpublish Preview"
+                        icon: circle-xmark
+                      size:
+                        width: "100%"
+                      visibility:
+                        condition:
+                          type: state_equals
+                          scope: page
+                          key: published
+                          equals: true
+                      interaction:
+                        - type: set_state
+                          stateKey: published
+                          value: false
+                          scope: page
 
                 - id: url_section
                   component: section
@@ -192,6 +206,16 @@ page:
                               stateKey: url_copied
                               value: true
                               scope: page
+                    - id: url_copied_msg
+                      component: text
+                      props:
+                        label: "Link copied to clipboard."
+                      visibility:
+                        condition:
+                          type: state_equals
+                          scope: page
+                          key: url_copied
+                          equals: true
                     - id: url_hint
                       component: text
                       props:

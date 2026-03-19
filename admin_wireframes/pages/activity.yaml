@@ -270,3 +270,6 @@ page:
               props:
                 label: "Load More Activity"
                 icon: clock-rotate-left
+              interaction:
+                - type: navigation
+                  targetRoute: activity
