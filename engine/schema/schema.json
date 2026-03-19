@@ -415,6 +415,27 @@
             { "required": ["use"] },
             { "required": ["injectable"] }
           ]
+        },
+        {
+          "if": {
+            "properties": { "component": { "const": "chart" } },
+            "required": ["component"]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "type": "object",
+                "required": ["chartType"],
+                "properties": {
+                  "chartType": {
+                    "type": "string",
+                    "enum": ["line", "bar", "vertical", "horizontal", "gauge", "donut"]
+                  }
+                }
+              }
+            },
+            "required": ["component", "props"]
+          }
         }
       ]
     },

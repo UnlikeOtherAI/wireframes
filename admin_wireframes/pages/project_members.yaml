@@ -214,6 +214,16 @@ page:
                               stateKey: invite_sent
                               value: true
                               scope: page
+                    - id: invite_sent_msg
+                      component: text
+                      props:
+                        label: "Invite sent."
+                      visibility:
+                        condition:
+                          type: state_equals
+                          scope: page
+                          key: invite_sent
+                          equals: true
 
                 - id: pending_section
                   component: section

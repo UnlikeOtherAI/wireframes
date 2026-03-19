@@ -154,6 +154,16 @@ page:
                       stateKey: profile_saved
                       value: true
                       scope: page
+                - id: profile_saved_msg
+                  component: text
+                  props:
+                    label: "Profile saved."
+                  visibility:
+                    condition:
+                      type: state_equals
+                      scope: page
+                      key: profile_saved
+                      equals: true
 
             - id: language_section
               component: section
@@ -188,6 +198,16 @@ page:
                       stateKey: language_saved
                       value: true
                       scope: page
+                - id: lang_saved_msg
+                  component: text
+                  props:
+                    label: "Language saved."
+                  visibility:
+                    condition:
+                      type: state_equals
+                      scope: page
+                      key: language_saved
+                      equals: true
 
             - id: session_section
               component: section

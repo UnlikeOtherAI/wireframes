@@ -138,11 +138,12 @@ Every UI string in the admin panel must be translatable. English is the initial 
 | Screen | Description |
 |--------|-------------|
 | Login | SSO redirect to authenticator.unlikeother.ai |
-| Dashboard | Grid of project cards. Each card is a square. Owned projects show edit icon; viewer-only projects show eye (fa-eye) icon. Pending invites appear as cards with accept/decline actions. |
+| Dashboard | Grid of project cards. Each card is a square. Owned projects show edit icon; viewer-only projects show eye icon. Pending invites appear as cards with accept/decline actions. |
 | Project Editor | Full wireframe editor. YAML editing + live preview pane. Template/page/component management. |
 | Project Settings | Rename, delete, manage members, preview settings. |
 | Members | List of members with role badges. Invite by email. Change roles. Remove members. |
 | Preview Settings | Toggle public/password/SSO. Manage email access list. Copy share link. |
+| Account | User profile (display name, email), language selector, active sessions, danger zone (delete account). |
 
 #### Role-Based Access
 

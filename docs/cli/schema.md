@@ -209,7 +209,7 @@ Must contain:
 
   * `mode: line | card` — selects rendering mode (default: `line`)
   * `density: comfortable | compact` — spacing density (default: `comfortable`)
-  * See [docs/rendering-modes.md](docs/rendering-modes.md) for full specification
+  * See [rendering-modes.md](rendering-modes.md) for full specification
 * pageState (optional) — page-scoped state, resets on navigation
 * dataSources (optional) — dataset bindings for this page
 * actions (optional) — named action definitions (e.g. form submissions, API calls). Keyed by action ID, referenced via `actionId` in interactions.
@@ -463,8 +463,9 @@ IDs must be unique within resolved tree.
 
 The built-in primitive component set is documented in
 [schema-systems.md](schema-systems.md) and includes common structural
-containers such as `tab_bar` for reusable route-backed navigation patterns
-and `table` for striped tabular data.
+containers such as `tab_bar` for reusable route-backed navigation patterns,
+`table` for striped tabular data, and `chart` for grayscale chart placeholders
+(requires `chartType`: line, bar, vertical, horizontal, gauge, donut).
 
 ---
 
@@ -476,4 +477,4 @@ This document covers the core structure (sections 1-4). See companion files for 
 |------|----------|
 | [schema-systems.md](schema-systems.md) | Layout, state, interactions, overlays, panes, wireframe style, data binding, primitives, validation, export (sections 5-20) |
 | [schema-canonical.yaml](schema-canonical.yaml) | Full canonical YAML definition of the schema |
-| [schema.json](schema.json) | Formal JSON Schema for validation |
+| [schema.json](../../engine/schema/schema.json) | Formal JSON Schema for validation |

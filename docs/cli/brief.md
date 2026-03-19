@@ -17,8 +17,9 @@ Everything renders as skeleton frames you can click through:
 * A navigation bar is a row of framed text links
 * An input is a framed placeholder field
 
-Built-in primitives: `heading`, `paragraph`, `text`, `image`, `button`,
-`input`, `textarea`, `select`, `checkbox`, `radio`, `toggle`, `chart`, `section`, `divider`, `spacer`.
+Built-in primitives: `heading`, `paragraph`, `text`, `image`, `icon`, `button`,
+`tab_bar`, `bottom_tab_bar`, `input`, `textarea`, `select`, `checkbox`, `radio`,
+`toggle`, `chart`, `table`, `section`, `divider`, `spacer`.
 
 Every element is a bordered rectangle (solid or dashed) with text labels or content.
 Images can reference a URL or a file in `assets/` (e.g. a client logo).

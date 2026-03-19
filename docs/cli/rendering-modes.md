@@ -429,6 +429,8 @@ No inner `overflow: scroll` container. No clipping.
 **What gets `wf-surface`:**
 
 - `table` component
+- `tab_bar` component
+- `bottom_tab_bar` component
 - `section` component
 - Template region containers (persistent and slot)
 - Pane panels (`node.pane` is defined)
@@ -879,7 +881,7 @@ A node gets the `wf-surface` class if ANY of the following is true:
 A node does NOT get `wf-surface` if:
 
 - `component` is any text primitive (`heading`, `paragraph`, `text`)
-- `component: button`, `input`, `textarea`, `select`, `checkbox`, `radio`, `toggle`
+- `component: button`, `input`, `textarea`, `select`, `checkbox`, `radio`, `toggle`, `icon`
 - `component: chart` (borderless placeholder — see Section 6.10)
 - `component: divider` or `component: spacer`
 - The node is a pure layout wrapper with `use` referencing a component
@@ -989,5 +991,5 @@ between Left and Right. No double line.
 | [schema.md](schema.md)                        | Document types, core node model               |
 | [schema-systems.md](schema-systems.md)        | Layout, state, interactions, overlays, validation |
 | [schema-canonical.yaml](schema-canonical.yaml) | Canonical YAML definition                    |
-| [schema.json](schema.json)                    | Formal JSON Schema                            |
+| [schema.json](../../engine/schema/schema.json) | Formal JSON Schema                            |
 | [wireframe-rendering-research.md](wireframe-rendering-research.md) | Source research document |

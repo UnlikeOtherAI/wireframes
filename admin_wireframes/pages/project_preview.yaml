@@ -311,6 +311,16 @@ page:
                               stateKey: viewer_added
                               value: true
                               scope: page
+                    - id: viewer_added_msg
+                      component: text
+                      props:
+                        label: "Viewer added."
+                      visibility:
+                        condition:
+                          type: state_equals
+                          scope: page
+                          key: viewer_added
+                          equals: true
                     - id: viewers_table
                       component: table
                       props:
@@ -362,3 +372,13 @@ page:
                               stateKey: download_started
                               value: true
                               scope: page
+                    - id: download_started_msg
+                      component: text
+                      props:
+                        label: "Download started."
+                      visibility:
+                        condition:
+                          type: state_equals
+                          scope: page
+                          key: download_started
+                          equals: true

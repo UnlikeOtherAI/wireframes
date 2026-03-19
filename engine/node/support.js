@@ -12,29 +12,9 @@ const {
   templatesFilePath,
 } = require(path.resolve(__dirname, '..', 'addressing'));
 
-const WF_ID_REGEX = /^[a-z][a-z0-9_]*$/;
+const { PRIMITIVE_COMPONENTS } = require(path.resolve(__dirname, '..', 'schema', 'primitives'));
 
-const PRIMITIVE_COMPONENTS = new Set([
-  'heading',
-  'paragraph',
-  'text',
-  'image',
-  'icon',
-  'button',
-  'tab_bar',
-  'bottom_tab_bar',
-  'input',
-  'textarea',
-  'select',
-  'checkbox',
-  'radio',
-  'toggle',
-  'chart',
-  'table',
-  'section',
-  'divider',
-  'spacer',
-]);
+const WF_ID_REGEX = /^[a-z][a-z0-9_]*$/;
 
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);

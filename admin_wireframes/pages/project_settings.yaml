@@ -211,6 +211,16 @@ page:
                           stateKey: settings_saved
                           value: true
                           scope: page
+                    - id: settings_saved_msg
+                      component: text
+                      props:
+                        label: "Settings saved."
+                      visibility:
+                        condition:
+                          type: state_equals
+                          scope: page
+                          key: settings_saved
+                          equals: true
 
                 - id: style_section
                   component: section
@@ -252,6 +262,16 @@ page:
                           stateKey: style_saved
                           value: true
                           scope: page
+                    - id: style_saved_msg
+                      component: text
+                      props:
+                        label: "Style saved."
+                      visibility:
+                        condition:
+                          type: state_equals
+                          scope: page
+                          key: style_saved
+                          equals: true
 
                 - id: danger_section
                   component: section

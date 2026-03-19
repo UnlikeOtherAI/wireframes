@@ -278,7 +278,7 @@ Rendering mode interaction:
   as surfaces; `node.surface: true` forces surface treatment on custom wrappers.
 * `node.elevation: 0-3` selects the card-mode shadow token for that node and is
   ignored in line mode.
-* See [docs/rendering-modes.md](docs/rendering-modes.md) for the full CSS
+* See [rendering-modes.md](rendering-modes.md) for the full CSS
   mapping per mode.
 
 ---

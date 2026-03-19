@@ -430,8 +430,13 @@ button    → <div class="wf-button">
 tab_bar   → <div class="wf-tab-bar wf-surface">
               <div class="wf-tab-bar-body">{children}</div>
             </div>
-            Defaults to a flush row with parent dividers and equal-width children.
-            Intended for common mobile bottom-tab navigation.
+            In-page tab navigation. Buttons laid out in a row with gap, NOT stretched.
+
+bottom_tab_bar → <div class="wf-bottom-tab-bar wf-surface">
+                   <div class="wf-bottom-tab-bar-body">{children}</div>
+                 </div>
+                 iOS-style bottom navigation. Child buttons stretch equally to fill width,
+                 icon stacks above label. Use with `icon` prop on buttons.
 
 input     → <div class="wf-input">
               <input type="{inputType}" placeholder="{placeholder}" />
@@ -969,5 +974,5 @@ state system (appState for cross-page, pageState for per-page).
 | [schema.md](schema.md) | Document types, core node model |
 | [schema-systems.md](schema-systems.md) | Layout, state, interactions, overlays, validation |
 | [schema-canonical.yaml](schema-canonical.yaml) | Canonical YAML definition |
-| [schema.json](schema.json) | Formal JSON Schema |
+| [schema.json](../../engine/schema/schema.json) | Formal JSON Schema |
 | [brief.md](brief.md) | CLI commands and behavior |
