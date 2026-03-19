@@ -11,6 +11,7 @@ const CORE_MODULES = [
   'build/index.js',
   'screenshots/renderer.js',
   'validate/index.js',
+  'addressing/index.js',
 ];
 
 const FORBIDDEN_IMPORTS = [
