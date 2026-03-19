@@ -156,6 +156,10 @@ Every UI string in the admin panel must be translatable. English is the initial 
 | Delete project | Yes | No | No |
 | Change preview access | Yes | Yes | No |
 
+#### Workspace Component
+
+The editor workspace (preview pane, navigation, tree, device controls) must be a self-contained, embeddable component. It will be reused in other projects and controlled externally — including from other systems, websites, or AI chat sessions via tool calls. Design it as a plug-in rendering tool with a clear interface for what is available and controllable.
+
 ### Web (`/web`)
 
 SSR landing/marketing page.

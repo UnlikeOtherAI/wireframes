@@ -17,6 +17,7 @@ page:
     viewer_added: false
     download_started: false
     access_saved: false
+    access_mode: public
   slots:
     - slotId: main_content
       content:
@@ -218,19 +219,40 @@ page:
                       component: radio
                       props:
                         label: "Public — anyone with the link can view"
+                      interaction:
+                        - type: set_state
+                          stateKey: access_mode
+                          value: public
+                          scope: page
                     - id: access_password
                       component: radio
                       props:
                         label: "Password protected"
+                      interaction:
+                        - type: set_state
+                          stateKey: access_mode
+                          value: password
+                          scope: page
                     - id: access_pw_field
                       component: input
                       props:
                         label: "Preview Password"
                         placeholder: "Set a preview password"
+                      visibility:
+                        condition:
+                          type: state_equals
+                          scope: page
+                          key: access_mode
+                          equals: password
                     - id: access_sso
                       component: radio
                       props:
                         label: "SSO restricted — only specific email addresses"
+                      interaction:
+                        - type: set_state
+                          stateKey: access_mode
+                          value: sso
+                          scope: page
                     - id: access_note
                       component: paragraph
                       props:
@@ -248,6 +270,12 @@ page:
 
                 - id: viewers_section
                   component: section
+                  visibility:
+                    condition:
+                      type: state_equals
+                      scope: page
+                      key: access_mode
+                      equals: sso
                   props:
                     title: "Allowed Viewers (SSO)"
                   layout:

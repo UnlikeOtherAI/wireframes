@@ -441,6 +441,7 @@ or a reusable component composed from them.
 * `checkbox` — checkbox with label. Required: `label`.
 * `radio` — radio button with label. Required: `label`.
 * `toggle` — on/off switch. Required: `label`.
+* `chart` — grayscale chart placeholder. Required: `chartType` (line, bar, vertical, horizontal, gauge, donut). Optional: `label`.
 
 ## Structural Primitives
 

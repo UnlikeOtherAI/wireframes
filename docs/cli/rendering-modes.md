@@ -607,7 +607,35 @@ alternates row fills between white and a very light grey. Columns come from
 
 Use `surface: false` when embedding a table inside an already framed card.
 
-### 6.10 Section with title
+### 6.10 Charts
+
+`chart` is a borderless primitive — no `wf-surface` class, no outline or border
+in either mode. Charts render as a grey title label above a placeholder SVG.
+
+```css
+.wf-chart {
+  border:     none;
+  background: transparent;
+  padding:    4px 0;
+}
+.wf-chart-svg {
+  width:      100%;
+  max-height: 160px;
+  display:    block;
+}
+.wf-chart-title {
+  font-size:     12px;
+  color:         #666;
+  margin-bottom: 4px;
+}
+```
+
+Six chart types: `line`, `bar` (alias `vertical`), `horizontal`, `gauge`,
+`donut`. All render as simple grayscale SVG shapes (strokes in `#9ca3af`,
+fills in `#e5e7eb`). No mode difference — charts look the same in both line
+and card mode.
+
+### 6.11 Section with title
 
 `section` renders title text above the body in both modes. The title uses the
 `meta` type scale (12px, grey-500) as a label over the content area.

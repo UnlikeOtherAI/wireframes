@@ -193,7 +193,10 @@ function resolveExpr(expr, eventContext, scopeState) {
 }
 function evalCondition(condition, eventContext) {
   if (!isObj(condition) || typeof condition.type !== 'string') return false;
-  if (condition.type === 'state_equals') return resolveExpr('{{' + condition.scope + '.' + condition.key + '}}', eventContext) === condition.equals;
+  if (condition.type === 'state_equals') {
+    var eScope = condition.scope === 'app' || condition.scope === 'appState' ? 'appState' : 'state';
+    return resolveExpr('{{' + eScope + '.' + condition.key + '}}', eventContext) === condition.equals;
+  }
   if (condition.type === 'route_match') return String(condition.routeId || '') === String(WF_ROUTE_ID || '');
   if (condition.type === 'compare') {
     var left = resolveExpr(condition.left, eventContext, WF_PAGE_STATE);

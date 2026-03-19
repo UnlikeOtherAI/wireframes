@@ -494,6 +494,15 @@ spacer    → <div class="wf-spacer" style="height:{size}px"></div>
             In stack layout: uses height.
             In row layout: uses width instead (style="width:{size}px").
             In grid layout: spans one cell with the given height.
+
+chart     → <div class="wf-chart">
+              <div class="wf-chart-title">{label}</div>
+              <svg viewBox="0 0 200 120" class="wf-chart-svg">...</svg>
+            </div>
+            `props.chartType` selects the SVG shape: line, bar (alias: vertical),
+            horizontal, gauge, donut. All charts are grayscale placeholder shapes.
+            CSS: no border, no surface frame. Title is 12px grey label above SVG.
+            SVG max-height: 160px, full width of parent.
 ```
 
 ---

@@ -213,6 +213,9 @@ page:
                     icon: file
                   size:
                     width: "100%"
+                  selection:
+                    scope: page
+                    stateKey: active_file
                   interaction:
                     - type: set_state
                       stateKey: active_file
@@ -225,6 +228,9 @@ page:
                     icon: file
                   size:
                     width: "100%"
+                  selection:
+                    scope: page
+                    stateKey: active_file
                   interaction:
                     - type: set_state
                       stateKey: active_file
@@ -237,6 +243,9 @@ page:
                     icon: file
                   size:
                     width: "100%"
+                  selection:
+                    scope: page
+                    stateKey: active_file
                   interaction:
                     - type: set_state
                       stateKey: active_file
@@ -249,6 +258,9 @@ page:
                     icon: file
                   size:
                     width: "100%"
+                  selection:
+                    scope: page
+                    stateKey: active_file
                   interaction:
                     - type: set_state
                       stateKey: active_file
@@ -277,6 +289,9 @@ page:
                     icon: layer-group
                   size:
                     width: "100%"
+                  selection:
+                    scope: page
+                    stateKey: active_file
                   interaction:
                     - type: set_state
                       stateKey: active_file
@@ -295,6 +310,9 @@ page:
                     icon: cube
                   size:
                     width: "100%"
+                  selection:
+                    scope: page
+                    stateKey: active_file
                   interaction:
                     - type: set_state
                       stateKey: active_file
@@ -307,6 +325,9 @@ page:
                     icon: cube
                   size:
                     width: "100%"
+                  selection:
+                    scope: page
+                    stateKey: active_file
                   interaction:
                     - type: set_state
                       stateKey: active_file
@@ -750,6 +771,12 @@ page:
 
                         - id: ws_viewport
                           component: section
+                          visibility:
+                            condition:
+                              type: state_equals
+                              scope: page
+                              key: workspace_mode
+                              equals: preview
                           layout:
                             type: stack
                             padding: 24
@@ -781,6 +808,12 @@ page:
                         # --- Sitemap tree view (shown when workspace_mode = sitemap) ---
                         - id: ws_sitemap
                           component: section
+                          visibility:
+                            condition:
+                              type: state_equals
+                              scope: page
+                              key: workspace_mode
+                              equals: sitemap
                           layout:
                             type: stack
                             padding: 16

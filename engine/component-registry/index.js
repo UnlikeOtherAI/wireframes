@@ -21,6 +21,7 @@ const PRIMITIVE_COMPONENTS = new Set([
   'checkbox',
   'radio',
   'toggle',
+  'chart',
   'table',
   'section',
   'divider',

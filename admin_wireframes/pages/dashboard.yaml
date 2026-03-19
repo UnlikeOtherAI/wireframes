@@ -12,6 +12,7 @@ page:
   rendering:
     mode: card
   pageState:
+    has_projects: true
     inv1_accepted: false
     inv1_declined: false
     inv2_accepted: false
@@ -120,6 +121,12 @@ page:
         # Empty state — shown when user has no projects yet
         - id: empty_state
           component: section
+          visibility:
+            condition:
+              type: state_equals
+              scope: page
+              key: has_projects
+              equals: false
           layout:
             type: stack
             gap: 16
@@ -185,6 +192,12 @@ page:
               children:
                 - id: inv_1
                   component: section
+                  visibility:
+                    condition:
+                      type: state_equals
+                      scope: page
+                      key: inv1_accepted
+                      equals: false
                   layout:
                     type: stack
                     gap: 8
@@ -245,6 +258,12 @@ page:
                               scope: page
                 - id: inv_2
                   component: section
+                  visibility:
+                    condition:
+                      type: state_equals
+                      scope: page
+                      key: inv2_accepted
+                      equals: false
                   layout:
                     type: stack
                     gap: 8

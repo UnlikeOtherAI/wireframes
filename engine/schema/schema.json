@@ -345,7 +345,7 @@
         "heading", "paragraph", "text",
         "image", "icon",
         "button", "tab_bar", "bottom_tab_bar", "input", "textarea", "select", "checkbox", "radio", "toggle",
-        "table", "section", "divider", "spacer"
+        "chart", "table", "section", "divider", "spacer"
       ]
     },
     "Layout": {
