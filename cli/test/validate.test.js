@@ -8,7 +8,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { initProject } = require('../../engine/init');
-const { runValidate } = require('../../engine/validate');
+const { runValidate } = require('../../engine/validate/cli-adapter');
 const { addPage } = require('../../engine/page');
 
 function createTempProject(projectName) {

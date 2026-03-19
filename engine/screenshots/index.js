@@ -6,7 +6,7 @@ const yaml = require('js-yaml');
 const { renderWireframeMarkup } = require(path.resolve(__dirname, 'renderer'));
 const { fsImageResolver } = require(path.resolve(__dirname, '..', 'renderer', 'fs-image-resolver'));
 
-const { runValidate } = require(path.resolve(__dirname, '..', 'validate'));
+const { runValidate } = require(path.resolve(__dirname, '..', 'validate', 'cli-adapter'));
 const { listPages } = require(path.resolve(__dirname, '..', 'page'));
 const { pageFilePath } = require(path.resolve(__dirname, '..', 'addressing', 'fs-resolver'));
 const { listRoutes } = require(path.resolve(__dirname, '..', 'introspection', 'routes'));

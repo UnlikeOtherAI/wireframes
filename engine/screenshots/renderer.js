@@ -1,18 +1,16 @@
 'use strict';
 
-const path = require('node:path');
-
-const { renderNode, renderNodes } = require(path.resolve(__dirname, '..', 'renderer', 'primitives'));
-const { buildInteractionRuntime } = require(path.resolve(__dirname, '..', 'renderer', 'interactions'));
+const { renderNode, renderNodes } = require('../renderer/primitives');
+const { buildInteractionRuntime } = require('../renderer/interactions');
 const {
   layoutToCss,
   shouldRenderParentSeparators,
-} = require(path.resolve(__dirname, '..', 'renderer', 'layout'));
+} = require('../renderer/layout');
 const {
   readLocalImage,
   mergeWireframeStyle,
   wireframeRootStyle,
-} = require(path.resolve(__dirname, '..', 'renderer', 'wireframe-styles'));
+} = require('../renderer/wireframe-styles');
 
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);

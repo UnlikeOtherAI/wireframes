@@ -9,7 +9,7 @@ const assert = require('node:assert/strict');
 
 const { initProject } = require('../../engine/init');
 const { runLint } = require('../../engine/lint');
-const { runValidate } = require('../../engine/validate');
+const { runValidate } = require('../../engine/validate/cli-adapter');
 
 function createTempProject(projectName) {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'wireframe-cli-'));

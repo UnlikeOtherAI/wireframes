@@ -1,7 +1,7 @@
 'use strict';
 
 const path = require('node:path');
-const { runValidate } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'validate'));
+const { runValidate } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'validate', 'cli-adapter'));
 const { formatGroupedIssues } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'validate', 'format'));
 
 function formatIssues(result) {

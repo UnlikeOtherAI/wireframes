@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
-const { runValidate } = require(path.resolve(__dirname, '..', 'validate'));
+const { runValidate } = require(path.resolve(__dirname, '..', 'validate', 'cli-adapter'));
 const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
 const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 

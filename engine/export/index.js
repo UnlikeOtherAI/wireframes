@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const childProcess = require('node:child_process');
 const yaml = require('js-yaml');
-const { runValidate } = require(path.resolve(__dirname, '..', 'validate'));
+const { runValidate } = require(path.resolve(__dirname, '..', 'validate', 'cli-adapter'));
 
 const DEFAULT_EXPORT_CONFIG = {
   strictValidation: true,

@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
 
-const { runValidate } = require(path.resolve(__dirname, '..', 'validate'));
+const { runValidate } = require(path.resolve(__dirname, '..', 'validate', 'cli-adapter'));
 const {
   resolvePageTargets,
 } = require(path.resolve(__dirname, '..', 'screenshots'));

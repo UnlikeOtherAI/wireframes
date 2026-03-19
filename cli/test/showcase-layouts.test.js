@@ -6,7 +6,7 @@ const path = require('node:path');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { runValidate } = require('../../engine/validate');
+const { runValidate } = require('../../engine/validate/cli-adapter');
 const { resolvePageTargets } = require('../../engine/screenshots');
 const { renderWireframeMarkup } = require('../../engine/screenshots/renderer');
 

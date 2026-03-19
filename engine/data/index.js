@@ -2,7 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { runValidate } = require(path.resolve(__dirname, '..', 'validate'));
+const { runValidate } = require(path.resolve(__dirname, '..', 'validate', 'cli-adapter'));
 const {
   datasetFilePath,
   getDatasetDocument,
