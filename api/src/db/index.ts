@@ -1,14 +1,17 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pg from "pg";
 import { config } from "../config.js";
 
-const queryClient = postgres(config.databaseUrl, { max: 10 });
+const pool = new pg.Pool({
+  connectionString: config.databaseUrl,
+  max: 10,
+});
 
-export const db = drizzle(queryClient);
+export const db = drizzle({ client: pool });
 
 export async function verifyConnection(): Promise<boolean> {
   try {
-    await queryClient`SELECT 1`;
+    await pool.query("SELECT 1");
     return true;
   } catch {
     return false;
@@ -16,5 +19,5 @@ export async function verifyConnection(): Promise<boolean> {
 }
 
 export async function closeConnection(): Promise<void> {
-  await queryClient.end();
+  await pool.end();
 }

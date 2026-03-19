@@ -29,3 +29,16 @@ export function unsubscribeAll(ws: WsSocket): void {
   }
   ws.data.channels.clear();
 }
+
+export function publishToChannel(
+  ws: WsSocket,
+  channel: string,
+  payload: unknown,
+): boolean {
+  if (!ws.data.channels.has(channel)) return false;
+  ws.publish(
+    channel,
+    JSON.stringify({ type: "message", channel, payload }),
+  );
+  return true;
+}

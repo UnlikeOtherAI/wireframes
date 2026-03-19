@@ -1,16 +1,17 @@
 import { verifyConnection } from "../db/index.js";
 
 export interface HealthStatus {
-  status: "ok" | "degraded";
+  status: "ok";
   timestamp: string;
-  db: boolean;
 }
 
 export async function checkHealth(): Promise<HealthStatus> {
-  const db = await verifyConnection();
+  const ok = await verifyConnection();
+  if (!ok) {
+    throw new Error("Database connection failed");
+  }
   return {
-    status: db ? "ok" : "degraded",
+    status: "ok",
     timestamp: new Date().toISOString(),
-    db,
   };
 }
