@@ -17,6 +17,7 @@ page:
     download_open: false
     build_status: idle
     message_sent: false
+    workspace_mode: preview
   overlays:
     - id: history_modal
       type: modal
@@ -590,15 +591,29 @@ page:
                             padding: 8
                             align: center
                           children:
-                            - id: ws_icon
-                              component: icon
-                              props:
-                                name: desktop
-                                size: sm
-                            - id: ws_label
-                              component: text
-                              props:
-                                label: "Live Preview"
+                            - id: ws_mode_tabs
+                              component: tab_bar
+                              children:
+                                - id: ws_tab_preview
+                                  component: button
+                                  props:
+                                    label: "Preview"
+                                    icon: desktop
+                                  interaction:
+                                    - type: set_state
+                                      stateKey: workspace_mode
+                                      value: preview
+                                      scope: page
+                                - id: ws_tab_sitemap
+                                  component: button
+                                  props:
+                                    label: "Sitemap"
+                                    icon: sitemap
+                                  interaction:
+                                    - type: set_state
+                                      stateKey: workspace_mode
+                                      value: sitemap
+                                      scope: page
                             - id: ws_spacer
                               component: spacer
                               size:
@@ -685,6 +700,268 @@ page:
                                   component: text
                                   props:
                                     label: "Use the chat to describe changes. Generation happens automatically."
+
+                        # --- Sitemap tree view (shown when workspace_mode = sitemap) ---
+                        - id: ws_sitemap
+                          component: section
+                          layout:
+                            type: stack
+                            padding: 16
+                            gap: 4
+                          size:
+                            height: "100%"
+                          children:
+                            - id: sm_heading
+                              component: heading
+                              props:
+                                label: "Project Sitemap"
+                                level: 3
+                            - id: sm_note
+                              component: text
+                              props:
+                                label: "Click any page to open it in the preview. The chat context updates automatically."
+                            - id: sm_divider
+                              component: divider
+                            # Pages folder
+                            - id: sm_pages_folder
+                              component: section
+                              layout:
+                                type: stack
+                                gap: 2
+                                padding: 0
+                              children:
+                                - id: sm_pages_label
+                                  component: section
+                                  layout:
+                                    type: row
+                                    gap: 6
+                                    align: center
+                                  children:
+                                    - id: sm_pages_icon
+                                      component: icon
+                                      props:
+                                        name: folder-open
+                                        size: sm
+                                    - id: sm_pages_text
+                                      component: heading
+                                      props:
+                                        label: "pages/"
+                                        level: 4
+                                - id: sm_p_dashboard
+                                  component: section
+                                  layout:
+                                    type: row
+                                    gap: 6
+                                    align: center
+                                    padding: 4
+                                  children:
+                                    - id: sm_p_dash_indent
+                                      component: spacer
+                                      size:
+                                        width: 16
+                                    - id: sm_p_dash_icon
+                                      component: icon
+                                      props:
+                                        name: file
+                                        size: sm
+                                    - id: sm_p_dash_name
+                                      component: text
+                                      props:
+                                        label: "dashboard.yaml"
+                                - id: sm_p_settings
+                                  component: section
+                                  layout:
+                                    type: row
+                                    gap: 6
+                                    align: center
+                                    padding: 4
+                                  children:
+                                    - id: sm_p_set_indent
+                                      component: spacer
+                                      size:
+                                        width: 16
+                                    - id: sm_p_set_icon
+                                      component: icon
+                                      props:
+                                        name: file
+                                        size: sm
+                                    - id: sm_p_set_name
+                                      component: text
+                                      props:
+                                        label: "settings.yaml"
+                                - id: sm_p_profile
+                                  component: section
+                                  layout:
+                                    type: row
+                                    gap: 6
+                                    align: center
+                                    padding: 4
+                                  children:
+                                    - id: sm_p_prof_indent
+                                      component: spacer
+                                      size:
+                                        width: 16
+                                    - id: sm_p_prof_icon
+                                      component: icon
+                                      props:
+                                        name: file
+                                        size: sm
+                                    - id: sm_p_prof_name
+                                      component: text
+                                      props:
+                                        label: "profile.yaml"
+                                - id: sm_p_checkout
+                                  component: section
+                                  layout:
+                                    type: row
+                                    gap: 6
+                                    align: center
+                                    padding: 4
+                                  children:
+                                    - id: sm_p_chk_indent
+                                      component: spacer
+                                      size:
+                                        width: 16
+                                    - id: sm_p_chk_icon
+                                      component: icon
+                                      props:
+                                        name: file
+                                        size: sm
+                                    - id: sm_p_chk_name
+                                      component: text
+                                      props:
+                                        label: "checkout.yaml"
+                            # Templates folder
+                            - id: sm_templates_folder
+                              component: section
+                              layout:
+                                type: stack
+                                gap: 2
+                              children:
+                                - id: sm_tpl_label
+                                  component: section
+                                  layout:
+                                    type: row
+                                    gap: 6
+                                    align: center
+                                  children:
+                                    - id: sm_tpl_icon
+                                      component: icon
+                                      props:
+                                        name: folder-open
+                                        size: sm
+                                    - id: sm_tpl_text
+                                      component: heading
+                                      props:
+                                        label: "templates/"
+                                        level: 4
+                                - id: sm_t_main
+                                  component: section
+                                  layout:
+                                    type: row
+                                    gap: 6
+                                    align: center
+                                    padding: 4
+                                  children:
+                                    - id: sm_t_main_indent
+                                      component: spacer
+                                      size:
+                                        width: 16
+                                    - id: sm_t_main_icon
+                                      component: icon
+                                      props:
+                                        name: layer-group
+                                        size: sm
+                                    - id: sm_t_main_name
+                                      component: text
+                                      props:
+                                        label: "main_template.yaml"
+                            # Components folder
+                            - id: sm_components_folder
+                              component: section
+                              layout:
+                                type: stack
+                                gap: 2
+                              children:
+                                - id: sm_comp_label
+                                  component: section
+                                  layout:
+                                    type: row
+                                    gap: 6
+                                    align: center
+                                  children:
+                                    - id: sm_comp_icon
+                                      component: icon
+                                      props:
+                                        name: folder-open
+                                        size: sm
+                                    - id: sm_comp_text
+                                      component: heading
+                                      props:
+                                        label: "components/"
+                                        level: 4
+                                - id: sm_c_nav
+                                  component: section
+                                  layout:
+                                    type: row
+                                    gap: 6
+                                    align: center
+                                    padding: 4
+                                  children:
+                                    - id: sm_c_nav_indent
+                                      component: spacer
+                                      size:
+                                        width: 16
+                                    - id: sm_c_nav_icon
+                                      component: icon
+                                      props:
+                                        name: cube
+                                        size: sm
+                                    - id: sm_c_nav_name
+                                      component: text
+                                      props:
+                                        label: "nav_item.yaml"
+                                - id: sm_c_card
+                                  component: section
+                                  layout:
+                                    type: row
+                                    gap: 6
+                                    align: center
+                                    padding: 4
+                                  children:
+                                    - id: sm_c_card_indent
+                                      component: spacer
+                                      size:
+                                        width: 16
+                                    - id: sm_c_card_icon
+                                      component: icon
+                                      props:
+                                        name: cube
+                                        size: sm
+                                    - id: sm_c_card_name
+                                      component: text
+                                      props:
+                                        label: "card_widget.yaml"
+                            # Route map
+                            - id: sm_routes_divider
+                              component: divider
+                            - id: sm_routes_heading
+                              component: heading
+                              props:
+                                label: "Routes"
+                                level: 4
+                            - id: sm_routes_table
+                              component: table
+                              props:
+                                columns:
+                                  - { key: route, label: "Route" }
+                                  - { key: page, label: "Page" }
+                                  - { key: path, label: "Path" }
+                                rows:
+                                  - { route: "dashboard", page: "dashboard.yaml", path: "/" }
+                                  - { route: "settings", page: "settings.yaml", path: "/settings" }
+                                  - { route: "profile", page: "profile.yaml", path: "/profile" }
+                                  - { route: "checkout", page: "checkout.yaml", path: "/checkout" }
 
                 # Status bar
                 - id: editor_status
