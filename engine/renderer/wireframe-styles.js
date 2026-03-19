@@ -27,7 +27,7 @@ function wireframeBorderCss(mergedStyle = {}) {
 }
 
 function resolveRenderingMode(rendering = {}) {
-  return rendering?.mode === 'card' ? 'card' : 'line';
+  return rendering?.mode === 'line' ? 'line' : 'card';
 }
 
 function scaleSurfaceRadius(radius, mode) {

@@ -312,7 +312,7 @@ function renderWireframeMarkup({
   rendering = {},
   bodyLayoutType = 'row',
 }) {
-  const mode = rendering?.mode === 'card' ? 'card' : 'line';
+  const mode = rendering?.mode === 'line' ? 'line' : 'card';
   const density = rendering?.density === 'compact' ? 'compact' : 'comfortable';
 
   const viewportWidth = Number.isFinite(pageViewport?.width) ? pageViewport.width : 1280;

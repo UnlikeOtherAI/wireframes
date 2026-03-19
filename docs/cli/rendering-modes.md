@@ -17,8 +17,9 @@ modes.
 ## 1. Overview
 
 The renderer supports two output modes. Both use the same schema, the same
-resolved node tree, and the same layout engine. Mode is declared per-page
- via `page.rendering.mode` or the shorthand `page.renderMode`.
+resolved node tree, and the same layout engine. **Card mode is the default.**
+Mode can be overridden per-page via `page.rendering.mode` or the shorthand
+`page.renderMode`.
 
 | Mode   | Character                       | Page background | Surface treatment          | Button style       |
 |--------|---------------------------------|-----------------|----------------------------|--------------------|
