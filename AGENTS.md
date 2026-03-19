@@ -1,0 +1,202 @@
+# Wireframes — Agent Guidelines
+
+> Read CLAUDE.md and AGENTS.md before starting any work.
+
+## Source of Truth
+
+- System architecture: [docs/architecture.md](docs/architecture.md)
+- CLI spec & commands: [docs/cli/brief.md](docs/cli/brief.md)
+- Schema contract: [docs/cli/schema.md](docs/cli/schema.md) + [schema-systems.md](docs/cli/schema-systems.md)
+- Canonical YAML: [docs/cli/schema-canonical.yaml](docs/cli/schema-canonical.yaml)
+- JSON Schema: [engine/schema/schema.json](engine/schema/schema.json)
+- Rendering spec: [docs/cli/rendering.md](docs/cli/rendering.md) + [rendering-modes.md](docs/cli/rendering-modes.md)
+
+---
+
+## Architecture Compliance
+
+**Follow existing patterns.** Don't introduce new folder structures, conventions, or architectural concepts unless the task requires it or the user approves.
+
+### Monorepo Layout
+
+```
+/engine    Shared engine — zero CLI/API/framework deps
+/cli       CLI tool — thin command layer over engine
+/api       Bun + PostgreSQL API (Drizzle ORM)
+/admin     React CSR — online wireframe editor
+/web       SSR landing page
+/docs      All documentation
+```
+
+### Engine Rules
+
+- No `process.exit`, `console.log`, or framework imports.
+- Must work from in-memory document maps, not filesystem paths (API is stateless).
+- CLI builds the document map from disk. API builds it from Postgres. Engine doesn't care.
+
+### Layered Architecture (API)
+
+- **Routes** → HTTP handling, input parsing, call controller
+- **Controllers** → Coordinate, validate intent, call services
+- **Services** → Business logic, orchestrate repositories
+- **Repositories** → Database access only, no business logic
+
+Don't skip layers or mix concerns.
+
+---
+
+## Code Rules
+
+### File Size Limits (Hard)
+
+- **Source/test/config:** 500 lines max. Exceeding requires splitting before continuing.
+- **Documentation (.md):** 1,000 lines max. Exceeding requires splitting into sub-files with an overview linking to them.
+- YAML, JSON, and canonical schema files are exempt when keeping them whole makes sense.
+
+### Quality
+
+- One exported component/class/service per file.
+- Functions and components focused on a single responsibility.
+- Naming conventions must be consistent within each package.
+- Test before committing.
+
+### No Unnecessary Abstractions
+
+- Three similar lines of code is better than a premature abstraction.
+- Don't add error handling for scenarios that can't happen.
+- Don't design for hypothetical future requirements.
+- Don't add comments, docstrings, or types beyond what's necessary for clarity.
+
+### No Patches on Patches
+
+- Don't add conditionals to handle edge cases when the architecture itself needs adjustment.
+- Don't add specialized versions of services — refactor the base to handle the case.
+- Question "just add a flag" solutions — they often indicate design problems.
+
+### Single Source of Truth
+
+- **Schema:** `schema.json` is authoritative. `schema.md`, `schema-systems.md`, `schema-canonical.yaml`, `brief.md`, and `rendering.md` must stay in sync.
+- **Database schema:** Drizzle is the single source of truth. No bypass with raw SQL.
+- **Configuration:** Centralized, no scattered magic values.
+
+---
+
+## Schema Discipline
+
+Any schema change must be updated in ALL of:
+1. `engine/schema/schema.json`
+2. `docs/cli/schema.md`
+3. `docs/cli/schema-systems.md`
+4. `docs/cli/schema-canonical.yaml`
+5. `docs/cli/brief.md` (if CLI behavior affected)
+6. `docs/cli/rendering.md` (if rendering affected)
+
+Never update one without the others.
+
+---
+
+## Wireframe & Brief Sync
+
+Wireframes and briefs are never out of sync. Any functionality change must update wireframes. Any wireframe change must be checked against the brief. A single instruction updates both.
+
+---
+
+## Determinism
+
+Same input = same output. No randomness, no timestamps in generated files.
+
+---
+
+## Verification
+
+- **Playwright:** Renderer changes require visual layout fixtures verified in Playwright.
+- **Tests:** Run `pnpm test` before committing. All tests must pass.
+- **Build:** Run `wf build` in admin_wireframes after YAML changes.
+- **Validate:** Run `wf validate` to catch schema/semantic errors.
+
+---
+
+## Cross-Provider Reviews
+
+### When to Review
+
+Get a second opinion from a different provider before implementation for:
+- New features spanning 3+ files
+- Architectural changes (new tables, API routes, component patterns)
+- Changes to engine core (resolver, renderer, interactions runtime)
+- Design documents
+
+### How to Review
+
+1. Write the design/spec first.
+2. Send to a different provider (Claude wrote it → Codex reviews; vice versa).
+3. Instruct reviewer to be adversarial: look for bugs, architectural regression, logic holes.
+4. Assess each finding independently — push back if the reviewer is wrong. Don't let reviewers push toward over-engineering.
+5. Append findings with adopt/defer/reject decisions.
+
+**Skip review for:** typo fixes, doc-only updates, single-file changes under 50 lines.
+
+---
+
+## Design Documents
+
+Required sections for feature design docs:
+
+1. **Problem Statement** — what's broken and why
+2. **Current Behavior** — how it works today (with file references)
+3. **Desired Behavior** — what should happen
+4. **Design** — technical approach
+5. **Implementation Order** — phased plan
+6. **Edge Cases** — scenarios and handling
+7. **Non-Goals** — explicitly out of scope
+
+Design docs live in `docs/plans/`. Move to `docs/done/` when complete.
+
+---
+
+## Commits & Working Style
+
+- Small, focused commits. Push promptly.
+- Don't mix unrelated changes in one commit.
+- Don't refactor surrounding code unless it's part of the task.
+- Save agent review output to `/tmp/` — don't stream into context.
+
+### What Belongs in the Repo
+
+Only commit permanent, hand-authored files.
+
+**Never commit:** build output (except `admin_wireframes/wireframes/build/`), one-off scripts, backup files, temporary notes.
+
+---
+
+## Database & Migrations (API)
+
+- Never edit an existing migration. Create a new one for follow-up changes.
+- Keep derived values computed; avoid storing redundant state.
+- Documents table stores YAML as text. Routes table stores structure as relational data.
+- Assets and builds go to GCS, not the database.
+
+---
+
+## Admin UI Rules
+
+### Internationalization
+
+Every UI string goes through a translation layer. No hardcoded strings. Language preference stored per-user in API + cookie.
+
+### Accessibility & UX
+
+- 44x44px minimum hit targets. 8px between touch targets.
+- Colour contrast: normal text >= 4.5:1, large text >= 3:1.
+- Every control has a label/accessible name. Logical focus order.
+- Confirm destructive actions. Explain errors with next steps.
+
+### Localization
+
+Don't hard-code user-facing copy. Externalize strings. Keep locale resources in sync.
+
+---
+
+## Task Management
+
+`steroids llm` — run for current task management instructions.
