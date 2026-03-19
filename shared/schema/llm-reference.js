@@ -248,20 +248,44 @@ Each column needs at minimum a "key" or a "label":
 Two scopes: appState (in sitemap.yaml, persists across pages) and pageState (in page, resets on nav).
 State keys must be declared before being referenced.
 
+## Building and Previewing
+
+### wf build
+
+Renders every page into static HTML files. Each page becomes a standalone wireframe you can open in a browser.
+
+\`\`\`bash
+wf build                 # outputs to ./build/
+wf build --out dist      # outputs to ./dist/
+\`\`\`
+
+The build resolves templates, fills slots, expands components, binds datasets, and renders all nodes as wireframe HTML. Output is a self-contained static site with navigation between pages.
+
+### wf serve
+
+Starts a local dev server that builds and serves the wireframe site. Useful for previewing layouts, testing navigation, and verifying interactions.
+
+\`\`\`bash
+wf serve                 # starts on default port
+wf serve --port 4000     # starts on port 4000
+\`\`\`
+
+Open the URL in a browser to see the rendered wireframes. The server rebuilds on each request so changes to YAML files are reflected immediately.
+
 ## CLI Commands Reference
 
-wf init <name>                     — scaffold project
+wf init <name>                     — scaffold a new wireframe project
 wf page add <id> --path <p> --template <t> --device <d> [--orientation <o>]
 wf page remove <id>
 wf page list
 wf node add <pageId> --parent <parentId> --id <nodeId> --component <type> [--props '<json>']
 wf component add <id> --root '<yaml>'
 wf overlay add <pageId> --id <overlayId> --type <type> --content '<yaml>'
-wf validate [--strict] [--json]
-wf lint
-wf doctor
-wf build [--out <dir>]
-wf serve [--port <n>]
+wf validate [--strict] [--json]    — validate schema + semantic checks
+wf lint                            — check naming conventions
+wf doctor                          — check project health and references
+wf build [--out <dir>]             — render all pages to static HTML
+wf serve [--port <n>]              — start local preview server
 wf schema                          — print allowed types
 wf schema --doc <type>             — print full structure (page, node, manifest, etc.)
 wf llm                             — print this reference
@@ -270,8 +294,8 @@ wf inspect <pageId> <nodeId>       — inspect a node
 wf routes                          — list all routes
 wf data add <id> --primaryKey <k>
 wf data item add <datasetId> --item '<json>'
-wf export [--out <file>]
-wf screenshots [--page <id>]
+wf export [--out <file>]           — package project as ZIP
+wf screenshots [--page <id>]       — render screenshots with Playwright
 `;
 }
 
