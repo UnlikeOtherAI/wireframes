@@ -11,18 +11,22 @@ prevention, and component-level rendering rules per mode.
 
 # 1. Rendering Philosophy
 
-Every YAML node renders as a **bordered wireframe box**. No production styling.
-No colors beyond black, white, and gray. No icons. No custom fonts.
-The visual output is a clickable skeleton.
+The rendering layer distinguishes **surfaces** from **content**.
+Only surfaces render frames. Content primitives stay unboxed unless they are
+explicitly boxed controls such as inputs, selects, and textareas.
+No production styling. No colors beyond black, white, and gray.
+No custom fonts. The visual output is a clickable skeleton.
+Font Awesome Free icons are supported via the `icon` component and `icon` prop on buttons.
 
 The rendering pipeline:
 
 1. Load project YAML (manifest, sitemap, templates, components, pages, data)
-2. Resolve template + page (fill slots, inject injectables, expand components)
-3. Walk resolved node tree and emit HTML
-4. Apply wireframe CSS (borders, layout, spacing)
-5. Attach interaction JavaScript (navigation, overlays, state, toggles)
-6. Bind state and data values into rendered nodes
+2. Resolve component import graphs from `templates.yaml`, page documents, and component documents
+3. Resolve template + page (fill slots, inject injectables, expand components)
+4. Walk resolved node tree and emit HTML
+5. Apply wireframe CSS (borders, layout, spacing)
+6. Attach interaction JavaScript (navigation, overlays, state, toggles)
+7. Bind state and data values into rendered nodes
 
 ---
 
@@ -58,6 +62,34 @@ If `--platform` is specified, only matching pages are built.
 * Project must pass `wf validate` (blocking errors abort build)
 * All referenced templates, components, datasets must resolve
 * Schema version must be compatible with CLI
+
+### Imported component documents
+
+Reusable component files are not limited to the root `components.yaml`.
+`templates.yaml`, any page document, and any `documentType: components` file may
+declare a top-level `imports` map whose values are relative file paths to other
+component documents.
+
+Example:
+
+```yaml
+imports:
+  nav: ./shared/navigation.yaml
+```
+
+Imported components are referenced through alias-qualified `use` values:
+
+```yaml
+- id: main_nav
+  use: nav.primary_menu
+  props:
+    activeItem: settings
+```
+
+Build and serve resolve these imports recursively before component expansion.
+Filesystem layout is free-form; only explicit imports matter.
+If template imports and page imports would produce the same alias-qualified
+component ID in one resolved page, build fails with a duplicate-component error.
 
 ### Output structure
 
@@ -376,12 +408,30 @@ image     → <div class="wf-image">
 Images in `assets/` render the actual `<img>` with wireframe border.
 Unresolvable sources render a placeholder box with alt text.
 
+## Icon
+
+```
+icon      → <span class="wf-icon">
+              <i class="fa-{style} fa-{name} fa-{size}"></i>
+            </span>
+```
+
+Font Awesome Free 6.x is loaded from CDN. `style` defaults to `solid`. `size` is optional.
+
 ## Interactive primitives
 
 ```
 button    → <div class="wf-button">
-              <button>{label}</button>
+              <button><i class="fa-solid fa-{icon}"></i> {label}</button>
+              icon prop is optional — renders Font Awesome icon before label
+              or <a href="{resolvedRouteHref}">...</a> for route-backed navigation
             </div>
+
+tab_bar   → <div class="wf-tab-bar wf-surface">
+              <div class="wf-tab-bar-body">{children}</div>
+            </div>
+            Defaults to a flush row with parent dividers and equal-width children.
+            Intended for common mobile bottom-tab navigation.
 
 input     → <div class="wf-input">
               <input type="{inputType}" placeholder="{placeholder}" />
@@ -417,6 +467,16 @@ toggle    → <div class="wf-toggle">
 ## Structural primitives
 
 ```
+table     → <div class="wf-table wf-surface?">
+              <div class="wf-table-header wf-table-grid">{column labels}</div>
+              <div class="wf-table-body">
+                <div class="wf-table-row wf-table-grid">{row cells}</div>
+                ...
+              </div>
+            </div>
+            `props.columns` defines grid columns. Rows come from `props.rows`
+            or `binding.source`. Body rows alternate white and very light grey.
+
 section   → <div class="wf-section">
               <div class="wf-section-title">{title}</div>
               <div class="wf-section-body">{children}</div>
@@ -464,6 +524,9 @@ overlay   → position: relative; (children stack with z-index)
 | `columns` | `grid-template-columns: repeat({value}, 1fr)` |
 | `justify` | `justify-content: {value}` |
 | `align` | `align-items: {value}` |
+| `separatorPolicy: auto \| divide` + `gap: 0` | parent divider classes (`wf-divide-x` / `wf-divide-y`) |
+| `separatorPolicy: gutters` or `gap > 0` | gutters only, no parent dividers |
+| `separatorStyle` | `--wf-divider-style: {value}` |
 
 ## Grid item properties → CSS
 
@@ -494,7 +557,8 @@ passed through as-is to CSS. When it is a number, it is treated as pixels.
 
 # 6. Wireframe Style Rendering
 
-The page `wireframeStyle` determines the default visual treatment for all nodes.
+The page `wireframeStyle` determines the default visual treatment for surface
+nodes. Content primitives do not automatically inherit borders.
 
 ## Border style → CSS
 
@@ -516,6 +580,12 @@ Per-node `wireframeStyle` overrides are applied as inline styles on that
 node's HTML element. Only the overridden properties are set; everything
 else inherits from the page style.
 
+Additional render-only controls:
+
+* `page.renderMode` is a shorthand alias for `page.rendering.mode`
+* `node.surface: true|false` forces or suppresses surface framing
+* `node.elevation: 0-3` selects the card-mode surface shadow token
+
 ---
 
 # 7. Overlay Rendering
@@ -532,15 +602,18 @@ Each type has specific positioning and z-index.
 | `drawer_left` | Fixed, left edge, full height | 200 | Yes (`rgba(0,0,0,0.3)`) |
 | `drawer_right` | Fixed, right edge, full height | 200 | Yes (`rgba(0,0,0,0.3)`) |
 | `bottom_sheet` | Fixed, bottom edge, full width | 200 | Yes (`rgba(0,0,0,0.3)`) |
-| `dropdown` | Absolute, relative to trigger | 100 | No |
-| `popover` | Absolute, relative to trigger | 100 | No |
-| `tooltip` | Absolute, near trigger | 100 | No |
+| `dropdown` | Fixed, runtime-anchored to trigger | 100 | No |
+| `popover` | Fixed, runtime-anchored to trigger | 100 | No |
+| `menu` | Fixed, runtime-anchored to trigger | 100 | No |
+| `tooltip` | Fixed, runtime-anchored to trigger | 100 | No |
 | `toast` | Fixed, top or bottom of viewport | 400 | No |
 
 ## Placement
 
 The `placement` value (top, bottom, left, right, center) controls
-positioning for dropdown/popover/tooltip relative to their trigger node.
+positioning for dropdown/popover/menu/tooltip relative to their trigger node.
+The renderer computes the popup position from the trigger's runtime geometry,
+so menu-like overlays appear over the page instead of affecting layout flow.
 
 ## Dismiss behavior
 
@@ -552,11 +625,12 @@ positioning for dropdown/popover/tooltip relative to their trigger node.
 | `escape` | Keydown Escape closes overlay |
 | `button` | Explicit close button (via close_overlay interaction) |
 | `timeout` | Auto-dismiss after 3 seconds (toast/alert) |
+| `outside` | Click outside the overlay and its trigger closes it |
 
 ## Z-order layers
 
 1. **base** (z-index: 0) — normal page content
-2. **overlay** (z-index: 100–199) — dropdowns, popovers, tooltips
+2. **overlay** (z-index: 100–199) — dropdowns, popovers, menus, tooltips
 3. **modal** (z-index: 200–299) — modals, drawers, bottom sheets
 4. **toast** (z-index: 400+) — toasts, alerts
 
@@ -570,11 +644,15 @@ across all pages in a platform. No external dependencies.
 ## Interaction type → runtime behavior
 
 ```
-navigation     → window.location.href = '<pageId>.html'
-                 Maps route ID to HTML file via embedded route table.
+navigation     → window.location.href = WF_ROUTES[routeId]
+                 Route IDs are stable author-facing references.
+                 The embedded route table resolves them to the current
+                 platform-aware HTML output path.
 
 open_overlay   → Show overlay element (add 'wf-visible' class).
                  Show backdrop if applicable.
+                 Trigger-anchored overlays are positioned from the
+                 trigger node's viewport rectangle at open time and on resize/scroll.
 
 close_overlay  → Hide overlay element (remove 'wf-visible' class).
                  Hide backdrop.
@@ -728,7 +806,7 @@ state changes.
 | `{{state.key}}` | pageState value | `<span data-bind="state.key">value</span>` |
 | `{{appState.key}}` | appState value | `<span data-bind="appState.key">value</span>` |
 | `{{route.id}}` | Current route ID | Static text (set at build/render time) |
-| `{{props.key}}` | Component prop | Resolved at build time during component expansion |
+| `{{props.key}}` | Component prop | Resolved during component expansion, including nested imported components |
 | `{{item.field}}` | Dataset item field | Resolved during data iteration (see section 10) |
 | `{{event.field}}` | Event data | Resolved at interaction time (see below) |
 
@@ -823,17 +901,17 @@ Route: { id: dashboard, path: /dashboard, page: dashboard }
 ```
 
 The mapping is embedded as a `const WF_ROUTES = { ... }` object in each
-page's HTML. The `wfNavigate(routeId)` function looks up the target file
-and performs `window.location.href = target`.
+page's HTML. Route IDs from `sitemap.yaml` are the stable contract; build and
+serve resolve them to whatever output file currently owns that route. The
+`wfNavigate(routeId)` function looks up the resolved file and performs
+`window.location.href = target`.
 
 ## Cross-platform navigation
 
-If a web page navigates to a route whose page has `device: mobile`, the
-link resolves to `../mobile/<pageId>.html`. The build emits a warning:
-
-```
-Warning: Cross-platform navigation from web/dashboard to mobile/home_mobile
-```
+The runtime route table spans every page included in the current build or serve
+session. If a web page links to a mobile page, it resolves directly to the
+mobile output path (for example `/mobile/home_mobile.html`) using the same
+route ID. Authors never link to file names directly.
 
 ## Back navigation
 

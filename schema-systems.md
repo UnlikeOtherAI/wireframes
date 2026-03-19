@@ -15,13 +15,23 @@ Allowed layout types:
 * absolute
 * overlay
 
-Layout properties: gap, padding, columns (grid), justify, align.
+Layout properties: gap, padding, columns (grid), justify, align,
+separatorPolicy, separators, separatorStyle.
 
 Grid:
 
 * columns defined per context
 * spans must not exceed columns
 * span cannot coexist with explicit width
+
+Separators:
+
+* `separatorPolicy: auto | gutters | divide | none`
+* `separators: none | between`
+* `separatorStyle: solid | dashed`
+* If `gap > 0`, gutters win and divider policies are ignored
+* If `gap == 0` and divider rendering is requested, the parent renders the
+  separator and child surface strokes on that shared edge are suppressed
 
 Absolute:
 
@@ -158,6 +168,7 @@ Overlay types:
 
 * dropdown
 * popover
+* menu
 * modal
 * drawer_left
 * drawer_right
@@ -176,13 +187,14 @@ Optional:
 
 * `trigger` — ID of the node that opens this overlay
 * `placement` — top, bottom, left, right, center
-* `dismissOn` — array of dismissal triggers: backdrop, escape, button, timeout
+* `dismissOn` — array of dismissal triggers: backdrop, escape, button, timeout, outside
 * `wireframeStyle` — per-overlay style override
 
 Rules:
 
-* dropdown/popover/tooltip require trigger + placement (enforced by code validator)
+* dropdown/popover/menu/tooltip require trigger + placement (enforced by code validator)
 * modal/drawer/bottom_sheet typically use backdrop + escape dismissal
+* menu overlays typically use outside + escape dismissal
 * overlays inherit page wireframe style unless overridden
 * overlays may be defined at page level (`page.overlays`) or template level (`template.overlays`)
 * template overlays are available on every page using that template (e.g. nav dropdowns, notification panels)
@@ -262,6 +274,10 @@ Rendering mode interaction:
   `corner.radius` is divided by 3 to preserve the schematic aesthetic.
 * In `card` mode, `wireframeStyle` maps to CSS `border` + `border-radius` on
   surface containers. A `box-shadow` is added automatically.
+* `node.surface: false` suppresses framing on nodes that would otherwise render
+  as surfaces; `node.surface: true` forces surface treatment on custom wrappers.
+* `node.elevation: 0-3` selects the card-mode shadow token for that node and is
+  ignored in line mode.
 * See [docs/rendering-modes.md](docs/rendering-modes.md) for the full CSS
   mapping per mode.
 
@@ -279,6 +295,11 @@ Bindings allowed:
 * {{item.field}}
 
 No arbitrary expressions.
+
+`{{props.key}}` is resolved during component expansion, before HTML render.
+That applies to local components and imported component documents alike, so
+prop values can drive labels, nested component props, and `Condition` payloads
+used for smart-object style branching.
 
 Collection renderers must define:
 
@@ -350,6 +371,22 @@ or a reusable component composed from them.
   or the actual image if `src` is resolvable.
 * Use `assets/` folder for project-local images (client logos, etc.).
 
+## Icon Primitive
+
+```yaml
+- id: settings_icon
+  component: icon
+  props:
+    name: gear               # Font Awesome icon name (without fa- prefix)
+    style: solid             # solid (default) | regular | brands
+    size: lg                 # xs | sm | lg | xl | 2xl (optional)
+```
+
+* `icon` — renders a Font Awesome icon. Required: `name`. Optional: `style` (solid/regular/brands, default solid), `size` (xs/sm/lg/xl/2xl).
+* Font Awesome Free 6.x is loaded from CDN automatically.
+* Buttons also support an `icon` prop: `props: { label: "Save", icon: "floppy-disk" }`.
+* Browse available icons: https://fontawesome.com/search?o=r&m=free
+
 ## Interactive Primitives
 
 ```yaml
@@ -357,6 +394,7 @@ or a reusable component composed from them.
   component: button
   props:
     label: "Save"
+    icon: floppy-disk        # optional: Font Awesome icon before label
 
 - id: email_field
   component: input
@@ -389,7 +427,9 @@ or a reusable component composed from them.
     label: "Enable notifications"
 ```
 
-* `button` — clickable wireframe box. Required: `label`.
+* `button` — clickable wireframe box. Required: `label`. Optional: `icon` (Font Awesome name, renders before label).
+* `tab_bar` — in-page tab navigation. Child buttons are laid out in a row with gap, NOT stretched.
+* `bottom_tab_bar` — iOS-style bottom navigation bar. Child buttons stretch equally to fill width, icon stacks above label. Use with `icon` prop on buttons.
 * `input` — text input field. Optional: `placeholder`, `inputType` (text, password, email, number, search; defaults to text).
 * `textarea` — multi-line input. Optional: `placeholder`, `rows`.
 * `select` — dropdown selector. Optional: `placeholder`, `options`.
@@ -399,6 +439,15 @@ or a reusable component composed from them.
 ## Structural Primitives
 
 ```yaml
+- id: recent_orders
+  component: table
+  props:
+    columns:
+      - { key: market, label: "Market" }
+      - { key: owner, label: "Owner" }
+      - { key: status, label: "Status" }
+      - { key: spend, label: "Spend", width: 120 }
+
 - id: main_section
   component: section
   props:
@@ -414,6 +463,7 @@ or a reusable component composed from them.
     size: 24
 ```
 
+* `table` — tabular data with a header row and alternating body-row fills. Required: `columns`. Optional: `rows`, `emptyText`. May also use `binding.source` to render dataset-backed rows.
 * `section` — named container frame. Optional: `title`. May have children.
 * `divider` — horizontal rule. No props required.
 * `spacer` — empty space. Optional: `size` (pixels).
@@ -480,6 +530,7 @@ ZIP containing:
 * pages/
 * data/
 * assets/
+* any additional imported `documentType: components` files under the project root
 
 `.wfrc.yaml` is NOT included in export.
 

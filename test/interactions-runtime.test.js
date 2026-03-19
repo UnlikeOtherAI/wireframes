@@ -447,3 +447,97 @@ test('buildInteractionRuntime applies pane collapse size during initialization',
   assert.equal(fakeDocument._nodes[0].style.width, '72px');
   assert.equal(fakeDocument._nodes[0].getAttribute('data-wf-pane-collapsed'), 'true');
 });
+
+test('renderNode renders icon component with Font Awesome classes', () => {
+  const html = renderNode({
+    id: 'settings_icon',
+    component: 'icon',
+    props: { name: 'gear', size: 'lg' },
+  }, { mode: 'card', rendering: { mode: 'card' } });
+
+  assert.equal(html.includes('wf-icon'), true);
+  assert.equal(html.includes('fa-solid fa-gear fa-lg'), true);
+});
+
+test('renderNode renders icon with regular style', () => {
+  const html = renderNode({
+    id: 'heart_icon',
+    component: 'icon',
+    props: { name: 'heart', style: 'regular' },
+  }, { mode: 'card', rendering: { mode: 'card' } });
+
+  assert.equal(html.includes('fa-regular fa-heart'), true);
+});
+
+test('renderNode renders icon with brands style', () => {
+  const html = renderNode({
+    id: 'github_icon',
+    component: 'icon',
+    props: { name: 'github', style: 'brands' },
+  }, { mode: 'card', rendering: { mode: 'card' } });
+
+  assert.equal(html.includes('fa-brands fa-github'), true);
+});
+
+test('renderNode renders button with icon prop', () => {
+  const html = renderNode({
+    id: 'save_btn',
+    component: 'button',
+    props: { label: 'Save', icon: 'floppy-disk' },
+  }, { mode: 'card', rendering: { mode: 'card' } });
+
+  assert.equal(html.includes('fa-solid fa-floppy-disk'), true);
+  assert.equal(html.includes('Save'), true);
+});
+
+test('renderNode renders button without icon when icon prop is absent', () => {
+  const html = renderNode({
+    id: 'plain_btn',
+    component: 'button',
+    props: { label: 'Click Me' },
+  }, { mode: 'card', rendering: { mode: 'card' } });
+
+  assert.equal(html.includes('fa-solid'), false);
+  assert.equal(html.includes('Click Me'), true);
+});
+
+test('renderNode renders bottom_tab_bar with stretched button layout', () => {
+  const html = renderNode({
+    id: 'bottom_nav',
+    component: 'bottom_tab_bar',
+    children: [
+      { id: 'home_tab', component: 'button', props: { label: 'Home', icon: 'house' } },
+      { id: 'search_tab', component: 'button', props: { label: 'Search', icon: 'magnifying-glass' } },
+    ],
+  }, { mode: 'card', rendering: { mode: 'card' } });
+
+  assert.equal(html.includes('wf-bottom-tab-bar'), true);
+  assert.equal(html.includes('wf-surface'), true);
+  assert.equal(html.includes('fa-solid fa-house'), true);
+  assert.equal(html.includes('fa-solid fa-magnifying-glass'), true);
+});
+
+test('renderNode renders tab_bar without stretched buttons', () => {
+  const html = renderNode({
+    id: 'page_tabs',
+    component: 'tab_bar',
+    children: [
+      { id: 'tab1', component: 'button', props: { label: 'Overview' } },
+      { id: 'tab2', component: 'button', props: { label: 'Details' } },
+    ],
+  }, { mode: 'card', rendering: { mode: 'card' } });
+
+  assert.equal(html.includes('wf-tab-bar'), true);
+  assert.equal(html.includes('wf-bottom-tab-bar'), false);
+});
+
+test('renderWireframeMarkup includes Font Awesome CDN link', () => {
+  const html = renderWireframeMarkup({
+    roots: [],
+    pageViewport: { device: 'web', width: 1280, height: 900 },
+    rendering: { mode: 'card' },
+  });
+
+  assert.equal(html.includes('font-awesome'), true);
+  assert.equal(html.includes('cdnjs.cloudflare.com'), true);
+});

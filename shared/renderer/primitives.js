@@ -18,8 +18,10 @@ const PRIMITIVE_COMPONENTS = new Set([
   'paragraph',
   'text',
   'image',
+  'icon',
   'button',
   'tab_bar',
+  'bottom_tab_bar',
   'input',
   'textarea',
   'select',
@@ -36,6 +38,7 @@ const BORDERLESS_PRIMITIVES = new Set([
   'paragraph',
   'text',
   'image',
+  'icon',
   'button',
   'input',
   'textarea',
@@ -48,6 +51,7 @@ const BORDERLESS_PRIMITIVES = new Set([
   // section gets its border from wf-surface CSS (mode-specific); no inline border
   'section',
   'tab_bar',
+  'bottom_tab_bar',
 ]);
 
 const OVERLAY_TYPES = new Set([
@@ -480,6 +484,8 @@ function buildNodeClasses(node, primitive, level = null, paneSide = null) {
     }
   } else if (primitive === 'tab_bar') {
     classList.push('wf-tab-bar', 'wf-surface');
+  } else if (primitive === 'bottom_tab_bar') {
+    classList.push('wf-bottom-tab-bar', 'wf-surface');
   } else if (primitive) {
     classList.push(`wf-${toSafeClass(primitive)}`);
   } else if (node.kind === 'overlay') {
@@ -964,15 +970,30 @@ function renderNode(node, options = {}) {
       });
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${image}</div>`;
     },
+    icon: () => {
+      const classes = buildNodeClasses(node, 'icon', null, paneSide);
+      const iconName = typeof props.name === 'string' ? props.name.trim() : 'circle-question';
+      const iconStyle = typeof props.style === 'string' ? props.style.trim() : 'solid';
+      const faPrefix = iconStyle === 'regular' ? 'fa-regular' : iconStyle === 'brands' ? 'fa-brands' : 'fa-solid';
+      const sizeClass = typeof props.size === 'string' ? ` fa-${escapeAttr(props.size)}` : '';
+      return `<span${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><i class="${faPrefix} fa-${escapeAttr(iconName)}${sizeClass}"></i></span>`;
+    },
     button: () => {
       const classes = buildNodeClasses(node, 'button', null, paneSide);
       const buttonLabel = renderBoundText(
         typeof props.label === 'string' ? props.label : 'Button',
         bindingContext,
       );
+      const iconName = typeof props.icon === 'string' ? props.icon.trim() : '';
+      const iconStyleProp = typeof props.iconStyle === 'string' ? props.iconStyle.trim() : 'solid';
+      const iconPrefix = iconStyleProp === 'regular' ? 'fa-regular' : iconStyleProp === 'brands' ? 'fa-brands' : 'fa-solid';
+      const iconSizeClass = typeof props.iconSize === 'string' ? ` fa-${escapeAttr(props.iconSize)}` : '';
+      const iconHtml = iconName !== ''
+        ? `<i class="${iconPrefix} fa-${escapeAttr(iconName)}${iconSizeClass}"></i> `
+        : '';
       const renderedLabel = options.mode === 'line'
-        ? `[ ${buttonLabel} ]`
-        : buttonLabel;
+        ? `[ ${iconHtml}${buttonLabel} ]`
+        : `${iconHtml}${buttonLabel}`;
       const buttonMarkup = navigationTarget
         ? `<a${joinAttrs(null, 'wf-button-link', null, navigationAttrs(navigationTarget))}>${renderedLabel}</a>`
         : `<button>${renderedLabel}</button>`;
@@ -1000,6 +1021,29 @@ function renderNode(node, options = {}) {
       const bodyDividerClass = sectionBodyDividerClass(tabLayout);
       const bodyStyleAttr = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><div class="wf-tab-bar-body${bodyDividerClass}"${bodyStyleAttr}>${bodyChildren}</div></div>`;
+    },
+    bottom_tab_bar: () => {
+      const classes = buildNodeClasses(node, 'bottom_tab_bar', null, paneSide);
+      const tabLayout = Object.keys(layout).length > 0
+        ? layout
+        : {
+          type: 'row',
+          gap: 4,
+          separatorPolicy: 'none',
+          padding: 0,
+          align: 'stretch',
+        };
+      const bodyChildren = renderChildren({
+        ...node,
+        layout: tabLayout,
+      }, {
+        ...options,
+        parentLayoutType: tabLayout.type || 'row',
+      });
+      const bodyLayoutCss = layoutToCss(tabLayout, {}, { defaultGridColumns, density: options.density });
+      const bodyDividerClass = sectionBodyDividerClass(tabLayout);
+      const bodyStyleAttr = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><div class="wf-bottom-tab-bar-body${bodyDividerClass}"${bodyStyleAttr}>${bodyChildren}</div></div>`;
     },
     input: () => {
       const classes = buildNodeClasses(node, 'input', null, paneSide);

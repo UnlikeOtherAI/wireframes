@@ -57,6 +57,47 @@ function generateLlmReference() {
 - There is NO "textfield" component. Use "input" instead.
 - There is NO "separator" component. Use "divider" instead.
 
+## Icons (Font Awesome)
+
+Font Awesome Free is loaded automatically. Use the "icon" component for standalone icons, or the "icon" prop on buttons.
+
+\`\`\`yaml
+# Standalone icon
+- id: settings_icon
+  component: icon
+  props:
+    name: gear             # Font Awesome icon name (without fa- prefix)
+    style: solid           # solid (default) | regular | brands
+    size: lg               # xs | sm | lg | xl | 2xl (optional)
+
+# Button with icon
+- id: save_btn
+  component: button
+  props:
+    label: "Save"
+    icon: floppy-disk      # adds icon before label
+\`\`\`
+
+Button icon also supports iconStyle (solid|regular|brands) and iconSize (xs|sm|lg|xl|2xl).
+
+\`\`\`yaml
+# Bottom tab bar with icons (iOS-style)
+- id: bottom_nav
+  component: bottom_tab_bar
+  children:
+    - id: home_tab
+      component: button
+      props: { label: "Home", icon: house }
+    - id: search_tab
+      component: button
+      props: { label: "Search", icon: magnifying-glass }
+    - id: profile_tab
+      component: button
+      props: { label: "Profile", icon: user }
+\`\`\`
+
+Browse icons at https://fontawesome.com/search?o=r&m=free
+
 ## Document Types
 
 Every YAML file needs: documentType, specVersion: "${SUPPORTED_SPEC_VERSION}", id
@@ -159,7 +200,8 @@ ${primitives.map((p) => `- ${p}`).join('\n')}
 - paragraph: { label }
 - text: { label }
 - image: { src, alt, width, height }
-- button: { label, variant: primary|secondary|ghost }
+- icon: { name: "house", style: solid|regular|brands, size: xs|sm|lg|xl|2xl }
+- button: { label, icon: "icon-name", variant: primary|secondary|ghost }
 - input: { label, placeholder, type: text|email|password|number }
 - textarea: { label, placeholder }
 - select: { label, placeholder, options: [{ value, label }] }
@@ -167,7 +209,8 @@ ${primitives.map((p) => `- ${p}`).join('\n')}
 - toggle: { label }
 - section: { title }
 - table: { columns: [{ key, label, width? }], rows: [{ ...values }], emptyText? }
-- tab_bar: (use children with button nodes; default row layout with 8px gap; children flex-stretch to fill width — ideal for bottom navigation bars)
+- tab_bar: (in-page tabs — children with button nodes, 8px gap, NOT stretched)
+- bottom_tab_bar: (iOS-style bottom navigation — children stretch equally, icon stacked above label, 4px gap)
 - divider: (no props)
 - spacer: (no props, use size.height)
 

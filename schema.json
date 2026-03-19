@@ -343,8 +343,8 @@
       "type": "string",
       "enum": [
         "heading", "paragraph", "text",
-        "image",
-        "button", "tab_bar", "input", "textarea", "select", "checkbox", "toggle",
+        "image", "icon",
+        "button", "tab_bar", "bottom_tab_bar", "input", "textarea", "select", "checkbox", "toggle",
         "table", "section", "divider", "spacer"
       ]
     },

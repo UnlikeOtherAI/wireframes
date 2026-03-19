@@ -51,6 +51,9 @@ projectStructure:
     - /data
   optionalFolders:
     - /assets
+  notes:
+    - additional documentType: components files may live anywhere under the project root
+    - reusable component lookup is driven by explicit imports, not folder names
 
 # ============================================================
 # 3. ID RULES
@@ -58,6 +61,7 @@ projectStructure:
 
 idRules:
   format: "^[a-z][a-z0-9_]*$"
+  componentReferenceFormat: "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
   globalUniqueness:
     - route.id
     - template.id
@@ -72,6 +76,19 @@ idRules:
     - no uppercase
     - no ambiguous names
     - no reserved keywords
+
+documentImports:
+  format: "{ alias: ./relative/path.yaml }"
+  aliasFormat: "^[a-z][a-z0-9_]*$"
+  validOn:
+    - templates
+    - components
+    - page
+  targetRule:
+    - target file must be a valid documentType: components document
+    - imports resolve relative to the importing document
+    - import alias scope is local to the importing document
+    - duplicate alias-qualified component IDs within one resolved page are invalid
 
 # ============================================================
 # 4. ADDRESSING MODEL
@@ -192,6 +209,8 @@ node:
     - interaction
     - selection
     - stateBindings
+    - surface
+    - elevation
     - children
     - pane
     - wireframeStyle
@@ -269,14 +288,18 @@ primitives:
     - text          # props: text
   media:
     - image         # props: src, alt, width, height
+    - icon          # props: name (Font Awesome), style (solid|regular|brands), size (xs|sm|lg|xl|2xl)
   interactive:
-    - button        # props: label
+    - button        # props: label, icon (optional Font Awesome name), iconStyle, iconSize
+    - tab_bar       # in-page tabs — button children, gap 8px, not stretched
+    - bottom_tab_bar # iOS-style bottom nav — button children stretch equally, icon stacked above label
     - input         # props: placeholder, inputType (text|password|email|number|search)
     - textarea      # props: placeholder, rows
     - select        # props: placeholder, options
     - checkbox      # props: label
     - toggle        # props: label
   structural:
+    - table         # props: columns[{key,label,width?}], rows?; also supports binding.source for dataset-backed rows
     - section       # props: title; may have children
     - divider       # no props
     - spacer        # props: size
@@ -299,6 +322,7 @@ layout:
     - columns        # for grid
     - justify        # enum: flex-start|flex-end|center|space-between|space-around|space-evenly|stretch|start|end
     - align          # enum: flex-start|flex-end|center|stretch|baseline|start|end
+    - separatorPolicy # auto | gutters | divide | none (auto/divide only matter when gap=0)
     - separators     # none | between (draw dividers between siblings; only meaningful when gap=0)
     - separatorStyle # solid | dashed (defaults to solid)
 
@@ -310,6 +334,10 @@ layout:
 
   separatorRules:
     - if gap > 0, gutters act as separator; separators field is ignored
+    - separatorPolicy:auto resolves to parent dividers only when gap == 0
+    - separatorPolicy:gutters forces space-only separation
+    - separatorPolicy:divide forces parent dividers when gap == 0
+    - separatorPolicy:none forces truly flush adjacency
     - if gap == 0 and separators == "between", parent dividers are rendered (one line between siblings)
     - if gap == 0 and separators == "none", siblings are truly flush (no separator)
 
@@ -400,6 +428,7 @@ overlay:
   types:
     - dropdown
     - popover
+    - menu
     - modal
     - drawer_left
     - drawer_right
@@ -426,7 +455,7 @@ overlay:
     - wireframeStyle
 
   triggerRequires:
-    appliesTo: [dropdown, popover, tooltip]
+    appliesTo: [dropdown, popover, menu, tooltip]
     required:
       - trigger
       - placement
@@ -436,6 +465,7 @@ overlay:
     - escape
     - button
     - timeout
+    - outside
 
   placementValues:
     - top
@@ -542,6 +572,9 @@ template:
     - layout
     - regions
 
+  documentOptional:
+    - imports
+
   region:
     required:
       - id
@@ -584,6 +617,7 @@ template:
     - injectable IDs referenced by page must exist in template
     - template overlays are available on every page using that template
     - overlay IDs must be unique across template + page overlays
+    - imported components are referenced with alias-qualified use values such as nav.primary_menu
 
 # ============================================================
 # 16. COMPONENT MODEL
@@ -594,6 +628,9 @@ component:
     - id
     - root
 
+  documentOptional:
+    - imports
+
   optional:
     - propDefaults    # default prop values
     - propHints       # prop type/description hints
@@ -602,6 +639,8 @@ component:
     - all node IDs unique within component
     - no direct pageState references inside component
     - props referenced via {{props.key}}
+    - {{props.key}} resolves during component expansion, including nested imported components
+    - component documents may import other component documents from arbitrary project paths
 
 # ============================================================
 # 16.1 PAGE MODEL
@@ -615,7 +654,11 @@ page:
     - wireframeStyle
     - slots
 
+  documentOptional:
+    - imports
+
   optional:
+    - renderMode       # shorthand alias for rendering.mode
     - rendering        # { mode: line|card, density: comfortable|compact }
     - pageState
     - dataSources
@@ -684,6 +727,7 @@ export:
     - pages/
     - data/
     - assets/
+    - additional imported component documents under the project root
   excludes:
     - .wfrc.yaml
   noTransformation: true

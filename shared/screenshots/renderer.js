@@ -158,8 +158,10 @@ function buildWireframeStyles() {
     '.wf-mode-card .wf-node.wf-surface{border:var(--wf-border-width,1px) var(--wf-border-style,solid) #e5e7eb;background:#ffffff;box-shadow:var(--wf-surface-shadow,0 1px 3px rgba(0,0,0,0.08));border-radius:var(--wf-surface-radius,4px)}',
 
     // --- Borderless primitives (no box) ---
-    '.wf-heading,.wf-paragraph,.wf-text,.wf-image,.wf-button,.wf-input,.wf-textarea,.wf-select,.wf-checkbox,.wf-toggle{border:none;background:transparent;padding:2px 0;min-height:0}',
+    '.wf-heading,.wf-paragraph,.wf-text,.wf-image,.wf-icon,.wf-button,.wf-input,.wf-textarea,.wf-select,.wf-checkbox,.wf-toggle{border:none;background:transparent;padding:2px 0;min-height:0}',
+    '.wf-icon{display:inline-flex;align-items:center;justify-content:center;color:#374151}',
     '.wf-button,.wf-checkbox,.wf-toggle{width:fit-content}',
+    '.wf-button i.fa-solid,.wf-button i.fa-regular,.wf-button i.fa-brands{margin-right:4px}',
     '.wf-interactive{cursor:pointer}',
     '.wf-inline-link{color:inherit;text-decoration:underline;text-underline-offset:2px}',
     '.wf-button-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:inherit}',
@@ -172,15 +174,25 @@ function buildWireframeStyles() {
     // Fallback button (no mode)
     '.wf-button button,.wf-button .wf-button-link{cursor:pointer;font-family:inherit}',
 
-    // --- Tab bars ---
+    // --- Tab bars (in-page tabs — buttons not stretched) ---
     '.wf-tab-bar{padding:0;margin:0;overflow:hidden}',
     '.wf-tab-bar-body{min-height:0}',
     '.wf-tab-bar .wf-node-children{display:flex;flex:1 1 auto;min-width:0}',
-    '.wf-tab-bar .wf-node-children>*{flex:1 1 0;min-width:0}',
     '.wf-tab-bar .wf-button,.wf-tab-bar .wf-section,.wf-tab-bar .wf-text{margin:0}',
-    '.wf-tab-bar .wf-button,.wf-tab-bar .wf-button .wf-button-link,.wf-tab-bar .wf-button button{width:100%}',
     '.wf-mode-card .wf-tab-bar .wf-button .wf-button-link,.wf-mode-card .wf-tab-bar .wf-button button{min-width:0;border-radius:0;background:#f3f4f6}',
     '.wf-mode-line .wf-tab-bar .wf-button .wf-button-link,.wf-mode-line .wf-tab-bar .wf-button button{min-width:0}',
+
+    // --- Bottom tab bar (iOS-style — buttons stretched, icon above text) ---
+    '.wf-bottom-tab-bar{padding:0;margin:0;overflow:hidden}',
+    '.wf-bottom-tab-bar-body{min-height:0}',
+    '.wf-bottom-tab-bar .wf-node-children{display:flex;flex:1 1 auto;min-width:0}',
+    '.wf-bottom-tab-bar .wf-node-children>*{flex:1 1 0;min-width:0}',
+    '.wf-bottom-tab-bar .wf-button,.wf-bottom-tab-bar .wf-section,.wf-bottom-tab-bar .wf-text{margin:0}',
+    '.wf-bottom-tab-bar .wf-button,.wf-bottom-tab-bar .wf-button .wf-button-link,.wf-bottom-tab-bar .wf-button button{width:100%}',
+    '.wf-mode-card .wf-bottom-tab-bar .wf-button .wf-button-link,.wf-mode-card .wf-bottom-tab-bar .wf-button button{min-width:0;border-radius:0;background:#f3f4f6}',
+    '.wf-mode-line .wf-bottom-tab-bar .wf-button .wf-button-link,.wf-mode-line .wf-bottom-tab-bar .wf-button button{min-width:0}',
+    '.wf-bottom-tab-bar .wf-button button,.wf-bottom-tab-bar .wf-button .wf-button-link{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;font-size:11px}',
+    '.wf-bottom-tab-bar .wf-button i{margin-right:0;font-size:16px}',
 
     // --- Tables ---
     '.wf-table{padding:0;margin:0;overflow:hidden}',
@@ -357,11 +369,14 @@ function renderWireframeMarkup({
     ? `<link rel="stylesheet" href="${escapeAttr(wireframeCssHref)}" />`
     : `<style>${styles}</style>`;
 
+  const fontAwesomeCdn = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />';
+
   return `<!doctype html>
 <html>
   <head>
     <meta charset="UTF-8" />
     <title>Wireframe ${escapeHtml(pageStyle?.title || 'capture')}</title>
+    ${fontAwesomeCdn}
     ${styleMarkup}
   </head>
   <body class="wf wf-mode-${escapeAttr(mode)}">

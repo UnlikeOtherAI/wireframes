@@ -16,6 +16,8 @@ const COMPONENT_ALIASES = {
   textfield: 'input',
   separator: 'divider',
   hr: 'divider',
+  bottom_tabs: 'bottom_tab_bar',
+  nav_bar: 'bottom_tab_bar',
 };
 
 const INTERACTION_REQUIRED_FIELDS = {
