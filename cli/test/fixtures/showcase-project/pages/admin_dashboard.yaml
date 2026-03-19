@@ -1,0 +1,396 @@
+documentType: page
+specVersion: "1.1"
+id: admin_dashboard
+page:
+  id: admin_dashboard
+  template: app_shell
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+      width: thin
+    corner:
+      style: rounded
+      radius: 12
+  renderMode: card
+  rendering:
+    density: comfortable
+  dataSources:
+    - id: ops_table
+      dataset: dashboard_operations
+  injectables:
+    - injectableId: app_top_actions
+      content:
+        - id: app_top_action_group
+          component: section
+          surface: false
+          layout:
+            type: row
+            gap: 12
+          children:
+            - id: app_top_marketing
+              component: button
+              props:
+                label: "Marketing Site"
+              interaction:
+                - type: navigation
+                  targetRoute: marketing_home
+            - id: app_top_workspace
+              component: button
+              props:
+                label: "Workspace"
+              interaction:
+                - type: navigation
+                  targetRoute: workspace_board
+  slots:
+    - slotId: app_main
+      content:
+        - id: dashboard_shell
+          component: section
+          surface: false
+          layout:
+            type: row
+            gap: 20
+            padding: 20
+            align: stretch
+          children:
+            - id: dashboard_sidebar
+              component: section
+              size:
+                width: 240
+              layout:
+                type: stack
+                gap: 12
+                padding: 16
+              children:
+                - id: sidebar_title
+                  component: heading
+                  props:
+                    level: 3
+                    text: "Teams"
+                - id: sidebar_nav_one
+                  component: button
+                  props:
+                    label: "Overview"
+                - id: sidebar_nav_two
+                  component: button
+                  props:
+                    label: "Launches"
+                - id: sidebar_nav_three
+                  component: button
+                  props:
+                    label: "Forecasts"
+                - id: sidebar_nav_four
+                  component: button
+                  props:
+                    label: "Vendors"
+                - id: sidebar_notes
+                  component: section
+                  children:
+                    - id: sidebar_notes_title
+                      component: heading
+                      props:
+                        level: 3
+                        text: "Today"
+                    - id: sidebar_notes_body
+                      component: paragraph
+                      props:
+                        text: "Three launches are blocked, one budget review is due, and regional ops has two open approvals."
+            - id: dashboard_main_column
+              component: section
+              surface: false
+              size:
+                width: "calc(100% - 260px)"
+              layout:
+                type: stack
+                gap: 20
+              children:
+                - id: dashboard_intro
+                  component: section
+                  elevation: 2
+                  layout:
+                    type: row
+                    justify: space-between
+                    align: center
+                    padding: 16
+                  children:
+                    - id: dashboard_intro_copy
+                      component: section
+                      surface: false
+                      layout:
+                        type: stack
+                        gap: 8
+                      children:
+                        - id: dashboard_intro_title
+                          component: heading
+                          props:
+                            level: 2
+                            text: "Executive dashboard"
+                        - id: dashboard_intro_body
+                          component: paragraph
+                          props:
+                            text: "A complex but believable application frame: left navigation, KPI cards, pipeline columns, activity feed, and an operating list."
+                    - id: dashboard_intro_actions
+                      component: section
+                      surface: false
+                      layout:
+                        type: row
+                        gap: 12
+                      children:
+                        - id: dashboard_intro_ios
+                          component: button
+                          props:
+                            label: "Open iPhone View"
+                          interaction:
+                            - type: navigation
+                              targetRoute: iphone_home
+                        - id: dashboard_intro_workspace
+                          component: button
+                          props:
+                            label: "Open Workspace"
+                          interaction:
+                            - type: navigation
+                              targetRoute: workspace_board
+                - id: dashboard_kpis
+                  component: section
+                  surface: false
+                  layout:
+                    type: grid
+                    columns: 12
+                    gap: 16
+                  children:
+                    - id: kpi_a
+                      component: section
+                      gridItem:
+                        span: 3
+                      children:
+                        - id: kpi_a_value
+                          component: heading
+                          props:
+                            level: 2
+                            text: "$4.8M"
+                        - id: kpi_a_body
+                          component: paragraph
+                          props:
+                            text: "forecasted media spend"
+                    - id: kpi_b
+                      component: section
+                      gridItem:
+                        span: 3
+                      children:
+                        - id: kpi_b_value
+                          component: heading
+                          props:
+                            level: 2
+                            text: "26"
+                        - id: kpi_b_body
+                          component: paragraph
+                          props:
+                            text: "live launch plans"
+                    - id: kpi_c
+                      component: section
+                      gridItem:
+                        span: 3
+                      children:
+                        - id: kpi_c_value
+                          component: heading
+                          props:
+                            level: 2
+                            text: "7"
+                        - id: kpi_c_body
+                          component: paragraph
+                          props:
+                            text: "critical risks"
+                    - id: kpi_d
+                      component: section
+                      gridItem:
+                        span: 3
+                      children:
+                        - id: kpi_d_value
+                          component: heading
+                          props:
+                            level: 2
+                            text: "92%"
+                        - id: kpi_d_body
+                          component: paragraph
+                          props:
+                            text: "budget pacing confidence"
+                - id: dashboard_mid_row
+                  component: section
+                  surface: false
+                  layout:
+                    type: row
+                    gap: 16
+                  children:
+                    - id: pipeline_panel
+                      component: section
+                      size:
+                        width: "64%"
+                      layout:
+                        type: stack
+                        gap: 16
+                        padding: 16
+                      children:
+                        - id: pipeline_title
+                          component: heading
+                          props:
+                            level: 3
+                            text: "Launch pipeline"
+                        - id: pipeline_columns
+                          component: section
+                          surface: false
+                          layout:
+                            type: grid
+                            columns: 12
+                            gap: 16
+                          children:
+                            - id: pipeline_col_one
+                              component: section
+                              gridItem:
+                                span: 4
+                              children:
+                                - id: pipeline_col_one_title
+                                  component: text
+                                  props:
+                                    text: "Briefing"
+                                - id: pipeline_col_one_card
+                                  component: section
+                                  children:
+                                    - id: pipeline_col_one_card_title
+                                      component: paragraph
+                                      props:
+                                        text: "Global spring launch"
+                                - id: pipeline_col_one_card_two
+                                  component: section
+                                  children:
+                                    - id: pipeline_col_one_card_two_title
+                                      component: paragraph
+                                      props:
+                                        text: "Retail partner kit"
+                            - id: pipeline_col_two
+                              component: section
+                              gridItem:
+                                span: 4
+                              children:
+                                - id: pipeline_col_two_title
+                                  component: text
+                                  props:
+                                    text: "Review"
+                                - id: pipeline_col_two_card
+                                  component: section
+                                  children:
+                                    - id: pipeline_col_two_card_title
+                                      component: paragraph
+                                      props:
+                                        text: "Budget reforecast"
+                                - id: pipeline_col_two_card_two
+                                  component: section
+                                  children:
+                                    - id: pipeline_col_two_card_two_title
+                                      component: paragraph
+                                      props:
+                                        text: "Regional compliance"
+                            - id: pipeline_col_three
+                              component: section
+                              gridItem:
+                                span: 4
+                              children:
+                                - id: pipeline_col_three_title
+                                  component: text
+                                  props:
+                                    text: "Shipping"
+                                - id: pipeline_col_three_card
+                                  component: section
+                                  children:
+                                    - id: pipeline_col_three_card_title
+                                      component: paragraph
+                                      props:
+                                        text: "Field toolkit finalization"
+                                - id: pipeline_col_three_card_two
+                                  component: section
+                                  children:
+                                    - id: pipeline_col_three_card_two_title
+                                      component: paragraph
+                                      props:
+                                        text: "Store sign-off bundle"
+                    - id: activity_panel
+                      component: section
+                      size:
+                        width: "36%"
+                      layout:
+                        type: stack
+                        gap: 0
+                        separatorPolicy: divide
+                        separatorStyle: solid
+                        padding: 0
+                      children:
+                        - id: activity_item_one
+                          component: section
+                          children:
+                            - id: activity_item_one_title
+                              component: heading
+                              props:
+                                level: 3
+                                text: "Ops review at 10:00"
+                            - id: activity_item_one_body
+                              component: paragraph
+                              props:
+                                text: "Forecast owners need the latest vendor commitments."
+                        - id: activity_item_two
+                          component: section
+                          children:
+                            - id: activity_item_two_title
+                              component: heading
+                              props:
+                                level: 3
+                                text: "Creative waiting on legal"
+                            - id: activity_item_two_body
+                              component: paragraph
+                              props:
+                                text: "Two SKUs are still missing claims language."
+                        - id: activity_item_three
+                          component: section
+                          children:
+                            - id: activity_item_three_title
+                              component: heading
+                              props:
+                                level: 3
+                                text: "Support readiness"
+                            - id: activity_item_three_body
+                              component: paragraph
+                              props:
+                                text: "Knowledge base draft ready for localization."
+                - id: operating_table_panel
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 16
+                    padding: 16
+                  children:
+                    - id: operating_table_title
+                      component: heading
+                      props:
+                        level: 3
+                        text: "Operations table"
+                    - id: operating_table_body
+                      component: paragraph
+                      props:
+                        text: "A striped table for the day-to-day operating queue: owners, status, market, and spend."
+                    - id: operating_table
+                      component: table
+                      surface: false
+                      binding:
+                        source: ops_table
+                      props:
+                        columns:
+                          - key: market
+                            label: "Market"
+                            width: "2fr"
+                          - key: owner
+                            label: "Owner"
+                          - key: status
+                            label: "Status"
+                          - key: spend
+                            label: "Spend"
+                            width: 120

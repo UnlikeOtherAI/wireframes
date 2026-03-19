@@ -1,0 +1,210 @@
+documentType: templates
+specVersion: "1.1"
+id: templates
+templates:
+  public_site:
+    layout:
+      type: stack
+    regions:
+      - id: site_header
+        kind: persistent
+        sticky: top
+        layout:
+          type: row
+          justify: space-between
+          align: center
+          padding: 16
+        children:
+          - id: brand_mark
+            component: heading
+            props:
+              level: 2
+              text: "Northstar"
+          - id: header_nav
+            component: section
+            surface: false
+            layout:
+              type: row
+              gap: 12
+              align: center
+            children:
+              - id: nav_home
+                component: button
+                props:
+                  label: "Home"
+                interaction:
+                  - type: navigation
+                    targetRoute: marketing_home
+              - id: nav_dashboard
+                component: button
+                props:
+                  label: "Dashboard"
+                interaction:
+                  - type: navigation
+                    targetRoute: admin_dashboard
+              - id: nav_workspace
+                component: button
+                props:
+                  label: "Workspace"
+                interaction:
+                  - type: navigation
+                    targetRoute: workspace_board
+              - id: nav_ios
+                component: button
+                props:
+                  label: "iPhone App"
+                interaction:
+                  - type: navigation
+                    targetRoute: iphone_home
+          - id: header_actions
+            injectable: true
+      - id: main
+        kind: slot
+      - id: site_footer
+        kind: persistent
+        layout:
+          type: row
+          justify: space-between
+          align: center
+          padding: 16
+        children:
+          - id: footer_left
+            component: paragraph
+            props:
+              text: "Northstar Labs  /  Strategy, operations, and reporting in one place."
+          - id: footer_right
+            component: section
+            surface: false
+            layout:
+              type: row
+              gap: 12
+            children:
+              - id: footer_link_one
+                component: text
+                props:
+                  text: "Docs"
+              - id: footer_link_two
+                component: text
+                props:
+                  text: "Security"
+              - id: footer_link_three
+                component: text
+                props:
+                  text: "Contact"
+  app_shell:
+    layout:
+      type: stack
+    overlays:
+      - id: app_header_menu
+        type: menu
+        trigger: app_menu_button
+        placement: bottom
+        dismissOn:
+          - outside
+          - escape
+        content:
+          - id: app_header_menu_panel
+            component: section
+            layout:
+              type: stack
+              gap: 0
+              separatorPolicy: divide
+              separatorStyle: solid
+              padding: 0
+            children:
+              - id: menu_link_dashboard
+                component: text
+                props:
+                  text: "Open Dashboard"
+                interaction:
+                  - type: navigation
+                    targetRoute: admin_dashboard
+              - id: menu_link_workspace
+                component: text
+                props:
+                  text: "Open Workspace"
+                interaction:
+                  - type: navigation
+                    targetRoute: workspace_board
+              - id: menu_link_marketing
+                component: text
+                props:
+                  text: "Open Marketing Site"
+                interaction:
+                  - type: navigation
+                    targetRoute: marketing_home
+              - id: menu_link_mobile
+                component: text
+                props:
+                  text: "Open iPhone App"
+                interaction:
+                  - type: navigation
+                    targetRoute: iphone_home
+    regions:
+      - id: app_top
+        kind: persistent
+        sticky: top
+        layout:
+          type: row
+          justify: space-between
+          align: center
+          padding: 16
+        children:
+          - id: app_title
+            component: heading
+            props:
+              level: 2
+              text: "Northstar App"
+          - id: app_top_right
+            component: section
+            surface: false
+            layout:
+              type: row
+              gap: 12
+              align: center
+            children:
+              - id: app_top_actions
+                injectable: true
+              - id: app_menu_button
+                component: button
+                props:
+                  label: "Menu"
+                interaction:
+                  - type: open_overlay
+                    targetOverlay: app_header_menu
+      - id: app_main
+        kind: slot
+  iphone_shell:
+    layout:
+      type: stack
+    regions:
+      - id: phone_top
+        kind: persistent
+        sticky: top
+        layout:
+          type: row
+          justify: space-between
+          align: center
+          padding: 12
+        children:
+          - id: phone_brand
+            component: text
+            props:
+              text: "9:41"
+          - id: phone_title
+            component: heading
+            props:
+              level: 3
+              text: "Northstar Go"
+          - id: phone_signal
+            component: text
+            props:
+              text: "LTE"
+      - id: phone_main
+        kind: slot
+      - id: phone_tabs
+        kind: persistent
+        sticky: bottom
+        children:
+          - id: primary_tabs
+            use: mobile_app_tabs

@@ -1,0 +1,21 @@
+documentType: sitemap
+specVersion: "1.1"
+id: sitemap
+defaultTemplate: public_site
+routes:
+  - id: marketing_home
+    path: /
+    page: marketing_home
+    template: public_site
+  - id: admin_dashboard
+    path: /app/dashboard
+    page: admin_dashboard
+    template: app_shell
+  - id: workspace_board
+    path: /app/workspace
+    page: workspace_board
+    template: app_shell
+  - id: iphone_home
+    path: /ios/home
+    page: iphone_home
+    template: iphone_shell

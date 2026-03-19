@@ -1,138 +1,71 @@
-# Wireframe CLI — Project Guide
+# Wireframes — Project Guide
 
 ## What This Is
 
-A deterministic CLI that generates and manages wireframe project specs.
-Node.js. YAML-based. No runtime, no deployment.
+A wireframe design platform: CLI tool, web landing page, and online admin panel.
+The core engine renders YAML specs into clickable wireframe HTML.
 
-The output is **literal wireframes** — bordered rectangles with text labels.
-Every element (button, sidebar, dropdown, card, modal) is a frame. The result
-is a clickable skeleton of a web app. Layouts stretch like HTML but render as
-wireframes only. No colors, no icons, no production styling.
-
-See [brief.md](brief.md) for the full CLI brief.
-See [schema.md](schema.md) for the schema contract (document types + node model).
-See [schema-systems.md](schema-systems.md) for systems (layout, state, interactions, validation).
-See [schema-canonical.yaml](schema-canonical.yaml) for the canonical YAML definition.
-See [schema.json](schema.json) for the formal JSON Schema.
+See [docs/architecture.md](docs/architecture.md) for full system architecture.
+See [docs/cli/](docs/cli/) for CLI-specific documentation.
 
 ---
 
-## Architecture
+## Monorepo Structure
 
 ```
-/cli              CLI commands only (thin layer)
-/shared           Shared libraries (used by CLI now, web app later)
-  /schema         Schema loading, parsing, validation
-  /resolver       Template + page + component expansion
-  /addressing     wf:// URI resolution and tree indexing
-  /renderer       Rendering utilities (future web app consumption)
-/docs             Project briefs and specs
+/engine           Shared engine (schema, resolver, renderer, validation)
+/cli              CLI tool — thin command layer over engine
+/api              Bun + PostgreSQL API (Drizzle ORM)
+/admin            React CSR app — online wireframe editor
+/web              SSR landing page
+/docs             All documentation
+  /cli            CLI-specific docs (brief, schema, rendering)
 ```
+
+### /engine
+
+Core wireframe engine. Zero CLI/API deps. Consumed by CLI, API, and admin.
+
+- **schema** — YAML loader, validation, JSON Schema
+- **resolver** — template inheritance, slot filling, component expansion
+- **renderer** — YAML-to-HTML rendering pipeline
+- **addressing** — `wf://` URI parsing, tree walking
 
 ### /cli
 
-Contains ONLY command definitions and their wiring. No business logic.
-Each command calls into `/shared` for all real work.
+Thin shell over engine. Commands parse args, call engine, format output.
 
-Commands: `init`, `info`, `doctor`, `schema`, `lint`, `validate`, `export`, `tree`,
-`page add/remove/list`, `template add/remove/list`, `component add/remove/list`,
-`node add/update/remove`, `overlay add/remove/list`, `state list`,
-`data add/remove/import/list/validate/stats/keys`,
-`data item add/update/remove/get/list`,
-`inspect`, `where-used`, `routes`, `stats`, `screenshots`,
-`build`, `serve`,
-`rename` (optional v1).
+### /api
 
-### /shared
+Bun HTTP server + PostgreSQL. Manages projects, users, previews, sharing.
 
-All logic that is not CLI-specific lives here. This code will be consumed
-by a web version of the app later, so it must have zero CLI dependencies.
+### /admin
 
-- **schema** — YAML loader, document type definitions, manifest handling, version checking
-- **resolver** — template inheritance, slot filling, component expansion
-- **addressing** — `wf://` URI parsing, tree walking, node lookup
-- **renderer** — YAML-to-HTML rendering pipeline (shared with future web app)
-  - html-emitter: node tree to HTML string
-  - css-generator: wireframe CSS from wireframeStyle
-  - interaction-runtime: client-side JS for navigation, overlays, state
-  - data-binder: dataset iteration and expression replacement
+React SPA. Online wireframe editor with real-time preview.
 
-### /docs
+### /web
 
-Briefs and specs live here (brief.md, schema.md, schema.json).
-Moved out of root once scaffolding begins.
-
----
-
-## Task Management
-
-When the user talks about "tasks", they mean the `steroids llm` CLI utility.
-Run `steroids llm` to get current instructions on how to manage development tasks.
-The instructions may change over time, so always refer to the command output for the latest usage.
+SSR landing page. Marketing, docs, pricing.
 
 ---
 
 ## Rules
 
-- **No source file bigger than 500 lines.** Break it down. YAML, JSON, and Markdown files are exempt when keeping them whole makes sense.
+- **No source file bigger than 500 lines.** YAML/JSON/Markdown exempt.
 - **Follow existing architecture.** Don't invent new patterns.
-- **CLI is a thin shell.** Commands parse args, call shared libs, format output.
-- **Shared libs have zero CLI deps.** No process.exit, no console.log, no commander/yargs imports.
-- **Schema-first.** The schema contract in schema.md/schema.json is authoritative.
-- **YAML only.** All project files are YAML. No JSON config in wireframe projects.
-- **Deterministic.** Same input = same output. No randomness, no timestamps in generated files.
-- **No over-engineering.** Solve what's needed now. No speculative abstractions.
-- **Verify every section with Playwright CLI.** Each section of the CLI that is developed must be run past Playwright to verify that generated outputs are correct. For example, after implementing `wf template add`, run Playwright tests to confirm the generated template YAML is valid and matches the expected structure. No section is considered done until its Playwright tests pass.
-- **Schema changes must be reflected everywhere.** Any change to the schema must be updated in ALL of: schema.md, schema-systems.md, schema-canonical.yaml, schema.json (formal JSON Schema), brief.md (if CLI behavior is affected), and rendering.md (if rendering behavior is affected). Never update one without the others.
-- **Save agent review output to temp files.** When running LLM agents (Codex, Gemini, Claude) for review, save their output to temp files (`/tmp/`) and read results from there. Do not stream full output back into context — it wastes tokens.
+- **Engine has zero CLI/API deps.** No process.exit, no console.log, no framework imports.
+- **Schema-first.** The schema contract in docs/cli/schema.md and engine/schema/schema.json is authoritative.
+- **Schema changes must be reflected everywhere.** schema.md, schema-systems.md, schema-canonical.yaml, schema.json, brief.md, rendering.md.
+- **Wireframes and briefs stay in sync.** Any UI change must update wireframes; any wireframe change must be checked against the brief.
+- **Verify with Playwright.** Renderer changes require visual layout fixtures verified in Playwright.
+- **Deterministic.** Same input = same output.
+- **Save agent review output to temp files.** Use `/tmp/`, don't stream into context.
 
 ---
 
-## Tech Stack
+## Task Management
 
-- **Runtime:** Node.js
-- **Language:** JavaScript (or TypeScript if project adopts it)
-- **CLI framework:** TBD (commander, yargs, or similar)
-- **YAML:** js-yaml or similar
-- **Validation:** Against schema.json (ajv or similar)
-- **Export:** archiver or similar for ZIP
-- **Screenshots:** Playwright (bundled as a dependency — ships with the package)
-- **Testing:** TBD
-
----
-
-## Key Concepts
-
-### Document Types
-
-Every YAML file has `documentType`, `specVersion`, `id`.
-Types: manifest, sitemap, templates, components, page, dataset.
-
-### Addressing
-
-Canonical URI: `wf://<doctype>/<docid>#<path>`
-Path segments are node IDs separated by dots. No index-based addressing.
-
-### State
-
-Two scopes only: `appState` (sitemap, persists) and `pageState` (page, resets on nav).
-State keys must exist before being referenced.
-
-### Templates
-
-Templates define persistent regions and slots. Pages inject into slots only.
-Pages cannot override persistent regions.
-
-### Validation
-
-Blocking errors halt export. Warnings are informational.
-`--strict` mode fails on warnings. `--json` flag for machine-readable output.
-
-### Version Locking
-
-`specVersion` required in every document. `manifest.schemaVersion` is the project-level version.
-CLI refuses to operate if `manifest.schemaVersion` exceeds CLI's supported version.
+`steroids llm` — run for current task management instructions.
 
 ---
 
@@ -140,9 +73,10 @@ CLI refuses to operate if `manifest.schemaVersion` exceeds CLI's supported versi
 
 | File | Purpose |
 |------|---------|
-| [brief.md](brief.md) | CLI commands, behavior, philosophy |
-| [schema.md](schema.md) | Schema contract: document types + core node model |
-| [schema-systems.md](schema-systems.md) | Schema: layout, state, interactions, overlays, validation, export |
-| [schema-canonical.yaml](schema-canonical.yaml) | Full canonical YAML definition of the schema |
-| [schema.json](schema.json) | Formal JSON Schema for validation |
-| [rendering.md](rendering.md) | Build, serve, and renderer specification |
+| [docs/architecture.md](docs/architecture.md) | System architecture (CLI, API, admin, web) |
+| [docs/cli/brief.md](docs/cli/brief.md) | CLI commands, behavior, philosophy |
+| [docs/cli/schema.md](docs/cli/schema.md) | Schema contract: document types + core node model |
+| [docs/cli/schema-systems.md](docs/cli/schema-systems.md) | Layout, state, interactions, overlays, validation |
+| [docs/cli/schema-canonical.yaml](docs/cli/schema-canonical.yaml) | Full canonical YAML definition |
+| [engine/schema/schema.json](engine/schema/schema.json) | Formal JSON Schema for validation |
+| [docs/cli/rendering.md](docs/cli/rendering.md) | Build, serve, and renderer specification |

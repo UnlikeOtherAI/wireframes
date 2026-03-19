@@ -1,0 +1,173 @@
+documentType: page
+specVersion: "1.1"
+id: iphone_home
+page:
+  id: iphone_home
+  template: iphone_shell
+  viewport:
+    device: mobile
+    orientation: portrait
+  wireframeStyle:
+    border:
+      style: solid
+      width: thin
+    corner:
+      style: rounded
+      radius: 12
+  renderMode: card
+  rendering:
+    density: compact
+  slots:
+    - slotId: phone_main
+      content:
+        - id: phone_stack
+          component: section
+          surface: false
+          layout:
+            type: stack
+            gap: 12
+            padding: 12
+          children:
+            - id: phone_greeting
+              component: section
+              elevation: 2
+              children:
+                - id: phone_greeting_title
+                  component: heading
+                  props:
+                    level: 2
+                    text: "Good morning, Maya"
+                - id: phone_greeting_body
+                  component: paragraph
+                  props:
+                    text: "Your field itinerary, budget guardrails, and launch tasks are synced for today."
+            - id: phone_stats
+              component: section
+              surface: false
+              layout:
+                type: row
+                gap: 12
+              children:
+                - id: phone_stat_one
+                  component: section
+                  size:
+                    width: "50%"
+                  children:
+                    - id: phone_stat_one_value
+                      component: heading
+                      props:
+                        level: 2
+                        text: "4"
+                    - id: phone_stat_one_body
+                      component: paragraph
+                      props:
+                        text: "stops today"
+                - id: phone_stat_two
+                  component: section
+                  size:
+                    width: "50%"
+                  children:
+                    - id: phone_stat_two_value
+                      component: heading
+                      props:
+                        level: 2
+                        text: "91%"
+                    - id: phone_stat_two_body
+                      component: paragraph
+                      props:
+                        text: "readiness score"
+            - id: phone_trip_planner
+              component: section
+              layout:
+                type: stack
+                gap: 10
+                padding: 12
+              children:
+                - id: phone_trip_title
+                  component: heading
+                  props:
+                    level: 3
+                    text: "Plan next route"
+                - id: phone_trip_origin
+                  component: input
+                  props:
+                    placeholder: "Origin store"
+                    inputType: text
+                - id: phone_trip_destination
+                  component: input
+                  props:
+                    placeholder: "Destination store"
+                    inputType: text
+                - id: phone_trip_button
+                  component: button
+                  props:
+                    label: "Build route"
+            - id: phone_itinerary
+              component: section
+              layout:
+                type: stack
+                gap: 0
+                separatorPolicy: divide
+                separatorStyle: solid
+                padding: 0
+              children:
+                - id: phone_stop_one
+                  component: section
+                  children:
+                    - id: phone_stop_one_title
+                      component: heading
+                      props:
+                        level: 3
+                        text: "08:30  /  Canary Wharf"
+                    - id: phone_stop_one_body
+                      component: paragraph
+                      props:
+                        text: "Check merchandising pack and confirm shelf labels."
+                - id: phone_stop_two
+                  component: section
+                  children:
+                    - id: phone_stop_two_title
+                      component: heading
+                      props:
+                        level: 3
+                        text: "11:15  /  Stratford"
+                    - id: phone_stop_two_body
+                      component: paragraph
+                      props:
+                        text: "Collect launch photos and note stock issues."
+                - id: phone_stop_three
+                  component: section
+                  children:
+                    - id: phone_stop_three_title
+                      component: heading
+                      props:
+                        level: 3
+                        text: "14:00  /  Greenwich"
+                    - id: phone_stop_three_body
+                      component: paragraph
+                      props:
+                        text: "Review end-cap placement with store manager."
+            - id: phone_activity
+              component: section
+              layout:
+                type: stack
+                gap: 10
+                padding: 12
+              children:
+                - id: phone_activity_title
+                  component: heading
+                  props:
+                    level: 3
+                    text: "Recent updates"
+                - id: phone_activity_one
+                  component: paragraph
+                  props:
+                    text: "Regional ops approved the revised route budget."
+                - id: phone_activity_two
+                  component: paragraph
+                  props:
+                    text: "Support attached a checklist for in-store issue logging."
+                - id: phone_activity_three
+                  component: paragraph
+                  props:
+                    text: "Creative uploaded the updated promo placement guide."

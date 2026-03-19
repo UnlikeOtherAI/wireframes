@@ -1,0 +1,32 @@
+'use strict';
+
+module.exports = {
+  schema: require('./schema'),
+  resolver: require('./resolver'),
+  renderer: {
+    primitives: require('./renderer/primitives'),
+    layout: require('./renderer/layout'),
+    interactions: require('./renderer/interactions'),
+    wireframeStyles: require('./renderer/wireframe-styles'),
+  },
+  screenshots: require('./screenshots'),
+  build: require('./build'),
+  serve: require('./serve'),
+  validate: require('./validate'),
+  lint: require('./lint'),
+  doctor: require('./doctor'),
+  init: require('./init'),
+  page: require('./page'),
+  template: require('./template'),
+  component: require('./component'),
+  node: require('./node'),
+  overlay: require('./overlay'),
+  data: require('./data'),
+  state: require('./state'),
+  addressing: require('./addressing'),
+  info: require('./info'),
+  introspection: require('./introspection'),
+  tree: require('./tree'),
+  exportProject: require('./export'),
+  routes: require('./routes'),
+};

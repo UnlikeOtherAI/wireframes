@@ -1,0 +1,6 @@
+packages:
+  - engine
+  - cli
+  - api
+  - web
+  - admin

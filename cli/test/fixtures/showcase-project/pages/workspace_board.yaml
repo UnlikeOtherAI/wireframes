@@ -1,0 +1,267 @@
+documentType: page
+specVersion: "1.1"
+id: workspace_board
+page:
+  id: workspace_board
+  template: app_shell
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: dashed
+      width: medium
+    corner:
+      style: rounded
+      radius: 12
+  renderMode: line
+  rendering:
+    density: compact
+  injectables:
+    - injectableId: app_top_actions
+      content:
+        - id: workspace_actions
+          component: section
+          surface: false
+          layout:
+            type: row
+            gap: 12
+          children:
+            - id: workspace_marketing
+              component: button
+              props:
+                label: "Site"
+              interaction:
+                - type: navigation
+                  targetRoute: marketing_home
+            - id: workspace_dashboard
+              component: button
+              props:
+                label: "Dashboard"
+              interaction:
+                - type: navigation
+                  targetRoute: admin_dashboard
+  slots:
+    - slotId: app_main
+      content:
+        - id: workspace_shell
+          component: section
+          surface: false
+          layout:
+            type: row
+            gap: 16
+            padding: 20
+            align: stretch
+          children:
+            - id: workspace_nav
+              component: section
+              size:
+                width: 220
+              layout:
+                type: stack
+                gap: 10
+                padding: 12
+              children:
+                - id: workspace_nav_title
+                  component: heading
+                  props:
+                    level: 3
+                    text: "Workspace"
+                - id: workspace_nav_a
+                  component: button
+                  props:
+                    label: "Inbox"
+                - id: workspace_nav_b
+                  component: button
+                  props:
+                    label: "Programs"
+                - id: workspace_nav_c
+                  component: button
+                  props:
+                    label: "Risks"
+                - id: workspace_nav_d
+                  component: button
+                  props:
+                    label: "Notes"
+            - id: workspace_center
+              component: section
+              surface: false
+              size:
+                width: "calc(100% - 520px)"
+              layout:
+                type: stack
+                gap: 12
+              children:
+                - id: workspace_toolbar
+                  component: section
+                  surface: false
+                  layout:
+                    type: row
+                    gap: 12
+                    align: center
+                  children:
+                    - id: toolbar_search
+                      component: input
+                      props:
+                        placeholder: "Search cards"
+                        inputType: search
+                    - id: toolbar_filter
+                      component: select
+                      props:
+                        placeholder: "Filter owner"
+                        options:
+                          - "All owners"
+                          - "Ops"
+                          - "Finance"
+                          - "Creative"
+                    - id: toolbar_action
+                      component: button
+                      props:
+                        label: "Add card"
+                - id: board_columns
+                  component: section
+                  layout:
+                    type: row
+                    gap: 0
+                    separatorPolicy: divide
+                    separatorStyle: dashed
+                    padding: 0
+                  children:
+                    - id: board_backlog
+                      component: section
+                      size:
+                        width: "33.333%"
+                      layout:
+                        type: stack
+                        gap: 12
+                        padding: 12
+                      children:
+                        - id: board_backlog_title
+                          component: heading
+                          props:
+                            level: 3
+                            text: "Backlog"
+                        - id: backlog_card_one
+                          component: section
+                          children:
+                            - id: backlog_card_one_text
+                              component: paragraph
+                              props:
+                                text: "Homepage revision for spring campaign"
+                        - id: backlog_card_two
+                          component: section
+                          children:
+                            - id: backlog_card_two_text
+                              component: paragraph
+                              props:
+                                text: "Regional pricing note needs legal check"
+                        - id: backlog_card_three
+                          component: section
+                          children:
+                            - id: backlog_card_three_text
+                              component: paragraph
+                              props:
+                                text: "Update launch deck with new staffing plan"
+                    - id: board_active
+                      component: section
+                      size:
+                        width: "33.333%"
+                      layout:
+                        type: stack
+                        gap: 12
+                        padding: 12
+                      children:
+                        - id: board_active_title
+                          component: heading
+                          props:
+                            level: 3
+                            text: "In Progress"
+                        - id: active_card_one
+                          component: section
+                          children:
+                            - id: active_card_one_text
+                              component: paragraph
+                              props:
+                                text: "Finance is reviewing regional spend reallocations"
+                        - id: active_card_two
+                          component: section
+                          children:
+                            - id: active_card_two_text
+                              component: paragraph
+                              props:
+                                text: "Partner team assembling store readiness checklist"
+                    - id: board_review
+                      component: section
+                      size:
+                        width: "33.333%"
+                      layout:
+                        type: stack
+                        gap: 12
+                        padding: 12
+                      children:
+                        - id: board_review_title
+                          component: heading
+                          props:
+                            level: 3
+                            text: "Ready for Review"
+                        - id: review_card_one
+                          component: section
+                          children:
+                            - id: review_card_one_text
+                              component: paragraph
+                              props:
+                                text: "Creative summary ready for stakeholder walkthrough"
+                        - id: review_card_two
+                          component: section
+                          children:
+                            - id: review_card_two_text
+                              component: paragraph
+                              props:
+                                text: "Field launch kit staged for approval"
+            - id: workspace_inspector
+              component: section
+              size:
+                width: 280
+              layout:
+                type: stack
+                gap: 12
+                padding: 12
+              children:
+                - id: inspector_title
+                  component: heading
+                  props:
+                    level: 3
+                    text: "Inspector"
+                - id: inspector_summary
+                  component: paragraph
+                  props:
+                    text: "This panel gives the line-mode page a third column so we can verify gaps, separators, and non-overlapping regions in a denser layout."
+                - id: inspector_divided
+                  component: section
+                  layout:
+                    type: stack
+                    gap: 0
+                    separatorPolicy: divide
+                    separatorStyle: dashed
+                    padding: 0
+                  children:
+                    - id: inspector_item_one
+                      component: section
+                      children:
+                        - id: inspector_item_one_text
+                          component: paragraph
+                          props:
+                            text: "Owner  /  Regional Ops"
+                    - id: inspector_item_two
+                      component: section
+                      children:
+                        - id: inspector_item_two_text
+                          component: paragraph
+                          props:
+                            text: "Status  /  Needs review"
+                    - id: inspector_item_three
+                      component: section
+                      children:
+                        - id: inspector_item_three_text
+                          component: paragraph
+                          props:
+                            text: "Risk  /  Medium"

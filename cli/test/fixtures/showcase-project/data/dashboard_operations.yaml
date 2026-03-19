@@ -1,0 +1,27 @@
+documentType: dataset
+specVersion: "1.1"
+id: dashboard_operations
+dataset:
+  id: dashboard_operations
+  primaryKey: row_id
+  items:
+    - row_id: ops_01
+      market: "North America retail"
+      owner: "A. Rivera"
+      status: "Needs approval"
+      spend: "$1.2M"
+    - row_id: ops_02
+      market: "EMEA partner launch"
+      owner: "L. Novak"
+      status: "Ready"
+      spend: "$860K"
+    - row_id: ops_03
+      market: "Field enablement kit"
+      owner: "J. Patel"
+      status: "Blocked"
+      spend: "$430K"
+    - row_id: ops_04
+      market: "Search and affiliate refresh"
+      owner: "M. Chen"
+      status: "Shared"
+      spend: "$640K"

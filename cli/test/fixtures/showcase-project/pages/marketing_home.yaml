@@ -1,0 +1,556 @@
+documentType: page
+specVersion: "1.1"
+id: marketing_home
+page:
+  id: marketing_home
+  template: public_site
+  viewport:
+    device: web
+  wireframeStyle:
+    border:
+      style: solid
+      width: thin
+    corner:
+      style: rounded
+      radius: 12
+  renderMode: card
+  rendering:
+    density: comfortable
+  dataSources:
+    - id: showcase_notes_source
+      dataset: showcase_notes
+  injectables:
+    - injectableId: header_actions
+      content:
+        - id: header_cta
+          component: section
+          surface: false
+          layout:
+            type: row
+            gap: 12
+          children:
+            - id: launch_app
+              component: button
+              props:
+                label: "Launch App"
+              interaction:
+                - type: navigation
+                  targetRoute: admin_dashboard
+            - id: launch_ios
+              component: button
+              props:
+                label: "View iPhone"
+              interaction:
+                - type: navigation
+                  targetRoute: iphone_home
+  slots:
+    - slotId: main
+      content:
+        - id: marketing_stack
+          component: section
+          surface: false
+          layout:
+            type: stack
+            gap: 24
+            padding: 24
+          children:
+            - id: hero_row
+              component: section
+              surface: false
+              layout:
+                type: row
+                gap: 24
+                align: stretch
+              children:
+                - id: hero_copy
+                  component: section
+                  surface: false
+                  size:
+                    width: "55%"
+                  layout:
+                    type: stack
+                    gap: 16
+                  children:
+                    - id: hero_tag
+                      component: text
+                      props:
+                        text: "OPERATIONS PLATFORM"
+                    - id: hero_heading
+                      component: heading
+                      props:
+                        level: 1
+                        text: "Turn campaign planning, approvals, and reporting into one shared system."
+                    - id: hero_body
+                      component: paragraph
+                      props:
+                        text: "Northstar gives strategy, production, finance, and support teams one operating picture. Wireframes stay low fidelity, but the structure reads like a real product site."
+                    - id: hero_actions
+                      component: section
+                      surface: false
+                      layout:
+                        type: row
+                        gap: 12
+                      children:
+                        - id: hero_primary
+                          component: button
+                          props:
+                            label: "Request Demo"
+                          interaction:
+                            - type: navigation
+                              targetRoute: admin_dashboard
+                        - id: hero_secondary
+                          component: button
+                          props:
+                            label: "See Workspace"
+                          interaction:
+                            - type: navigation
+                              targetRoute: workspace_board
+                    - id: hero_inline_link
+                      component: text
+                      props:
+                        text: "Open the iPhone sample"
+                      interaction:
+                        - type: navigation
+                          targetRoute: iphone_home
+                    - id: hero_logos
+                      component: section
+                      surface: false
+                      layout:
+                        type: row
+                        gap: 16
+                      children:
+                        - id: logo_a
+                          component: text
+                          props:
+                            text: "Atlas Retail"
+                        - id: logo_b
+                          component: text
+                          props:
+                            text: "Signal Bank"
+                        - id: logo_c
+                          component: text
+                          props:
+                            text: "Blue Harbor"
+                        - id: logo_d
+                          component: text
+                          props:
+                            text: "North Rail"
+                - id: hero_preview
+                  component: section
+                  elevation: 2
+                  size:
+                    width: "45%"
+                  layout:
+                    type: stack
+                    gap: 16
+                    padding: 16
+                  children:
+                    - id: preview_heading
+                      component: heading
+                      props:
+                        level: 3
+                        text: "Executive Overview"
+                    - id: preview_kpi_row
+                      component: section
+                      surface: false
+                      layout:
+                        type: grid
+                        columns: 12
+                        gap: 16
+                      children:
+                        - id: preview_kpi_one
+                          component: section
+                          gridItem:
+                            span: 6
+                          children:
+                            - id: preview_kpi_one_label
+                              component: text
+                              props:
+                                text: "Pipeline Health"
+                            - id: preview_kpi_one_value
+                              component: heading
+                              props:
+                                level: 2
+                                text: "94%"
+                        - id: preview_kpi_two
+                          component: section
+                          gridItem:
+                            span: 6
+                          children:
+                            - id: preview_kpi_two_label
+                              component: text
+                              props:
+                                text: "Review Cycle"
+                            - id: preview_kpi_two_value
+                              component: heading
+                              props:
+                                level: 2
+                                text: "2.3 days"
+                    - id: preview_activity
+                      component: section
+                      layout:
+                        type: stack
+                        gap: 0
+                        separatorPolicy: divide
+                        separatorStyle: solid
+                        padding: 0
+                      children:
+                        - id: preview_activity_one
+                          component: section
+                          children:
+                            - id: preview_activity_one_text
+                              component: paragraph
+                              props:
+                                text: "Creative brief approved by brand, legal, and regional ops."
+                        - id: preview_activity_two
+                          component: section
+                          children:
+                            - id: preview_activity_two_text
+                              component: paragraph
+                              props:
+                                text: "Forecast updated after media mix shifted toward search."
+                        - id: preview_activity_three
+                          component: section
+                          children:
+                            - id: preview_activity_three_text
+                              component: paragraph
+                              props:
+                                text: "Support queue flagged 3 launch blockers needing ownership."
+            - id: stats_grid
+              component: section
+              surface: false
+              layout:
+                type: grid
+                columns: 12
+                gap: 16
+              children:
+                - id: stat_card_one
+                  component: section
+                  gridItem:
+                    span: 3
+                  children:
+                    - id: stat_one_value
+                      component: heading
+                      props:
+                        level: 2
+                        text: "180"
+                    - id: stat_one_copy
+                      component: paragraph
+                      props:
+                        text: "active launch plans across field, product, and media teams"
+                - id: stat_card_two
+                  component: section
+                  gridItem:
+                    span: 3
+                  children:
+                    - id: stat_two_value
+                      component: heading
+                      props:
+                        level: 2
+                        text: "41%"
+                    - id: stat_two_copy
+                      component: paragraph
+                      props:
+                        text: "faster approval cycles after replacing spreadsheet handoffs"
+                - id: stat_card_three
+                  component: section
+                  gridItem:
+                    span: 3
+                  children:
+                    - id: stat_three_value
+                      component: heading
+                      props:
+                        level: 2
+                        text: "12"
+                    - id: stat_three_copy
+                      component: paragraph
+                      props:
+                        text: "cross-functional rituals coordinated from one weekly workspace"
+                - id: stat_card_four
+                  component: section
+                  gridItem:
+                    span: 3
+                  children:
+                    - id: stat_four_value
+                      component: heading
+                      props:
+                        level: 2
+                        text: "99.2%"
+                    - id: stat_four_copy
+                      component: paragraph
+                      props:
+                        text: "delivery reliability across launches, reporting, and approvals"
+            - id: features_intro
+              component: section
+              surface: false
+              layout:
+                type: stack
+                gap: 8
+              children:
+                - id: features_title
+                  component: heading
+                  props:
+                    level: 2
+                    text: "A full operating system, not a gallery of isolated widgets."
+                - id: features_body
+                  component: paragraph
+                  props:
+                    text: "The page below is intentionally dense. It should feel like a believable product site with hierarchy, modules, and repeated patterns that still stay visually calm."
+            - id: feature_grid
+              component: section
+              surface: false
+              layout:
+                type: grid
+                columns: 12
+                gap: 16
+              children:
+                - id: feature_one
+                  component: section
+                  gridItem:
+                    span: 4
+                  elevation: 1
+                  children:
+                    - id: feature_one_title
+                      component: heading
+                      props:
+                        level: 3
+                        text: "Planning room"
+                    - id: feature_one_body
+                      component: paragraph
+                      props:
+                        text: "Briefs, calendars, risks, and owners sit together so teams discuss one plan."
+                    - id: feature_one_button
+                      component: button
+                      props:
+                        label: "Open Dashboard"
+                      interaction:
+                        - type: navigation
+                          targetRoute: admin_dashboard
+                - id: feature_two
+                  component: section
+                  gridItem:
+                    span: 4
+                  elevation: 1
+                  children:
+                    - id: feature_two_title
+                      component: heading
+                      props:
+                        level: 3
+                        text: "Live workspace"
+                    - id: feature_two_body
+                      component: paragraph
+                      props:
+                        text: "Operators can triage blockers, move work forward, and keep flush dividers from becoming messy borders."
+                    - id: feature_two_button
+                      component: button
+                      props:
+                        label: "See Workspace"
+                      interaction:
+                        - type: navigation
+                          targetRoute: workspace_board
+                - id: feature_three
+                  component: section
+                  gridItem:
+                    span: 4
+                  elevation: 1
+                  children:
+                    - id: feature_three_title
+                      component: heading
+                      props:
+                        level: 3
+                        text: "Pocket companion"
+                    - id: feature_three_body
+                      component: paragraph
+                      props:
+                        text: "Field teams can review status, launch kits, and itineraries on a mobile-first companion flow."
+                    - id: feature_three_button
+                      component: button
+                      props:
+                        label: "View iPhone App"
+                      interaction:
+                        - type: navigation
+                          targetRoute: iphone_home
+            - id: story_row
+              component: section
+              surface: false
+              layout:
+                type: row
+                gap: 16
+              children:
+                - id: testimonial_card
+                  component: section
+                  size:
+                    width: "60%"
+                  elevation: 2
+                  children:
+                    - id: testimonial_title
+                      component: heading
+                      props:
+                        level: 3
+                        text: "How North Rail replaced six weekly status decks"
+                    - id: testimonial_body
+                      component: paragraph
+                      props:
+                        text: "A single planning workspace now tracks the launch calendar, localized approvals, spend pacing, and support readiness. Leadership gets one crisp readout instead of conflicting versions."
+                    - id: testimonial_quote
+                      component: paragraph
+                      props:
+                        text: "\"The new operating review is shorter, calmer, and harder to misread.\""
+                - id: milestone_stack
+                  component: section
+                  size:
+                    width: "40%"
+                  layout:
+                    type: stack
+                    gap: 0
+                    separatorPolicy: divide
+                    separatorStyle: dashed
+                    padding: 0
+                  children:
+                    - id: milestone_one
+                      component: section
+                      children:
+                        - id: milestone_one_title
+                          component: text
+                          props:
+                            text: "Week 1  /  Align goals"
+                        - id: milestone_one_body
+                          component: paragraph
+                          props:
+                            text: "Define launch owners, due dates, and dependencies."
+                    - id: milestone_two
+                      component: section
+                      children:
+                        - id: milestone_two_title
+                          component: text
+                          props:
+                            text: "Week 2  /  Model scenarios"
+                        - id: milestone_two_body
+                          component: paragraph
+                          props:
+                            text: "Review pacing, contingencies, and risk concentration."
+                    - id: milestone_three
+                      component: section
+                      children:
+                        - id: milestone_three_title
+                          component: text
+                          props:
+                            text: "Week 3  /  Launch with confidence"
+                        - id: milestone_three_body
+                          component: paragraph
+                          props:
+                            text: "Ship one brief, one report, and one operational view."
+            - id: pricing_grid
+              component: section
+              surface: false
+              layout:
+                type: grid
+                columns: 12
+                gap: 16
+              children:
+                - id: pricing_start
+                  component: section
+                  gridItem:
+                    span: 4
+                  children:
+                    - id: pricing_start_title
+                      component: heading
+                      props:
+                        level: 3
+                        text: "Starter"
+                    - id: pricing_start_value
+                      component: heading
+                      props:
+                        level: 2
+                        text: "$49"
+                    - id: pricing_start_body
+                      component: paragraph
+                      props:
+                        text: "Shared planning, weekly reporting, and one operating review template."
+                - id: pricing_scale
+                  component: section
+                  gridItem:
+                    span: 4
+                  elevation: 2
+                  children:
+                    - id: pricing_scale_title
+                      component: heading
+                      props:
+                        level: 3
+                        text: "Scale"
+                    - id: pricing_scale_value
+                      component: heading
+                      props:
+                        level: 2
+                        text: "$129"
+                    - id: pricing_scale_body
+                      component: paragraph
+                      props:
+                        text: "Approvals, scenario planning, and one shared workspace for operators."
+                - id: pricing_enterprise
+                  component: section
+                  gridItem:
+                    span: 4
+                  children:
+                    - id: pricing_enterprise_title
+                      component: heading
+                      props:
+                        level: 3
+                        text: "Enterprise"
+                    - id: pricing_enterprise_value
+                      component: heading
+                      props:
+                        level: 2
+                        text: "Custom"
+                    - id: pricing_enterprise_body
+                      component: paragraph
+                      props:
+                        text: "Governance, mobile workflows, and regional operating templates."
+            - id: faq_stack
+              component: section
+              surface: false
+              layout:
+                type: stack
+                gap: 12
+              children:
+                - id: faq_title
+                  component: heading
+                  props:
+                    level: 2
+                    text: "Frequently asked questions"
+                - id: faq_one
+                  component: section
+                  children:
+                    - id: faq_one_q
+                      component: heading
+                      props:
+                        level: 3
+                        text: "Can this stay low fidelity without feeling unfinished?"
+                    - id: faq_one_a
+                      component: paragraph
+                      props:
+                        text: "Yes. The hierarchy comes from spacing, grouping, and consistent surfaces, not decoration."
+                - id: faq_two
+                  component: section
+                  children:
+                    - id: faq_two_q
+                      component: heading
+                      props:
+                        level: 3
+                        text: "How do you avoid double borders?"
+                    - id: faq_two_a
+                      component: paragraph
+                      props:
+                        text: "Use gutters when there is space. When things must be flush, put the divider responsibility on the parent."
+                - id: faq_three
+                  component: section
+                  children:
+                    - id: faq_three_q
+                      component: heading
+                      props:
+                        level: 3
+                        text: "Do these pages link together?"
+                    - id: faq_three_a
+                      component: paragraph
+                      props:
+                        text: "Yes. The hero, feature cards, and template navigation route into the dashboard, workspace, and iPhone views."

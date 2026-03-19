@@ -1,0 +1,28 @@
+documentType: components
+specVersion: "1.1"
+id: components
+components:
+  mobile_app_tabs:
+    root:
+      id: mobile_app_tabs
+      component: tab_bar
+      children:
+        - id: tab_home
+          component: button
+          props:
+            label: "Home"
+          interaction:
+            - type: navigation
+              targetRoute: iphone_home
+        - id: tab_plan
+          component: button
+          props:
+            label: "Plan"
+        - id: tab_wallet
+          component: button
+          props:
+            label: "Wallet"
+        - id: tab_account
+          component: button
+          props:
+            label: "Account"

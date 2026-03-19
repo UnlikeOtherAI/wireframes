@@ -1,0 +1,11 @@
+{
+  "name": "@wireframes/engine",
+  "version": "1.0.0",
+  "description": "Wireframe engine — schema, resolver, renderer, validation",
+  "private": true,
+  "type": "commonjs",
+  "main": "index.js",
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}

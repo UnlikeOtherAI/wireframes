@@ -1,0 +1,21 @@
+{
+  "name": "@wireframes/cli",
+  "version": "1.0.0",
+  "description": "CLI for managing wireframe projects",
+  "private": true,
+  "type": "commonjs",
+  "bin": {
+    "wf": "./bin/wf.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@wireframes/engine": "workspace:*",
+    "js-yaml": "^4.1.0",
+    "playwright": "^1.58.2"
+  }
+}

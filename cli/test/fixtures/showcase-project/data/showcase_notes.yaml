@@ -1,0 +1,10 @@
+documentType: dataset
+specVersion: "1.1"
+id: showcase_notes
+dataset:
+  id: showcase_notes
+  primaryKey: note_id
+  items:
+    - note_id: note_one
+      title: "Launch status"
+      body: "Used as a placeholder dataset so the showcase fixture is a complete project."
