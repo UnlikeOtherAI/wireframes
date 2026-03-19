@@ -5,8 +5,18 @@ const MAX_NODES_PER_PAGE = 5000;
 
 const STATE_KEY_PATTERN = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/;
 
-const OVERLAYS_REQUIRING_TRIGGER = new Set(['dropdown', 'popover', 'tooltip']);
+const OVERLAYS_REQUIRING_TRIGGER = new Set(['dropdown', 'popover', 'menu', 'tooltip']);
 const { resolveTemplatePage } = require('../resolver');
+
+const COMPONENT_ALIASES = {
+  card: 'section',
+  container: 'section',
+  box: 'section',
+  label: 'text',
+  textfield: 'input',
+  separator: 'divider',
+  hr: 'divider',
+};
 
 const INTERACTION_REQUIRED_FIELDS = {
   navigation: ['targetRoute'],
@@ -32,6 +42,13 @@ function addDiagnostic(result, code, message) {
     code,
     message,
   });
+}
+
+function addWarning(result, code, message) {
+  if (!result.warnings) {
+    result.warnings = [];
+  }
+  result.warnings.push({ code, message });
 }
 
 function defaultGridColumnsFromManifest(manifest) {
@@ -310,6 +327,43 @@ function validateChildrenGrid(node, context) {
   }
 }
 
+function validateTableNode(node, context) {
+  if (node?.component !== 'table') {
+    return;
+  }
+
+  const props = isObject(node.props) ? node.props : {};
+  const columns = Array.isArray(props.columns) ? props.columns : [];
+  if (columns.length === 0) {
+    addDiagnostic(
+      context.result,
+      'TABLE_MISSING_COLUMNS',
+      `Table node "${node.id}" in page "${context.pageId}" must define at least one column.`,
+    );
+    return;
+  }
+
+  const invalidColumn = columns.find((column) => {
+    if (typeof column === 'string') {
+      return column.trim() === '';
+    }
+    if (!isObject(column)) {
+      return true;
+    }
+    const hasKey = typeof column.key === 'string' && column.key.trim() !== '';
+    const hasLabel = typeof column.label === 'string' && column.label.trim() !== '';
+    return !hasKey && !hasLabel;
+  });
+
+  if (invalidColumn !== undefined) {
+    addDiagnostic(
+      context.result,
+      'TABLE_INVALID_COLUMN',
+      `Table node "${node.id}" in page "${context.pageId}" has a column without a valid key or label. Provide at least one — key will auto-derive from label if omitted.`,
+    );
+  }
+}
+
 function validateNode(node, context, depth = 1) {
   if (!isObject(node)) {
     return;
@@ -328,6 +382,14 @@ function validateNode(node, context, depth = 1) {
     } else {
       context.nodeIds.add(nodeId);
     }
+  }
+
+  if (typeof node.component === 'string' && COMPONENT_ALIASES[node.component]) {
+    addWarning(
+      context.result,
+      'COMPONENT_ALIAS',
+      `Node "${nodeId}" uses component "${node.component}" — did you mean "${COMPONENT_ALIASES[node.component]}"?`,
+    );
   }
 
   if (Array.isArray(node.interaction)) {
@@ -378,6 +440,7 @@ function validateNode(node, context, depth = 1) {
   }
 
   validateChildrenGrid(node, context);
+  validateTableNode(node, context);
 }
 
 function validateOverlayDefinition(overlay, context, overlaySource) {
@@ -451,7 +514,7 @@ function collectTemplateOverlays(templates, result) {
   return templateMap;
 }
 
-function collectComponentRoots(componentMap, result, defaultGridColumns) {
+function collectComponentRoots(componentMap, result, routeIds, defaultGridColumns) {
   for (const [componentId, component] of Object.entries(componentMap || {})) {
     if (!isObject(component) || !isObject(component.root)) {
       continue;
@@ -460,7 +523,7 @@ function collectComponentRoots(componentMap, result, defaultGridColumns) {
     const context = createNodeContext({
       result,
       pageId: `component "${componentId}"`,
-      routeIds: new Set(),
+      routeIds,
       appState: {},
       pageState: {},
       actionIds: new Set(),
@@ -603,16 +666,35 @@ function runSemanticValidation({
   templates = {},
   components = {},
   pages = [],
+  resolveComponentsForPage = null,
 }) {
   const routeIds = collectRouteIds(sitemap.routes);
   const appState = isObject(sitemap.appState) ? sitemap.appState : {};
   const defaultGrid = defaultGridColumnsFromManifest(manifest);
+  const globalComponents = isObject(components) ? components : {};
 
   const templateOverlayMap = collectTemplateOverlays(templates, result);
-  collectComponentRoots(components, result, defaultGrid);
+  collectComponentRoots(globalComponents, result, routeIds, defaultGrid);
 
   for (const pageLoaded of pages) {
-    validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, appState, components, result, defaultGrid);
+    let pageComponents = globalComponents;
+
+    if (typeof resolveComponentsForPage === 'function') {
+      const resolvedComponents = resolveComponentsForPage(pageLoaded);
+      if (resolvedComponents && resolvedComponents.ok === false) {
+        addDiagnostic(
+          result,
+          'COMPONENT_IMPORT_ERROR',
+          resolvedComponents.error || `Unable to resolve component imports for page "${pageLoaded?.id || '<unknown>'}".`,
+        );
+        continue;
+      }
+      if (resolvedComponents && isObject(resolvedComponents.components)) {
+        pageComponents = resolvedComponents.components;
+      }
+    }
+
+    validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, appState, pageComponents, result, defaultGrid);
   }
 }
 

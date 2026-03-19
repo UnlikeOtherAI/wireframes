@@ -2,21 +2,16 @@
 
 const path = require('node:path');
 const { runValidate } = require(path.resolve(__dirname, '..', '..', 'shared', 'validate'));
+const { formatGroupedIssues } = require(path.resolve(__dirname, '..', '..', 'shared', 'validate', 'format'));
 
 function formatIssues(result) {
-  if (result.errors.length > 0) {
-    console.log('wf validate found issues:');
-    for (const issue of result.errors) {
-      const code = issue.code ?? 'SCHEMA_VALIDATION';
-      console.log(`  - [${code}] ${issue.message}`);
-    }
+  const errorOutput = formatGroupedIssues(result.errors, 'issues');
+  if (errorOutput) {
+    console.log(errorOutput);
   }
-  if (result.warnings.length > 0) {
-    console.log('wf validate found warnings:');
-    for (const issue of result.warnings) {
-      const code = issue.code ?? 'WARNING';
-      console.log(`  - [${code}] ${issue.message}`);
-    }
+  const warningOutput = formatGroupedIssues(result.warnings, 'warnings');
+  if (warningOutput) {
+    console.log(warningOutput);
   }
 }
 

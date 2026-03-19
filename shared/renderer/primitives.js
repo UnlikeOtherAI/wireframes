@@ -4,9 +4,11 @@ const {
   layoutToCss,
   layoutItemCss,
   absoluteChildStyle,
+  shouldRenderParentSeparators,
   toPx,
 } = require('./layout');
 const {
+  surfaceElevationOverride,
   wireframeNodeStyleOverrides,
   readLocalImage,
 } = require('./wireframe-styles');
@@ -17,11 +19,13 @@ const PRIMITIVE_COMPONENTS = new Set([
   'text',
   'image',
   'button',
+  'tab_bar',
   'input',
   'textarea',
   'select',
   'checkbox',
   'toggle',
+  'table',
   'section',
   'divider',
   'spacer',
@@ -38,10 +42,12 @@ const BORDERLESS_PRIMITIVES = new Set([
   'select',
   'checkbox',
   'toggle',
+  'table',
   'divider',
   'spacer',
   // section gets its border from wf-surface CSS (mode-specific); no inline border
   'section',
+  'tab_bar',
 ]);
 
 const OVERLAY_TYPES = new Set([
@@ -49,6 +55,7 @@ const OVERLAY_TYPES = new Set([
   'alert',
   'dropdown',
   'popover',
+  'menu',
   'drawer_left',
   'drawer_right',
   'bottom_sheet',
@@ -67,6 +74,7 @@ const OVERLAY_BACKDROP_TYPES = new Set([
 const OVERLAY_Z_INDEX = {
   dropdown: 100,
   popover: 100,
+  menu: 100,
   tooltip: 100,
   modal: 200,
   drawer_left: 200,
@@ -445,19 +453,33 @@ function buildNodeDataAttributes(node, stateBindings, selectionValue, paneData) 
   if (isObject(paneData)) {
     entries.push(`data-wf-pane="${escapeAttr(JSON.stringify(paneData))}"`);
   }
+  if (typeof node.role === 'string' && node.role.trim() !== '') {
+    entries.push(`data-wf-role="${escapeAttr(node.role.trim())}"`);
+  }
   return entries.length > 0 ? ` ${entries.join(' ')}` : '';
 }
 
 function buildNodeClasses(node, primitive, level = null, paneSide = null) {
   const classList = ['wf-node'];
+  const explicitSurface = typeof node?.surface === 'boolean' ? node.surface : null;
 
   if (primitive === 'heading') {
     classList.push('wf-heading');
     if (level && Number.isInteger(level) && level >= 1 && level <= 6) {
       classList.push(`wf-heading-${level}`);
     }
+  } else if (primitive === 'table') {
+    classList.push('wf-table');
+    if (explicitSurface !== false) {
+      classList.push('wf-surface');
+    }
   } else if (primitive === 'section') {
-    classList.push('wf-section', 'wf-surface');
+    classList.push('wf-section');
+    if (explicitSurface !== false) {
+      classList.push('wf-surface');
+    }
+  } else if (primitive === 'tab_bar') {
+    classList.push('wf-tab-bar', 'wf-surface');
   } else if (primitive) {
     classList.push(`wf-${toSafeClass(primitive)}`);
   } else if (node.kind === 'overlay') {
@@ -478,19 +500,24 @@ function buildNodeClasses(node, primitive, level = null, paneSide = null) {
   if (typeof paneSide === 'string' && paneSide.trim() !== '') {
     classList.push('wf-pane', `wf-pane-${toSafeClass(paneSide)}`);
   }
+  if (typeof node?.role === 'string' && node.role.trim() !== '') {
+    classList.push(`wf-role-${toSafeClass(node.role.trim())}`);
+  }
+
+  if (explicitSurface === true && !classList.includes('wf-surface')) {
+    classList.push('wf-surface');
+  }
 
   return classList.join(' ');
 }
 
 function sectionBodyDividerClass(layout) {
-  if (!isObject(layout) || layout.separators !== 'between') return '';
-  // Separators only meaningful when gap == 0; with gap > 0 the gutter already separates items.
-  if (Number(layout.gap) > 0) return '';
+  if (!shouldRenderParentSeparators(layout)) return '';
   const type = layout.type || 'stack';
   return type === 'row' ? ' wf-divide-x' : ' wf-divide-y';
 }
 
-function joinAttrs(nodeId, classes, style) {
+function joinAttrs(nodeId, classes, style, extraAttrs = []) {
   const attrs = [];
   if (typeof nodeId === 'string' && nodeId.trim() !== '') {
     attrs.push(`id="${escapeAttr(nodeId)}"`);
@@ -501,7 +528,48 @@ function joinAttrs(nodeId, classes, style) {
   if (style) {
     attrs.push(`style="${escapeAttr(style)}"`);
   }
+  if (Array.isArray(extraAttrs)) {
+    for (const attr of extraAttrs) {
+      if (typeof attr === 'string' && attr.trim() !== '') {
+        attrs.push(attr.trim());
+      }
+    }
+  }
   return attrs.length > 0 ? ` ${attrs.join(' ')}` : '';
+}
+
+function primaryNavigationTarget(node, options = {}) {
+  if (!Array.isArray(node?.interaction) || node.interaction.length !== 1) {
+    return null;
+  }
+
+  const interaction = node.interaction[0];
+  if (!isObject(interaction) || interaction.type !== 'navigation' || interaction.condition || typeof interaction.targetRoute !== 'string') {
+    return null;
+  }
+
+  const routeId = interaction.targetRoute.trim();
+  if (!routeId) {
+    return null;
+  }
+
+  const routeTable = isObject(options.routeTable) ? options.routeTable : {};
+  const href = typeof routeTable[routeId] === 'string' && routeTable[routeId].trim() !== ''
+    ? routeTable[routeId].trim()
+    : null;
+
+  return href ? { routeId, href } : null;
+}
+
+function navigationAttrs(navTarget) {
+  if (!navTarget) {
+    return [];
+  }
+
+  return [
+    `href="${escapeAttr(navTarget.href)}"`,
+    `data-wf-route-target="${escapeAttr(navTarget.routeId)}"`,
+  ];
 }
 
 function renderImageElement(projectPath, props, options = {}) {
@@ -539,6 +607,91 @@ function renderSectionTitle(props, options = {}) {
     ? props.title
     : 'Section';
   return `<div class="wf-section-title">${renderBoundText(titleValue, options)}</div>`;
+}
+
+function deriveKeyFromLabel(label) {
+  return label.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+}
+
+function normalizeTableColumns(props) {
+  if (!Array.isArray(props?.columns)) {
+    return [];
+  }
+
+  return props.columns
+    .map((entry, index) => {
+      if (typeof entry === 'string' && entry.trim() !== '') {
+        const key = entry.trim();
+        return {
+          key,
+          label: key,
+          width: '',
+          index,
+        };
+      }
+
+      if (!isObject(entry)) {
+        return null;
+      }
+
+      let key = typeof entry.key === 'string' && entry.key.trim() !== ''
+        ? entry.key.trim()
+        : '';
+
+      if (!key && typeof entry.label === 'string' && entry.label.trim() !== '') {
+        key = deriveKeyFromLabel(entry.label);
+      }
+
+      if (!key) {
+        return null;
+      }
+
+      const label = typeof entry.label === 'string' && entry.label.trim() !== ''
+        ? entry.label.trim()
+        : key;
+      const width = typeof entry.width === 'number' && Number.isFinite(entry.width)
+        ? `${entry.width}px`
+        : typeof entry.width === 'string' && entry.width.trim() !== ''
+          ? entry.width.trim()
+          : '';
+
+      return {
+        key,
+        label,
+        width,
+        index,
+      };
+    })
+    .filter(Boolean);
+}
+
+function tableGridTemplate(columns) {
+  if (!Array.isArray(columns) || columns.length === 0) {
+    return '';
+  }
+
+  return columns
+    .map((column) => column.width || 'minmax(0,1fr)')
+    .join(' ');
+}
+
+function resolveTableRows(node, props, options = {}) {
+  const collection = resolveCollectionItems(node.binding, options);
+  if (Array.isArray(collection.items) && collection.items.length > 0) {
+    return collection.items;
+  }
+
+  return Array.isArray(props?.rows) ? props.rows : [];
+}
+
+function renderTableValue(value, bindingContext) {
+  if (typeof value === 'string') {
+    return renderBoundText(value, bindingContext);
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return escapeHtml(String(value));
+  }
+  return '';
 }
 
 function renderChildren(node, options) {
@@ -626,21 +779,12 @@ function overlayTypeStyle(type, placement) {
     return style.join(';');
   }
 
-  if (type === 'dropdown' || type === 'popover' || type === 'tooltip') {
+  if (type === 'dropdown' || type === 'popover' || type === 'menu' || type === 'tooltip') {
     const style = [
-      'position:absolute',
+      'position:fixed',
       'display:none',
       'z-index:' + zIndex,
     ];
-    if (normalizedPlacement === 'top') {
-      style.push('bottom:100%');
-    } else if (normalizedPlacement === 'left') {
-      style.push('right:100%');
-    } else if (normalizedPlacement === 'right') {
-      style.push('left:100%');
-    } else {
-      style.push('top:100%');
-    }
     return style.join(';');
   }
 
@@ -709,7 +853,7 @@ function renderNode(node, options = {}) {
     ? options.defaultGridColumns
     : undefined;
   const nodeStyle = isObject(node.wireframeStyle) ? node.wireframeStyle : {};
-  const nodeWireframeOverrides = wireframeNodeStyleOverrides(nodeStyle, options.pageStyle);
+  const nodeWireframeOverrides = wireframeNodeStyleOverrides(nodeStyle, options.pageStyle, options.rendering);
   const parentLayoutType = options.parentLayoutType || 'stack';
   const paneData = normalizePane(node.pane, parentLayoutType);
   const projectPath = options.projectPath || '';
@@ -721,8 +865,9 @@ function renderNode(node, options = {}) {
     item: options.itemContext || {},
     itemVar: options.itemVar || 'item',
   };
+  const navigationTarget = primaryNavigationTarget(node, options);
 
-  const collectionData = renderCollectionNode(node, options);
+  const collectionData = primitiveName === 'table' ? null : renderCollectionNode(node, options);
   if (collectionData) {
     return collectionData.items
       .map((item, index) => {
@@ -746,10 +891,11 @@ function renderNode(node, options = {}) {
   }
 
   const childStyle = [
-    layoutToCss(layout, size, { defaultGridColumns }),
+    layoutToCss(layout, size, { defaultGridColumns, density: options.density }),
     layoutItemCss(gridItem),
     absoluteChildStyle(node.position, parentLayoutType),
     paneMetaToStyle(paneData),
+    surfaceElevationOverride(node.elevation, options.rendering),
     // In mode contexts, CSS mode rules own all border/background — skip inline border.
     (isBorderless || options.mode) ? '' : wfNodeBorderStyle,
     nodeWireframeOverrides,
@@ -763,21 +909,36 @@ function renderNode(node, options = {}) {
   const primitives = {
     heading: () => {
       const classes = buildNodeClasses(node, 'heading', safeHeadingLevel, paneSide);
+      const headingText = renderBoundText(
+        typeof props.text === 'string' ? props.text : 'Heading',
+        bindingContext,
+      );
+      const headingContent = navigationTarget
+        ? `<a${joinAttrs(null, 'wf-inline-link', null, navigationAttrs(navigationTarget))}>${headingText}</a>`
+        : headingText;
       const body = `<h${safeHeadingLevel}>${
-        renderBoundText(typeof props.text === 'string' ? props.text : 'Heading', bindingContext)
+        headingContent
       }</h${safeHeadingLevel}>`;
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${body}${renderChildren(node, options)}</div>`;
     },
     paragraph: () => {
       const classes = buildNodeClasses(node, 'paragraph', null, paneSide);
+      const paragraphText = renderBoundText(typeof props.text === 'string' ? props.text : '', bindingContext);
+      const paragraphContent = navigationTarget
+        ? `<a${joinAttrs(null, 'wf-inline-link', null, navigationAttrs(navigationTarget))}>${paragraphText}</a>`
+        : paragraphText;
       return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><p>${
-        renderBoundText(typeof props.text === 'string' ? props.text : '', bindingContext)
+        paragraphContent
       }</p>${renderChildren(node, options)}</div>`;
     },
     text: () => {
       const classes = buildNodeClasses(node, 'text', null, paneSide);
+      const textContent = renderBoundText(typeof props.text === 'string' ? props.text : '', bindingContext);
+      const textBody = navigationTarget
+        ? `<a${joinAttrs(null, 'wf-inline-link', null, navigationAttrs(navigationTarget))}>${textContent}</a>`
+        : textContent;
       return `<span${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${
-        renderBoundText(typeof props.text === 'string' ? props.text : '', bindingContext)
+        textBody
       }</span>${renderChildren(node, options)}`;
     },
     image: () => {
@@ -790,9 +951,41 @@ function renderNode(node, options = {}) {
     },
     button: () => {
       const classes = buildNodeClasses(node, 'button', null, paneSide);
-      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><button>${
-        renderBoundText(typeof props.label === 'string' ? props.label : 'Button', bindingContext)
-      }</button>${renderChildren(node, options)}</div>`;
+      const buttonLabel = renderBoundText(
+        typeof props.label === 'string' ? props.label : 'Button',
+        bindingContext,
+      );
+      const renderedLabel = options.mode === 'line'
+        ? `[ ${buttonLabel} ]`
+        : buttonLabel;
+      const buttonMarkup = navigationTarget
+        ? `<a${joinAttrs(null, 'wf-button-link', null, navigationAttrs(navigationTarget))}>${renderedLabel}</a>`
+        : `<button>${renderedLabel}</button>`;
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}>${buttonMarkup}${renderChildren(node, options)}</div>`;
+    },
+    tab_bar: () => {
+      const classes = buildNodeClasses(node, 'tab_bar', null, paneSide);
+      const tabLayout = Object.keys(layout).length > 0
+        ? layout
+        : {
+          type: 'row',
+          gap: 0,
+          separatorPolicy: 'divide',
+          separatorStyle: 'solid',
+          padding: 0,
+          align: 'stretch',
+        };
+      const bodyChildren = renderChildren({
+        ...node,
+        layout: tabLayout,
+      }, {
+        ...options,
+        parentLayoutType: tabLayout.type || 'row',
+      });
+      const bodyLayoutCss = layoutToCss(tabLayout, {}, { defaultGridColumns, density: options.density });
+      const bodyDividerClass = sectionBodyDividerClass(tabLayout);
+      const bodyStyleAttr = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><div class="wf-tab-bar-body${bodyDividerClass}"${bodyStyleAttr}>${bodyChildren}</div></div>`;
     },
     input: () => {
       const classes = buildNodeClasses(node, 'input', null, paneSide);
@@ -839,6 +1032,45 @@ function renderNode(node, options = {}) {
         renderBoundText(typeof props.label === 'string' ? props.label : 'Toggle', bindingContext)
       }</label>${renderChildren(node, options)}</div>`;
     },
+    table: () => {
+      const classes = buildNodeClasses(node, 'table', null, paneSide);
+      const columns = normalizeTableColumns(props);
+      const rows = resolveTableRows(node, props, options);
+      const itemVar = typeof node?.binding?.itemVar === 'string' && node.binding.itemVar.trim() !== ''
+        ? node.binding.itemVar.trim()
+        : 'item';
+      const template = tableGridTemplate(columns);
+      const gridStyleAttr = template ? ` style="${escapeAttr(`grid-template-columns:${template}`)}"` : '';
+      const headerMarkup = columns.length > 0
+        ? columns.map((column) => (
+          `<div class="wf-table-cell wf-table-header-cell" data-wf-table-column="${column.index}">${
+            renderBoundText(column.label, bindingContext)
+          }</div>`
+        )).join('')
+        : '<div class="wf-table-cell wf-table-header-cell">Table</div>';
+      const bodyMarkup = rows.length > 0
+        ? rows.map((row, rowIndex) => {
+          const rowContext = isObject(row) ? row : {};
+          const rowBindingContext = {
+            ...bindingContext,
+            item: rowContext,
+            itemVar,
+          };
+
+          return `<div class="wf-table-row wf-table-grid" data-wf-table-row="${rowIndex}"${gridStyleAttr}>${
+            columns.map((column) => (
+              `<div class="wf-table-cell" data-wf-table-column="${column.index}">${
+                renderTableValue(getPathValue(rowContext, column.key), rowBindingContext)
+              }</div>`
+            )).join('')
+          }</div>`;
+        }).join('')
+        : `<div class="wf-table-row wf-table-row-empty"${gridStyleAttr}><div class="wf-table-cell">${
+          escapeHtml(typeof props.emptyText === 'string' && props.emptyText.trim() !== '' ? props.emptyText : 'No rows')
+        }</div></div>`;
+
+      return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs()}><div class="wf-table-header wf-table-grid"${gridStyleAttr}>${headerMarkup}</div><div class="wf-table-body">${bodyMarkup}</div></div>`;
+    },
     section: () => {
       const classes = buildNodeClasses(node, 'section', null, paneSide);
       const sectionLayoutType = isObject(node.layout) ? node.layout.type || 'stack' : 'stack';
@@ -858,14 +1090,15 @@ function renderNode(node, options = {}) {
         bindingContext,
       );
       const sectionOuterStyle = [
-        layoutToCss({}, size, { defaultGridColumns }),
+        layoutToCss({}, size, { defaultGridColumns, density: options.density }),
         layoutItemCss(gridItem),
         absoluteChildStyle(node.position, parentLayoutType),
         paneMetaToStyle(paneData),
+        surfaceElevationOverride(node.elevation, options.rendering),
         (isBorderless || options.mode) ? '' : wfNodeBorderStyle,
         nodeWireframeOverrides,
       ].filter(Boolean).join(';');
-      const bodyLayoutCss = layoutToCss(layout, {}, { defaultGridColumns });
+      const bodyLayoutCss = layoutToCss(layout, {}, { defaultGridColumns, density: options.density });
       const bodyDividerClass = sectionBodyDividerClass(layout);
       const bodyClass = `wf-section-body${bodyDividerClass}`;
       const bodyStyleAttr = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';

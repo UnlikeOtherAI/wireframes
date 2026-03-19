@@ -66,8 +66,8 @@ test('wf page add auto-fills template slots and updates sitemap route', () => {
   assert.equal(route.page, 'settings');
 });
 
-test('wf page add requires orientation for mobile and tablet', () => {
-  const projectPath = createTempProject('Page Add Requires Orientation');
+test('wf page add defaults orientation for mobile to portrait when omitted', () => {
+  const projectPath = createTempProject('Page Add Defaults Orientation');
 
   const result = addPage({
     projectPath,
@@ -77,8 +77,11 @@ test('wf page add requires orientation for mobile and tablet', () => {
     device: 'mobile',
   });
 
-  assert.equal(result.ok, false);
-  assert.ok(result.error.includes('Orientation is required'));
+  assert.equal(result.ok, true);
+  const pageDoc = yaml.load(fs.readFileSync(
+    path.join(projectPath, 'pages', 'mobile_dashboard.yaml'), 'utf8'
+  ));
+  assert.equal(pageDoc.page.viewport.orientation, 'portrait');
 });
 
 test('wf page add fills only template slots and rejects unknown slot ids', () => {

@@ -67,9 +67,10 @@ function buildViewport(device, orientation) {
     return { device: 'web' };
   }
 
+  const defaultOrientation = device === 'mobile' ? 'portrait' : 'landscape';
   return {
     device,
-    orientation,
+    orientation: orientation || defaultOrientation,
   };
 }
 
@@ -221,12 +222,11 @@ function addPage({
     };
   }
 
-  if ((normalizedDevice === 'mobile' || normalizedDevice === 'tablet') && !isValidOrientation(normalizedOrientation)) {
-    return {
-      ok: false,
-      error: `Orientation is required for "${normalizedDevice}" and must be portrait or landscape.`,
-    };
-  }
+  const resolvedOrientation = (normalizedDevice === 'mobile' || normalizedDevice === 'tablet')
+    ? (isValidOrientation(normalizedOrientation)
+        ? normalizedOrientation
+        : (normalizedDevice === 'mobile' ? 'portrait' : 'landscape'))
+    : normalizedOrientation;
 
   const { template } = loadTemplateById(projectPath, normalizedTemplate);
   if (!template) {
@@ -293,7 +293,7 @@ function addPage({
     page: {
       id: normalizedPageId,
       template: normalizedTemplate,
-      viewport: buildViewport(normalizedDevice, normalizedOrientation),
+      viewport: buildViewport(normalizedDevice, resolvedOrientation),
       wireframeStyle: finalWireframeStyle,
       slots: resolvedSlots.slots,
     },
