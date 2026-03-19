@@ -1,9 +1,35 @@
-.steroids/
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+*.tsbuildinfo
+
+# Astro
 .astro/
+
+# Logs
 *.log
+
+# Environment
 .env
 .env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+*.swp
+*.swo
+.idea/
+
+# Test
+coverage/
+
+# Playwright
 .playwright-cli/
 .playwright-mcp/
+
+# Steroids
+.steroids/
