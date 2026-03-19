@@ -130,7 +130,7 @@ layout:                          # how children are arranged
   gap: 16
   padding: 12
 size:
-  width: 300                     # number (px) or string (e.g. "50%")
+  width: 300                     # number (px) or string (e.g. "50%", "100%")
   height: 200
   minWidth: 100
   maxWidth: 500
@@ -167,7 +167,7 @@ ${primitives.map((p) => `- ${p}`).join('\n')}
 - toggle: { label }
 - section: { title }
 - table: { columns: [{ key, label, width? }], rows: [{ ...values }], emptyText? }
-- tab_bar: (use children with button nodes)
+- tab_bar: (use children with button nodes; default row layout with 8px gap; children flex-stretch to fill width — ideal for bottom navigation bars)
 - divider: (no props)
 - spacer: (no props, use size.height)
 
@@ -252,6 +252,13 @@ Each column needs at minimum a "key" or a "label":
 
 Two scopes: appState (in sitemap.yaml, persists across pages) and pageState (in page, resets on nav).
 State keys must be declared before being referenced.
+
+## Layout Tips
+
+- To make a node fill parent width: \`size: { width: "100%" }\`
+- To spread children evenly in a row: \`layout: { type: row, justify: space-evenly }\`
+- Children in a row layout default to shrink-fit; use \`size: { width: "100%" }\` on each child to stretch
+- Tab bars default to row layout with gap and flex-stretch children (like iOS UITabBarController bottom tabs)
 
 ## Building and Previewing
 

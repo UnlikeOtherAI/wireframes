@@ -53,6 +53,131 @@ test('renderWireframeMarkup includes runtime script and interaction attributes',
   assert.equal(html.includes('wf-runtime-toast'), true);
 });
 
+test('renderWireframeMarkup emits overlay roots as actual overlay containers', () => {
+  const html = renderWireframeMarkup({
+    roots: [
+      {
+        id: 'menu_overlay',
+        kind: 'overlay',
+        type: 'menu',
+        trigger: 'menu_button',
+        placement: 'bottom',
+        dismissOn: ['outside', 'escape'],
+        nodes: [
+          {
+            id: 'menu_panel',
+            component: 'section',
+            children: [
+              {
+                id: 'menu_item',
+                component: 'text',
+                props: { text: 'Profile' },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    pageViewport: { width: 390, height: 844, device: 'mobile' },
+    pageRouteId: 'home',
+    routeTable: { home: 'home.html' },
+    appStateDefaults: {},
+    pageStateDefaults: {},
+    projectPath: process.cwd(),
+  });
+
+  assert.equal(html.includes('id="menu_overlay"'), true);
+  assert.equal(html.includes('data-wf-overlay-type="menu"'), true);
+  assert.equal(html.includes('data-wf-overlay-trigger="menu_button"'), true);
+  assert.equal(html.includes('menu_item'), true);
+});
+
+test('renderNode renders anchor fallbacks for navigation buttons and text links', () => {
+  const buttonHtml = renderNode({
+    id: 'go_dashboard',
+    component: 'button',
+    props: { label: 'Dashboard' },
+    interaction: [{ type: 'navigation', targetRoute: 'dashboard' }],
+  }, {
+    routeTable: { dashboard: '/web/dashboard.html' },
+    mode: 'card',
+  });
+
+  const textHtml = renderNode({
+    id: 'go_mobile',
+    component: 'text',
+    props: { text: 'Open mobile app' },
+    interaction: [{ type: 'navigation', targetRoute: 'iphone_home' }],
+  }, {
+    routeTable: { iphone_home: '/mobile/iphone_home_mobile.html' },
+  });
+
+  assert.equal(buttonHtml.includes('href="/web/dashboard.html"'), true);
+  assert.equal(buttonHtml.includes('data-wf-route-target="dashboard"'), true);
+  assert.equal(textHtml.includes('href="/mobile/iphone_home_mobile.html"'), true);
+  assert.equal(textHtml.includes('wf-inline-link'), true);
+});
+
+test('renderNode renders tab bars as dedicated surface containers', () => {
+  const html = renderNode({
+    id: 'tabs',
+    component: 'tab_bar',
+    children: [
+      {
+        id: 'home_tab',
+        component: 'button',
+        props: { label: 'Home' },
+      },
+      {
+        id: 'account_tab',
+        component: 'button',
+        props: { label: 'Account' },
+      },
+    ],
+  }, {
+    mode: 'card',
+    rendering: { mode: 'card' },
+  });
+
+  assert.equal(html.includes('wf-tab-bar'), true);
+  assert.equal(html.includes('wf-surface'), true);
+  assert.equal(html.includes('wf-tab-bar-body'), true);
+  assert.equal(html.includes('wf-divide-x'), false);
+});
+
+test('renderNode renders tables from bound datasets with header and body rows', () => {
+  const html = renderNode({
+    id: 'ops_table',
+    component: 'table',
+    binding: { source: 'ops_table' },
+    props: {
+      columns: [
+        { key: 'market', label: 'Market', width: '2fr' },
+        { key: 'status', label: 'Status' },
+        { key: 'spend', label: 'Spend', width: 120 },
+      ],
+    },
+  }, {
+    mode: 'card',
+    rendering: { mode: 'card' },
+    dataSources: {
+      ops_table: {
+        items: [
+          { market: 'North America retail', status: 'Needs approval', spend: '$1.2M' },
+          { market: 'EMEA partner launch', status: 'Ready', spend: '$860K' },
+        ],
+      },
+    },
+  });
+
+  assert.equal(html.includes('wf-table'), true);
+  assert.equal(html.includes('wf-table-header'), true);
+  assert.equal(html.includes('grid-template-columns:2fr minmax(0,1fr) 120px'), true);
+  assert.equal(html.includes('North America retail'), true);
+  assert.equal(html.includes('EMEA partner launch'), true);
+  assert.equal(html.includes('data-wf-table-row="1"'), true);
+});
+
 test('renderNode resolves route, props, item, and state bindings in text', () => {
   const html = renderNode({
     id: 'title',

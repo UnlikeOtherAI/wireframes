@@ -4,6 +4,8 @@ function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
 }
 
+const PROP_TOKEN_PATTERN = /\{\{\s*props\.([a-zA-Z0-9_.]+)\s*\}\}/g;
+
 function cloneDeep(value) {
   if (Array.isArray(value)) {
     return value.map((entry) => cloneDeep(entry));
@@ -19,6 +21,123 @@ function cloneDeep(value) {
   }
 
   return clone;
+}
+
+function getPathValue(source, path) {
+  if (!isObject(source) || typeof path !== 'string' || path.trim() === '') {
+    return undefined;
+  }
+
+  const parts = path.split('.');
+  let current = source;
+
+  for (const part of parts) {
+    if (!isObject(current) || !Object.prototype.hasOwnProperty.call(current, part)) {
+      return undefined;
+    }
+    current = current[part];
+  }
+
+  return current;
+}
+
+function resolveComponentPropString(value, props) {
+  if (typeof value !== 'string' || !value.includes('{{')) {
+    return value;
+  }
+
+  const exactMatch = value.match(/^\{\{\s*props\.([a-zA-Z0-9_.]+)\s*\}\}$/);
+  if (exactMatch) {
+    const exactValue = getPathValue(props, exactMatch[1]);
+    return exactValue === undefined ? '' : cloneDeep(exactValue);
+  }
+
+  return value.replace(PROP_TOKEN_PATTERN, (_match, propPath) => {
+    const resolved = getPathValue(props, propPath);
+    return resolved === undefined || resolved == null ? '' : String(resolved);
+  });
+}
+
+function resolveComponentPropTemplates(value, props) {
+  if (Array.isArray(value)) {
+    return value.map((entry) => resolveComponentPropTemplates(entry, props));
+  }
+
+  if (isObject(value)) {
+    const resolved = {};
+    for (const [key, item] of Object.entries(value)) {
+      resolved[key] = resolveComponentPropTemplates(item, props);
+    }
+    return resolved;
+  }
+
+  return resolveComponentPropString(value, props);
+}
+
+function namespaceNodeIds(nodes, namespace) {
+  if (!Array.isArray(nodes) || typeof namespace !== 'string' || !namespace.trim()) {
+    return new Map();
+  }
+
+  const idMap = new Map();
+
+  function visit(node) {
+    if (!isObject(node)) {
+      return;
+    }
+
+    if (typeof node.id === 'string' && node.id.trim() !== '') {
+      const oldId = node.id;
+      const newId = `${namespace}__${oldId}`;
+      node.id = newId;
+      idMap.set(oldId, newId);
+    }
+
+    if (Array.isArray(node.children)) {
+      for (const child of node.children) {
+        visit(child);
+      }
+    }
+  }
+
+  for (const node of nodes) {
+    visit(node);
+  }
+
+  return idMap;
+}
+
+function rewriteScopedNodeReferences(nodes, idMap) {
+  if (!Array.isArray(nodes) || !(idMap instanceof Map) || idMap.size === 0) {
+    return;
+  }
+
+  function visit(node) {
+    if (!isObject(node)) {
+      return;
+    }
+
+    if (Array.isArray(node.interaction)) {
+      for (const interaction of node.interaction) {
+        if (!isObject(interaction)) {
+          continue;
+        }
+        if (typeof interaction.formId === 'string' && idMap.has(interaction.formId)) {
+          interaction.formId = idMap.get(interaction.formId);
+        }
+      }
+    }
+
+    if (Array.isArray(node.children)) {
+      for (const child of node.children) {
+        visit(child);
+      }
+    }
+  }
+
+  for (const node of nodes) {
+    visit(node);
+  }
 }
 
 function buildContentMap(list, idField) {
@@ -151,6 +270,16 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
     resolvedNode.props = mergedProps;
   }
 
+  const substitutedNode = resolveComponentPropTemplates(resolvedNode, mergedProps);
+  for (const [key, value] of Object.entries(substitutedNode)) {
+    resolvedNode[key] = value;
+  }
+
+  if (Array.isArray(resolvedNode.children) && typeof id === 'string' && id.trim() !== '') {
+    const idMap = namespaceNodeIds(resolvedNode.children, id);
+    rewriteScopedNodeReferences(resolvedNode.children, idMap);
+  }
+
   componentStack.add(node.use);
   if (Array.isArray(resolvedNode.children)) {
     const childResult = resolveInjectableNodes(
@@ -259,7 +388,6 @@ function resolveRegion(region, slotMap, injectableMap, components, componentStac
     ? (Array.isArray(slotContent) ? slotContent : (Array.isArray(region.children) ? region.children : []))
     : (Array.isArray(region.children) ? region.children : []);
 
-  delete resolved.kind;
   const resolvedChildren = resolveInjectableNodes(baseChildren, injectableMap, components, componentStack);
   if (!resolvedChildren.ok) {
     return resolvedChildren;

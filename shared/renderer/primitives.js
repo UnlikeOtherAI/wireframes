@@ -984,9 +984,8 @@ function renderNode(node, options = {}) {
         ? layout
         : {
           type: 'row',
-          gap: 0,
-          separatorPolicy: 'divide',
-          separatorStyle: 'solid',
+          gap: 8,
+          separatorPolicy: 'none',
           padding: 0,
           align: 'stretch',
         };
