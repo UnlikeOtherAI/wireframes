@@ -228,13 +228,20 @@ The editor workspace (preview pane, navigation, tree, device controls) must be a
 The wireframe engine must be packaged as a super-compressed standalone JavaScript library that runs entirely in the browser. This offloads all rendering cost from the server to the client.
 
 **How it works:**
-- The API stores and serves YAML project data (pages, templates, components, sitemap, datasets)
-- The client downloads the project data as JSON (pre-parsed YAML) and the rendering library
-- The library resolves templates, fills slots, expands components, and generates the full wireframe HTML in the browser — no server-side build step
+- The API stores and serves YAML project files verbatim — no conversion to JSON
+- The client downloads the YAML and the rendering library (which bundles js-yaml, ~8KB gzipped)
+- The library parses YAML in the browser, resolves templates, fills slots, expands components, and generates the full wireframe HTML — no server-side build step
 - Live preview in the editor, published previews, and shared links all use the same client-side renderer
-- The library is the engine's resolver + renderer compiled/bundled into a single minified JS file
+- The library is the engine's resolver + renderer + js-yaml compiled/bundled into a single minified JS file
+
+**Why YAML over JSON:**
+- One format everywhere — what's stored is what's sent, no conversion layer in the API
+- YAML is more compact than equivalent JSON (no quoted keys, no braces)
+- Debuggable — developers can read the response directly in network tools
+- API serves files verbatim from storage, zero transform cost
 
 **What the library includes:**
+- YAML parser (js-yaml, bundled)
 - Template resolution (persistent regions, slots, injectables)
 - Component expansion
 - Layout engine (stack, row, grid, absolute)
@@ -244,12 +251,12 @@ The wireframe engine must be packaged as a super-compressed standalone JavaScrip
 - Data binding and dataset iteration
 
 **What stays server-side:**
-- YAML parsing and storage (API)
+- YAML storage (API serves files as-is)
 - Validation and linting (API, on save)
 - Screenshot generation (Playwright, on demand)
 - Chat/LLM orchestration
 
-**Cost model:** Server only stores YAML and serves JSON. All CPU-intensive rendering happens on the user's machine. Published previews load the library once (cached) and render from project JSON — zero per-render server cost.
+**Cost model:** Server only stores and serves raw YAML files. All parsing and rendering happens on the user's machine. Published previews load the library once (cached) and render from YAML — zero per-render server cost.
 
 ### Web (`/web`)
 
@@ -286,7 +293,7 @@ Preview auth (for restricted previews):
 | API | Bun | TypeScript | drizzle-orm, pg |
 | Admin | Browser | TypeScript/React | react, vite, react-router |
 | Admin Chat | Browser + Bun | TypeScript/React | WebSocket, Anthropic SDK (reused from AdGoes.live) |
-| Renderer Lib | Browser | JavaScript (ESM) | None (zero deps, self-contained) |
+| Renderer Lib | Browser | JavaScript (ESM) | js-yaml (bundled, ~8KB gzip) |
 | Web | Node.js | TypeScript | astro or next.js |
 
 ---
