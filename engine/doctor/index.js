@@ -12,28 +12,16 @@ const {
   loadProjectComponentRegistry,
 } = require(path.resolve(__dirname, '..', 'component-registry'));
 const { runSemanticValidation } = require(path.resolve(__dirname, 'semantic-validator'));
-
-const PRIMITIVE_COMPONENTS = new Set([
-  'heading',
-  'paragraph',
-  'text',
-  'image',
-  'icon',
-  'button',
-  'tab_bar',
-  'bottom_tab_bar',
-  'input',
-  'textarea',
-  'select',
-  'checkbox',
-  'radio',
-  'toggle',
-  'chart',
-  'table',
-  'section',
-  'divider',
-  'spacer',
-]);
+const {
+  collectComponentUseGraph,
+  collectUsedComponents,
+  detectCircularUse,
+} = require(path.resolve(__dirname, 'component-graph'));
+const {
+  collectTemplateReferences,
+  collectPageReferences,
+  collectPageRouteDiagnostics,
+} = require(path.resolve(__dirname, 'reference-checks'));
 
 function addDiagnostic(result, severity, code, message) {
   result[severity].push({
@@ -92,341 +80,6 @@ function loadDocument(filePath, result, expectedType) {
 
     addDiagnostic(result, 'errors', error.code || 'DOCUMENT_LOAD_ERROR', error.message);
     return null;
-  }
-}
-
-function collectReferencedComponents(node, result, context, componentIds, usage) {
-  if (!node || typeof node !== 'object' || Array.isArray(node)) {
-    return;
-  }
-
-  if (typeof node.component === 'string') {
-    if (!PRIMITIVE_COMPONENTS.has(node.component) && !componentIds.has(node.component)) {
-      addDiagnostic(
-        result,
-        'errors',
-        'BROKEN_COMPONENT_REFERENCE',
-        `Unknown component "${node.component}" in ${context}.`,
-      );
-    } else if (componentIds.has(node.component) && usage?.componentsUsed) {
-      usage.componentsUsed.add(node.component);
-    }
-  }
-
-  if (typeof node.use === 'string') {
-    if (!componentIds.has(node.use)) {
-      addDiagnostic(
-        result,
-        'errors',
-        'BROKEN_COMPONENT_REFERENCE',
-        `Unknown component reference "${node.use}" in ${context}.`,
-      );
-    } else if (usage?.componentsUsed) {
-      usage.componentsUsed.add(node.use);
-    }
-  }
-
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
-      collectReferencedComponents(child, result, context, componentIds, usage);
-    }
-  }
-}
-
-function collectTemplateReferences(templateContent, result, componentIds, seenSlotIds, seenInjectableIds, usage) {
-  if (!templateContent || typeof templateContent !== 'object') {
-    return;
-  }
-
-  const regions = Array.isArray(templateContent.regions) ? templateContent.regions : [];
-  for (const region of regions) {
-    if (!region || typeof region !== 'object') {
-      continue;
-    }
-
-    if (region.kind === 'slot' && typeof region.id === 'string') {
-      seenSlotIds.add(region.id);
-    }
-
-    if (Array.isArray(region.children)) {
-      const queue = [...region.children];
-      while (queue.length > 0) {
-        const child = queue.shift();
-        if (child && typeof child === 'object') {
-          if (child.injectable === true && typeof child.id === 'string') {
-            seenInjectableIds.add(child.id);
-          }
-          if (Array.isArray(child.children)) {
-            queue.push(...child.children);
-          }
-        }
-      }
-      for (const child of region.children) {
-        collectReferencedComponents(child, result, `template region "${region.id}"`, componentIds, usage);
-      }
-    }
-
-    collectReferencedComponents(region, result, `template region "${region.id}"`, componentIds, usage);
-  }
-
-  if (Array.isArray(templateContent.overlays)) {
-    for (const overlay of templateContent.overlays) {
-      if (overlay && Array.isArray(overlay.content)) {
-        for (const node of overlay.content) {
-          collectReferencedComponents(node, result, `template overlay "${overlay.id}"`, componentIds, usage);
-        }
-      }
-    }
-  }
-}
-
-function collectPageReferences(pageDocument, result, pageTemplates, componentIds, datasetIds, usage) {
-  const pageId = pageDocument.id;
-  const page = pageDocument.document?.page || {};
-  const templateId = page.template;
-  const filledSlots = new Set();
-
-  const templateMeta = pageTemplates.get(templateId);
-  const templateInfo = templateMeta || { slotIds: new Set(), injectableIds: new Set() };
-
-  if (!templateId) {
-    addDiagnostic(result, 'errors', 'MISSING_PAGE_TEMPLATE', `Page "${pageId}" does not define a template.`);
-    return;
-  }
-
-  if (!pageMetaExists(pageTemplates, templateId)) {
-    addDiagnostic(result, 'errors', 'MISSING_TEMPLATE_REFERENCE', `Page "${pageId}" references missing template "${templateId}".`);
-    return;
-  }
-
-  const pageSlots = Array.isArray(page.slots) ? page.slots : [];
-  for (const slot of pageSlots) {
-    if (!slot || typeof slot !== 'object') {
-      continue;
-    }
-    const slotId = slot.slotId;
-    const slotHasContent = Array.isArray(slot.content) && slot.content.length > 0;
-
-    if (typeof slotId === 'string' && !templateInfo.slotIds.has(slotId)) {
-      addDiagnostic(
-        result,
-        'errors',
-        'MISSING_SLOT_REFERENCE',
-        `Page "${pageId}" targets unknown slot "${slotId}" on template "${templateId}".`,
-      );
-    }
-
-    if (Array.isArray(slot.content)) {
-      for (const node of slot.content) {
-        collectReferencedComponents(node, result, `page "${pageId}" slot "${slotId}"`, componentIds, usage);
-      }
-    }
-
-    if (typeof slotId === 'string' && templateInfo.slotIds.has(slotId)) {
-      if (!slotHasContent) {
-        addDiagnostic(
-          result,
-          'warnings',
-          'EMPTY_SLOT',
-          `Page "${pageId}" defines empty content for template slot "${slotId}" on template "${templateId}".`,
-        );
-      } else {
-        filledSlots.add(slotId);
-      }
-    }
-  }
-
-  if (Array.isArray(page.injectables)) {
-    for (const injectable of page.injectables) {
-      if (!injectable || typeof injectable !== 'object') {
-        continue;
-      }
-      if (typeof injectable.injectableId === 'string' && !templateInfo.injectableIds.has(injectable.injectableId)) {
-        addDiagnostic(
-          result,
-          'errors',
-          'MISSING_INJECTABLE_REFERENCE',
-          `Page "${pageId}" targets unknown injectable "${injectable.injectableId}" on template "${templateId}".`,
-        );
-      }
-      if (Array.isArray(injectable.content)) {
-        for (const node of injectable.content) {
-          collectReferencedComponents(node, result, `page "${pageId}" injectable "${injectable.injectableId}"`, componentIds, usage);
-        }
-      }
-    }
-  }
-
-  if (Array.isArray(page.overlays)) {
-    for (const overlay of page.overlays) {
-      if (overlay && Array.isArray(overlay.content)) {
-        for (const node of overlay.content) {
-          collectReferencedComponents(node, result, `page "${pageId}" overlay "${overlay.id}"`, componentIds, usage);
-        }
-      }
-    }
-  }
-
-  if (Array.isArray(page.dataSources)) {
-    for (const source of page.dataSources) {
-      if (!source || typeof source !== 'object' || typeof source.dataset !== 'string') {
-        continue;
-      }
-      if (!datasetIds.has(source.dataset)) {
-        addDiagnostic(
-          result,
-          'errors',
-          'MISSING_DATASET_REFERENCE',
-          `Page "${pageId}" references missing dataset "${source.dataset}".`,
-        );
-      } else if (usage) {
-        usage.datasetsUsed.add(source.dataset);
-      }
-    }
-  }
-
-  if (templateInfo.slotIds.size > 0) {
-    for (const slotId of templateInfo.slotIds) {
-      if (!filledSlots.has(slotId)) {
-        addDiagnostic(
-          result,
-          'warnings',
-          'EMPTY_SLOT',
-          `Page "${pageId}" does not define content for template slot "${slotId}" on template "${templateId}".`,
-        );
-      }
-    }
-  }
-}
-
-function pageMetaExists(pageTemplates, templateId) {
-  return pageTemplates.has(templateId);
-}
-
-function collectComponentUseGraph(components, result) {
-  const graph = Object.create(null);
-  const componentIds = new Set(Object.keys(components));
-  const entries = Object.entries(components);
-
-  for (const [componentId, componentDoc] of entries) {
-    const edges = [];
-    const root = componentDoc?.root;
-    walkUseGraph(root, edges, componentIds);
-    graph[componentId] = edges;
-  }
-
-  return graph;
-}
-
-function walkUseGraph(node, edges, componentIds) {
-  if (!node || typeof node !== 'object' || Array.isArray(node)) {
-    return;
-  }
-
-  if (typeof node.use === 'string' && componentIds.has(node.use)) {
-    edges.push(node.use);
-  }
-
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
-      walkUseGraph(child, edges, componentIds);
-    }
-  }
-}
-
-function collectUsedComponents(componentGraph, directUsages) {
-  const used = new Set(directUsages);
-  const queue = Array.from(directUsages);
-
-  while (queue.length > 0) {
-    const current = queue.shift();
-    const references = componentGraph[current] || [];
-    for (const reference of references) {
-      if (!used.has(reference)) {
-        used.add(reference);
-        queue.push(reference);
-      }
-    }
-  }
-
-  return used;
-}
-
-function detectCircularUse(referenceGraph, result) {
-  const visited = new Set();
-  const stack = [];
-  const inStack = new Set();
-
-  function visit(current) {
-    if (!Object.prototype.hasOwnProperty.call(referenceGraph, current)) {
-      return null;
-    }
-    if (inStack.has(current)) {
-      const start = stack.indexOf(current);
-      const cycle = stack.slice(start).concat(current);
-      return cycle;
-    }
-    if (visited.has(current)) {
-      return null;
-    }
-
-    visited.add(current);
-    inStack.add(current);
-    stack.push(current);
-
-    for (const edge of referenceGraph[current]) {
-      const cycle = visit(edge);
-      if (cycle) {
-        return cycle;
-      }
-    }
-
-    stack.pop();
-    inStack.delete(current);
-    return null;
-  }
-
-  for (const node of Object.keys(referenceGraph)) {
-    const cycle = visit(node);
-    if (cycle) {
-      addDiagnostic(
-        result,
-        'errors',
-        'CIRCULAR_TEMPLATE_REFERENCE',
-        `Circular component reference detected: ${cycle.join(' -> ')}.`,
-      );
-      return;
-    }
-  }
-}
-
-function collectPageRouteDiagnostics(routes, result, pages, templates) {
-  if (!Array.isArray(routes)) {
-    addDiagnostic(result, 'errors', 'INVALID_ROUTE_BLOCK', 'sitemap.routes must be an array.');
-    return;
-  }
-
-  for (const route of routes) {
-    if (!route || typeof route !== 'object') {
-      continue;
-    }
-
-    if (typeof route.page === 'string' && !pages.has(route.page)) {
-      addDiagnostic(
-        result,
-        'errors',
-        'ORPHAN_ROUTE',
-        `Route "${route.id ?? '<unknown>'}" points to missing page "${route.page}".`,
-      );
-    }
-    if (typeof route.template === 'string' && !templates.has(route.template)) {
-      addDiagnostic(
-        result,
-        'errors',
-        'MISSING_TEMPLATE_REFERENCE',
-        `Route "${route.id ?? '<unknown>'}" points to missing template "${route.template}".`,
-      );
-    }
   }
 }
 
@@ -598,11 +251,11 @@ function runDoctor({ projectPath } = {}) {
       `template "${templateId}"`,
       componentIds,
     );
-    collectTemplateReferences(templateDocument, result, templateComponentIds, templateInfo.slotIds, templateInfo.injectableIds, componentUsages);
+    collectTemplateReferences(templateDocument, result, templateComponentIds, templateInfo.slotIds, templateInfo.injectableIds, componentUsages, addDiagnostic);
   }
 
   const routeEntries = sitemap?.document?.routes || sitemap?.document?.sitemap?.routes || [];
-  collectPageRouteDiagnostics(routeEntries, result, pageMap, templateMap);
+  collectPageRouteDiagnostics(routeEntries, result, pageMap, templateMap, addDiagnostic);
 
   for (const pageLoaded of pageMap.values()) {
     const pageComponentIds = loadScopedComponentIds(
@@ -621,10 +274,11 @@ function runDoctor({ projectPath } = {}) {
       pageComponentIds,
       datasetIds,
       componentUsages,
+      addDiagnostic,
     );
   }
 
-  const componentGraph = collectComponentUseGraph(componentMap, result);
+  const componentGraph = collectComponentUseGraph(componentMap, result, addDiagnostic);
   const usedComponents = collectUsedComponents(componentGraph, componentUsages.componentsUsed);
 
   for (const componentId of Object.keys(componentMap)) {
@@ -649,7 +303,7 @@ function runDoctor({ projectPath } = {}) {
     }
   }
 
-  detectCircularUse(componentGraph, result);
+  detectCircularUse(componentGraph, result, addDiagnostic);
 
   runSemanticValidation({
     result,
