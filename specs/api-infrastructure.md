@@ -41,12 +41,18 @@ Package name: `@wireframes/api`. Runtime: Bun. Language: TypeScript.
 - Initialize `api/` as a Bun project with TypeScript
 - Add Drizzle ORM + `drizzle-kit` + `pg` as dependencies
 - Create Drizzle config pointing to PostgreSQL (connection string from `DATABASE_URL` env var)
-- Implement a minimal HTTP server (Bun native `Bun.serve()`)
-- Create layered directory structure: `routes/`, `controllers/`, `services/`, `repositories/`, `middleware/`, `db/`
+- Implement a minimal HTTP server (Bun native `Bun.serve()`) with WebSocket upgrade support
+- Create layered directory structure: `routes/`, `controllers/`, `services/`, `repositories/`, `middleware/`, `db/`, `ws/`
 - Add `GET /health` endpoint returning `{ status: "ok", timestamp }` — verifies DB connection
 - Add error-handling middleware (catches thrown errors, returns structured JSON errors)
 - Add request-logging middleware (method, path, status, duration)
 - Add CORS middleware (configurable origins via `CORS_ORIGINS` env var)
+- Add WebSocket server infrastructure:
+  - Bun's built-in WebSocket support via `server.upgrade()`
+  - Channel-based pub/sub (Bun's `ws.subscribe(channel)` / `ws.publish(channel, data)`)
+  - Connection lifecycle: open, message, close, error handlers
+  - Auth on upgrade: validate JWT from query param or cookie before upgrading
+  - Channel format: `{entity}.{entityId}` (e.g. `chat.{sessionId}`, `project.{projectId}`)
 - Add to pnpm workspace in root `pnpm-workspace.yaml`
 
 ### Patterns
@@ -172,12 +178,20 @@ Implement the auth flow described in [architecture.md](../docs/architecture.md) 
 - No refresh tokens for v1 — client re-authenticates via SSO when JWT expires
 - JWT is stateless — no server-side session store
 
+**Rate limiting:**
+- Apply rate limiting to sensitive endpoints:
+  - `POST /auth/sso` — 10 requests/minute per IP
+  - `POST /preview/:slug/auth` — 5 requests/minute per IP (prevent password brute-force)
+- Use a simple in-memory rate limiter (sliding window) for v1
+- Return 429 Too Many Requests with `Retry-After` header
+
 ### Patterns
 
 - Auth middleware is a Bun middleware function applied to protected routes
 - Use a route-level decorator or explicit public route list for unprotected endpoints
 - SSO token validation is a service-layer concern (not in middleware)
 - Password hashing for preview access uses bcrypt (separate from JWT)
+- Rate limiter is middleware, applied before auth
 
 ### Acceptance Criteria
 
@@ -187,3 +201,5 @@ Implement the auth flow described in [architecture.md](../docs/architecture.md) 
 - Protected routes return 200 with valid JWT and `req.user` populated
 - New users are created on first SSO login
 - Existing users are found by `ssoSubject` on subsequent logins
+- Rate limiting returns 429 after threshold exceeded
+- WebSocket upgrade works with valid JWT, rejects without

@@ -35,6 +35,11 @@ CRUD endpoints for projects, documents, and memberships. Documents store raw YAM
 - Requires membership (any role)
 - Returns project + user's role + member count + document count
 
+`PATCH /projects/:id` — Update project.
+- Body: `{ name }` (partial update, only provided fields change)
+- Requires `owner` or `editor` role
+- Returns updated project
+
 `DELETE /projects/:id` — Delete project.
 - Requires `owner` role
 - Cascading delete: removes all documents, memberships, previews, preview access, invites
@@ -50,7 +55,8 @@ CRUD endpoints for projects, documents, and memberships. Documents store raw YAM
 ### Acceptance Criteria
 
 - Non-members cannot access any project endpoint (403)
-- Viewers can GET but not DELETE
+- Viewers can GET but not PATCH or DELETE
+- Editors can PATCH (rename) but not DELETE
 - Only owners can DELETE
 - Creating a project automatically creates an owner membership
 - Deleting a project cascades to all related rows
@@ -145,7 +151,7 @@ The engine works with in-memory document maps, not filesystem paths. The API bui
 - Body: `{ role }` where role is `owner`, `editor`, or `viewer`
 - Requires `owner` role
 - Cannot change own role (prevents accidental self-demotion)
-- Cannot set role to `owner` if not transferring ownership (only one owner)
+- Ownership transfer: setting another member's role to `owner` automatically demotes the current owner to `editor`. Only one owner exists at a time.
 
 `DELETE /projects/:id/members/:uid` — Remove member.
 - Requires `owner` role
@@ -179,3 +185,56 @@ The engine works with in-memory document maps, not filesystem paths. The API bui
 - Email mismatch on accept returns 403
 - Cannot remove or demote self as owner
 - Duplicate invite to existing member returns 409
+
+---
+
+## Task: Implement user profile and pending invites endpoints
+
+### Requirements
+
+**Endpoints:**
+
+`GET /users/me` — Get current user profile.
+- Returns `{ id, email, displayName, locale, createdAt }`
+
+`PATCH /users/me` — Update user profile.
+- Body (partial): `{ displayName?, locale? }`
+- Updates provided fields only
+- If `locale` changes: updates the user row
+- Returns updated user profile
+
+`DELETE /users/me` — Delete user account.
+- Cascading behavior:
+  - Remove all memberships
+  - For owned projects: transfer ownership to the next editor, or delete if no editors
+  - Remove all invites sent by this user
+  - Delete the user row
+- Requires confirmation: `X-Confirm-Delete: {email}` header must match user's email
+- Returns 204
+
+`GET /users/me/invites` — List pending invites for current user.
+- Matches invites by the user's email address (case-insensitive)
+- Returns only unaccepted invites: `{ id, projectId, projectName, role, invitedBy, createdAt, token }`
+- Ordered by createdAt descending
+
+`POST /users/me/invites/:id/decline` — Decline an invite.
+- Deletes the invite row
+- Returns 204
+
+### Patterns
+
+- User endpoints are under `/users/me` (no `:userId` path — always the authenticated user)
+- Account deletion is the most destructive operation — requires explicit confirmation
+- Ownership transfer on account deletion: find the oldest editor membership, promote to owner
+- Invite listing matches by email, not by userId (invites are created before the user accepts)
+
+### Acceptance Criteria
+
+- `GET /users/me` returns the authenticated user's profile
+- `PATCH /users/me` updates displayName and/or locale
+- `DELETE /users/me` with correct confirmation header deletes the account
+- `DELETE /users/me` without confirmation header returns 400
+- Owned projects are transferred or deleted on account deletion
+- `GET /users/me/invites` returns pending invites matching user's email
+- `POST /users/me/invites/:id/decline` removes the invite
+- All endpoints require authentication (401 without JWT)

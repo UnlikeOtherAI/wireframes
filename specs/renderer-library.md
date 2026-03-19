@@ -91,16 +91,16 @@ If the engine has any Node.js-specific code paths, create browser-compatible shi
 
 ---
 
-## Task 12: Implement browser-side YAML → HTML render pipeline
+## Task 12a: Implement core rendering pipeline (primitives, layout, styles)
 
 ### Requirements
 
-The renderer library must replicate the full `wf build` pipeline from [rendering.md](../docs/cli/rendering.md) in the browser:
+Implement the core rendering path — YAML → resolved tree → HTML — in the browser library.
 
 **API:** The library exports these functions:
 
 ```typescript
-// Full project render — same output as wf build
+// Full project render
 function renderProject(yamlFiles: Record<string, string>, options?: RenderOptions): RenderedProject
 
 // Single page render — for live preview in editor
@@ -115,43 +115,90 @@ Where:
 - `RenderOptions`: `{ platform?, basePath?, mode? }`
 - `RenderedProject`: `{ pages: Map<string, string>, css: string, js: string, routeTable: Record<string, string> }`
 
-**Pipeline steps** (from [rendering.md](../docs/cli/rendering.md) § rendering pipeline):
+**Note on engine input:** The library receives raw YAML strings, parses them with js-yaml, builds a DocumentMap (see [engine-abstraction.md](engine-abstraction.md)), and passes it to the engine's core functions. The engine core accepts parsed objects, not raw YAML.
+
+**Pipeline steps** (from [rendering.md](../docs/cli/rendering.md)):
 
 1. Parse all YAML strings using js-yaml
-2. Resolve component import graphs from templates, pages, and component documents
-3. Resolve template + page (fill slots, inject injectables, expand components)
-4. Walk resolved node tree and emit HTML
-5. Apply wireframe CSS (borders, layout, spacing) — [rendering-modes.md](../docs/cli/rendering-modes.md)
-6. Attach interaction JavaScript (navigation, overlays, state, toggles) — [rendering.md](../docs/cli/rendering.md) § 8
-7. Bind state and data values into rendered nodes — [rendering.md](../docs/cli/rendering.md) § 9-10
-8. Return complete HTML strings
+2. Build DocumentMap from parsed objects
+3. Resolve component import graphs from templates, pages, and component documents
+4. Resolve template + page (fill slots, inject injectables, expand components)
+5. Walk resolved node tree and emit HTML
+6. Apply wireframe CSS (borders, layout, spacing) — [rendering-modes.md](../docs/cli/rendering-modes.md)
 
-**Must support all features from rendering.md:**
+**This task covers:**
 - All primitives (heading, paragraph, text, image, icon, button, tab_bar, bottom_tab_bar, input, textarea, select, checkbox, radio, toggle, chart, table, section, divider, spacer)
 - All layout types (stack, row, grid, absolute, overlay)
 - Both rendering modes (line, card) from [rendering-modes.md](../docs/cli/rendering-modes.md)
-- Overlay rendering with correct z-indexing
-- Interaction runtime (navigation, overlays, state, toggles, submit, action, gesture)
-- State binding (appState, pageState) with reactivity
-- Data binding with collection iteration
-- Selection rendering
-- Pane rendering (resizable panels)
 - Viewport dimensions per device type
+- Wireframe style system (borders, corners, surfaces)
+- Pane rendering (resizable panels)
 
 ### Patterns
 
 - Share as much code as possible with the engine (same resolver, same renderer)
-- The interaction runtime JS is generated as a string and injected into the HTML
 - CSS is generated based on the rendering mode (line/card)
-- Navigation works differently in browser preview vs static build (SPA vs file navigation)
-- For live preview: `renderPage` re-renders a single page efficiently
+- Font Awesome: link to CDN in generated HTML (self-containment is relaxed for icons — bundling FA would triple the bundle size)
 
 ### Acceptance Criteria
 
-- `renderProject` produces identical HTML to `wf build` for the same YAML input
+- `renderProject` produces functionally equivalent HTML to `wf build` for the same YAML input (semantically identical structure and styling; minor whitespace/attribute-order differences are acceptable)
 - `renderPage` renders a single page with correct template resolution
 - All primitives render correctly in both line and card modes
-- Interactions work in the browser (navigation between pages, overlay open/close, state changes)
-- Data binding iterates over dataset items correctly
+- All layout types produce correct CSS
 - Viewport dimensions match the device type declarations
 - Performance: renders a 20-page project in < 500ms on a modern browser
+
+---
+
+## Task 12b: Implement interaction runtime, state binding, and data binding
+
+### Requirements
+
+Complete the browser rendering pipeline with runtime behaviors.
+
+**This task adds to the library built in 12a:**
+
+**Interaction Runtime** (from [rendering.md](../docs/cli/rendering.md) § 8):
+- Navigation: `wfNavigate(routeId)` using embedded route table
+- Overlay open/close: add/remove `wf-visible` class, backdrop handling, trigger-anchored positioning
+- Toggle: flip boolean state, update DOM
+- Set state: update state store, trigger reactive DOM updates
+- Submit: gather form values, show toast
+- Action: show toast with action ID
+- Gesture: touch event handlers for mobile/tablet viewports
+- Conditional execution: evaluate conditions before running interactions
+
+**State Binding** (from [rendering.md](../docs/cli/rendering.md) § 9):
+- appState in sessionStorage, pageState in JS object
+- Binding expressions: `{{state.key}}`, `{{appState.key}}`, `{{route.id}}`, `{{event.field}}`
+- Reactive updates: state change → update bound DOM elements → re-evaluate visibility conditions → update stateBindings
+
+**Data Binding** (from [rendering.md](../docs/cli/rendering.md) § 10):
+- Collection iteration: clone children per dataset item
+- `{{item.field}}` expression resolution including nested dot notation
+- Unique DOM IDs for cloned elements
+
+**Selection Rendering:**
+- `wf-selectable` click handler writes to state
+- `wf-selected` class on active item
+
+**Navigation in browser preview vs static build:**
+- In static build: navigation changes `window.location.href`
+- In live preview (editor): navigation should fire a callback (`onNavigate`) instead of changing URL, so the editor can handle page switching
+
+### Patterns
+
+- Interaction JS is generated as a string and injected into the HTML `<script>` tag
+- The library generates all runtime JS — no external files needed
+- For live preview mode, inject a message-passing bridge so the parent frame (editor) can intercept navigation
+
+### Acceptance Criteria
+
+- Interactions work in the browser (navigation, overlay open/close, state changes, submit, action)
+- State bindings update reactively when state changes
+- Visibility conditions show/hide elements based on state
+- Data binding iterates over dataset items correctly
+- Selection highlights the active item
+- Gestures trigger on mobile/tablet viewports
+- Navigation in preview mode fires callback instead of hard navigation

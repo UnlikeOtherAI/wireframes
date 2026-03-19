@@ -32,6 +32,8 @@ The build endpoint lets editors trigger a full wireframe build from stored docum
   5. Return build output as JSON: `{ pages: [{ pageId, platform, html }], css, js }`
 - Optional query params:
   - `platform=web|mobile|tablet|all` (default: `all`)
+- Returns build output as structured JSON (see [engine-abstraction.md](engine-abstraction.md) for BuildOutput shape):
+  `{ pages: [{ pageId, platform, html }], css, js, routeTable, indexHtml, platformIndexes }`
 
 ### Engine Integration
 
@@ -112,7 +114,7 @@ assets/logo.png → https://storage.googleapis.com/{bucket}/assets/{projectId}/l
 
 - Bucket: `GCS_BUCKET` env var
 - Service account: `GCS_SERVICE_ACCOUNT_KEY` env var (JSON key file path)
-- Public read access for asset files (preview viewers need to see them)
+- Asset files are private (same as preview files) — served via API proxy
 - Set appropriate `Cache-Control` and `Content-Type` headers
 
 ### Patterns

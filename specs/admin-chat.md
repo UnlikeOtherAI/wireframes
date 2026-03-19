@@ -105,13 +105,43 @@ Every message triggers the pipeline (from [architecture.md](../docs/architecture
 5. Broadcast change to workspace via WebSocket
 6. If invalid: return validation errors to LLM for self-correction (retry once)
 
+### Database Tables (new migration)
+
+Create a new Drizzle migration adding these tables (do NOT edit the initial migration from Task 2):
+
+**ChatSessions table:**
+- `id` (UUID, PK)
+- `projectId` (UUID, FK → projects.id)
+- `userId` (UUID, FK → users.id)
+- `scope` (jsonb) — ChatSessionScope object
+- `createdAt` (timestamp)
+- `updatedAt` (timestamp)
+- `expiresAt` (timestamp, default 30 days from creation) — session TTL for cleanup
+
+**ChatMessages table:**
+- `id` (UUID, PK)
+- `sessionId` (UUID, FK → chat_sessions.id, cascade delete)
+- `role` (text: `user`, `assistant`)
+- `content` (text)
+- `toolCalls` (jsonb, nullable) — LLM tool call records
+- `createdAt` (timestamp)
+
+### Context Budget Strategy
+
+LLM context window is limited. Manage token budgets:
+- **System prompt + schema reference:** max 2000 tokens (compressed schema summary, not full docs)
+- **Project structure:** max 500 tokens (document list, page count, template names)
+- **Active document content:** max 3000 tokens (current page YAML, its template)
+- **Message history:** keep last 20 messages; summarize older messages into a single "conversation summary" message
+- **Total target:** < 8000 tokens of context per request, leaving room for response
+
 ### Patterns
 
 - Chat service is in the API server, not a separate service
-- Session state stored in DB (new table: `chat_sessions`, `chat_messages`)
-- LLM context window management: include relevant docs, trim old messages
+- Session state stored in DB (new tables: `chat_sessions`, `chat_messages`)
 - Idempotency keys on edit operations (from docgen patterns)
 - Rate limiting: max 1 concurrent LLM call per session
+- Session cleanup: cron or on-access deletion of sessions past `expiresAt`
 
 ### Acceptance Criteria
 
