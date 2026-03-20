@@ -33,6 +33,7 @@ export function WorkspacePreview({
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [html, setHtml] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [srcdoc, setSrcdoc] = useState<string>('')
   const rendererRef = useRef<typeof import('@wireframes/renderer') | null>(null)
   const renderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const viewport = DEVICE_VIEWPORTS[device]
@@ -109,22 +110,14 @@ export function WorkspacePreview({
     onHtmlChange?.(html ?? '')
   }, [html, onHtmlChange])
 
-  // Write to iframe
+  // Build srcdoc content for the iframe
   useEffect(() => {
-    const iframe = iframeRef.current
-    if (!iframe) return
-    const doc = iframe.contentDocument
-    if (!doc) return
-
     if (error) {
-      doc.open()
-      doc.write(buildErrorHtml(t('workspace.renderError'), error))
-      doc.close()
+      setSrcdoc(buildErrorHtml(t('workspace.renderError'), error))
     } else if (html) {
-      const finalHtml = injectNodeClickBridge(html, activePage, interactive)
-      doc.open()
-      doc.write(finalHtml)
-      doc.close()
+      setSrcdoc(injectNodeClickBridge(html, activePage, interactive))
+    } else {
+      setSrcdoc('')
     }
   }, [html, error, t, activePage, interactive])
 
@@ -194,7 +187,8 @@ export function WorkspacePreview({
           ref={iframeRef}
           data-testid="workspace-preview-iframe"
           title={t('workspace.preview')}
-          sandbox={interactive ? 'allow-scripts' : undefined}
+          sandbox={interactive ? 'allow-scripts allow-same-origin' : undefined}
+          srcDoc={srcdoc || undefined}
           style={{
             width: viewport.width,
             height: viewport.minHeight,

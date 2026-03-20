@@ -12,8 +12,11 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     resolve: {
       alias: {
-        '@wireframes/renderer': resolve(__dirname, '../renderer/src/index.ts'),
+        '@wireframes/renderer': resolve(__dirname, '../renderer/bundle/wireframe-renderer.min.js'),
       },
+    },
+    optimizeDeps: {
+      exclude: ['@wireframes/renderer'],
     },
     server: {
       proxy: {
