@@ -303,7 +303,7 @@ export function ProjectEditorPage() {
             documents={documents}
             activeDocType={activeDoc?.documentType ?? null}
             activeDocId={activeDoc?.documentId ?? null}
-            onSelect={(type, id) => { loadDocument(type, id); handleCenterViewChange('source') }}
+            onSelect={(type, id) => { loadDocument(type, id) }}
             isUnsaved={isUnsaved}
             onNewFile={() => setCreateFileOpen(true)}
           />

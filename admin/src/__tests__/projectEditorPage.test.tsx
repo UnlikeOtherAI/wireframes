@@ -121,6 +121,7 @@ describe('ProjectEditorPage', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     localStorage.clear()
+    document.cookie = 'wf_editor_center_view=source;path=/'
     lastEditorProps = null
     useAuthStore.setState({
       user: { id: 'u1', email: 'test@test.com', displayName: 'Test User', locale: 'en' },

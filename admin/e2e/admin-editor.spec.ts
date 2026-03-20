@@ -71,23 +71,24 @@ test('source/preview toggle switches center view', async ({ page }) => {
   await expect(page.getByTestId('view-source-btn')).toBeVisible()
   await expect(page.getByTestId('preview-area')).toBeVisible()
 
-  // Click a document to switch to source
-  await page.getByRole('button', { name: 'home.yaml' }).click()
+  // Toggle to source
+  await page.getByTestId('view-source-btn').click()
   await expect(page.getByTestId('preview-area')).toHaveCount(0)
 
   // Toggle back to preview
   await page.getByTestId('view-preview-btn').click()
   await expect(page.getByTestId('preview-area')).toBeVisible()
 
-  // Toggle to source
-  await page.getByTestId('view-source-btn').click()
-  await expect(page.getByTestId('preview-area')).toHaveCount(0)
+  // Clicking a document does NOT switch away from preview
+  await page.getByRole('button', { name: 'home.yaml' }).click()
+  await expect(page.getByTestId('preview-area')).toBeVisible()
 })
 
 test('pins chat, persists pane preferences, and applies a dev chat change', async ({ page }) => {
   await loginAndOpenProject(page)
 
   await page.getByRole('button', { name: 'home.yaml' }).click()
+  await page.getByTestId('view-source-btn').click()
   await expect(page.getByTestId('resize-nav-handle')).toBeVisible()
 
   // Drag the nav resize handle

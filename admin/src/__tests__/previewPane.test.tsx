@@ -239,30 +239,19 @@ describe('Preview Pane', () => {
     })
   })
 
-  it('switches preview to current page when editing a page document', async () => {
+  it('clicking a document does not switch away from preview view', async () => {
     mockFetchResponses()
     renderEditor()
     await waitFor(() => {
       expect(screen.getByText('about.yaml')).toBeInTheDocument()
     })
-    // Click on about page to edit it (auto-switches to source view)
+    // Default is preview view
+    expect(screen.getByTestId('preview-area')).toBeInTheDocument()
+    // Click on about page — should stay in preview
     await act(async () => {
       fireEvent.click(screen.getByText('about.yaml'))
     })
-    await waitFor(() => {
-      expect(screen.getByTestId('yaml-editor')).toBeInTheDocument()
-    })
-    // Switch back to preview to check page selector
-    await act(async () => {
-      fireEvent.click(screen.getByTestId('view-preview-btn'))
-    })
-    // Page selector should switch to about
-    await waitFor(() => {
-      const pageSelect = screen.queryByLabelText('Page') as HTMLSelectElement | null
-      if (pageSelect) {
-        expect(pageSelect.value).toBe('about')
-      }
-    })
+    expect(screen.getByTestId('preview-area')).toBeInTheDocument()
   })
 
   it('shows warning banner when validation problems exist but preview renders', async () => {
@@ -273,6 +262,10 @@ describe('Preview Pane', () => {
     })
     await act(async () => {
       fireEvent.click(screen.getByText('home.yaml'))
+    })
+    // Switch to source view to access the editor
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('view-source-btn'))
     })
     await waitFor(() => {
       expect(screen.getByTestId('yaml-editor')).toBeInTheDocument()
