@@ -37,17 +37,7 @@ mock.module("../repositories/chat.js", () => ({
 
 mock.module("../services/engine.js", () => ({
   validateProject: () => ({ ok: true, errors: [], warnings: [] }),
-}));
-
-mock.module("../services/build.js", () => ({
-  buildDocumentMap: () => ({
-    manifest: null,
-    sitemap: null,
-    templates: null,
-    components: null,
-    pages: new Map(),
-    datasets: new Map(),
-  }),
+  buildProject: () => ({ ok: true, html: "" }),
 }));
 
 mock.module("../ws/broadcast.js", () => ({
