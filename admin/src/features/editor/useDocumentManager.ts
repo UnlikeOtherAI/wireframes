@@ -262,6 +262,29 @@ export function useDocumentManager(projectId: string) {
     return state.current !== state.original
   }, [])
 
+  // Load all document contents for preview rendering
+  const loadAllDocuments = useCallback(async () => {
+    const promises = documents.map(async (doc) => {
+      const key = docKey(doc.documentType, doc.documentId)
+      if (docStateRef.current.has(key)) return
+      try {
+        const full = await getDocument(projectId, doc.documentType, doc.documentId)
+        docStateRef.current.set(key, {
+          documentType: doc.documentType,
+          documentId: doc.documentId,
+          original: full.content,
+          current: full.content,
+          contentHash: full.contentHash,
+          problems: [],
+          serverProblems: [],
+        })
+      } catch {
+        // Skip documents that fail to load
+      }
+    })
+    await Promise.all(promises)
+  }, [documents, projectId])
+
   // Cleanup timers
   useEffect(() => {
     return () => {
@@ -279,7 +302,9 @@ export function useDocumentManager(projectId: string) {
     autoSaveEnabled,
     setAutoSaveEnabled,
     conflict,
+    docStateRef,
     loadDocument,
+    loadAllDocuments,
     getActiveContent,
     updateContent,
     saveDocument,

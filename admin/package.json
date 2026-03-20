@@ -23,7 +23,8 @@
     "@codemirror/view": "^6.0.0",
     "@codemirror/commands": "^6.0.0",
     "yaml": "^2.0.0",
-    "zustand": "^5.0.0"
+    "zustand": "^5.0.0",
+    "@wireframes/renderer": "workspace:*"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.0.0",

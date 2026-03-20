@@ -131,6 +131,23 @@
       "conflict": "Conflict detected"
     }
   },
+  "preview": {
+    "title": "Preview",
+    "toolbar": "Preview controls",
+    "selectPage": "Select a page to preview",
+    "device": "Device",
+    "page": "Page",
+    "renderMode": "Render mode",
+    "modeLine": "Line",
+    "modeCard": "Card",
+    "devices": {
+      "web": "Web",
+      "tablet_portrait": "Tablet Portrait",
+      "tablet_landscape": "Tablet Landscape",
+      "mobile_portrait": "Mobile Portrait",
+      "mobile_landscape": "Mobile Landscape"
+    }
+  },
   "account": {
     "title": "Account Settings",
     "backToDashboard": "Back to dashboard",

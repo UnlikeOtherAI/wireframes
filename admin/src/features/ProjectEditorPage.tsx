@@ -1,11 +1,19 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { YamlEditor, type YamlEditorHandle } from './editor/YamlEditor'
 import { DocumentTree } from './editor/DocumentTree'
 import { ProblemsPanel } from './editor/ProblemsPanel'
 import { ConflictDialog } from './editor/ConflictDialog'
+import { PreviewPane } from './editor/PreviewPane'
+import { PreviewBreadcrumb } from './editor/PreviewBreadcrumb'
+import { PreviewToolbar } from './editor/PreviewToolbar'
 import { useDocumentManager, type Problem } from './editor/useDocumentManager'
+import {
+  usePreviewRenderer,
+  type DeviceType,
+  type RenderMode,
+} from './editor/usePreviewRenderer'
 import type { Diagnostic } from '@codemirror/lint'
 
 function lineColToPos(doc: string, line: number, col: number): number {
@@ -55,6 +63,18 @@ export function ProjectEditorPage() {
   const { t } = useTranslation()
   const editorRef = useRef<YamlEditorHandle>(null)
 
+  const [device, setDevice] = useState<DeviceType>('web')
+  const [renderMode, setRenderMode] = useState<RenderMode>(() => {
+    const stored = localStorage.getItem('wf_preview_mode')
+    return stored === 'line' || stored === 'card' ? stored : 'card'
+  })
+  const [previewPageId, setPreviewPageId] = useState<string | null>(null)
+
+  const handleRenderModeChange = useCallback((mode: RenderMode) => {
+    setRenderMode(mode)
+    localStorage.setItem('wf_preview_mode', mode)
+  }, [])
+
   const {
     documents,
     activeDoc,
@@ -64,7 +84,9 @@ export function ProjectEditorPage() {
     autoSaveEnabled,
     setAutoSaveEnabled,
     conflict,
+    docStateRef,
     loadDocument,
+    loadAllDocuments,
     getActiveContent,
     updateContent,
     saveDocument,
@@ -72,6 +94,37 @@ export function ProjectEditorPage() {
     dismissConflict,
     isUnsaved,
   } = useDocumentManager(projectId ?? '')
+
+  // Load all document contents for preview when document list is available
+  const [allDocsLoaded, setAllDocsLoaded] = useState(false)
+  useEffect(() => {
+    if (!loading && documents.length > 0 && !allDocsLoaded) {
+      loadAllDocuments().then(() => setAllDocsLoaded(true))
+    }
+  }, [loading, documents, allDocsLoaded, loadAllDocuments])
+
+  // Auto-select first page for preview when documents are loaded
+  useEffect(() => {
+    if (allDocsLoaded && previewPageId === null) {
+      const firstPage = documents.find((d) => d.documentType === 'page')
+      if (firstPage) setPreviewPageId(firstPage.documentId)
+    }
+  }, [allDocsLoaded, previewPageId, documents])
+
+  // When editing a page document, switch the preview to that page
+  useEffect(() => {
+    if (activeDoc?.documentType === 'page') {
+      setPreviewPageId(activeDoc.documentId)
+    }
+  }, [activeDoc])
+
+  const { previewState, scheduleRender } = usePreviewRenderer(
+    docStateRef,
+    documents,
+    previewPageId,
+    device,
+    renderMode,
+  )
 
   const content = getActiveContent()
 
@@ -90,7 +143,20 @@ export function ProjectEditorPage() {
     saveDocument()
   }, [saveDocument])
 
-  // Determine the effective display status: show "Unsaved changes" when dirty + idle
+  const handleContentChange = useCallback((value: string) => {
+    updateContent(value)
+    scheduleRender()
+  }, [updateContent, scheduleRender])
+
+  const handlePreviewNavigate = useCallback((routeId: string) => {
+    const page = documents.find(
+      (d) => d.documentType === 'page' && d.documentId === routeId,
+    )
+    if (page) {
+      setPreviewPageId(page.documentId)
+    }
+  }, [documents])
+
   const displayStatus = activeDoc && saveStatus === 'idle' && isUnsaved(activeDoc.documentType, activeDoc.documentId)
     ? 'unsaved'
     : saveStatus
@@ -172,7 +238,7 @@ export function ProjectEditorPage() {
         )}
       </header>
 
-      {/* Main layout */}
+      {/* Main layout: sidebar + editor + preview */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Document tree sidebar */}
         <DocumentTree
@@ -191,7 +257,7 @@ export function ProjectEditorPage() {
                 <YamlEditor
                   ref={editorRef}
                   value={content}
-                  onChange={updateContent}
+                  onChange={handleContentChange}
                   diagnostics={diagnostics}
                 />
               </div>
@@ -213,6 +279,39 @@ export function ProjectEditorPage() {
               {t('editor.selectDocument')}
             </div>
           )}
+        </div>
+
+        {/* Preview area */}
+        <div
+          data-testid="preview-area"
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            borderLeft: '1px solid #ddd',
+            overflow: 'hidden',
+          }}
+        >
+          <PreviewToolbar
+            device={device}
+            onDeviceChange={setDevice}
+            renderMode={renderMode}
+            onRenderModeChange={handleRenderModeChange}
+            pageIds={previewState.pageIds}
+            activePage={previewPageId}
+            onPageChange={setPreviewPageId}
+          />
+          <PreviewBreadcrumb
+            pageId={previewPageId}
+            templateName={previewState.templateName}
+            routePath={previewState.routePath}
+          />
+          <PreviewPane
+            html={previewState.html}
+            error={previewState.error}
+            device={device}
+            onNavigate={handlePreviewNavigate}
+          />
         </div>
       </div>
 
