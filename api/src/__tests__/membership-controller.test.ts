@@ -244,6 +244,23 @@ describe("sendInviteController", () => {
     expect(res.status).toBe(409);
   });
 
+  test("returns 409 for mixed-case email of existing member", async () => {
+    repoState.projectMembership = { role: "owner" };
+    repoState.userByEmail = {
+      id: "user-3",
+      email: "User@Example.COM",
+    };
+    repoState.membershipByUserAndProject = { role: "viewer" };
+
+    const res = await inviteHandler(
+      makeRequest("/projects/project-1/invite", "POST", {
+        email: "user@example.com",
+        role: "editor",
+      }),
+    );
+    expect(res.status).toBe(409);
+  });
+
   test("returns 400 for missing email", async () => {
     repoState.projectMembership = { role: "owner" };
 
@@ -369,6 +386,7 @@ describe("changeMemberRoleController", () => {
     );
     expect(res.status).toBe(200);
     expect(repoState.transferCalled).toBe(true);
+    expect(repoState.transferArgs).toEqual(["project-1", "user-1", "user-2"]);
   });
 
   test("returns 400 when trying to change own role", async () => {

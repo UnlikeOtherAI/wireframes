@@ -1,4 +1,4 @@
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { memberships, users, invites, projects } from "../db/schema.js";
 
@@ -47,7 +47,7 @@ export async function findUserByEmail(
   const rows = await db
     .select({ id: users.id, email: users.email })
     .from(users)
-    .where(eq(users.email, email))
+    .where(sql`lower(${users.email}) = lower(${email})`)
     .limit(1);
   return rows[0] ?? null;
 }
@@ -173,6 +173,11 @@ export async function transferOwnership(
           eq(memberships.projectId, projectId),
         ),
       );
+
+    await tx
+      .update(projects)
+      .set({ ownerId: newOwnerId })
+      .where(eq(projects.id, projectId));
   });
 }
 
