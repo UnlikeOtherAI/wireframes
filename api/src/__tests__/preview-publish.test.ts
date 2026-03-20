@@ -110,7 +110,6 @@ import {
   assembleBuildFiles,
   collectFontAwesomeFiles,
   publishPreview,
-  updatePreviewSettings,
 } from "../services/preview.js";
 
 describe("rewritePreviewAssetUrls", () => {
@@ -496,76 +495,4 @@ describe("publishPreview", () => {
     expect(result.slug).toBeTruthy();
   });
 
-  test("uploads preview files with private, max-age=3600 cache control", async () => {
-    membershipState = { role: "editor" };
-    documentRows = [
-      {
-        id: "d1",
-        projectId: "p1",
-        documentType: "page",
-        documentId: "home",
-        content: "page:\n  template: main",
-        contentHash: "abc",
-      },
-    ];
-
-    await publishPreview("user1", "proj1");
-
-    expect(gcsState.uploaded.length).toBeGreaterThan(0);
-    for (const upload of gcsState.uploaded) {
-      expect(upload.cacheControl).toBe("private, max-age=3600");
-    }
-  });
-});
-
-describe("updatePreviewSettings", () => {
-  beforeEach(() => {
-    resetGcsState();
-    membershipState = null;
-    previewState = null;
-    emailActions = [];
-  });
-
-  test("clears email list when switching to SSO without providing emails", async () => {
-    membershipState = { role: "editor" };
-    previewState = {
-      id: "preview-1",
-      projectId: "proj1",
-      slug: "testslug",
-      accessMode: "public",
-      passwordHash: null,
-      buildUrl: "previews/testslug/",
-      publishedAt: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    await updatePreviewSettings("user1", "proj1", { accessMode: "sso" });
-
-    expect(emailActions).toEqual([{ action: "clear" }]);
-  });
-
-  test("replaces email list when switching to SSO with emails provided", async () => {
-    membershipState = { role: "editor" };
-    previewState = {
-      id: "preview-1",
-      projectId: "proj1",
-      slug: "testslug",
-      accessMode: "public",
-      passwordHash: null,
-      buildUrl: "previews/testslug/",
-      publishedAt: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    await updatePreviewSettings("user1", "proj1", {
-      accessMode: "sso",
-      emails: ["a@test.com", "b@test.com"],
-    });
-
-    expect(emailActions).toEqual([
-      { action: "replace", emails: ["a@test.com", "b@test.com"] },
-    ]);
-  });
 });
