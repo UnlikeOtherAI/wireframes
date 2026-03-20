@@ -19,3 +19,17 @@ export const buildProject: (
   indexHtml: string;
   platformIndexes: Record<string, string>;
 } = engine.build.buildProject;
+
+export const validateDocument: (
+  document: unknown,
+  filePath: string,
+  supportedSpecVersion?: string,
+) => { documentType: string; specVersion: string; id: string } =
+  engine.schema.validateDocument;
+
+export const SchemaLoadError: {
+  new (message: string, code: string, details?: object): Error & {
+    code: string;
+    details?: { errors?: Array<{ code?: string; path?: string; message: string }> };
+  };
+} = engine.schema.SchemaLoadError;
