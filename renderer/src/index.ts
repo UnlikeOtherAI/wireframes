@@ -5,7 +5,29 @@ import { resolveDataSources } from './data.js';
 
 // Engine imports — esbuild resolves these from the engine package (CJS → ESM)
 // @ts-expect-error CJS module without type declarations
-import { buildProject, renderPage as engineRenderPage } from '../../engine/build/index.js';
+import * as engineBuildModule from '../../engine/build/index.js';
+
+const {
+  buildProject,
+  renderPage: engineRenderPage,
+} = engineBuildModule as {
+  buildProject: (
+    documentMap: DocumentMap,
+    options: { platform: string; basePath: string },
+  ) => {
+    ok: boolean
+    error?: string
+    pages: Array<{ pageId: string; html: string }>
+    css: string
+    js: string
+    routeTable: Record<string, string>
+  }
+  renderPage: (
+    documentMap: DocumentMap,
+    pageId: string,
+    options: { routeTable: Record<string, string>; assetUrlPrefix: string },
+  ) => { ok: boolean; error?: string; html?: string }
+};
 
 export type { DocumentMap } from './document-map.js';
 export type { InteractionRuntimeOptions } from './interactions.js';

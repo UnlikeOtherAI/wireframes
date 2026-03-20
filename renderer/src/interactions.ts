@@ -1,5 +1,13 @@
 // @ts-expect-error CJS module without type declarations
-import { buildInteractionRuntime, buildInteractionRuntimeFromWindowContext } from '../../engine/renderer/interactions.js';
+import * as interactionRuntimeModule from '../../engine/renderer/interactions.js';
+
+const {
+  buildInteractionRuntime,
+  buildInteractionRuntimeFromWindowContext,
+} = interactionRuntimeModule as {
+  buildInteractionRuntime: (options: InteractionRuntimeOptions) => string
+  buildInteractionRuntimeFromWindowContext: (options: InteractionRuntimeOptions) => string
+};
 
 export interface InteractionRuntimeOptions {
   routeId: string;

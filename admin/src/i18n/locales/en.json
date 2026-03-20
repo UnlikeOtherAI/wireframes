@@ -180,6 +180,43 @@
       "mobile_landscape": "Mobile Landscape"
     }
   },
+  "chat": {
+    "button": "Chat",
+    "open": "Open chat",
+    "close": "Close",
+    "panel": "Editor chat",
+    "title": "Assistant",
+    "input": "Chat message",
+    "send": "Send",
+    "sending": "Sending...",
+    "newConversation": "New conversation",
+    "streamingPlaceholder": "Thinking...",
+    "scopeMode": "Workspace mode",
+    "status": {
+      "disconnected": "Disconnected",
+      "connecting": "Connecting",
+      "connected": "Connected",
+      "reconnecting": "Reconnecting"
+    },
+    "actions": {
+      "addPage": "Add a page",
+      "editPage": "Edit this page",
+      "explainNode": "Explain this node",
+      "buildPreview": "Build preview"
+    },
+    "prompts": {
+      "addPage": "Add a new page to this project and update the navigation if needed.",
+      "editPage": "Edit the current page {{page}}. Keep the structure consistent with the rest of the project.",
+      "explainNode": "Explain what the selected node {{node}} does and how it fits into the current page."
+    },
+    "diff": {
+      "title": "Pending document change",
+      "document": "Pending change for {{document}}",
+      "apply": "Apply",
+      "applying": "Applying...",
+      "reject": "Reject"
+    }
+  },
   "account": {
     "title": "Account Settings",
     "backToDashboard": "Back to dashboard",

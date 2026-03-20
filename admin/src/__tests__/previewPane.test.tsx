@@ -151,7 +151,7 @@ describe('Preview Pane', () => {
     mockFetchResponses()
     renderEditor()
     await waitFor(() => {
-      expect(screen.getByTestId('preview-iframe')).toBeInTheDocument()
+      expect(screen.getByTestId('workspace-preview-iframe')).toBeInTheDocument()
     })
   })
 
@@ -186,7 +186,7 @@ describe('Preview Pane', () => {
     await act(async () => {
       fireEvent.change(deviceSelect, { target: { value: 'mobile_portrait' } })
     })
-    const frame = screen.getByTestId('device-frame')
+    const frame = screen.getByTestId('workspace-device-frame')
     expect(frame.style.width).toBe('390px')
   })
 

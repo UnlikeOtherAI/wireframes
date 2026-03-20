@@ -56,6 +56,19 @@ export function useDocumentManager(projectId: string) {
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const validateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const updateDocumentSummary = useCallback((
+    documentType: string,
+    documentId: string,
+    contentHash: string,
+    updatedAt: string,
+  ) => {
+    setDocuments((prev) => prev.map((doc) => (
+      doc.documentType === documentType && doc.documentId === documentId
+        ? { ...doc, contentHash, updatedAt }
+        : doc
+    )))
+  }, [])
+
   // Load document list
   useEffect(() => {
     let cancelled = false
@@ -95,6 +108,12 @@ export function useDocumentManager(projectId: string) {
       if (result.document.contentHash) {
         state.original = state.current
         state.contentHash = result.document.contentHash
+        updateDocumentSummary(
+          state.documentType,
+          state.documentId,
+          result.document.contentHash,
+          result.document.updatedAt,
+        )
         setSaveStatus('saved')
       } else {
         // 422 validation response — server rejected but content is still unsaved
@@ -126,6 +145,28 @@ export function useDocumentManager(projectId: string) {
         setSaveStatus('error')
       }
     }
+  }, [projectId, updateDocumentSummary])
+
+  const ensureDocumentState = useCallback(async (
+    documentType: string,
+    documentId: string,
+  ): Promise<DocumentState> => {
+    const key = docKey(documentType, documentId)
+    const existing = docStateRef.current.get(key)
+    if (existing) return existing
+
+    const full = await getDocument(projectId, documentType, documentId)
+    const state: DocumentState = {
+      documentType,
+      documentId,
+      original: full.content,
+      current: full.content,
+      contentHash: full.contentHash,
+      problems: [],
+      serverProblems: [],
+    }
+    docStateRef.current.set(key, state)
+    return state
   }, [projectId])
 
   // Load a specific document
@@ -153,24 +194,14 @@ export function useDocumentManager(projectId: string) {
     }
 
     try {
-      const full = await getDocument(projectId, documentType, documentId)
-      const state: DocumentState = {
-        documentType,
-        documentId,
-        original: full.content,
-        current: full.content,
-        contentHash: full.contentHash,
-        problems: [],
-        serverProblems: [],
-      }
-      docStateRef.current.set(key, state)
+      const state = await ensureDocumentState(documentType, documentId)
       setActiveDoc({ documentType, documentId, key })
-      setProblems([])
+      setProblems([...state.problems, ...state.serverProblems])
       setSaveStatus('idle')
     } catch {
       setSaveStatus('error')
     }
-  }, [projectId, activeDoc, saveDocByKey])
+  }, [activeDoc, ensureDocumentState, saveDocByKey])
 
   const getActiveContent = useCallback((): string => {
     if (!activeDoc) return ''
@@ -265,25 +296,94 @@ export function useDocumentManager(projectId: string) {
   // Load all document contents for preview rendering
   const loadAllDocuments = useCallback(async () => {
     const promises = documents.map(async (doc) => {
-      const key = docKey(doc.documentType, doc.documentId)
-      if (docStateRef.current.has(key)) return
       try {
-        const full = await getDocument(projectId, doc.documentType, doc.documentId)
-        docStateRef.current.set(key, {
-          documentType: doc.documentType,
-          documentId: doc.documentId,
-          original: full.content,
-          current: full.content,
-          contentHash: full.contentHash,
-          problems: [],
-          serverProblems: [],
-        })
+        await ensureDocumentState(doc.documentType, doc.documentId)
       } catch {
         // Skip documents that fail to load
       }
     })
     await Promise.all(promises)
-  }, [documents, projectId])
+  }, [documents, ensureDocumentState])
+
+  const applyDocumentContent = useCallback(async (
+    documentType: string,
+    documentId: string,
+    content: string,
+  ) => {
+    const state = await ensureDocumentState(documentType, documentId)
+    state.current = content
+    state.problems = validateYaml(content)
+    state.serverProblems = []
+
+    const result = await upsertDocument(
+      projectId,
+      documentType,
+      documentId,
+      content,
+      state.contentHash,
+    )
+
+    if (result.validationErrors && result.validationErrors.length > 0) {
+      state.serverProblems = result.validationErrors
+      throw new ApiError(422, JSON.stringify({ details: result.validationErrors }))
+    }
+
+    state.original = content
+    state.current = content
+    state.contentHash = result.document.contentHash
+    updateDocumentSummary(
+      documentType,
+      documentId,
+      result.document.contentHash,
+      result.document.updatedAt,
+    )
+
+    if (activeDoc?.key === docKey(documentType, documentId)) {
+      setProblems([])
+      setSaveStatus('saved')
+    }
+
+    return result.document
+  }, [
+    activeDoc,
+    ensureDocumentState,
+    projectId,
+    updateDocumentSummary,
+    validateYaml,
+  ])
+
+  const syncDocumentContent = useCallback((
+    documentType: string,
+    documentId: string,
+    content: string,
+    contentHash: string,
+    updatedAt: string,
+  ) => {
+    const key = docKey(documentType, documentId)
+    const existing = docStateRef.current.get(key)
+    const nextState: DocumentState = existing ?? {
+      documentType,
+      documentId,
+      original: content,
+      current: content,
+      contentHash,
+      problems: [],
+      serverProblems: [],
+    }
+
+    nextState.original = content
+    nextState.current = content
+    nextState.contentHash = contentHash
+    nextState.problems = []
+    nextState.serverProblems = []
+    docStateRef.current.set(key, nextState)
+    updateDocumentSummary(documentType, documentId, contentHash, updatedAt)
+
+    if (activeDoc?.key === key) {
+      setProblems([])
+      setSaveStatus('idle')
+    }
+  }, [activeDoc, updateDocumentSummary])
 
   // Cleanup timers
   useEffect(() => {
@@ -308,6 +408,8 @@ export function useDocumentManager(projectId: string) {
     getActiveContent,
     updateContent,
     saveDocument,
+    applyDocumentContent,
+    syncDocumentContent,
     resolveConflict,
     dismissConflict,
     isUnsaved,

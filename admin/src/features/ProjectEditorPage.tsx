@@ -5,7 +5,6 @@ import { YamlEditor, type YamlEditorHandle } from './editor/YamlEditor'
 import { DocumentTree } from './editor/DocumentTree'
 import { ProblemsPanel } from './editor/ProblemsPanel'
 import { ConflictDialog } from './editor/ConflictDialog'
-import { PreviewPane } from './editor/PreviewPane'
 import { PreviewBreadcrumb } from './editor/PreviewBreadcrumb'
 import { PreviewToolbar } from './editor/PreviewToolbar'
 import { useDocumentManager, type Problem } from './editor/useDocumentManager'
@@ -15,6 +14,11 @@ import {
   type RenderMode,
 } from './editor/usePreviewRenderer'
 import type { Diagnostic } from '@codemirror/lint'
+import { ChatPopup } from './chat/ChatPopup'
+import { WorkspacePreview } from './workspace/WorkspacePreview'
+import { NodeTree } from './workspace/NodeTree'
+import { SitemapView } from './workspace/SitemapView'
+import { buildNodeIdToAddressMap, useResolvedNodes, useSitemapNodes } from './workspace/useWorkspaceData'
 
 function lineColToPos(doc: string, line: number, col: number): number {
   let pos = 0
@@ -58,6 +62,22 @@ const STATUS_STYLES: Record<string, { color: string }> = {
   conflict: { color: '#d32f2f' },
 }
 
+function buildYamlFilesMap(
+  docStates: Map<string, { documentType: string; documentId: string; current: string }>,
+): Record<string, string> {
+  const files: Record<string, string> = {}
+  for (const [, state] of docStates) {
+    if (state.documentType === 'page') {
+      files[`pages/${state.documentId}.yaml`] = state.current
+    } else if (state.documentType === 'dataset') {
+      files[`data/${state.documentId}.yaml`] = state.current
+    } else {
+      files[`${state.documentType}.yaml`] = state.current
+    }
+  }
+  return files
+}
+
 export function ProjectEditorPage() {
   const { id: projectId } = useParams<{ id: string }>()
   const { t } = useTranslation()
@@ -69,6 +89,8 @@ export function ProjectEditorPage() {
     return stored === 'line' || stored === 'card' ? stored : 'card'
   })
   const [previewPageId, setPreviewPageId] = useState<string | null>(null)
+  const [selectedNode, setSelectedNode] = useState<string | null>(null)
+  const [workspaceMode, setWorkspaceMode] = useState<'preview' | 'tree' | 'sitemap'>('preview')
 
   const handleRenderModeChange = useCallback((mode: RenderMode) => {
     setRenderMode(mode)
@@ -90,6 +112,7 @@ export function ProjectEditorPage() {
     getActiveContent,
     updateContent,
     saveDocument,
+    applyDocumentContent,
     resolveConflict,
     dismissConflict,
     isUnsaved,
@@ -127,6 +150,10 @@ export function ProjectEditorPage() {
   )
 
   const content = getActiveContent()
+  const yamlFiles = useMemo(() => buildYamlFilesMap(docStateRef.current), [docStateRef, documents, previewState])
+  const resolvedNodes = useResolvedNodes(yamlFiles, previewPageId ?? '')
+  const sitemapNodes = useSitemapNodes(yamlFiles)
+  const nodeIdToAddress = useMemo(() => buildNodeIdToAddressMap(resolvedNodes), [resolvedNodes])
 
   const diagnostics = useMemo(
     () => problemsToDiagnostics(problems, content),
@@ -154,8 +181,18 @@ export function ProjectEditorPage() {
     )
     if (page) {
       setPreviewPageId(page.documentId)
+      setSelectedNode(null)
     }
   }, [documents])
+
+  const handleApplyChatDocument = useCallback(async (
+    documentType: string,
+    documentId: string,
+    nextContent: string,
+  ) => {
+    await applyDocumentContent(documentType, documentId, nextContent)
+    scheduleRender()
+  }, [applyDocumentContent, scheduleRender])
 
   const displayStatus = activeDoc && saveStatus === 'idle' && isUnsaved(activeDoc.documentType, activeDoc.documentId)
     ? 'unsaved'
@@ -306,13 +343,75 @@ export function ProjectEditorPage() {
             templateName={previewState.templateName}
             routePath={previewState.routePath}
           />
-          <PreviewPane
-            html={previewState.html}
-            error={previewState.error}
-            hasWarnings={problems.length > 0}
-            device={device}
-            onNavigate={handlePreviewNavigate}
-          />
+          <div
+            role="tablist"
+            aria-label={t('chat.scopeMode')}
+            style={{ display: 'flex', gap: '8px', padding: '8px 12px', borderBottom: '1px solid #eee' }}
+          >
+            {(['preview', 'tree', 'sitemap'] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                role="tab"
+                aria-selected={workspaceMode === mode}
+                onClick={() => setWorkspaceMode(mode)}
+                style={{
+                  border: '1px solid #ddd',
+                  borderRadius: '999px',
+                  background: workspaceMode === mode ? '#17324d' : '#fff',
+                  color: workspaceMode === mode ? '#fff' : '#17324d',
+                  padding: '6px 12px',
+                }}
+              >
+                {mode === 'preview' ? t('preview.title') : t(`workspace.tab${mode === 'tree' ? 'Tree' : 'Sitemap'}`)}
+              </button>
+            ))}
+          </div>
+          {workspaceMode === 'preview' && (
+            <div data-testid="preview-pane" style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+              {problems.length > 0 && (
+                <div
+                  data-testid="preview-warning-banner"
+                  role="alert"
+                  style={{
+                    padding: '8px 12px',
+                    background: '#fff8e1',
+                    borderBottom: '1px solid #ffe082',
+                    color: '#6d4c00',
+                    fontSize: '13px',
+                  }}
+                >
+                  {t('preview.validationWarnings')}
+                </div>
+              )}
+              <WorkspacePreview
+                yamlFiles={yamlFiles}
+                activePage={previewPageId ?? ''}
+                device={device}
+                renderMode={renderMode}
+                onNavigate={handlePreviewNavigate}
+                onNodeSelect={setSelectedNode}
+                highlightedNode={selectedNode}
+                nodeIdToAddress={nodeIdToAddress}
+              />
+            </div>
+          )}
+          {workspaceMode === 'tree' && (
+            <div style={{ flex: 1, overflow: 'auto' }}>
+              <NodeTree
+                nodes={resolvedNodes}
+                onNodeSelect={setSelectedNode}
+                selectedNode={selectedNode}
+              />
+            </div>
+          )}
+          {workspaceMode === 'sitemap' && (
+            <SitemapView
+              nodes={sitemapNodes}
+              activePage={previewPageId ?? ''}
+              onPageChange={handlePreviewNavigate}
+            />
+          )}
         </div>
       </div>
 
@@ -324,6 +423,18 @@ export function ProjectEditorPage() {
           onDismiss={dismissConflict}
         />
       )}
+      <ChatPopup
+        projectId={projectId}
+        scope={{
+          projectId,
+          activePage: previewPageId ?? undefined,
+          selectedNode: selectedNode ?? undefined,
+          workspaceMode,
+          device,
+          renderMode,
+        }}
+        onApplyDocument={handleApplyChatDocument}
+      />
     </main>
   )
 }
