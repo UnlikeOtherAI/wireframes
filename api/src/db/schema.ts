@@ -4,6 +4,7 @@ import {
   uuid,
   text,
   timestamp,
+  jsonb,
   unique,
 } from "drizzle-orm/pg-core";
 
@@ -14,6 +15,11 @@ export const membershipRole = pgEnum("membership_role", [
 ]);
 
 export const inviteRole = pgEnum("invite_role", ["editor", "viewer"]);
+
+export const chatMessageRole = pgEnum("chat_message_role", [
+  "user",
+  "assistant",
+]);
 
 export const accessMode = pgEnum("access_mode", [
   "public",
@@ -134,6 +140,37 @@ export const invites = pgTable("invites", {
     .references(() => users.id)
     .notNull(),
   acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const chatSessions = pgTable("chat_sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  projectId: uuid("project_id")
+    .references(() => projects.id, { onDelete: "cascade" })
+    .notNull(),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  scope: jsonb("scope").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
+
+export const chatMessages = pgTable("chat_messages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sessionId: uuid("session_id")
+    .references(() => chatSessions.id, { onDelete: "cascade" })
+    .notNull(),
+  role: chatMessageRole("role").notNull(),
+  content: text("content").notNull(),
+  toolCalls: jsonb("tool_calls"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

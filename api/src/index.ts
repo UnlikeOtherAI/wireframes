@@ -7,6 +7,7 @@ import { errorHandler } from "./middleware/error-handler.js";
 import { requestLogger } from "./middleware/request-logger.js";
 import { router } from "./routes/index.js";
 import { tryUpgrade, setJwtVerifier } from "./ws/upgrade.js";
+import { setServer } from "./ws/broadcast.js";
 import { verifyJwt } from "./services/jwt.js";
 import {
   handleOpen,
@@ -39,6 +40,8 @@ const server = Bun.serve<WsData>({
   },
   websocket: wsHandlers,
 });
+
+setServer(server);
 
 const dbOk = await verifyConnection();
 if (!dbOk) {

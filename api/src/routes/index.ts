@@ -7,6 +7,7 @@ import { handleBuildRoute } from "./build.js";
 import { handleMembershipRoute } from "./membership.js";
 import { handleUserProfileRoute } from "./user-profile.js";
 import { handleAssetRoute } from "./asset.js";
+import { handleChatRoute } from "./chat.js";
 
 export const router: Handler = async (req) => {
   const healthResponse = handleHealthRoute(req);
@@ -23,6 +24,9 @@ export const router: Handler = async (req) => {
 
   const assetResponse = handleAssetRoute(req);
   if (assetResponse) return assetResponse;
+
+  const chatResponse = handleChatRoute(req);
+  if (chatResponse) return chatResponse;
 
   const buildResponse = handleBuildRoute(req);
   if (buildResponse) return buildResponse;

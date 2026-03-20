@@ -8,9 +8,12 @@ import {
   previews,
   previewAccess,
   invites,
+  chatSessions,
+  chatMessages,
   membershipRole,
   inviteRole,
   accessMode,
+  chatMessageRole,
 } from "../db/schema.js";
 
 describe("enums", () => {
@@ -24,6 +27,10 @@ describe("enums", () => {
 
   test("accessMode has public, password, sso", () => {
     expect(accessMode.enumValues).toEqual(["public", "password", "sso"]);
+  });
+
+  test("chatMessageRole has user, assistant", () => {
+    expect(chatMessageRole.enumValues).toEqual(["user", "assistant"]);
   });
 });
 
@@ -177,5 +184,58 @@ describe("invites table", () => {
 
   test("token is not nullable", () => {
     expect(invites.token.notNull).toBe(true);
+  });
+});
+
+describe("chatSessions table", () => {
+  test("has correct table name", () => {
+    expect(getTableName(chatSessions)).toBe("chat_sessions");
+  });
+
+  test("has all required columns", () => {
+    const columns = Object.keys(chatSessions);
+    expect(columns).toContain("id");
+    expect(columns).toContain("projectId");
+    expect(columns).toContain("userId");
+    expect(columns).toContain("scope");
+    expect(columns).toContain("createdAt");
+    expect(columns).toContain("updatedAt");
+    expect(columns).toContain("expiresAt");
+  });
+
+  test("projectId is not nullable", () => {
+    expect(chatSessions.projectId.notNull).toBe(true);
+  });
+
+  test("userId is not nullable", () => {
+    expect(chatSessions.userId.notNull).toBe(true);
+  });
+});
+
+describe("chatMessages table", () => {
+  test("has correct table name", () => {
+    expect(getTableName(chatMessages)).toBe("chat_messages");
+  });
+
+  test("has all required columns", () => {
+    const columns = Object.keys(chatMessages);
+    expect(columns).toContain("id");
+    expect(columns).toContain("sessionId");
+    expect(columns).toContain("role");
+    expect(columns).toContain("content");
+    expect(columns).toContain("toolCalls");
+    expect(columns).toContain("createdAt");
+  });
+
+  test("sessionId is not nullable", () => {
+    expect(chatMessages.sessionId.notNull).toBe(true);
+  });
+
+  test("content is not nullable", () => {
+    expect(chatMessages.content.notNull).toBe(true);
+  });
+
+  test("toolCalls is nullable", () => {
+    expect(chatMessages.toolCalls.notNull).toBe(false);
   });
 });
