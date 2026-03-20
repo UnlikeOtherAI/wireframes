@@ -44,6 +44,10 @@
     "decline": "Decline",
     "accepting": "Accepting...",
     "declining": "Declining...",
+    "fileCount": "{{count}} files",
+    "fileCount_one": "{{count}} file",
+    "pageCount": "{{count}} pages",
+    "pageCount_one": "{{count}} page",
     "networkError": "Failed to load projects. Please try again.",
     "retry": "Retry"
   },

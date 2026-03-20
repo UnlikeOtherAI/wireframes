@@ -6,6 +6,8 @@ export interface Project {
   role: string
   createdAt: string
   updatedAt: string
+  documentCount?: number
+  pageCount?: number
 }
 
 export function listProjects(): Promise<Project[]> {

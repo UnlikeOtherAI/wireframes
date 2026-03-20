@@ -1,4 +1,4 @@
-import { eq, and, desc, count } from "drizzle-orm";
+import { eq, and, desc, count, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { projects, memberships, documents } from "../db/schema.js";
 
@@ -10,6 +10,8 @@ export interface ProjectWithRole {
   role: MembershipRole;
   createdAt: Date;
   updatedAt: Date;
+  documentCount: number;
+  pageCount: number;
 }
 
 export interface ProjectDetail {
@@ -22,6 +24,16 @@ export interface ProjectDetail {
 export async function findProjectsByUserId(
   userId: string,
 ): Promise<ProjectWithRole[]> {
+  const docCountSq = db
+    .select({
+      projectId: documents.projectId,
+      total: count().as("total"),
+      pages: sql<number>`count(*) filter (where ${documents.documentType} = 'page')`.as("pages"),
+    })
+    .from(documents)
+    .groupBy(documents.projectId)
+    .as("doc_counts");
+
   const rows = await db
     .select({
       id: projects.id,
@@ -29,9 +41,12 @@ export async function findProjectsByUserId(
       role: memberships.role,
       createdAt: projects.createdAt,
       updatedAt: projects.updatedAt,
+      documentCount: sql<number>`coalesce(${docCountSq.total}, 0)`,
+      pageCount: sql<number>`coalesce(${docCountSq.pages}, 0)`,
     })
     .from(memberships)
     .innerJoin(projects, eq(memberships.projectId, projects.id))
+    .leftJoin(docCountSq, eq(projects.id, docCountSq.projectId))
     .where(eq(memberships.userId, userId))
     .orderBy(desc(projects.updatedAt));
   return rows as ProjectWithRole[];

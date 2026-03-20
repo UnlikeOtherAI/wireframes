@@ -18,7 +18,7 @@ import {
 const gridStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-  gap: 16,
+  gap: 22,
 }
 
 const newCardStyle: React.CSSProperties = {
@@ -26,13 +26,11 @@ const newCardStyle: React.CSSProperties = {
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  aspectRatio: '1',
-  padding: 16,
+  padding: 20,
   border: `2px dashed ${adminColors.border}`,
   borderRadius: adminRadii.card,
   cursor: 'pointer',
   minHeight: 180,
-  minWidth: 180,
   color: adminColors.textTertiary,
   fontSize: 14,
   background: adminColors.cardBg,
@@ -40,13 +38,11 @@ const newCardStyle: React.CSSProperties = {
 }
 
 const skeletonCardStyle: React.CSSProperties = {
-  aspectRatio: '1',
-  padding: 16,
+  padding: 20,
   border: `1px solid ${adminColors.border}`,
   borderRadius: adminRadii.card,
   backgroundColor: adminColors.surfaceMuted,
   minHeight: 180,
-  minWidth: 180,
   animation: 'pulse 1.5s ease-in-out infinite',
 }
 

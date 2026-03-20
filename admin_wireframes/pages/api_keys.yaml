@@ -9,6 +9,10 @@ page:
   wireframeStyle:
     border:
       style: solid
+      width: thin
+    corner:
+      style: rounded
+      radius: 8
   pageState:
     key_created: false
     key_copied: false

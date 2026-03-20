@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faFile, faFileLines } from '@fortawesome/free-solid-svg-icons'
 import type { Project } from '../api/projects'
 import {
   adminColors,
@@ -12,11 +14,9 @@ const cardStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
-  aspectRatio: '1',
   padding: 20,
   cursor: 'pointer',
   minHeight: 180,
-  minWidth: 180,
   transition: 'box-shadow 150ms ease, transform 150ms ease',
 }
 
@@ -133,9 +133,33 @@ export function ProjectCard({ project }: ProjectCardProps) {
           </span>
         </div>
       </div>
-      <div style={{ fontSize: 12, color: adminColors.textTertiary }}>
-        {t('dashboard.lastUpdated', { date: formatDate(project.updatedAt) })}
+      <div>
+        <div style={statsRowStyle}>
+          <span style={statStyle}>
+            <FontAwesomeIcon icon={faFile} style={{ marginRight: 5 }} />
+            {t('dashboard.fileCount', { count: Number(project.documentCount ?? 0) })}
+          </span>
+          <span style={statStyle}>
+            <FontAwesomeIcon icon={faFileLines} style={{ marginRight: 5 }} />
+            {t('dashboard.pageCount', { count: Number(project.pageCount ?? 0) })}
+          </span>
+        </div>
+        <div style={{ fontSize: 12, color: adminColors.textTertiary, marginTop: 8 }}>
+          {t('dashboard.lastUpdated', { date: formatDate(project.updatedAt) })}
+        </div>
       </div>
     </div>
   )
+}
+
+const statsRowStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: 16,
+}
+
+const statStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  fontSize: 12,
+  color: adminColors.textSecondary,
 }
