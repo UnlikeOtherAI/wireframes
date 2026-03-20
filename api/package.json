@@ -11,7 +11,9 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
+    "@wireframes/engine": "workspace:*",
     "drizzle-orm": "^0.38.0",
+    "js-yaml": "^4.1.0",
     "pg": "^8.13.0"
   },
   "devDependencies": {
