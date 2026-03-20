@@ -1,11 +1,13 @@
 import { config } from "./config.js";
 import { verifyConnection } from "./db/index.js";
 import { compose } from "./middleware/compose.js";
+import { auth } from "./middleware/auth.js";
 import { cors } from "./middleware/cors.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { requestLogger } from "./middleware/request-logger.js";
 import { router } from "./routes/index.js";
-import { tryUpgrade } from "./ws/upgrade.js";
+import { tryUpgrade, setJwtVerifier } from "./ws/upgrade.js";
+import { verifyJwt } from "./services/jwt.js";
 import {
   handleOpen,
   handleMessage,
@@ -14,7 +16,9 @@ import {
 } from "./ws/handlers.js";
 import type { WsData } from "./ws/types.js";
 
-const handler = compose(requestLogger, cors, errorHandler)(router);
+setJwtVerifier((token) => verifyJwt(token, config.jwtSecret));
+
+const handler = compose(requestLogger, cors, errorHandler, auth)(router);
 
 // Extracted so TypeScript doesn't reject the `error` handler via excess-property
 // checking — bun-types 1.3.x omits it from WebSocketHandler but Bun supports it.

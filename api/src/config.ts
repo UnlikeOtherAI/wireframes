@@ -3,4 +3,7 @@ export const config = {
   databaseUrl: process.env.DATABASE_URL || "",
   corsOrigins: (process.env.CORS_ORIGINS || "").split(",").filter(Boolean),
   jwtSecret: process.env.JWT_SECRET || "",
+  ssoVerifyUrl:
+    process.env.SSO_VERIFY_URL ||
+    "https://authenticator.unlikeother.ai/verify",
 } as const;
