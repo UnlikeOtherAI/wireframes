@@ -15,6 +15,13 @@
       "when": 1773998907506,
       "tag": "0001_thankful_sabretooth",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774000514401,
+      "tag": "0002_powerful_christian_walker",
+      "breakpoints": true
     }
   ]
 }

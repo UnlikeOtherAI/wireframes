@@ -7,6 +7,7 @@ import {
   jsonb,
   unique,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const membershipRole = pgEnum("membership_role", [
   "owner",
@@ -160,7 +161,9 @@ export const chatSessions = pgTable("chat_sessions", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true })
+    .notNull()
+    .default(sql`now() + interval '30 days'`),
 });
 
 export const chatMessages = pgTable("chat_messages", {

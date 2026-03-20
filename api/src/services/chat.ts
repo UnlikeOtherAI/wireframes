@@ -294,11 +294,16 @@ async function callLlmWithStreaming(
         ctx,
       );
 
-      allToolCalls.push({
+      const toolCallRecord: ChatToolCall = {
         name: toolUse.name,
         input: toolUse.input as Record<string, unknown>,
         result: executionResult.result,
-      });
+      };
+      const inputObj = toolUse.input as Record<string, unknown>;
+      if (inputObj.idempotencyKey) {
+        toolCallRecord.idempotencyKey = inputObj.idempotencyKey as string;
+      }
+      allToolCalls.push(toolCallRecord);
 
       toolResultContent.push({
         type: "tool_result",

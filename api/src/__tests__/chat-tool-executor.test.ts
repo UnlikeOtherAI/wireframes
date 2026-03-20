@@ -32,6 +32,7 @@ mock.module("../repositories/document.js", () => ({
 
 mock.module("../repositories/chat.js", () => ({
   updateSessionScope: async () => {},
+  findToolCallByIdempotencyKey: async () => null,
 }));
 
 mock.module("../services/engine.js", () => ({

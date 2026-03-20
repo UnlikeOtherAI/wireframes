@@ -23,6 +23,11 @@ export const chatTools: Tool[] = [
           type: "string",
           description: "The complete new YAML content for the document",
         },
+        idempotencyKey: {
+          type: "string",
+          description:
+            "A unique key for this edit operation. If the same key was already used in this session, the edit is skipped.",
+        },
       },
       required: ["documentType", "documentId", "content"],
     },

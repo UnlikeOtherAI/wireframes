@@ -4,7 +4,10 @@ import {
   findDocumentsByProjectId,
   upsertDocument,
 } from "../repositories/document.js";
-import { updateSessionScope } from "../repositories/chat.js";
+import {
+  updateSessionScope,
+  findToolCallByIdempotencyKey,
+} from "../repositories/chat.js";
 import { validateProject } from "./engine.js";
 import { buildDocumentMap } from "./build.js";
 import { broadcastToChannel } from "../ws/broadcast.js";
@@ -42,12 +45,24 @@ export async function executeToolCall(
 async function executeEditDocument(
   input: Record<string, unknown>,
   ctx: ToolExecutionContext,
-): Promise<{ result: string; error?: boolean }> {
-  const { documentType, documentId, content } = input as {
+): Promise<{ result: string; error?: boolean; idempotencyKey?: string }> {
+  const { documentType, documentId, content, idempotencyKey } = input as {
     documentType: string;
     documentId: string;
     content: string;
+    idempotencyKey?: string;
   };
+
+  // Idempotency check: skip if this key was already used in this session
+  if (idempotencyKey) {
+    const existing = await findToolCallByIdempotencyKey(
+      ctx.sessionId,
+      idempotencyKey,
+    );
+    if (existing) {
+      return { result: existing.result };
+    }
+  }
 
   // Validate YAML parses
   try {

@@ -100,6 +100,26 @@ export async function insertChatMessage(
   };
 }
 
+export async function findToolCallByIdempotencyKey(
+  sessionId: string,
+  idempotencyKey: string,
+): Promise<{ result: string } | null> {
+  const rows = await db
+    .select({ toolCalls: chatMessages.toolCalls })
+    .from(chatMessages)
+    .where(eq(chatMessages.sessionId, sessionId));
+
+  for (const row of rows) {
+    if (!Array.isArray(row.toolCalls)) continue;
+    for (const tc of row.toolCalls as Array<Record<string, unknown>>) {
+      if (tc.idempotencyKey === idempotencyKey) {
+        return { result: (tc.result as string) ?? "Edit already applied." };
+      }
+    }
+  }
+  return null;
+}
+
 export async function deleteExpiredSessions(): Promise<void> {
   await db
     .delete(chatSessions)

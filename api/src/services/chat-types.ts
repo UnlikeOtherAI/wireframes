@@ -30,4 +30,5 @@ export interface ChatToolCall {
   name: string;
   input: Record<string, unknown>;
   result?: unknown;
+  idempotencyKey?: string;
 }
