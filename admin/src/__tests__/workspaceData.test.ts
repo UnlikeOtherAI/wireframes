@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { renderHook } from '@testing-library/react'
-import { useResolvedNodes, useSitemapNodes } from '../features/workspace/useWorkspaceData'
+import { useResolvedNodes, useSitemapNodes, buildNodeIdToAddressMap } from '../features/workspace/useWorkspaceData'
 
 describe('useResolvedNodes', () => {
   it('returns empty array when page file is missing', () => {
@@ -150,6 +150,82 @@ describe('useResolvedNodes', () => {
     expect(result.current[0].children.some(c => c.id === 'card_title')).toBe(true)
   })
 
+  it('resolves template slots using canonical content field', () => {
+    const yamlFiles = {
+      'templates.yaml': [
+        'documentType: templates',
+        'id: templates',
+        'templates:',
+        '  main:',
+        '    regions:',
+        '      - id: main_content',
+        '        kind: slot',
+      ].join('\n'),
+      'pages/dash.yaml': [
+        'documentType: page',
+        'id: dash',
+        'page:',
+        '  template: main',
+        '  slots:',
+        '    - slotId: main_content',
+        '      content:',
+        '        - id: hero',
+        '          type: section',
+        '        - id: details',
+        '          type: paragraph',
+      ].join('\n'),
+    }
+
+    const { result } = renderHook(() =>
+      useResolvedNodes(yamlFiles, 'dash'),
+    )
+
+    const mainContent = result.current.find(n => n.id === 'main_content')
+    expect(mainContent).toBeDefined()
+    expect(mainContent!.children.some(c => c.id === 'hero')).toBe(true)
+    expect(mainContent!.children.some(c => c.id === 'details')).toBe(true)
+  })
+
+  it('resolves template injectables using canonical content field', () => {
+    const yamlFiles = {
+      'templates.yaml': [
+        'documentType: templates',
+        'id: templates',
+        'templates:',
+        '  main:',
+        '    regions:',
+        '      - id: sidebar',
+        '        kind: persistent',
+        '        children:',
+        '          - id: nav',
+        '            type: section',
+        '            injectable: true',
+      ].join('\n'),
+      'pages/dash.yaml': [
+        'documentType: page',
+        'id: dash',
+        'page:',
+        '  template: main',
+        '  slots: []',
+        '  injectables:',
+        '    - injectableId: nav',
+        '      content:',
+        '        - id: nav_link',
+        '          type: link',
+      ].join('\n'),
+    }
+
+    const { result } = renderHook(() =>
+      useResolvedNodes(yamlFiles, 'dash'),
+    )
+
+    const sidebar = result.current.find(n => n.id === 'sidebar')
+    expect(sidebar).toBeDefined()
+    const nav = sidebar!.children.find(c => c.id === 'nav')
+    expect(nav).toBeDefined()
+    expect(nav!.children.some(c => c.id === 'nav_link')).toBe(true)
+  })
+
   it('includes overlays in node tree', () => {
     const yamlFiles = {
       'pages/home.yaml': [
@@ -170,6 +246,38 @@ describe('useResolvedNodes', () => {
     )
 
     expect(result.current.some(n => n.id === 'modal1')).toBe(true)
+  })
+})
+
+describe('buildNodeIdToAddressMap', () => {
+  it('maps node IDs to their full hierarchical addresses', () => {
+    const yamlFiles = {
+      'pages/home.yaml': [
+        'documentType: page',
+        'id: home',
+        'page:',
+        '  body:',
+        '    - id: header',
+        '      type: section',
+        '      children:',
+        '        - id: title',
+        '          type: heading',
+        '        - id: subtitle',
+        '          type: paragraph',
+        '    - id: footer',
+        '      type: section',
+      ].join('\n'),
+    }
+
+    const { result } = renderHook(() =>
+      useResolvedNodes(yamlFiles, 'home'),
+    )
+
+    const map = buildNodeIdToAddressMap(result.current)
+    expect(map.get('header')).toBe('wf://page/home#header')
+    expect(map.get('title')).toBe('wf://page/home#header.title')
+    expect(map.get('subtitle')).toBe('wf://page/home#header.subtitle')
+    expect(map.get('footer')).toBe('wf://page/home#footer')
   })
 })
 

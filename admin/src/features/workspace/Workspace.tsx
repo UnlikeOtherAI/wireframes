@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { DeviceType, RenderMode } from './types'
 import { PageNavigation } from './PageNavigation'
@@ -6,7 +6,7 @@ import { DeviceControls } from './DeviceControls'
 import { NodeTree } from './NodeTree'
 import { SitemapView } from './SitemapView'
 import { WorkspacePreview } from './WorkspacePreview'
-import { useResolvedNodes, useSitemapNodes } from './useWorkspaceData'
+import { useResolvedNodes, useSitemapNodes, buildNodeIdToAddressMap } from './useWorkspaceData'
 
 export interface WorkspaceProps {
   yamlFiles: Record<string, string>
@@ -64,6 +64,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
   const renderedHtmlRef = useRef('')
 
   const resolvedNodes = useResolvedNodes(yamlFiles, activePage)
+  const nodeIdToAddress = useMemo(() => buildNodeIdToAddressMap(resolvedNodes), [resolvedNodes])
   const sitemapNodes = useSitemapNodes(yamlFiles)
 
   // Derive page IDs from yamlFiles if not provided externally
@@ -162,6 +163,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
           interactive={interactive}
           onHtmlChange={handleHtmlChange}
           zoom={zoom}
+          nodeIdToAddress={nodeIdToAddress}
         />
 
         {/* Right panel: Node tree or Sitemap */}

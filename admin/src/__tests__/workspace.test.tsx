@@ -197,6 +197,26 @@ describe('Workspace', () => {
     expect(screen.getByText('custom1')).toBeInTheDocument()
     expect(screen.getByText('custom2')).toBeInTheDocument()
   })
+
+  it('resolves nested node click to full hierarchical address', async () => {
+    const onNodeSelect = vi.fn()
+    renderWorkspace({ onNodeSelect, showTree: true })
+
+    // Simulate a wf:nodeClick message from the preview iframe with a bare nodeId
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          type: 'wf:nodeClick',
+          nodeId: 'title',
+          address: 'wf://page/home#title',
+        },
+      }),
+    )
+
+    // The workspace should resolve 'title' to the full hierarchical address
+    // using the nodeIdToAddress map built from the resolved node tree
+    expect(onNodeSelect).toHaveBeenCalledWith('wf://page/home#header.title')
+  })
 })
 
 describe('PageNavigation', () => {

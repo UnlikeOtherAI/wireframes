@@ -13,6 +13,7 @@ interface WorkspacePreviewProps {
   interactive?: boolean
   onHtmlChange?: (html: string) => void
   zoom?: number
+  nodeIdToAddress?: Map<string, string>
 }
 
 export function WorkspacePreview({
@@ -26,6 +27,7 @@ export function WorkspacePreview({
   interactive = true,
   onHtmlChange,
   zoom = 100,
+  nodeIdToAddress,
 }: WorkspacePreviewProps) {
   const { t } = useTranslation()
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -42,13 +44,16 @@ export function WorkspacePreview({
       if (event.data?.type === 'wf:navigate' && typeof event.data.routeId === 'string') {
         onNavigate?.(event.data.routeId)
       }
-      if (event.data?.type === 'wf:nodeClick' && typeof event.data.address === 'string') {
-        onNodeSelect?.(event.data.address)
+      if (event.data?.type === 'wf:nodeClick' && typeof event.data.nodeId === 'string') {
+        const resolvedAddress = nodeIdToAddress?.get(event.data.nodeId)
+          ?? event.data.address
+          ?? `wf://page/${activePage}#${event.data.nodeId}`
+        onNodeSelect?.(resolvedAddress)
       }
     }
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [onNavigate, onNodeSelect])
+  }, [onNavigate, onNodeSelect, nodeIdToAddress, activePage])
 
   // Lazy-load renderer
   const getRenderer = useCallback(async () => {

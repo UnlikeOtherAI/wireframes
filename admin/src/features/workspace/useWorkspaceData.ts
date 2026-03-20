@@ -112,16 +112,20 @@ function resolveTemplateRegions(
 
   if (Array.isArray(page.slots)) {
     for (const slot of page.slots) {
-      if (isObject(slot) && typeof slot.slotId === 'string' && Array.isArray(slot.body)) {
-        slotMap.set(slot.slotId, slot.body)
-      }
+      if (!isObject(slot) || typeof slot.slotId !== 'string') continue
+      const slotChildren = Array.isArray(slot.content) ? slot.content
+        : Array.isArray(slot.body) ? slot.body
+        : null
+      if (slotChildren) slotMap.set(slot.slotId, slotChildren)
     }
   }
   if (Array.isArray(page.injectables)) {
     for (const inj of page.injectables) {
-      if (isObject(inj) && typeof inj.injectableId === 'string' && Array.isArray(inj.body)) {
-        injectableMap.set(inj.injectableId, inj.body)
-      }
+      if (!isObject(inj) || typeof inj.injectableId !== 'string') continue
+      const injChildren = Array.isArray(inj.content) ? inj.content
+        : Array.isArray(inj.body) ? inj.body
+        : null
+      if (injChildren) injectableMap.set(inj.injectableId, injChildren)
     }
   }
 
@@ -232,6 +236,16 @@ export function useResolvedNodes(
       return []
     }
   }, [yamlFiles, activePage])
+}
+
+export function buildNodeIdToAddressMap(nodes: ResolvedNode[]): Map<string, string> {
+  const map = new Map<string, string>()
+  function walk(node: ResolvedNode) {
+    map.set(node.id, node.address)
+    for (const child of node.children) walk(child)
+  }
+  for (const node of nodes) walk(node)
+  return map
 }
 
 export function useSitemapNodes(
