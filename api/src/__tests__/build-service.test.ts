@@ -143,6 +143,34 @@ describe("buildDocumentMap", () => {
     expect(map.datasets.has("users")).toBe(true);
   });
 
+  test("preserves row order in pages and datasets for deterministic output", () => {
+    const makeRow = (type: string, docId: string) => ({
+      id: docId,
+      projectId: "p1",
+      documentType: type,
+      documentId: docId,
+      content: type === "page"
+        ? `page:\n  template: main`
+        : `dataset:\n  items:\n    - name: ${docId}`,
+      contentHash: docId,
+    });
+
+    // Rows sorted by document_type then document_id (as the repository now returns)
+    const sortedRows = [
+      makeRow("dataset", "cities"),
+      makeRow("dataset", "users"),
+      makeRow("page", "about"),
+      makeRow("page", "contact"),
+      makeRow("page", "home"),
+    ];
+
+    const map = buildDocumentMap(sortedRows);
+
+    // Map iteration order must match insertion (sorted) order
+    expect([...map.pages.keys()]).toEqual(["about", "contact", "home"]);
+    expect([...map.datasets.keys()]).toEqual(["cities", "users"]);
+  });
+
   test("throws ApiError for invalid YAML", () => {
     expect(() =>
       buildDocumentMap([

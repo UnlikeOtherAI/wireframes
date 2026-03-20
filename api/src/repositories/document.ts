@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { documents } from "../db/schema.js";
 
@@ -24,5 +24,6 @@ export async function findDocumentsByProjectId(
       contentHash: documents.contentHash,
     })
     .from(documents)
-    .where(eq(documents.projectId, projectId));
+    .where(eq(documents.projectId, projectId))
+    .orderBy(asc(documents.documentType), asc(documents.documentId));
 }
