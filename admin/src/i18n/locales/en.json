@@ -107,6 +107,30 @@
     "deleting": "Deleting...",
     "readOnlyNotice": "You have view-only access to this project."
   },
+  "editor": {
+    "title": "Project Editor",
+    "selectDocument": "Select a document from the sidebar to begin editing",
+    "documentTree": "Document tree",
+    "pages": "pages/",
+    "data": "data/",
+    "noProblems": "No problems",
+    "problems": "Problems",
+    "lineCol": "Ln {{line}}, Col {{col}}",
+    "saving": "Saving...",
+    "autoSave": "Auto-save",
+    "conflictTitle": "Save conflict",
+    "conflictDescription": "The document \"{{type}}\" was modified on the server since you last loaded it.",
+    "viewServerVersion": "View server version",
+    "useServerVersion": "Use server version",
+    "useLocalVersion": "Keep my changes",
+    "status": {
+      "saving": "Saving...",
+      "saved": "Saved",
+      "unsaved": "Unsaved changes",
+      "error": "Save failed",
+      "conflict": "Conflict detected"
+    }
+  },
   "account": {
     "title": "Account Settings",
     "backToDashboard": "Back to dashboard",
