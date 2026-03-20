@@ -44,6 +44,10 @@ function mockFetchResponses(
     if (urlStr.includes('/projects/') && method === 'GET') {
       return new Response(JSON.stringify(project), { status: 200 })
     }
+    if (urlStr.includes('/preview') && method === 'PATCH') {
+      const body = JSON.parse((init as RequestInit).body as string)
+      return new Response(JSON.stringify({ ...(preview as Record<string, unknown>), ...body }), { status: 200 })
+    }
     if (urlStr.includes('/projects/') && method === 'PATCH') {
       const body = JSON.parse((init as RequestInit).body as string)
       return new Response(JSON.stringify({ ...project, name: body.name }), { status: 200 })
@@ -137,14 +141,18 @@ describe('ProjectSettingsPage', () => {
     expect(screen.queryByText('Danger Zone')).not.toBeInTheDocument()
   })
 
-  it('shows read-only notice for viewer', async () => {
+  it('shows read-only notice and disabled preview for viewer', async () => {
     renderSettings('viewer')
     await waitFor(() => {
       expect(screen.getByText('You have view-only access to this project.')).toBeInTheDocument()
     })
     expect(screen.queryByText('Members')).not.toBeInTheDocument()
     expect(screen.queryByText('Danger Zone')).not.toBeInTheDocument()
-    expect(screen.queryByText('Preview Settings')).not.toBeInTheDocument()
+    expect(screen.getByText('Preview Settings')).toBeInTheDocument()
+    const accessSelect = screen.getByLabelText('Access mode')
+    expect(accessSelect).toBeDisabled()
+    const publishBtn = screen.getByText('Publish')
+    expect(publishBtn).toBeDisabled()
   })
 
   it('rename project works for editor+', async () => {
@@ -213,6 +221,64 @@ describe('ProjectSettingsPage', () => {
     })
   })
 
+  it('switching to password mode does not send PATCH without password', async () => {
+    const fetchSpy = mockFetchResponses()
+    render(
+      <MemoryRouter initialEntries={['/projects/p1/settings']}>
+        <Routes>
+          <Route path="/projects/:id/settings" element={<ProjectSettingsPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    await waitFor(() => {
+      expect(screen.getByText('Preview Settings')).toBeInTheDocument()
+    })
+    const callCountBefore = fetchSpy.mock.calls.length
+    const accessSelect = screen.getByLabelText('Access mode')
+    fireEvent.change(accessSelect, { target: { value: 'password' } })
+    await waitFor(() => {
+      expect(screen.getByText('Password is required')).toBeInTheDocument()
+    })
+    const patchCalls = fetchSpy.mock.calls
+      .slice(callCountBefore)
+      .filter(([, init]) => (init as RequestInit)?.method === 'PATCH')
+    expect(patchCalls).toHaveLength(0)
+  })
+
+  it('password mode sends PATCH after entering password and clicking save', async () => {
+    const fetchSpy = mockFetchResponses()
+    render(
+      <MemoryRouter initialEntries={['/projects/p1/settings']}>
+        <Routes>
+          <Route path="/projects/:id/settings" element={<ProjectSettingsPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    await waitFor(() => {
+      expect(screen.getByText('Preview Settings')).toBeInTheDocument()
+    })
+    const accessSelect = screen.getByLabelText('Access mode')
+    fireEvent.change(accessSelect, { target: { value: 'password' } })
+    await waitFor(() => {
+      expect(screen.getByLabelText('Password')).toBeInTheDocument()
+    })
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret123' } })
+    const callCountBefore = fetchSpy.mock.calls.length
+    const saveBtn = screen.getAllByText('Save').find(
+      (el) => el.tagName === 'BUTTON' && el.closest('[aria-label="Preview Settings"]'),
+    )!
+    fireEvent.click(saveBtn)
+    await waitFor(() => {
+      const patchCalls = fetchSpy.mock.calls
+        .slice(callCountBefore)
+        .filter(([, init]) => (init as RequestInit)?.method === 'PATCH')
+      expect(patchCalls).toHaveLength(1)
+      const body = JSON.parse((patchCalls[0][1] as RequestInit).body as string)
+      expect(body.accessMode).toBe('password')
+      expect(body.password).toBe('secret123')
+    })
+  })
+
   it('shows preview share link and copy button', async () => {
     renderSettings('owner')
     await waitFor(() => {
@@ -254,7 +320,7 @@ describe('ProjectSettingsPage', () => {
     })
   })
 
-  it('remove member shows confirm then removes', async () => {
+  it('remove member opens dialog then removes on confirm', async () => {
     renderSettings('owner')
     await waitFor(() => {
       expect(screen.getByText('Editor User')).toBeInTheDocument()
@@ -262,11 +328,13 @@ describe('ProjectSettingsPage', () => {
     const deleteBtns = screen.getAllByLabelText('Remove member')
     fireEvent.click(deleteBtns[0])
     await waitFor(() => {
-      expect(screen.getByText('Confirm')).toBeInTheDocument()
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
     })
+    expect(screen.getByText(/Remove Editor User from this project/)).toBeInTheDocument()
     fireEvent.click(screen.getByText('Confirm'))
     await waitFor(() => {
       expect(screen.queryByText('Editor User')).not.toBeInTheDocument()
     })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

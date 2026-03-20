@@ -49,6 +49,24 @@ const memberRowStyle: React.CSSProperties = {
   borderBottom: '1px solid #eee',
 }
 
+const overlayStyle: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  backgroundColor: 'rgba(0,0,0,0.4)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 1000,
+}
+
+const dialogBoxStyle: React.CSSProperties = {
+  backgroundColor: '#fff',
+  borderRadius: 8,
+  padding: 24,
+  width: 400,
+  maxWidth: '90vw',
+}
+
 const errorStyle: React.CSSProperties = {
   color: '#d93025',
   fontSize: 13,
@@ -180,7 +198,7 @@ export function MembersSection({ projectId, members, currentUserId, onMembersCha
                     ))}
                   </select>
                 )}
-                {!isCurrentUser && confirmRemoveId !== member.userId && (
+                {!isCurrentUser && (
                   <button
                     type="button"
                     onClick={() => setConfirmRemoveId(member.userId)}
@@ -189,26 +207,6 @@ export function MembersSection({ projectId, members, currentUserId, onMembersCha
                   >
                     {t('common.delete')}
                   </button>
-                )}
-                {!isCurrentUser && confirmRemoveId === member.userId && (
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <button
-                      type="button"
-                      onClick={() => handleRemove(member.userId)}
-                      disabled={removingId === member.userId}
-                      style={{ ...buttonBase, backgroundColor: '#c5221f', color: '#fff', fontSize: 13 }}
-                    >
-                      {removingId === member.userId ? t('settings.removing') : t('common.confirm')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmRemoveId(null)}
-                      disabled={removingId === member.userId}
-                      style={{ ...buttonBase, backgroundColor: '#f1f3f4', color: '#333', fontSize: 13 }}
-                    >
-                      {t('common.cancel')}
-                    </button>
-                  </div>
                 )}
               </div>
             </div>
@@ -256,6 +254,60 @@ export function MembersSection({ projectId, members, currentUserId, onMembersCha
         {inviteError && <p style={errorStyle} role="alert">{inviteError}</p>}
         {inviteSuccess && <p style={successStyle} role="status">{t('settings.invited')}</p>}
       </div>
+
+      {confirmRemoveId && (() => {
+        const member = members.find((m) => m.userId === confirmRemoveId)
+        if (!member) return null
+        const memberName = member.displayName || member.email
+
+        function closeDialog() {
+          if (!removingId) {
+            setConfirmRemoveId(null)
+          }
+        }
+
+        return (
+          <div
+            style={overlayStyle}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) closeDialog()
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') closeDialog()
+            }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('settings.removeMember')}
+          >
+            <div style={dialogBoxStyle}>
+              <h3 style={{ margin: '0 0 12px', fontSize: 18 }}>
+                {t('settings.removeMember')}
+              </h3>
+              <p style={{ margin: '0 0 16px', fontSize: 14 }}>
+                {t('settings.removeMemberConfirm', { name: memberName })}
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={closeDialog}
+                  disabled={removingId === confirmRemoveId}
+                  style={{ ...buttonBase, backgroundColor: '#f1f3f4', color: '#333' }}
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRemove(confirmRemoveId)}
+                  disabled={removingId === confirmRemoveId}
+                  style={{ ...buttonBase, backgroundColor: '#c5221f', color: '#fff' }}
+                >
+                  {removingId === confirmRemoveId ? t('settings.removing') : t('common.confirm')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </section>
   )
 }

@@ -155,13 +155,12 @@ export function ProjectSettingsPage() {
         />
       )}
 
-      {isEditorOrAbove && (
-        <PreviewSection
-          projectId={project.id}
-          preview={preview}
-          onPreviewChanged={setPreview}
-        />
-      )}
+      <PreviewSection
+        projectId={project.id}
+        preview={preview}
+        onPreviewChanged={setPreview}
+        readOnly={!isEditorOrAbove}
+      />
 
       {isOwner && (
         <DangerZoneSection

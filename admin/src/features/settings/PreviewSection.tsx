@@ -75,9 +75,10 @@ interface PreviewSectionProps {
   projectId: string
   preview: PreviewSettings | null
   onPreviewChanged: (preview: PreviewSettings) => void
+  readOnly?: boolean
 }
 
-export function PreviewSection({ projectId, preview, onPreviewChanged }: PreviewSectionProps) {
+export function PreviewSection({ projectId, preview, onPreviewChanged, readOnly = false }: PreviewSectionProps) {
   const { t } = useTranslation()
   const [accessMode, setAccessMode] = useState<string>(preview?.accessMode ?? 'public')
   const [password, setPassword] = useState('')
@@ -91,13 +92,14 @@ export function PreviewSection({ projectId, preview, onPreviewChanged }: Preview
 
   async function handleAccessModeChange(mode: string) {
     setAccessMode(mode)
+    if (mode === 'password') {
+      setError(t('settings.passwordRequired'))
+      return
+    }
     setSaving(true)
     setError('')
     try {
-      const settings: { accessMode: string; password?: string; emails?: string[] } = { accessMode: mode }
-      if (mode === 'password' && password) {
-        settings.password = password
-      }
+      const settings: { accessMode: string; emails?: string[] } = { accessMode: mode }
       if (mode === 'sso') {
         settings.emails = ssoEmails
       }
@@ -187,7 +189,7 @@ export function PreviewSection({ projectId, preview, onPreviewChanged }: Preview
         id="access-mode"
         value={accessMode}
         onChange={(e) => handleAccessModeChange(e.target.value)}
-        disabled={saving}
+        disabled={saving || readOnly}
         style={selectStyle}
       >
         <option value="public">{t('settings.accessPublic')}</option>
@@ -209,13 +211,13 @@ export function PreviewSection({ projectId, preview, onPreviewChanged }: Preview
                 setPassword(e.target.value)
                 setError('')
               }}
-              disabled={saving}
+              disabled={saving || readOnly}
               style={{ ...inputStyle, flex: 1 }}
             />
             <button
               type="button"
               onClick={handleSavePassword}
-              disabled={saving || !password}
+              disabled={saving || !password || readOnly}
               style={{ ...buttonBase, backgroundColor: '#1a73e8', color: '#fff' }}
             >
               {saving ? t('settings.saving') : t('common.save')}
@@ -233,7 +235,7 @@ export function PreviewSection({ projectId, preview, onPreviewChanged }: Preview
             {ssoEmails.map((email) => (
               <span key={email} style={emailTagStyle}>
                 {email}
-                <button
+                {!readOnly && <button
                   type="button"
                   onClick={() => handleRemoveEmail(email)}
                   style={{
@@ -249,11 +251,11 @@ export function PreviewSection({ projectId, preview, onPreviewChanged }: Preview
                   aria-label={`${t('common.delete')} ${email}`}
                 >
                   x
-                </button>
+                </button>}
               </span>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          {!readOnly && <div style={{ display: 'flex', gap: 8 }}>
             <input
               id="sso-email"
               type="email"
@@ -276,7 +278,7 @@ export function PreviewSection({ projectId, preview, onPreviewChanged }: Preview
             >
               {t('settings.addEmail')}
             </button>
-          </div>
+          </div>}
         </div>
       )}
 
@@ -311,7 +313,7 @@ export function PreviewSection({ projectId, preview, onPreviewChanged }: Preview
           <button
             type="button"
             onClick={handlePublish}
-            disabled={publishing}
+            disabled={publishing || readOnly}
             style={{ ...buttonBase, backgroundColor: '#1a73e8', color: '#fff' }}
           >
             {publishing ? t('settings.publishing') : t('settings.publish')}
