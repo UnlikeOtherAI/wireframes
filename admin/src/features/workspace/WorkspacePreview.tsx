@@ -115,7 +115,9 @@ export function WorkspacePreview({
     if (error) {
       setSrcdoc(buildErrorHtml(t('workspace.renderError'), error))
     } else if (html) {
-      setSrcdoc(injectNodeClickBridge(html, activePage, interactive))
+      let processed = fixPreviewAssetPaths(html)
+      processed = injectNodeClickBridge(processed, activePage, interactive)
+      setSrcdoc(processed)
     } else {
       setSrcdoc('')
     }
@@ -200,6 +202,15 @@ export function WorkspacePreview({
         />
       </div>
     </div>
+  )
+}
+
+const FA_CDN_URL = 'https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css'
+
+function fixPreviewAssetPaths(html: string): string {
+  return html.replace(
+    /href="[^"]*\/_shared\/fa\/css\/all\.min\.css"/g,
+    `href="${FA_CDN_URL}"`,
   )
 }
 
