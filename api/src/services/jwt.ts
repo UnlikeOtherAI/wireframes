@@ -8,9 +8,11 @@ export interface JwtPayload {
 interface JwtFullPayload extends JwtPayload {
   iat: number;
   exp: number;
+  type: string;
 }
 
-const SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60;
+const ACCESS_TOKEN_TTL = 30 * 60; // 30 minutes
+const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60; // 7 days
 
 function base64url(input: string | Buffer): string {
   const str =
@@ -30,23 +32,25 @@ function hmacSign(data: string, secret: string): string {
   return base64url(createHmac("sha256", secret).update(data).digest());
 }
 
-export function signJwt(payload: JwtPayload, secret: string): string {
+function sign(
+  payload: JwtPayload,
+  secret: string,
+  ttl: number,
+  type: string,
+): string {
   const header = base64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
   const now = Math.floor(Date.now() / 1000);
   const body = base64url(
-    JSON.stringify({
-      ...payload,
-      iat: now,
-      exp: now + SEVEN_DAYS_SECONDS,
-    }),
+    JSON.stringify({ ...payload, type, iat: now, exp: now + ttl }),
   );
   const signature = hmacSign(`${header}.${body}`, secret);
   return `${header}.${body}.${signature}`;
 }
 
-export function verifyJwt(
+function verify(
   token: string,
   secret: string,
+  expectedType: string,
 ): JwtPayload | null {
   const parts = token.split(".");
   if (parts.length !== 3) return null;
@@ -64,8 +68,27 @@ export function verifyJwt(
 
   const now = Math.floor(Date.now() / 1000);
   if (!payload.exp || payload.exp < now) return null;
-
   if (!payload.userId || !payload.email) return null;
+  if (payload.type !== expectedType) return null;
 
   return { userId: payload.userId, email: payload.email };
+}
+
+export function signJwt(payload: JwtPayload, secret: string): string {
+  return sign(payload, secret, ACCESS_TOKEN_TTL, "access");
+}
+
+export function signRefreshJwt(payload: JwtPayload, secret: string): string {
+  return sign(payload, secret, REFRESH_TOKEN_TTL, "refresh");
+}
+
+export function verifyJwt(token: string, secret: string): JwtPayload | null {
+  return verify(token, secret, "access");
+}
+
+export function verifyRefreshJwt(
+  token: string,
+  secret: string,
+): JwtPayload | null {
+  return verify(token, secret, "refresh");
 }

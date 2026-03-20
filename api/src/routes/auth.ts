@@ -1,4 +1,8 @@
-import { devLogin, ssoCallback } from "../controllers/auth.js";
+import {
+  devLogin,
+  refreshTokenHandler,
+  ssoCallback,
+} from "../controllers/auth.js";
 import { createRateLimiter } from "../middleware/rate-limit.js";
 
 const ssoLimiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
@@ -12,6 +16,9 @@ export function handleAuthRoute(req: Request): Promise<Response> | null {
   }
   if (url.pathname === "/auth/dev-login" && req.method === "POST") {
     return devLogin(req);
+  }
+  if (url.pathname === "/auth/refresh" && req.method === "POST") {
+    return refreshTokenHandler(req);
   }
   return null;
 }

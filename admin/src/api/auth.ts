@@ -3,6 +3,7 @@ import type { User } from '../types/auth'
 
 export interface SsoResponse {
   token: string
+  refreshToken: string
   user: User
 }
 

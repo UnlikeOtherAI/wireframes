@@ -9,6 +9,7 @@ const PUBLIC_ROUTES: Array<{ method: string; pattern: RegExp }> = [
   { method: "GET", pattern: /^\/health$/ },
   { method: "POST", pattern: /^\/auth\/sso$/ },
   { method: "POST", pattern: /^\/auth\/dev-login$/ },
+  { method: "POST", pattern: /^\/auth\/refresh$/ },
   { method: "GET", pattern: /^\/preview\/[^/]+(\/.*)?$/ },
   { method: "POST", pattern: /^\/preview\/[^/]+\/auth$/ },
 ];

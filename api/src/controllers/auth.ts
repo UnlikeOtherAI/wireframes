@@ -3,7 +3,11 @@ import { config } from "../config.js";
 import { validateSsoToken } from "../services/sso.js";
 import { findOrCreateUser } from "../services/user.js";
 import { loginAsDevUser } from "../services/dev-auth.js";
-import { signJwt } from "../services/jwt.js";
+import {
+  signJwt,
+  signRefreshJwt,
+  verifyRefreshJwt,
+} from "../services/jwt.js";
 
 function toResponseUser(user: {
   userId: string;
@@ -28,6 +32,16 @@ function isLocalRequest(req: Request): boolean {
   );
 }
 
+function makeTokens(
+  userId: string,
+  email: string,
+): { token: string; refreshToken: string } {
+  return {
+    token: signJwt({ userId, email }, config.jwtSecret),
+    refreshToken: signRefreshJwt({ userId, email }, config.jwtSecret),
+  };
+}
+
 export async function ssoCallback(req: Request): Promise<Response> {
   let body: { token?: string };
   try {
@@ -46,12 +60,9 @@ export async function ssoCallback(req: Request): Promise<Response> {
   }
 
   const user = await findOrCreateUser(ssoUser);
-  const jwt = signJwt(
-    { userId: user.userId, email: user.email },
-    config.jwtSecret,
-  );
+  const { token, refreshToken } = makeTokens(user.userId, user.email);
 
-  return Response.json({ token: jwt, user: toResponseUser(user) });
+  return Response.json({ token, refreshToken, user: toResponseUser(user) });
 }
 
 export async function devLogin(req: Request): Promise<Response> {
@@ -64,10 +75,28 @@ export async function devLogin(req: Request): Promise<Response> {
   }
 
   const user = await loginAsDevUser();
-  const jwt = signJwt(
-    { userId: user.userId, email: user.email },
-    config.jwtSecret,
-  );
+  const { token, refreshToken } = makeTokens(user.userId, user.email);
 
-  return Response.json({ token: jwt, user: toResponseUser(user) });
+  return Response.json({ token, refreshToken, user: toResponseUser(user) });
+}
+
+export async function refreshTokenHandler(req: Request): Promise<Response> {
+  let body: { refreshToken?: string };
+  try {
+    body = await req.json();
+  } catch {
+    throw new ApiError(400, "Invalid JSON body");
+  }
+
+  if (!body.refreshToken || typeof body.refreshToken !== "string") {
+    throw new ApiError(400, "Missing refreshToken");
+  }
+
+  const payload = verifyRefreshJwt(body.refreshToken, config.jwtSecret);
+  if (!payload) {
+    throw new ApiError(401, "Invalid or expired refresh token");
+  }
+
+  const { token, refreshToken } = makeTokens(payload.userId, payload.email);
+  return Response.json({ token, refreshToken });
 }

@@ -62,11 +62,12 @@ function makePostRequest(body: unknown): Request {
 }
 
 describe("auth controller - ssoCallback", () => {
-  test("returns JWT for valid SSO token", async () => {
+  test("returns JWT and refreshToken for valid SSO token", async () => {
     const res = await handler(makePostRequest({ token: "valid-sso-token" }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.token).toBeTruthy();
+    expect(body.refreshToken).toBeTruthy();
     expect(body.user).toEqual({
       id: "user-id-1",
       email: "user@example.com",

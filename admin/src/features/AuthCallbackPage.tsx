@@ -26,8 +26,8 @@ export function AuthCallbackPage() {
     }
 
     exchangeSsoToken(ssoToken)
-      .then(({ token, user }) => {
-        useAuthStore.getState().login(token, user)
+      .then(({ token, refreshToken, user }) => {
+        useAuthStore.getState().login(token, refreshToken, user)
         if (user.locale && user.locale !== i18n.language) {
           i18n.changeLanguage(user.locale)
         }

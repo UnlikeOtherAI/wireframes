@@ -15,6 +15,7 @@ describe('authStore', () => {
     useAuthStore.setState({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
     })
   })
@@ -27,23 +28,25 @@ describe('authStore', () => {
   })
 
   it('login sets token, user, and isAuthenticated', () => {
-    useAuthStore.getState().login('test-token', mockUser)
+    useAuthStore.getState().login('test-token', 'test-refresh', mockUser)
 
     const state = useAuthStore.getState()
     expect(state.isAuthenticated).toBe(true)
     expect(state.token).toBe('test-token')
+    expect(state.refreshToken).toBe('test-refresh')
     expect(state.user).toEqual(mockUser)
   })
 
   it('login persists to localStorage', () => {
-    useAuthStore.getState().login('test-token', mockUser)
+    useAuthStore.getState().login('test-token', 'test-refresh', mockUser)
 
     expect(localStorage.getItem('wireframes_token')).toBe('test-token')
+    expect(localStorage.getItem('wireframes_refresh_token')).toBe('test-refresh')
     expect(JSON.parse(localStorage.getItem('wireframes_user')!)).toEqual(mockUser)
   })
 
   it('logout clears state and localStorage', () => {
-    useAuthStore.getState().login('test-token', mockUser)
+    useAuthStore.getState().login('test-token', 'test-refresh', mockUser)
     useAuthStore.getState().logout()
 
     const state = useAuthStore.getState()
@@ -51,6 +54,7 @@ describe('authStore', () => {
     expect(state.token).toBeNull()
     expect(state.user).toBeNull()
     expect(localStorage.getItem('wireframes_token')).toBeNull()
+    expect(localStorage.getItem('wireframes_refresh_token')).toBeNull()
     expect(localStorage.getItem('wireframes_user')).toBeNull()
   })
 })

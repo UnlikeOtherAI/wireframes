@@ -37,7 +37,7 @@ export function LoginPage() {
 
     try {
       const session = await devLogin()
-      useAuthStore.getState().login(session.token, session.user)
+      useAuthStore.getState().login(session.token, session.refreshToken, session.user)
       navigate(returnUrl || '/', { replace: true })
     } catch {
       setDevLoginError(true)
