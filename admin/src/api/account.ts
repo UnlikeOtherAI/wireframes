@@ -8,8 +8,9 @@ export function updateProfile(displayName: string): Promise<User> {
   })
 }
 
-export function deleteAccount(): Promise<void> {
+export function deleteAccount(email: string): Promise<void> {
   return apiFetch<void>('/users/me', {
     method: 'DELETE',
+    headers: { 'X-Confirm-Delete': email },
   })
 }

@@ -174,6 +174,8 @@ describe('AccountPage', () => {
         ([, init]) => (init as RequestInit)?.method === 'DELETE',
       )
       expect(deleteCalls).toHaveLength(1)
+      const headers = new Headers((deleteCalls[0][1] as RequestInit).headers)
+      expect(headers.get('X-Confirm-Delete')).toBe('test@test.com')
     })
   })
 

@@ -139,7 +139,7 @@ export function AccountPage() {
     setDeleting(true)
     setDeleteError('')
     try {
-      await deleteAccount()
+      await deleteAccount(user.email)
       logout()
       window.location.href = '/login'
     } catch {
