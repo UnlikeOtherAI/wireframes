@@ -1,0 +1,36 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "back": "Back"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "account": "Account",
+    "logout": "Log out"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "signInDescription": "Sign in to manage your wireframe projects",
+    "authError": "Authentication failed. Redirecting to login...",
+    "sessionExpired": "Your session has expired. Please sign in again."
+  },
+  "dashboard": {
+    "title": "Projects",
+    "noProjects": "No projects yet"
+  },
+  "project": {
+    "editor": "Project Editor",
+    "settings": "Project Settings",
+    "members": "Members",
+    "preview": "Preview Settings"
+  },
+  "account": {
+    "title": "Account Settings"
+  }
+}
