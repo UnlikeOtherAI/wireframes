@@ -137,13 +137,9 @@ describe('buildRuntimeJs', () => {
     assert.ok(js.includes('bindGestures') && js.includes('swipe_left'));
   });
 
-  it('preview mode adds postMessage bridge', () => {
-    const js = buildRuntimeJs({ ...defaultOpts, preview: true });
+  it('always includes postMessage iframe navigation', () => {
+    const js = buildRuntimeJs(defaultOpts);
     assert.ok(js.includes('postMessage') && js.includes('wf:navigate'));
-  });
-
-  it('non-preview mode has no postMessage bridge', () => {
-    assert.ok(!buildRuntimeJs({ ...defaultOpts, preview: false }).includes('wf:navigate'));
   });
 
   it('generates deterministic output', () => {
@@ -157,8 +153,8 @@ describe('buildRuntimeJsFromWindowContext', () => {
     assert.ok(buildRuntimeJsFromWindowContext().includes('WF_RUNTIME_CONTEXT'));
   });
 
-  it('preview mode adds postMessage bridge', () => {
-    assert.ok(buildRuntimeJsFromWindowContext({ preview: true }).includes('postMessage'));
+  it('always includes postMessage iframe navigation', () => {
+    assert.ok(buildRuntimeJsFromWindowContext().includes('postMessage'));
   });
 });
 
@@ -287,17 +283,13 @@ describe('Preview mode', () => {
     };
   }
 
-  it('renderProject preview JS includes postMessage bridge', () => {
-    const result = renderProject(baseFiles(), { preview: true });
+  it('renderProject JS always includes postMessage iframe navigation', () => {
+    const result = renderProject(baseFiles());
     assert.ok(result.js.includes('postMessage') && result.js.includes('wf:navigate'));
   });
 
-  it('renderPage preview mode injects bridge script', () => {
-    const html = renderPage(baseFiles(), 'home', { preview: true });
+  it('renderPage HTML always includes postMessage iframe navigation', () => {
+    const html = renderPage(baseFiles(), 'home');
     assert.ok(html.includes('postMessage') && html.includes('wf:navigate'));
-  });
-
-  it('non-preview renderProject does not include postMessage', () => {
-    assert.ok(!renderProject(baseFiles()).js.includes('wf:navigate'));
   });
 });

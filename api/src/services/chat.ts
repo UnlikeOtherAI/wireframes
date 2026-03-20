@@ -1,6 +1,4 @@
 import Anthropic from "@anthropic-ai/sdk";
-import yaml from "js-yaml";
-import { config } from "../config.js";
 import { ApiError } from "../middleware/error-handler.js";
 import { requireProjectAccess } from "./project.js";
 import {
@@ -8,7 +6,6 @@ import {
   findChatSession,
   findMessagesBySessionId,
   insertChatMessage,
-  updateSessionScope,
   deleteExpiredSessions,
 } from "../repositories/chat.js";
 import { findDocumentsByProjectId } from "../repositories/document.js";
@@ -201,19 +198,12 @@ export async function sendChatMessage(
 
     let assistantResponse: LlmResponse;
     try {
-      assistantResponse = config.devChatEnabled
-        ? await callDevChat(
-          projectId,
-          sessionId,
-          session.scope as ChatSessionScope,
-          content,
-        )
-        : await callLlmWithStreaming(
-          systemPrompt,
-          llmMessages,
-          sessionId,
-          { projectId, sessionId, scope: session.scope as ChatSessionScope },
-        );
+      assistantResponse = await callLlmWithStreaming(
+        systemPrompt,
+        llmMessages,
+        sessionId,
+        { projectId, sessionId, scope: session.scope as ChatSessionScope },
+      );
     } catch (err) {
       const channel = `chat.${sessionId}`;
       const msg = err instanceof Error ? err.message : "LLM request failed";
@@ -354,96 +344,3 @@ async function callLlmWithStreaming(
   return { content: finalText, toolCalls: allToolCalls };
 }
 
-async function callDevChat(
-  projectId: string,
-  sessionId: string,
-  scope: ChatSessionScope,
-  prompt: string,
-): Promise<LlmResponse> {
-  const rows = await findDocumentsByProjectId(projectId);
-  const activePage = rows.find(
-    (row) => row.documentType === "page" && row.documentId === (scope.activePage || "home"),
-  ) || rows.find((row) => row.documentType === "page");
-
-  const responseText = activePage
-    ? `I drafted a local development update for page:${activePage.documentId}. Review the pending diff on the right, then apply or reject it.`
-    : "I could not find a page to edit in this project yet. Create a page first, then ask again.";
-
-  streamDevResponse(sessionId, responseText);
-
-  let pendingChange: PendingChangePayload | undefined;
-  if (activePage) {
-    pendingChange = createDevPendingChange(activePage.documentId, activePage.content, prompt);
-    broadcastToChannel(`chat.${sessionId}`, "document.pending", pendingChange);
-  }
-
-  return { content: responseText, toolCalls: [], pendingChange };
-}
-
-function streamDevResponse(sessionId: string, content: string): void {
-  const channel = `chat.${sessionId}`;
-  const chunks = content.match(/.{1,32}/g) ?? [content];
-  for (const token of chunks) {
-    broadcastToChannel(channel, "chat.stream.token", { token });
-  }
-  broadcastToChannel(channel, "chat.stream.done", { content });
-}
-
-function createDevPendingChange(
-  documentId: string,
-  oldContent: string,
-  prompt: string,
-): PendingChangePayload {
-  let parsed: Record<string, unknown>;
-
-  try {
-    parsed = (yaml.load(oldContent) as Record<string, unknown>) || {};
-  } catch {
-    parsed = {};
-  }
-
-  const page = ensureRecord(parsed.page);
-  const cleanPrompt = prompt.replace(/\s+/g, " ").trim();
-  const message = cleanPrompt || "Drafted locally by the dev chat flow.";
-
-  // Find the first slot's content array to append a note node
-  const slots = Array.isArray(page.slots) ? page.slots.map((s) => ({ ...ensureRecord(s) })) : [];
-  if (slots.length > 0) {
-    const firstSlot = slots[0];
-    const content = Array.isArray(firstSlot.content) ? [...firstSlot.content] : [];
-    const noteId = `dev_note_${content.length + 1}`;
-    const alreadyPresent = content.some((node) => {
-      const nodeRecord = ensureRecord(node);
-      return typeof nodeRecord.id === "string" && nodeRecord.id === noteId;
-    });
-    if (!alreadyPresent) {
-      content.push({
-        id: noteId,
-        component: "paragraph",
-        props: { label: `Dev chat update: ${message}` },
-      });
-    }
-    firstSlot.content = content;
-  }
-
-  const nextContent = yaml.dump({
-    ...parsed,
-    page: { ...page, slots },
-  }, { lineWidth: -1 });
-
-  return {
-    documentType: "page",
-    documentId,
-    oldContent,
-    newContent: nextContent,
-  };
-}
-
-function ensureRecord(
-  value: unknown,
-  fallback: Record<string, unknown> = {},
-): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : fallback;
-}

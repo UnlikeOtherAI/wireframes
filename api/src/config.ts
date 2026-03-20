@@ -12,7 +12,6 @@ export const config = {
   corsOrigins: (process.env.CORS_ORIGINS || "").split(",").filter(Boolean),
   jwtSecret: requireEnv("JWT_SECRET"),
   devAuthEnabled: process.env.DEV_AUTH_ENABLED === "true",
-  devChatEnabled: process.env.DEV_CHAT_ENABLED === "true",
   devAuthUserEmail:
     process.env.DEV_AUTH_USER_EMAIL || "dev@wireframes.local",
   devAuthUserName:

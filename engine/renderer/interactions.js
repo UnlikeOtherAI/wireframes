@@ -278,6 +278,12 @@ function refreshVisibility() {
 }
 ` + buildOverlayRuntimeCode() + `
 function wfNavigate(id) {
+  try {
+    if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'wf:navigate', routeId: id }, '*');
+      return;
+    }
+  } catch (_err) {}
   var target = WF_ROUTES[id];
   if (!target) { console.warn('Missing target route:', id); return; }
   window.location.href = target;

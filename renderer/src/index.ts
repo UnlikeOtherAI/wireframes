@@ -1,5 +1,4 @@
 import { buildDocumentMap, type DocumentMap } from './document-map.js';
-import { buildRuntimeJs, buildRuntimeJsFromWindowContext } from './interactions.js';
 import { extractAppStateDefaults, extractPageStateDefaults } from './state.js';
 import { resolveDataSources } from './data.js';
 
@@ -53,7 +52,6 @@ export interface RenderOptions {
   platform?: string;
   basePath?: string;
   mode?: 'line' | 'card';
-  preview?: boolean;
 }
 
 function applyModeOverride(documentMap: DocumentMap, mode: 'line' | 'card'): void {
@@ -93,15 +91,10 @@ export function renderProject(
     pages.set(entry.pageId, entry.html);
   }
 
-  let js = result.js as string;
-  if (options?.preview) {
-    js = buildRuntimeJsFromWindowContext({ preview: true });
-  }
-
   return {
     pages,
     css: result.css,
-    js,
+    js: result.js as string,
     routeTable: result.routeTable,
   };
 }
@@ -133,37 +126,7 @@ export function renderPage(
     throw new Error(result.error || `Failed to render page "${pageId}"`);
   }
 
-  let html = result.html as string;
-  if (options?.preview) {
-    html = injectPreviewBridge(html, routeTable);
-  }
-
-  return html;
-}
-
-function injectPreviewBridge(
-  html: string,
-  routeTable: Record<string, string>,
-): string {
-  const bridge = `<script>
-(function(){
-  var WF_ROUTES = ${JSON.stringify(routeTable)};
-  var _origNav = typeof wfNavigate === 'function' ? wfNavigate : null;
-  window.wfNavigate = function(id) {
-    var target = WF_ROUTES[id];
-    if (!target) { console.warn('Missing target route:', id); return; }
-    try {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'wf:navigate', routeId: id, target: target }, '*');
-        return;
-      }
-    } catch (_err) {}
-    if (_origNav) { _origNav(id); }
-    else { window.location.href = target; }
-  };
-})();
-</script>`;
-  return html.replace('</body>', bridge + '\n</body>');
+  return result.html as string;
 }
 
 export function parseProject(

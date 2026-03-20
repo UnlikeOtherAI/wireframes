@@ -158,7 +158,6 @@ export function usePreviewRenderer(
       const parsed = renderer.parseProject(yamlFiles)
       const html = renderer.renderPage(yamlFiles, activePageId, {
         mode: renderMode,
-        preview: true,
       })
       setPreviewState({
         html,
