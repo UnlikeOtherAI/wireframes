@@ -12,6 +12,7 @@
   "scripts": {
     "build": "node build.mjs",
     "build:dev": "node build.mjs --dev",
+    "pretest": "node build.mjs",
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
