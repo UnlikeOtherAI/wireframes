@@ -22,7 +22,27 @@
   },
   "dashboard": {
     "title": "Projects",
-    "noProjects": "No projects yet"
+    "noProjects": "No projects yet",
+    "createFirst": "Create your first project to get started",
+    "newProject": "New Project",
+    "createProject": "Create Project",
+    "projectName": "Project name",
+    "projectNameRequired": "Project name is required",
+    "projectNameMaxLength": "Project name must be 100 characters or less",
+    "creating": "Creating...",
+    "lastUpdated": "Updated {{date}}",
+    "roleOwner": "Owner",
+    "roleEditor": "Editor",
+    "roleViewer": "Viewer",
+    "invitedTo": "You've been invited to {{projectName}}",
+    "invitedBy": "Invited by {{name}}",
+    "roleOffered": "Role: {{role}}",
+    "accept": "Accept",
+    "decline": "Decline",
+    "accepting": "Accepting...",
+    "declining": "Declining...",
+    "networkError": "Failed to load projects. Please try again.",
+    "retry": "Retry"
   },
   "project": {
     "editor": "Project Editor",
