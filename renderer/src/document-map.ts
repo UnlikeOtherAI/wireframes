@@ -1,6 +1,6 @@
 import { parseYaml } from './parser.js';
 
-interface DocumentMap {
+export interface DocumentMap {
   manifest: Record<string, unknown> | null;
   sitemap: Record<string, unknown> | null;
   templates: Record<string, unknown> | null;
