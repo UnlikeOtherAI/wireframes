@@ -128,6 +128,22 @@ describe('renderPage', () => {
     const second = renderPage(files, 'home');
     assert.strictEqual(first, second);
   });
+
+  it('options.mode overrides page-level rendering mode', () => {
+    const files = baseFiles();
+    const lineHtml = renderPage(files, 'home', { mode: 'line' });
+    const cardHtml = renderPage(files, 'home', { mode: 'card' });
+
+    const lineBody = lineHtml.match(/<body[^>]*class="([^"]*)"/);
+    const cardBody = cardHtml.match(/<body[^>]*class="([^"]*)"/);
+    assert.ok(lineBody, 'line HTML should have body with class');
+    assert.ok(cardBody, 'card HTML should have body with class');
+    assert.ok(lineBody[1].includes('wf-mode-line'), 'line mode body should have wf-mode-line');
+    assert.ok(!lineBody[1].includes('wf-mode-card'), 'line mode body should not have wf-mode-card');
+    assert.ok(cardBody[1].includes('wf-mode-card'), 'card mode body should have wf-mode-card');
+    assert.ok(!cardBody[1].includes('wf-mode-line'), 'card mode body should not have wf-mode-line');
+    assert.notStrictEqual(lineHtml, cardHtml, 'different modes produce different HTML');
+  });
 });
 
 describe('parseProject', () => {
@@ -239,8 +255,9 @@ sitemap:
       'pages/mobile.yaml': mobilePage,
       'pages/web.yaml': webPage,
     });
-    const platforms = new Set(result.pages.map((p) => p.platform));
-    assert.ok(platforms.has('web'), 'should have web pages');
-    assert.ok(platforms.has('mobile'), 'should have mobile pages');
+    assert.ok(result.pages.has('mobile_home'), 'should have mobile page');
+    assert.ok(result.pages.has('web_home'), 'should have web page');
+    assert.ok(result.pages.get('mobile_home').includes('Mobile'), 'mobile page should have Mobile text');
+    assert.ok(result.pages.get('web_home').includes('Web'), 'web page should have Web text');
   });
 });

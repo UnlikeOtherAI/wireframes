@@ -74,8 +74,8 @@ describe('renderProject', () => {
     });
 
     assert.ok(result, 'result should be truthy');
-    assert.ok(Array.isArray(result.pages), 'result.pages should be an array');
-    assert.ok(result.pages.length > 0, 'should have at least one page');
+    assert.ok(result.pages instanceof Map, 'result.pages should be a Map');
+    assert.ok(result.pages.size > 0, 'should have at least one page');
     assert.strictEqual(typeof result.css, 'string');
     assert.strictEqual(typeof result.js, 'string');
     assert.ok(
@@ -92,15 +92,15 @@ describe('renderProject', () => {
       'pages/home.yaml': HOME_PAGE_YAML,
     });
 
-    const homePage = result.pages.find((p) => p.pageId === 'home');
-    assert.ok(homePage, 'should have a home page');
-    assert.ok(homePage.html.includes('<!doctype html'), 'should be full HTML');
+    const homeHtml = result.pages.get('home');
+    assert.ok(homeHtml, 'should have a home page');
+    assert.ok(homeHtml.includes('<!doctype html'), 'should be full HTML');
     assert.ok(
-      homePage.html.includes('Hello from the renderer'),
+      homeHtml.includes('Hello from the renderer'),
       'should contain page text',
     );
     assert.ok(
-      homePage.html.includes('Test Site'),
+      homeHtml.includes('Test Site'),
       'should contain template heading',
     );
   });
@@ -166,11 +166,8 @@ page:
       { platform: 'web' },
     );
 
-    assert.ok(result.pages.length > 0);
-    assert.ok(
-      result.pages.every((p) => p.platform === 'web'),
-      'all pages should be web platform',
-    );
+    assert.ok(result.pages.size > 0, 'should have pages');
+    assert.ok(result.pages.has('home'), 'should have home page');
   });
 
   it('produces deterministic output', () => {
@@ -184,9 +181,34 @@ page:
     const first = renderProject(input);
     const second = renderProject(input);
 
-    assert.deepStrictEqual(first.pages, second.pages);
+    assert.deepStrictEqual([...first.pages], [...second.pages]);
     assert.strictEqual(first.css, second.css);
     assert.strictEqual(first.js, second.js);
     assert.deepStrictEqual(first.routeTable, second.routeTable);
+  });
+
+  it('options.mode overrides page-level rendering mode', () => {
+    const input = {
+      'manifest.yaml': MANIFEST_YAML,
+      'sitemap.yaml': SITEMAP_YAML,
+      'templates.yaml': TEMPLATES_YAML,
+      'pages/home.yaml': HOME_PAGE_YAML,
+    };
+
+    const lineResult = renderProject(input, { mode: 'line' });
+    const cardResult = renderProject(input, { mode: 'card' });
+
+    const lineHtml = lineResult.pages.get('home');
+    const cardHtml = cardResult.pages.get('home');
+
+    const lineBody = lineHtml.match(/<body[^>]*class="([^"]*)"/);
+    const cardBody = cardHtml.match(/<body[^>]*class="([^"]*)"/);
+    assert.ok(lineBody, 'line HTML should have body with class');
+    assert.ok(cardBody, 'card HTML should have body with class');
+    assert.ok(lineBody[1].includes('wf-mode-line'), 'line mode body should have wf-mode-line');
+    assert.ok(!lineBody[1].includes('wf-mode-card'), 'line mode body should not have wf-mode-card');
+    assert.ok(cardBody[1].includes('wf-mode-card'), 'card mode body should have wf-mode-card');
+    assert.ok(!cardBody[1].includes('wf-mode-line'), 'card mode body should not have wf-mode-line');
+    assert.notStrictEqual(lineHtml, cardHtml, 'line and card mode should produce different HTML');
   });
 });

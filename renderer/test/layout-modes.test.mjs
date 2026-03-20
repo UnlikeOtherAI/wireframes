@@ -60,7 +60,7 @@ function getPageHtml(pageYaml) {
     'templates.yaml': TEMPLATES_YAML,
     'pages/test.yaml': pageYaml,
   });
-  return result.pages.find((p) => p.pageId === 'test').html;
+  return result.pages.get('test');
 }
 
 describe('Layout types', () => {
@@ -445,10 +445,10 @@ page:
       'templates.yaml': stickyTemplate,
       'pages/test.yaml': pageYaml,
     });
-    const page = result.pages.find((p) => p.pageId === 'test');
-    assert.ok(page, 'should find page');
-    assert.ok(page.html.includes('data-sticky="top"'), 'should have sticky top');
-    assert.ok(page.html.includes('data-sticky="bottom"'), 'should have sticky bottom');
+    const pageHtml = result.pages.get('test');
+    assert.ok(pageHtml, 'should find page');
+    assert.ok(pageHtml.includes('data-sticky="top"'), 'should have sticky top');
+    assert.ok(pageHtml.includes('data-sticky="bottom"'), 'should have sticky bottom');
   });
 });
 

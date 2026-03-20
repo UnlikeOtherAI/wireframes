@@ -58,8 +58,7 @@ function renderContent(content) {
     'templates.yaml': TEMPLATES_YAML,
     'pages/test.yaml': buildPage(content),
   });
-  const page = result.pages.find((p) => p.pageId === 'test');
-  return page.html;
+  return result.pages.get('test');
 }
 
 describe('Text primitives', () => {
