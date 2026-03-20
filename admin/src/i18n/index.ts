@@ -1,6 +1,21 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import en from './locales/en.json'
+
+const localeModules = import.meta.glob<{ default: Record<string, unknown> }>(
+  './locales/*.json',
+  { eager: true },
+)
+
+function buildResources(): Record<string, { translation: Record<string, unknown> }> {
+  const resources: Record<string, { translation: Record<string, unknown> }> = {}
+  for (const path of Object.keys(localeModules)) {
+    const match = path.match(/\.\/locales\/(.+)\.json$/)
+    if (match) {
+      resources[match[1]] = { translation: localeModules[path].default }
+    }
+  }
+  return resources
+}
 
 function getInitialLocale(): string {
   const match = document.cookie.match(/(?:^|;\s*)locale=([^;]*)/)
@@ -8,9 +23,7 @@ function getInitialLocale(): string {
 }
 
 i18n.use(initReactI18next).init({
-  resources: {
-    en: { translation: en },
-  },
+  resources: buildResources(),
   lng: getInitialLocale(),
   fallbackLng: 'en',
   interpolation: {
@@ -18,4 +31,5 @@ i18n.use(initReactI18next).init({
   },
 })
 
+export { buildResources }
 export default i18n

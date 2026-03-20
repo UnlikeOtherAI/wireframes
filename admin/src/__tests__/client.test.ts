@@ -2,12 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useAuthStore } from '../stores/authStore'
 import { apiFetch, ApiError } from '../api/client'
 
-function makeJwt(exp: number): string {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-  const payload = btoa(JSON.stringify({ sub: '1', exp }))
-  return `${header}.${payload}.signature`
-}
-
 describe('apiFetch', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -20,8 +14,8 @@ describe('apiFetch', () => {
   })
 
   it('attaches Authorization header when token is set', async () => {
-    const token = makeJwt(Math.floor(Date.now() / 1000) + 3600)
-    useAuthStore.getState().setToken(token)
+    const token = 'test-jwt-token'
+    useAuthStore.setState({ token, isAuthenticated: true })
 
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), { status: 200 }),
@@ -48,8 +42,7 @@ describe('apiFetch', () => {
   })
 
   it('triggers logout on 401 response', async () => {
-    const token = makeJwt(Math.floor(Date.now() / 1000) + 3600)
-    useAuthStore.getState().setToken(token)
+    useAuthStore.setState({ token: 'test-jwt-token', isAuthenticated: true })
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response('Unauthorized', { status: 401 }),

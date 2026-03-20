@@ -29,32 +29,13 @@ function loadUser(): User | null {
   }
 }
 
-function isTokenExpired(token: string): boolean {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    return payload.exp * 1000 < Date.now()
-  } catch {
-    return true
-  }
-}
-
-function getInitialState(): { token: string | null; user: User | null } {
-  const token = loadToken()
-  if (token && !isTokenExpired(token)) {
-    return { token, user: loadUser() }
-  }
-  const storage = getStorage()
-  storage?.removeItem(TOKEN_KEY)
-  storage?.removeItem(USER_KEY)
-  return { token: null, user: null }
-}
-
-const initial = getInitialState()
+const initialToken = loadToken()
+const initialUser = initialToken ? loadUser() : null
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: initial.user,
-  token: initial.token,
-  isAuthenticated: initial.token !== null,
+  user: initialUser,
+  token: initialToken,
+  isAuthenticated: initialToken !== null,
 
   login: (token: string, user: User) => {
     const storage = getStorage()
@@ -68,15 +49,5 @@ export const useAuthStore = create<AuthState>((set) => ({
     storage?.removeItem(TOKEN_KEY)
     storage?.removeItem(USER_KEY)
     set({ token: null, user: null, isAuthenticated: false })
-  },
-
-  setToken: (token: string) => {
-    getStorage()?.setItem(TOKEN_KEY, token)
-    set({ token, isAuthenticated: true })
-  },
-
-  setUser: (user: User) => {
-    getStorage()?.setItem(USER_KEY, JSON.stringify(user))
-    set({ user })
   },
 }))
