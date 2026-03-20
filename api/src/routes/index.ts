@@ -2,6 +2,7 @@ import type { Handler } from "../middleware/types.js";
 import { handleHealthRoute } from "./health.js";
 import { handleAuthRoute } from "./auth.js";
 import { handlePreviewRoute } from "./preview.js";
+import { handleProjectRoute } from "./project.js";
 
 export const router: Handler = async (req) => {
   const healthResponse = handleHealthRoute(req);
@@ -9,6 +10,9 @@ export const router: Handler = async (req) => {
 
   const authResponse = handleAuthRoute(req);
   if (authResponse) return authResponse;
+
+  const projectResponse = handleProjectRoute(req);
+  if (projectResponse) return projectResponse;
 
   const previewResponse = handlePreviewRoute(req);
   if (previewResponse) return previewResponse;
