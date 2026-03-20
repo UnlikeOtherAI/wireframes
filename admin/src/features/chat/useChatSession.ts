@@ -293,14 +293,11 @@ export function useChatSession({
     await sendUserMessage(content)
   }, [input, sendUserMessage])
 
-  const rejectChange = useCallback(async () => {
+  const rejectChange = useCallback(() => {
     if (!pendingChange) return
     setPendingChange(null)
     sessionStorage.removeItem(pendingKey(projectId))
-    await sendUserMessage(
-      `Please discard the proposed edit for ${pendingChange.documentType}:${pendingChange.documentId} and try a different approach.`,
-    )
-  }, [pendingChange, sendUserMessage])
+  }, [pendingChange, projectId])
 
   const applyChange = useCallback(async () => {
     if (!pendingChange) return

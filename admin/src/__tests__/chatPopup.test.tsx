@@ -208,11 +208,11 @@ describe('ChatPopup', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reject' }))
 
     await waitFor(() => {
-      const messageCalls = fetchSpy.mock.calls.filter(([url]) => String(url).includes('/messages'))
-      expect(messageCalls).toHaveLength(1)
-      const body = JSON.parse(String((messageCalls[0][1] as RequestInit).body))
-      expect(body.content).toContain('discard the proposed edit')
+      expect(screen.queryByTestId('chat-diff-preview')).not.toBeInTheDocument()
     })
+    // Reject should NOT send a follow-up message — just dismiss the change
+    const messageCalls = fetchSpy.mock.calls.filter(([url]) => String(url).includes('/messages'))
+    expect(messageCalls).toHaveLength(0)
   })
 
   it('clears chat history when the project changes', async () => {
