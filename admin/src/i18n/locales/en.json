@@ -152,6 +152,29 @@
       "mobile_landscape": "Mobile Landscape"
     }
   },
+  "workspace": {
+    "pages": "Pages",
+    "pageNavigation": "Page navigation",
+    "nodeTree": "Node tree",
+    "noNodes": "No nodes to display",
+    "noRoutes": "No routes defined",
+    "sitemapDiagram": "Sitemap diagram",
+    "deviceControls": "Device controls",
+    "device": "Device",
+    "renderMode": "Render mode",
+    "modeLine": "Line",
+    "modeCard": "Card",
+    "preview": "Workspace preview",
+    "renderError": "Render Error",
+    "rendererUnavailable": "Renderer library not available",
+    "devices": {
+      "web": "Web",
+      "tablet_portrait": "Tablet Portrait",
+      "tablet_landscape": "Tablet Landscape",
+      "mobile_portrait": "Mobile Portrait",
+      "mobile_landscape": "Mobile Landscape"
+    }
+  },
   "account": {
     "title": "Account Settings",
     "backToDashboard": "Back to dashboard",
