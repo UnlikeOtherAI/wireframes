@@ -4,6 +4,7 @@ import { handleAuthRoute } from "./auth.js";
 import { handlePreviewRoute } from "./preview.js";
 import { handleProjectRoute } from "./project.js";
 import { handleMembershipRoute } from "./membership.js";
+import { handleUserProfileRoute } from "./user-profile.js";
 
 export const router: Handler = async (req) => {
   const healthResponse = handleHealthRoute(req);
@@ -11,6 +12,9 @@ export const router: Handler = async (req) => {
 
   const authResponse = handleAuthRoute(req);
   if (authResponse) return authResponse;
+
+  const userProfileResponse = handleUserProfileRoute(req);
+  if (userProfileResponse) return userProfileResponse;
 
   const membershipResponse = handleMembershipRoute(req);
   if (membershipResponse) return membershipResponse;
