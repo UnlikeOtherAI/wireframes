@@ -3,6 +3,7 @@ import { describe, test, expect, mock, beforeEach } from "bun:test";
 let documentRows: any[] = [];
 let upsertCalled = false;
 let lastUpsertArgs: any = null;
+let broadcastCalls: Array<{ channel: string; event: string; payload: unknown }> = [];
 
 mock.module("../repositories/document.js", () => ({
   findDocumentsByProjectId: async () => documentRows,
@@ -41,7 +42,9 @@ mock.module("../services/engine.js", () => ({
 }));
 
 mock.module("../ws/broadcast.js", () => ({
-  broadcastToChannel: () => {},
+  broadcastToChannel: (channel: string, event: string, payload: unknown) => {
+    broadcastCalls.push({ channel, event, payload });
+  },
 }));
 
 import { executeToolCall } from "../services/chat-tool-executor.js";
@@ -58,6 +61,7 @@ describe("executeToolCall", () => {
     documentRows = [];
     upsertCalled = false;
     lastUpsertArgs = null;
+    broadcastCalls = [];
   });
 
   test("returns error for unknown tool", async () => {
@@ -125,6 +129,18 @@ describe("executeToolCall", () => {
     expect(lastUpsertArgs.documentType).toBe("page");
     expect(lastUpsertArgs.documentId).toBe("home");
     expect(lastUpsertArgs.expectedHash).toBe("current-hash");
+    expect(broadcastCalls).toEqual([
+      {
+        channel: "project.project-1",
+        event: "document.updated",
+        payload: expect.objectContaining({
+          documentType: "page",
+          documentId: "home",
+          oldContent: "title: Home",
+          newContent: "title: Updated Home",
+        }),
+      },
+    ]);
   });
 
   test("edit_document returns conflict error when hash mismatch", async () => {

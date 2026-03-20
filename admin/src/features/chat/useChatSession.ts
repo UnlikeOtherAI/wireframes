@@ -28,6 +28,7 @@ interface UseChatSessionOptions {
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'reconnecting'
 type LocalMessage = ChatMessage & { localStatus?: 'streaming' | 'error' }
+type SocketEventPayload = Record<string, unknown> | undefined
 
 const sessionKey = (projectId: string) => `wf_chat_session:${projectId}`
 
@@ -63,13 +64,31 @@ export function useChatSession({
 
   const token = useAuthStore((state) => state.token)
 
+  const showPendingChange = useCallback((payload: SocketEventPayload) => {
+    const documentType = typeof payload?.documentType === 'string' ? payload.documentType : ''
+    const documentId = typeof payload?.documentId === 'string' ? payload.documentId : ''
+    const oldContent = typeof payload?.oldContent === 'string' ? payload.oldContent : ''
+    const newContent = typeof payload?.newContent === 'string' ? payload.newContent : ''
+    if (!documentType || !documentId) return
+    setPendingChange({
+      documentType,
+      documentId,
+      oldContent,
+      newContent,
+      lines: diffLines(oldContent, newContent),
+    })
+  }, [])
+
   const subscribe = useCallback(() => {
     const ws = wsRef.current
     const sessionId = sessionIdRef.current
-    if (ws && ws.readyState === WebSocket.OPEN && sessionId) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return
+
+    ws.send(JSON.stringify({ type: 'subscribe', channel: `project.${projectId}` }))
+    if (sessionId) {
       ws.send(JSON.stringify({ type: 'subscribe', channel: `chat.${sessionId}` }))
     }
-  }, [])
+  }, [projectId])
 
   const closeSocket = useCallback(() => {
     if (reconnectRef.current) clearTimeout(reconnectRef.current)
@@ -136,19 +155,8 @@ export function useChatSession({
         return
       }
 
-      if (data.type === 'document.pending') {
-        const documentType = typeof data.payload?.documentType === 'string' ? data.payload.documentType : ''
-        const documentId = typeof data.payload?.documentId === 'string' ? data.payload.documentId : ''
-        const oldContent = typeof data.payload?.oldContent === 'string' ? data.payload.oldContent : ''
-        const newContent = typeof data.payload?.newContent === 'string' ? data.payload.newContent : ''
-        if (!documentType || !documentId) return
-        setPendingChange({
-          documentType,
-          documentId,
-          oldContent,
-          newContent,
-          lines: diffLines(oldContent, newContent),
-        })
+      if (data.type === 'document.pending' || data.type === 'document.updated') {
+        showPendingChange(data.payload)
       }
     })
 
@@ -163,7 +171,7 @@ export function useChatSession({
       setConnectionStatus('reconnecting')
       reconnectRef.current = setTimeout(connectSocket, delay)
     })
-  }, [isOpen, subscribe, token])
+  }, [isOpen, showPendingChange, subscribe, token])
 
   const loadSession = useCallback(async () => {
     if (!isOpen || loadedRef.current) return

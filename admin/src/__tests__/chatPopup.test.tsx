@@ -158,7 +158,7 @@ describe('ChatPopup', () => {
     })
   })
 
-  it('shows a pending diff from websocket events and applies or rejects against the mocked contract', async () => {
+  it('shows a pending diff from backend document update events and applies or rejects against the mocked contract', async () => {
     const fetchSpy = mockFetch()
     const onApplyDocument = vi.fn().mockResolvedValue(undefined)
     sessionStorage.setItem('wf_chat_session:project-1', 'session-1')
@@ -166,12 +166,15 @@ describe('ChatPopup', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open chat' }))
     await waitFor(() => expect(screen.getByText('Saved history')).toBeInTheDocument())
-    await waitFor(() => expect(MockWebSocket.instances[0].sent.some((entry) => entry.includes('chat.session-1'))).toBe(true))
+    await waitFor(() => {
+      expect(MockWebSocket.instances[0].sent.some((entry) => entry.includes('project.project-1'))).toBe(true)
+      expect(MockWebSocket.instances[0].sent.some((entry) => entry.includes('chat.session-1'))).toBe(true)
+    })
 
     act(() => {
       MockWebSocket.instances[0].emit('message', {
         data: JSON.stringify({
-          type: 'document.pending',
+          type: 'document.updated',
           payload: {
             documentType: 'page',
             documentId: 'home',
@@ -191,7 +194,7 @@ describe('ChatPopup', () => {
     act(() => {
       MockWebSocket.instances[0].emit('message', {
         data: JSON.stringify({
-          type: 'document.pending',
+          type: 'document.updated',
           payload: {
             documentType: 'page',
             documentId: 'home',
