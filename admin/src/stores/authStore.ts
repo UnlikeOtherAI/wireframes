@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { AuthState, User } from '../types/auth'
+import { isTokenExpired } from '../utils/jwt'
 
 const TOKEN_KEY = 'wireframes_token'
 const USER_KEY = 'wireframes_user'
@@ -16,7 +17,13 @@ function getStorage(): Storage | null {
 }
 
 function loadToken(): string | null {
-  return getStorage()?.getItem(TOKEN_KEY) ?? null
+  const token = getStorage()?.getItem(TOKEN_KEY) ?? null
+  if (token && isTokenExpired(token)) {
+    getStorage()?.removeItem(TOKEN_KEY)
+    getStorage()?.removeItem(USER_KEY)
+    return null
+  }
+  return token
 }
 
 function loadUser(): User | null {

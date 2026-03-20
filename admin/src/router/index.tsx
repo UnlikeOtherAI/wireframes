@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { AuthGuard } from './guards'
 import { LoginPage } from '../features/LoginPage'
+import { AuthCallbackPage } from '../features/AuthCallbackPage'
 import { DashboardPage } from '../features/DashboardPage'
 import { ProjectEditorPage } from '../features/ProjectEditorPage'
 import { ProjectSettingsPage } from '../features/ProjectSettingsPage'
@@ -12,6 +13,10 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/auth/callback',
+    element: <AuthCallbackPage />,
   },
   {
     element: <AuthGuard />,
