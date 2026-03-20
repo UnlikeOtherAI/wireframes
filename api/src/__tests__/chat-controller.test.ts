@@ -1,4 +1,4 @@
-import { describe, test, expect, mock, beforeEach } from "bun:test";
+import { describe, test, expect, mock, beforeEach, beforeAll } from "bun:test";
 
 let serviceState = {
   sessionResult: null as any,
@@ -23,16 +23,6 @@ function resetService() {
     lastSendArgs: null,
   };
 }
-
-mock.module("../config.js", () => ({
-  config: {
-    port: 3001,
-    databaseUrl: "",
-    corsOrigins: [],
-    jwtSecret: "test-secret",
-    ssoVerifyUrl: "https://sso.test/verify",
-  },
-}));
 
 mock.module("../services/chat.js", () => ({
   startChatSession: async (userId: string, projectId: string, scope: any) => {
@@ -69,10 +59,27 @@ import { errorHandler } from "../middleware/error-handler.js";
 import { auth } from "../middleware/auth.js";
 import { signJwt } from "../services/jwt.js";
 
-const testJwt = signJwt(
-  { userId: "user-1", email: "test@example.com" },
-  "test-secret",
-);
+let testJwt: string;
+let createHandler: (req: Request) => Promise<Response>;
+let getHandler: (req: Request) => Promise<Response>;
+let sendHandler: (req: Request) => Promise<Response>;
+
+beforeAll(() => {
+  testJwt = signJwt(
+    { userId: "user-1", email: "test@example.com" },
+    "test-secret",
+  );
+
+  createHandler = errorHandler(
+    auth((r) => createChatSessionController(r, "project-1")),
+  );
+  getHandler = errorHandler(
+    auth((r) => getChatSessionController(r, "project-1", "session-1")),
+  );
+  sendHandler = errorHandler(
+    auth((r) => sendChatMessageController(r, "project-1", "session-1")),
+  );
+});
 
 function makeRequest(
   path: string,
@@ -87,16 +94,6 @@ function makeRequest(
   if (body !== undefined) init.body = JSON.stringify(body);
   return new Request(`http://localhost${path}`, init);
 }
-
-const createHandler = errorHandler(
-  auth((r) => createChatSessionController(r, "project-1")),
-);
-const getHandler = errorHandler(
-  auth((r) => getChatSessionController(r, "project-1", "session-1")),
-);
-const sendHandler = errorHandler(
-  auth((r) => sendChatMessageController(r, "project-1", "session-1")),
-);
 
 describe("createChatSessionController", () => {
   beforeEach(resetService);

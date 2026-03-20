@@ -1,13 +1,14 @@
 import yaml from "js-yaml";
 import { createHash } from "node:crypto";
-import { findDocumentsByProjectId } from "../repositories/document.js";
+import {
+  findDocumentsByProjectId,
+  upsertDocument,
+} from "../repositories/document.js";
 import { updateSessionScope } from "../repositories/chat.js";
 import { validateProject } from "./engine.js";
 import { buildDocumentMap } from "./build.js";
 import { broadcastToChannel } from "../ws/broadcast.js";
 import type { ChatSessionScope } from "./chat-types.js";
-import { db } from "../db/index.js";
-import { documents } from "../db/schema.js";
 
 export interface ToolExecutionContext {
   projectId: string;
@@ -98,21 +99,24 @@ async function executeEditDocument(
     };
   }
 
-  // Save the document
+  // Save the document with conflict detection
   const contentHash = createHash("sha256").update(content).digest("hex");
-  await db
-    .insert(documents)
-    .values({
-      projectId: ctx.projectId,
-      documentType,
-      documentId,
-      content,
-      contentHash,
-    })
-    .onConflictDoUpdate({
-      target: [documents.projectId, documents.documentType, documents.documentId],
-      set: { content, contentHash, updatedAt: new Date() },
-    });
+  const expectedHash = existingDoc?.contentHash;
+  const { conflict } = await upsertDocument(
+    ctx.projectId,
+    documentType,
+    documentId,
+    content,
+    contentHash,
+    expectedHash,
+  );
+
+  if (conflict) {
+    return {
+      result: "Conflict: the document was modified by another user. Please reload and try again.",
+      error: true,
+    };
+  }
 
   // Broadcast the change via WebSocket (include old + new content for diff)
   broadcastToChannel(`project.${ctx.projectId}`, "document.updated", {

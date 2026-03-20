@@ -7,6 +7,7 @@ import {
   findMessagesBySessionId,
   insertChatMessage,
   updateSessionScope,
+  deleteExpiredSessions,
 } from "../repositories/chat.js";
 import { findDocumentsByProjectId } from "../repositories/document.js";
 import { broadcastToChannel } from "../ws/broadcast.js";
@@ -91,6 +92,9 @@ export async function startChatSession(
   scope: ChatSessionScope,
 ) {
   await requireProjectAccess(userId, projectId);
+
+  // Clean up expired sessions on access
+  deleteExpiredSessions().catch(() => {});
 
   const session = await createChatSession(projectId, userId, {
     ...scope,
@@ -233,45 +237,55 @@ interface LlmResponse {
   toolCalls: ChatToolCall[];
 }
 
+type AnthropicMessage = Anthropic.MessageParam;
+
+const MAX_TOOL_ROUNDS = 3;
+
 async function callLlmWithStreaming(
   systemPrompt: string,
-  messages: Array<{ role: "user" | "assistant"; content: string }>,
+  messages: AnthropicMessage[],
   sessionId: string,
   ctx: { projectId: string; sessionId: string; scope: ChatSessionScope },
-  retryCount: number = 0,
 ): Promise<LlmResponse> {
   const client = getClient();
   const channel = `chat.${sessionId}`;
+  const allToolCalls: ChatToolCall[] = [];
+  let currentMessages = [...messages];
+  let finalText = "";
 
-  const stream = client.messages.stream({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 4096,
-    system: systemPrompt,
-    tools: chatTools,
-    messages,
-  });
+  for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+    const stream = client.messages.stream({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4096,
+      system: systemPrompt,
+      tools: chatTools,
+      messages: currentMessages,
+    });
 
-  let textContent = "";
-  const toolCalls: ChatToolCall[] = [];
+    let roundText = "";
+    stream.on("text", (text) => {
+      roundText += text;
+      broadcastToChannel(channel, "chat.stream.token", { token: text });
+    });
 
-  stream.on("text", (text) => {
-    textContent += text;
-    broadcastToChannel(channel, "chat.stream.token", { token: text });
-  });
+    const response = await stream.finalMessage();
 
-  const response = await stream.finalMessage();
+    const textBlocks = response.content.filter(
+      (block): block is Anthropic.TextBlock => block.type === "text",
+    );
+    finalText = textBlocks.map((b) => b.text).join("") || roundText;
 
-  // Process tool use blocks
-  const toolUseBlocks = response.content.filter(
-    (block): block is Anthropic.ToolUseBlock => block.type === "tool_use",
-  );
+    const toolUseBlocks = response.content.filter(
+      (block): block is Anthropic.ToolUseBlock => block.type === "tool_use",
+    );
 
-  if (toolUseBlocks.length > 0) {
-    const toolResults: Array<{
-      type: "tool_result";
-      tool_use_id: string;
-      content: string;
-    }> = [];
+    if (toolUseBlocks.length === 0) {
+      break;
+    }
+
+    // Execute tool calls and collect results
+    const toolResultContent: Anthropic.ToolResultBlockParam[] = [];
+    let hasError = false;
 
     for (const toolUse of toolUseBlocks) {
       const executionResult = await executeToolCall(
@@ -280,50 +294,39 @@ async function callLlmWithStreaming(
         ctx,
       );
 
-      toolCalls.push({
+      allToolCalls.push({
         name: toolUse.name,
         input: toolUse.input as Record<string, unknown>,
         result: executionResult.result,
       });
 
-      toolResults.push({
+      toolResultContent.push({
         type: "tool_result",
         tool_use_id: toolUse.id,
         content: executionResult.result,
       });
 
-      // If there was a validation error and we haven't retried, let LLM self-correct
-      if (executionResult.error && retryCount < 1) {
-        const retryMessages = [
-          ...messages,
-          { role: "assistant" as const, content: response.content },
-          { role: "user" as const, content: `Tool error: ${executionResult.result}. Please fix and try again.` },
-        ];
+      if (executionResult.error) hasError = true;
+    }
 
-        return callLlmWithStreaming(
-          systemPrompt,
-          retryMessages.map((m) => ({
-            role: m.role as "user" | "assistant",
-            content: typeof m.content === "string" ? m.content : textContent,
-          })),
-          sessionId,
-          ctx,
-          retryCount + 1,
-        );
-      }
+    // Send tool results back to Claude for a follow-up turn
+    currentMessages = [
+      ...currentMessages,
+      { role: "assistant" as const, content: response.content },
+      { role: "user" as const, content: toolResultContent },
+    ];
+
+    // If there was a validation error and this is the first retry, let LLM self-correct
+    // Otherwise if no error, still send results back for the LLM to produce a text summary
+    if (hasError && round >= 1) {
+      break;
     }
   }
 
-  // Extract text content from the response
-  const textBlocks = response.content.filter(
-    (block): block is Anthropic.TextBlock => block.type === "text",
-  );
-  const finalText = textBlocks.map((b) => b.text).join("") || textContent;
-
   broadcastToChannel(channel, "chat.stream.done", {
     content: finalText,
-    toolCalls,
+    toolCalls: allToolCalls,
   });
 
-  return { content: finalText, toolCalls };
+  return { content: finalText, toolCalls: allToolCalls };
 }

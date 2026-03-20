@@ -5,6 +5,7 @@ import {
   unsubscribeAll,
   publishToChannel,
 } from "./channels.js";
+import { canSubscribeToChannel } from "./channel-auth.js";
 
 export function handleOpen(ws: WsSocket): void {
   console.log(`WS connected: user=${ws.data.userId}`);
@@ -27,14 +28,7 @@ export function handleMessage(ws: WsSocket, raw: string | Buffer): void {
         );
         return;
       }
-      const ok = subscribeToChannel(ws, msg.channel);
-      ws.send(
-        JSON.stringify({
-          type: ok ? "subscribed" : "error",
-          channel: msg.channel,
-          ...(ok ? {} : { payload: "Invalid channel format" }),
-        }),
-      );
+      handleSubscribe(ws, msg.channel);
       break;
     }
     case "unsubscribe": {
@@ -73,6 +67,29 @@ export function handleMessage(ws: WsSocket, raw: string | Buffer): void {
         JSON.stringify({ type: "error", payload: "Unknown message type" }),
       );
   }
+}
+
+async function handleSubscribe(ws: WsSocket, channel: string): Promise<void> {
+  const authorized = await canSubscribeToChannel(ws.data.userId, channel);
+  if (!authorized) {
+    ws.send(
+      JSON.stringify({
+        type: "error",
+        channel,
+        payload: "Not authorized to subscribe to this channel",
+      }),
+    );
+    return;
+  }
+
+  const ok = subscribeToChannel(ws, channel);
+  ws.send(
+    JSON.stringify({
+      type: ok ? "subscribed" : "error",
+      channel,
+      ...(ok ? {} : { payload: "Invalid channel format" }),
+    }),
+  );
 }
 
 export function handleError(ws: WsSocket, error: Error): void {

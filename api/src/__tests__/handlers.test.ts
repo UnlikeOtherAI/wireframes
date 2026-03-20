@@ -1,4 +1,9 @@
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect, mock } from "bun:test";
+
+mock.module("../ws/channel-auth.js", () => ({
+  canSubscribeToChannel: async () => true,
+}));
+
 import {
   handleMessage,
   handleOpen,
@@ -29,6 +34,10 @@ function createMockWs(
     sent,
     published,
   } as unknown as WsSocket & { sent: string[]; published: Array<{ channel: string; data: string }> };
+}
+
+function flushMicrotasks(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 10));
 }
 
 describe("handleOpen", () => {
@@ -66,9 +75,10 @@ describe("handleMessage", () => {
     });
   });
 
-  test("subscribe to valid channel", () => {
+  test("subscribe to valid channel", async () => {
     const ws = createMockWs();
     handleMessage(ws, JSON.stringify({ type: "subscribe", channel: "chat.room1" }));
+    await flushMicrotasks();
     expect(ws.sent).toHaveLength(1);
     const response = JSON.parse(ws.sent[0]);
     expect(response.type).toBe("subscribed");
