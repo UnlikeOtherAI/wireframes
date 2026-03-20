@@ -258,13 +258,36 @@ export function ProjectEditorPage() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer', color: adminColors.textSecondary }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', color: adminColors.textSecondary, userSelect: 'none' }}>
             <input
               type="checkbox"
               checked={autoSaveEnabled}
               onChange={(e) => setAutoSaveEnabled(e.target.checked)}
               aria-label={t('editor.autoSave')}
+              style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
             />
+            <span style={{
+              display: 'inline-flex',
+              width: 36,
+              height: 20,
+              borderRadius: 10,
+              background: autoSaveEnabled ? adminColors.primary : adminColors.border,
+              transition: 'background 150ms ease',
+              position: 'relative',
+              flexShrink: 0,
+            }}>
+              <span style={{
+                position: 'absolute',
+                top: 2,
+                left: autoSaveEnabled ? 18 : 2,
+                width: 16,
+                height: 16,
+                borderRadius: '50%',
+                background: '#fff',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                transition: 'left 150ms ease',
+              }} />
+            </span>
             {t('editor.autoSave')}
           </label>
           <button
