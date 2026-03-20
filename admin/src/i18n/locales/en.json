@@ -167,6 +167,11 @@
     "preview": "Workspace preview",
     "renderError": "Render Error",
     "rendererUnavailable": "Renderer library not available",
+    "tabTree": "Tree",
+    "tabSitemap": "Sitemap",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "zoom": "Zoom",
     "devices": {
       "web": "Web",
       "tablet_portrait": "Tablet Portrait",

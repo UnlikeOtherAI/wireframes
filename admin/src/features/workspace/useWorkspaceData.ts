@@ -6,7 +6,19 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value)
 }
 
-function extractNodeTree(node: unknown, parentId: string, index: number): ResolvedNode | null {
+function buildAddress(docType: string, docId: string, pathParts: string[]): string {
+  const fragment = pathParts.join('.')
+  return `wf://${docType}/${docId}#${fragment}`
+}
+
+function extractNodeTree(
+  node: unknown,
+  parentId: string,
+  index: number,
+  docType: string,
+  docId: string,
+  pathParts: string[],
+): ResolvedNode | null {
   if (!isObject(node)) return null
 
   const id = typeof node.id === 'string' ? node.id : `${parentId}_${index}`
@@ -18,17 +30,141 @@ function extractNodeTree(node: unknown, parentId: string, index: number): Resolv
       ? node.layout
       : undefined
 
+  const currentPath = [...pathParts, id]
+  const address = buildAddress(docType, docId, currentPath)
+
   const rawChildren = Array.isArray(node.children) ? node.children
     : Array.isArray(node.body) ? node.body
     : []
 
   const children: ResolvedNode[] = []
   for (let i = 0; i < rawChildren.length; i++) {
-    const child = extractNodeTree(rawChildren[i], id, i)
+    const child = extractNodeTree(rawChildren[i], id, i, docType, docId, currentPath)
     if (child) children.push(child)
   }
 
-  return { id, type, component, layout, children }
+  return { id, address, type, component, layout, children }
+}
+
+function extractComponentDefs(parsed: unknown): Record<string, unknown> {
+  if (!isObject(parsed)) return {}
+  const comps = isObject(parsed.components) ? parsed.components : parsed
+  const result: Record<string, unknown> = {}
+  for (const [key, val] of Object.entries(comps)) {
+    if (key === 'documentType' || key === 'specVersion' || key === 'id' || key === 'imports') continue
+    if (isObject(val)) result[key] = val
+  }
+  return result
+}
+
+function resolveComponents(
+  nodes: unknown[],
+  componentDefs: Record<string, unknown>,
+  componentStack: Set<string>,
+): unknown[] {
+  const resolved: unknown[] = []
+  for (const node of nodes) {
+    if (!isObject(node)) continue
+
+    const useRef = typeof node.use === 'string' ? node.use.trim() : ''
+    const compRef = typeof node.component === 'string' ? node.component.trim() : ''
+    const lookupKey = useRef || compRef
+
+    if (lookupKey && isObject(componentDefs[lookupKey]) && !componentStack.has(lookupKey)) {
+      const def = componentDefs[lookupKey] as Record<string, unknown>
+      const root = isObject(def.root) ? def.root : def
+      const merged: Record<string, unknown> = { ...root }
+      if (typeof node.id === 'string') merged.id = node.id
+      if (isObject(node.props) && isObject(root.props)) {
+        merged.props = { ...(root.props as Record<string, unknown>), ...(node.props as Record<string, unknown>) }
+      }
+      const newStack = new Set(componentStack)
+      newStack.add(lookupKey)
+      const inner = resolveComponents(
+        Array.isArray(merged.children) ? merged.children as unknown[] : [],
+        componentDefs,
+        newStack,
+      )
+      merged.children = inner
+      resolved.push(merged)
+    } else {
+      const clone: Record<string, unknown> = { ...node }
+      const childArr = Array.isArray(node.children) ? node.children
+        : Array.isArray(node.body) ? node.body
+        : null
+      if (childArr) {
+        clone.children = resolveComponents(childArr as unknown[], componentDefs, componentStack)
+      }
+      resolved.push(clone)
+    }
+  }
+  return resolved
+}
+
+function resolveTemplateRegions(
+  template: Record<string, unknown>,
+  page: Record<string, unknown>,
+  componentDefs: Record<string, unknown>,
+): unknown[] {
+  const regions = Array.isArray(template.regions) ? template.regions : []
+  const slotMap = new Map<string, unknown[]>()
+  const injectableMap = new Map<string, unknown[]>()
+
+  if (Array.isArray(page.slots)) {
+    for (const slot of page.slots) {
+      if (isObject(slot) && typeof slot.slotId === 'string' && Array.isArray(slot.body)) {
+        slotMap.set(slot.slotId, slot.body)
+      }
+    }
+  }
+  if (Array.isArray(page.injectables)) {
+    for (const inj of page.injectables) {
+      if (isObject(inj) && typeof inj.injectableId === 'string' && Array.isArray(inj.body)) {
+        injectableMap.set(inj.injectableId, inj.body)
+      }
+    }
+  }
+
+  const result: unknown[] = []
+  for (const region of regions) {
+    if (!isObject(region)) continue
+    const kind = typeof region.kind === 'string' ? region.kind : 'slot'
+    const regionId = typeof region.id === 'string' ? region.id : ''
+
+    if (kind === 'slot') {
+      const slotContent = slotMap.get(regionId)
+      if (slotContent && slotContent.length > 0) {
+        const resolved = resolveComponents(slotContent, componentDefs, new Set())
+        result.push({ id: regionId, type: 'region', layout: region.layout, children: resolved })
+      }
+    } else {
+      const children = Array.isArray(region.children) ? region.children : []
+      const resolvedChildren: unknown[] = []
+      for (const child of children) {
+        if (isObject(child) && child.injectable === true && typeof child.id === 'string') {
+          const injContent = injectableMap.get(child.id)
+          if (injContent && injContent.length > 0) {
+            const resolved = resolveComponents(injContent, componentDefs, new Set())
+            resolvedChildren.push({ ...child, children: resolved })
+          } else {
+            resolvedChildren.push(child)
+          }
+        } else {
+          resolvedChildren.push(child)
+        }
+      }
+      const resolved = resolveComponents(resolvedChildren as unknown[], componentDefs, new Set())
+      result.push({ id: regionId, type: 'region', layout: region.layout, children: resolved })
+    }
+  }
+  return result
+}
+
+function getRawBody(page: Record<string, unknown>, componentDefs: Record<string, unknown>): unknown[] {
+  const raw = Array.isArray(page.body) ? page.body
+    : Array.isArray(page.children) ? page.children
+    : []
+  return resolveComponents(raw as unknown[], componentDefs, new Set())
 }
 
 export function useResolvedNodes(
@@ -47,13 +183,48 @@ export function useResolvedNodes(
         ? parsed.page as Record<string, unknown>
         : parsed
 
-      const bodyNodes = Array.isArray(page.body) ? page.body
-        : Array.isArray(page.children) ? page.children
-        : []
+      const componentDefs: Record<string, unknown> = {}
+      const componentsFile = yamlFiles['components.yaml']
+      if (componentsFile) {
+        const compParsed = parseYaml(componentsFile)
+        Object.assign(componentDefs, extractComponentDefs(compParsed))
+      }
+
+      const templateId = typeof page.template === 'string' ? page.template : ''
+      const templatesFile = yamlFiles['templates.yaml']
+      let bodyNodes: unknown[]
+
+      if (templateId && templatesFile) {
+        const templatesParsed = parseYaml(templatesFile)
+        if (isObject(templatesParsed)) {
+          Object.assign(componentDefs, extractComponentDefs(templatesParsed))
+          const templates = isObject(templatesParsed.templates)
+            ? templatesParsed.templates
+            : templatesParsed
+          const template = isObject((templates as Record<string, unknown>)[templateId])
+            ? (templates as Record<string, unknown>)[templateId] as Record<string, unknown>
+            : null
+          if (template) {
+            bodyNodes = resolveTemplateRegions(template, page, componentDefs)
+          } else {
+            bodyNodes = getRawBody(page, componentDefs)
+          }
+        } else {
+          bodyNodes = getRawBody(page, componentDefs)
+        }
+      } else {
+        bodyNodes = getRawBody(page, componentDefs)
+      }
+
+      if (Array.isArray(page.overlays)) {
+        for (const overlay of page.overlays) {
+          if (isObject(overlay)) bodyNodes.push(overlay)
+        }
+      }
 
       const result: ResolvedNode[] = []
       for (let i = 0; i < bodyNodes.length; i++) {
-        const node = extractNodeTree(bodyNodes[i], 'root', i)
+        const node = extractNodeTree(bodyNodes[i], 'root', i, 'page', activePage, [])
         if (node) result.push(node)
       }
       return result

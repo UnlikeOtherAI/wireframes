@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DEVICE_VIEWPORTS, type DeviceType, type RenderMode } from './types'
 
@@ -10,6 +10,9 @@ interface WorkspacePreviewProps {
   onNavigate?: (routeId: string) => void
   onNodeSelect?: (address: string) => void
   highlightedNode?: string | null
+  interactive?: boolean
+  onHtmlChange?: (html: string) => void
+  zoom?: number
 }
 
 export function WorkspacePreview({
@@ -20,6 +23,9 @@ export function WorkspacePreview({
   onNavigate,
   onNodeSelect,
   highlightedNode,
+  interactive = true,
+  onHtmlChange,
+  zoom = 100,
 }: WorkspacePreviewProps) {
   const { t } = useTranslation()
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -28,8 +34,9 @@ export function WorkspacePreview({
   const rendererRef = useRef<typeof import('@wireframes/renderer') | null>(null)
   const renderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const viewport = DEVICE_VIEWPORTS[device]
+  const scale = zoom / 100
 
-  // Listen for navigation messages from the preview iframe
+  // Listen for messages from the preview iframe
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (event.data?.type === 'wf:navigate' && typeof event.data.routeId === 'string') {
@@ -91,6 +98,11 @@ export function WorkspacePreview({
     }
   }, [doRender])
 
+  // Report rendered HTML to parent
+  useEffect(() => {
+    onHtmlChange?.(html ?? '')
+  }, [html, onHtmlChange])
+
   // Write to iframe
   useEffect(() => {
     const iframe = iframeRef.current
@@ -103,13 +115,14 @@ export function WorkspacePreview({
       doc.write(buildErrorHtml(t('workspace.renderError'), error))
       doc.close()
     } else if (html) {
+      const finalHtml = injectNodeClickBridge(html, activePage, interactive)
       doc.open()
-      doc.write(html)
+      doc.write(finalHtml)
       doc.close()
     }
-  }, [html, error, t])
+  }, [html, error, t, activePage, interactive])
 
-  // Highlight node in iframe
+  // Highlight node in iframe — uses HTML id attr (engine renders node IDs as id attrs)
   const prevHighlightRef = useRef<string | null>(null)
   useEffect(() => {
     const iframe = iframeRef.current
@@ -119,29 +132,31 @@ export function WorkspacePreview({
 
     // Remove previous highlight
     if (prevHighlightRef.current) {
-      const prev = doc.querySelector(`[data-wf-id="${CSS.escape(prevHighlightRef.current)}"]`)
-      if (prev) {
-        ;(prev as HTMLElement).style.outline = ''
-        ;(prev as HTMLElement).style.outlineOffset = ''
+      const nodeId = extractNodeIdFromAddress(prevHighlightRef.current)
+      if (nodeId) {
+        const prev = doc.getElementById(nodeId)
+        if (prev) {
+          prev.style.outline = ''
+          prev.style.outlineOffset = ''
+        }
       }
     }
 
     // Add new highlight
     if (highlightedNode) {
-      const el = doc.querySelector(`[data-wf-id="${CSS.escape(highlightedNode)}"]`)
-      if (el) {
-        ;(el as HTMLElement).style.outline = '2px solid #1976d2'
-        ;(el as HTMLElement).style.outlineOffset = '2px'
-        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      const nodeId = extractNodeIdFromAddress(highlightedNode)
+      if (nodeId) {
+        const el = doc.getElementById(nodeId)
+        if (el) {
+          el.style.outline = '2px solid #1976d2'
+          el.style.outlineOffset = '2px'
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        }
       }
     }
 
     prevHighlightRef.current = highlightedNode ?? null
   }, [highlightedNode, html])
-
-  // stable key to track content for getRenderedHtml
-  const renderedHtmlRef = useRef<string | null>(null)
-  renderedHtmlRef.current = html
 
   return (
     <div
@@ -159,8 +174,8 @@ export function WorkspacePreview({
       <div
         data-testid="workspace-device-frame"
         style={{
-          width: viewport.width,
-          minHeight: viewport.minHeight,
+          width: viewport.width * scale,
+          minHeight: viewport.minHeight * scale,
           border: '2px solid #ccc',
           borderRadius: '8px',
           overflow: 'hidden',
@@ -173,12 +188,14 @@ export function WorkspacePreview({
           ref={iframeRef}
           data-testid="workspace-preview-iframe"
           title={t('workspace.preview')}
-          sandbox="allow-scripts"
+          sandbox={interactive ? 'allow-scripts' : undefined}
           style={{
-            width: '100%',
+            width: viewport.width,
             height: viewport.minHeight,
             border: 'none',
             display: 'block',
+            transform: scale !== 1 ? `scale(${scale})` : undefined,
+            transformOrigin: 'top left',
           }}
         />
       </div>
@@ -186,10 +203,42 @@ export function WorkspacePreview({
   )
 }
 
-export function useRenderedHtml(): [React.RefObject<string | null>, () => string] {
-  const ref = useRef<string | null>(null)
-  const getter = useCallback(() => ref.current ?? '', [])
-  return [ref, getter]
+function extractNodeIdFromAddress(address: string): string | null {
+  const hashIdx = address.indexOf('#')
+  if (hashIdx >= 0) {
+    const path = address.slice(hashIdx + 1)
+    const parts = path.split('.')
+    return parts[parts.length - 1] || null
+  }
+  return address || null
+}
+
+function injectNodeClickBridge(html: string, activePage: string, interactive: boolean): string {
+  if (!interactive) {
+    return html.replace(/<script[\s\S]*?<\/script>/gi, '')
+  }
+
+  const bridge = `<script>
+(function(){
+  var PAGE_ID = ${JSON.stringify(activePage)};
+  document.addEventListener('click', function(e) {
+    var el = e.target;
+    while (el && el !== document.body) {
+      if (el.id && el.classList && el.classList.contains('wf-node')) {
+        var address = 'wf://page/' + PAGE_ID + '#' + el.id;
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'wf:nodeClick', address: address, nodeId: el.id }, '*');
+          }
+        } catch(_e){}
+        break;
+      }
+      el = el.parentElement;
+    }
+  });
+})();
+</script>`
+  return html.replace('</body>', bridge + '\n</body>')
 }
 
 function buildErrorHtml(title: string, message: string): string {

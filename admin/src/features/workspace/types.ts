@@ -30,6 +30,7 @@ export const DEVICE_ORDER: DeviceType[] = [
 
 export interface ResolvedNode {
   id: string
+  address: string
   type: string
   component?: string
   layout?: string

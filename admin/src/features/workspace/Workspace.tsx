@@ -1,4 +1,5 @@
 import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { DeviceType, RenderMode } from './types'
 import { PageNavigation } from './PageNavigation'
 import { DeviceControls } from './DeviceControls'
@@ -50,6 +51,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
     showNavigation = true,
     showDeviceControls = true,
     showTree = false,
+    interactive = true,
     onNodeSelect,
     onNavigate,
     pageIds: externalPageIds,
@@ -58,7 +60,8 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
 ) {
   const [highlightedNode, setHighlightedNode] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
-  const renderedHtmlRef = useRef<string | null>(null)
+  const [zoom, setZoom] = useState(100)
+  const renderedHtmlRef = useRef('')
 
   const resolvedNodes = useResolvedNodes(yamlFiles, activePage)
   const sitemapNodes = useSitemapNodes(yamlFiles)
@@ -82,6 +85,10 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
     [onNavigate, onPageChange],
   )
 
+  const handleHtmlChange = useCallback((html: string) => {
+    renderedHtmlRef.current = html
+  }, [])
+
   // Imperative ref methods
   useImperativeHandle(
     ref,
@@ -99,7 +106,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
         setHighlightedNode(address)
       },
       getRenderedHtml() {
-        return renderedHtmlRef.current ?? ''
+        return renderedHtmlRef.current
       },
       refresh() {
         setRefreshKey((k) => k + 1)
@@ -126,6 +133,8 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
           onDeviceChange={onDeviceChange}
           renderMode={renderMode}
           onRenderModeChange={onRenderModeChange}
+          zoom={zoom}
+          onZoomChange={setZoom}
         />
       )}
 
@@ -150,6 +159,9 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
           onNavigate={handleNavigate}
           onNodeSelect={handleNodeSelect}
           highlightedNode={highlightedNode}
+          interactive={interactive}
+          onHtmlChange={handleHtmlChange}
+          zoom={zoom}
         />
 
         {/* Right panel: Node tree or Sitemap */}
@@ -208,6 +220,7 @@ function TreeSitemapTabs({
   onNodeSelect,
   selectedNode,
 }: TreeSitemapTabsProps) {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<'tree' | 'sitemap'>('tree')
 
   return (
@@ -236,7 +249,7 @@ function TreeSitemapTabs({
             padding: '8px 4px',
           }}
         >
-          Tree
+          {t('workspace.tabTree')}
         </button>
         <button
           role="tab"
@@ -254,7 +267,7 @@ function TreeSitemapTabs({
             padding: '8px 4px',
           }}
         >
-          Sitemap
+          {t('workspace.tabSitemap')}
         </button>
       </div>
       <div style={{ flex: 1, overflow: 'auto' }}>

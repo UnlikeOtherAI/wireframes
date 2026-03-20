@@ -314,21 +314,54 @@ describe('DeviceControls', () => {
     expect(screen.getByText('Line').getAttribute('aria-checked')).toBe('true')
     expect(screen.getByText('Card').getAttribute('aria-checked')).toBe('false')
   })
+
+  it('renders zoom controls when onZoomChange is provided', () => {
+    const onZoomChange = vi.fn()
+    render(
+      <DeviceControls
+        device="web"
+        onDeviceChange={vi.fn()}
+        renderMode="card"
+        onRenderModeChange={vi.fn()}
+        zoom={100}
+        onZoomChange={onZoomChange}
+      />,
+    )
+    expect(screen.getByTestId('workspace-zoom-select')).toBeInTheDocument()
+  })
+
+  it('calls onZoomChange when zoom is changed', () => {
+    const onZoomChange = vi.fn()
+    render(
+      <DeviceControls
+        device="web"
+        onDeviceChange={vi.fn()}
+        renderMode="card"
+        onRenderModeChange={vi.fn()}
+        zoom={100}
+        onZoomChange={onZoomChange}
+      />,
+    )
+    fireEvent.change(screen.getByTestId('workspace-zoom-select'), { target: { value: '75' } })
+    expect(onZoomChange).toHaveBeenCalledWith(75)
+  })
 })
 
 describe('NodeTree', () => {
   const sampleNodes: ResolvedNode[] = [
     {
       id: 'header',
+      address: 'wf://page/home#header',
       type: 'section',
       layout: 'stack',
       children: [
-        { id: 'title', type: 'heading', children: [] },
-        { id: 'subtitle', type: 'paragraph', children: [] },
+        { id: 'title', address: 'wf://page/home#header.title', type: 'heading', children: [] },
+        { id: 'subtitle', address: 'wf://page/home#header.subtitle', type: 'paragraph', children: [] },
       ],
     },
     {
       id: 'content',
+      address: 'wf://page/home#content',
       type: 'section',
       layout: 'row',
       children: [],
@@ -352,15 +385,15 @@ describe('NodeTree', () => {
     expect(screen.getByText('subtitle')).toBeInTheDocument()
   })
 
-  it('calls onNodeSelect when a node is clicked', () => {
+  it('calls onNodeSelect with address when a node is clicked', () => {
     const onNodeSelect = vi.fn()
     render(<NodeTree nodes={sampleNodes} onNodeSelect={onNodeSelect} />)
     fireEvent.click(screen.getByText('title'))
-    expect(onNodeSelect).toHaveBeenCalledWith('title')
+    expect(onNodeSelect).toHaveBeenCalledWith('wf://page/home#header.title')
   })
 
-  it('highlights the selected node', () => {
-    render(<NodeTree nodes={sampleNodes} selectedNode="header" />)
+  it('highlights the selected node by address', () => {
+    render(<NodeTree nodes={sampleNodes} selectedNode="wf://page/home#header" />)
     const item = screen.getByTestId('node-tree-item-header')
     expect(item.style.borderLeft).toContain('2px solid')
   })

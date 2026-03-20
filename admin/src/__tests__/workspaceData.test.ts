@@ -10,13 +10,12 @@ describe('useResolvedNodes', () => {
     expect(result.current).toEqual([])
   })
 
-  it('extracts nodes from page body', () => {
+  it('extracts nodes from page body with addresses', () => {
     const yamlFiles = {
       'pages/home.yaml': [
         'documentType: page',
         'id: home',
         'page:',
-        '  template: main',
         '  body:',
         '    - id: header',
         '      type: section',
@@ -34,10 +33,13 @@ describe('useResolvedNodes', () => {
 
     expect(result.current).toHaveLength(2)
     expect(result.current[0].id).toBe('header')
+    expect(result.current[0].address).toBe('wf://page/home#header')
     expect(result.current[0].type).toBe('section')
     expect(result.current[0].children).toHaveLength(1)
     expect(result.current[0].children[0].id).toBe('title')
+    expect(result.current[0].children[0].address).toBe('wf://page/home#header.title')
     expect(result.current[1].id).toBe('footer')
+    expect(result.current[1].address).toBe('wf://page/home#footer')
   })
 
   it('handles malformed YAML gracefully', () => {
@@ -57,7 +59,6 @@ describe('useResolvedNodes', () => {
         'documentType: page',
         'id: test',
         'page:',
-        '  template: main',
         '  body:',
         '    - id: row1',
         '      type: section',
@@ -71,6 +72,104 @@ describe('useResolvedNodes', () => {
     )
 
     expect(result.current[0].layout).toBe('row')
+  })
+
+  it('resolves template regions with slots', () => {
+    const yamlFiles = {
+      'templates.yaml': [
+        'documentType: templates',
+        'id: templates',
+        'templates:',
+        '  main:',
+        '    regions:',
+        '      - id: sidebar',
+        '        kind: persistent',
+        '        children:',
+        '          - id: logo',
+        '            type: image',
+        '      - id: main_content',
+        '        kind: slot',
+      ].join('\n'),
+      'pages/dash.yaml': [
+        'documentType: page',
+        'id: dash',
+        'page:',
+        '  template: main',
+        '  slots:',
+        '    - slotId: main_content',
+        '      body:',
+        '        - id: hero',
+        '          type: section',
+      ].join('\n'),
+    }
+
+    const { result } = renderHook(() =>
+      useResolvedNodes(yamlFiles, 'dash'),
+    )
+
+    // Should have sidebar (persistent) and main_content (slot filled)
+    expect(result.current.length).toBeGreaterThanOrEqual(2)
+    const sidebar = result.current.find(n => n.id === 'sidebar')
+    expect(sidebar).toBeDefined()
+    expect(sidebar!.children.some(c => c.id === 'logo')).toBe(true)
+    const mainContent = result.current.find(n => n.id === 'main_content')
+    expect(mainContent).toBeDefined()
+    expect(mainContent!.children.some(c => c.id === 'hero')).toBe(true)
+  })
+
+  it('resolves components from components.yaml', () => {
+    const yamlFiles = {
+      'components.yaml': [
+        'documentType: components',
+        'id: components',
+        'components:',
+        '  card:',
+        '    root:',
+        '      id: card_root',
+        '      type: section',
+        '      children:',
+        '        - id: card_title',
+        '          type: heading',
+      ].join('\n'),
+      'pages/home.yaml': [
+        'documentType: page',
+        'id: home',
+        'page:',
+        '  body:',
+        '    - id: my_card',
+        '      use: card',
+      ].join('\n'),
+    }
+
+    const { result } = renderHook(() =>
+      useResolvedNodes(yamlFiles, 'home'),
+    )
+
+    expect(result.current).toHaveLength(1)
+    expect(result.current[0].id).toBe('my_card')
+    expect(result.current[0].children.some(c => c.id === 'card_title')).toBe(true)
+  })
+
+  it('includes overlays in node tree', () => {
+    const yamlFiles = {
+      'pages/home.yaml': [
+        'documentType: page',
+        'id: home',
+        'page:',
+        '  body:',
+        '    - id: main',
+        '      type: section',
+        '  overlays:',
+        '    - id: modal1',
+        '      type: modal',
+      ].join('\n'),
+    }
+
+    const { result } = renderHook(() =>
+      useResolvedNodes(yamlFiles, 'home'),
+    )
+
+    expect(result.current.some(n => n.id === 'modal1')).toBe(true)
   })
 })
 

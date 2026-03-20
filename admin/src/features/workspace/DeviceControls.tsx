@@ -1,11 +1,15 @@
 import { useTranslation } from 'react-i18next'
 import { DEVICE_ORDER, DEVICE_VIEWPORTS, type DeviceType, type RenderMode } from './types'
 
+const ZOOM_LEVELS = [50, 75, 100, 125, 150, 200]
+
 interface DeviceControlsProps {
   device: DeviceType
   onDeviceChange: (device: DeviceType) => void
   renderMode: RenderMode
   onRenderModeChange: (mode: RenderMode) => void
+  zoom?: number
+  onZoomChange?: (zoom: number) => void
 }
 
 export function DeviceControls({
@@ -13,6 +17,8 @@ export function DeviceControls({
   onDeviceChange,
   renderMode,
   onRenderModeChange,
+  zoom = 100,
+  onZoomChange,
 }: DeviceControlsProps) {
   const { t } = useTranslation()
 
@@ -105,6 +111,39 @@ export function DeviceControls({
           {t('workspace.modeCard')}
         </button>
       </div>
+
+      {/* Zoom controls */}
+      {onZoomChange && (
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '13px',
+          }}
+        >
+          <span>{t('workspace.zoom')}</span>
+          <select
+            value={zoom}
+            onChange={(e) => onZoomChange(Number(e.target.value))}
+            aria-label={t('workspace.zoom')}
+            data-testid="workspace-zoom-select"
+            style={{
+              padding: '4px 8px',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              fontSize: '13px',
+              minHeight: '32px',
+            }}
+          >
+            {ZOOM_LEVELS.map((level) => (
+              <option key={level} value={level}>
+                {level}%
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
     </div>
   )
 }

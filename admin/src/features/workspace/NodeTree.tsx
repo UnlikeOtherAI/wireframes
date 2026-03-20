@@ -35,7 +35,7 @@ export function NodeTree({ nodes, onNodeSelect, selectedNode }: NodeTreeProps) {
     >
       {nodes.map((node) => (
         <NodeTreeItem
-          key={node.id}
+          key={node.address}
           node={node}
           depth={0}
           onNodeSelect={onNodeSelect}
@@ -54,17 +54,18 @@ interface NodeTreeItemProps {
 }
 
 function NodeTreeItem({ node, depth, onNodeSelect, selectedNode }: NodeTreeItemProps) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(depth < 2)
   const hasChildren = node.children.length > 0
-  const isSelected = selectedNode === node.id
+  const isSelected = selectedNode === node.address
 
   const handleToggle = useCallback(() => {
     setExpanded((prev) => !prev)
   }, [])
 
   const handleSelect = useCallback(() => {
-    onNodeSelect?.(node.id)
-  }, [onNodeSelect, node.id])
+    onNodeSelect?.(node.address)
+  }, [onNodeSelect, node.address])
 
   const label = buildNodeLabel(node)
 
@@ -86,7 +87,7 @@ function NodeTreeItem({ node, depth, onNodeSelect, selectedNode }: NodeTreeItemP
         {hasChildren ? (
           <button
             onClick={handleToggle}
-            aria-label={expanded ? 'Collapse' : 'Expand'}
+            aria-label={expanded ? t('workspace.collapse') : t('workspace.expand')}
             style={{
               width: '16px',
               height: '16px',
@@ -135,7 +136,7 @@ function NodeTreeItem({ node, depth, onNodeSelect, selectedNode }: NodeTreeItemP
         <div role="group">
           {node.children.map((child) => (
             <NodeTreeItem
-              key={child.id}
+              key={child.address}
               node={child}
               depth={depth + 1}
               onNodeSelect={onNodeSelect}
