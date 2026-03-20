@@ -22,7 +22,7 @@ interface PendingChange {
 interface UseChatSessionOptions {
   projectId: string
   scope: ChatSessionScope
-  isOpen: boolean
+  isActive: boolean
   onApplyDocument: (documentType: string, documentId: string, content: string) => Promise<void>
 }
 
@@ -31,6 +31,7 @@ type LocalMessage = ChatMessage & { localStatus?: 'streaming' | 'error' }
 type SocketEventPayload = Record<string, unknown> | undefined
 
 const sessionKey = (projectId: string) => `wf_chat_session:${projectId}`
+const pendingKey = (projectId: string) => `wf_chat_pending:${projectId}`
 
 function getWsUrl(token: string | null): string {
   const base = import.meta.env.VITE_API_URL ?? window.location.origin
@@ -44,7 +45,7 @@ function getWsUrl(token: string | null): string {
 export function useChatSession({
   projectId,
   scope,
-  isOpen,
+  isActive,
   onApplyDocument,
 }: UseChatSessionOptions) {
   const { t } = useTranslation()
@@ -70,14 +71,18 @@ export function useChatSession({
     const oldContent = typeof payload?.oldContent === 'string' ? payload.oldContent : ''
     const newContent = typeof payload?.newContent === 'string' ? payload.newContent : ''
     if (!documentType || !documentId) return
-    setPendingChange({
+    const change: PendingChange = {
       documentType,
       documentId,
       oldContent,
       newContent,
       lines: diffLines(oldContent, newContent),
-    })
-  }, [])
+    }
+    setPendingChange(change)
+    try {
+      sessionStorage.setItem(pendingKey(projectId), JSON.stringify({ documentType, documentId, oldContent, newContent }))
+    } catch { /* ignore quota errors */ }
+  }, [projectId])
 
   const subscribe = useCallback(() => {
     const ws = wsRef.current
@@ -99,7 +104,7 @@ export function useChatSession({
   }, [])
 
   const connectSocket = useCallback(() => {
-    if (!isOpen || wsRef.current) return
+    if (!isActive || wsRef.current) return
 
     setConnectionStatus(loadedRef.current ? 'reconnecting' : 'connecting')
     const ws = new WebSocket(getWsUrl(token))
@@ -162,7 +167,7 @@ export function useChatSession({
 
     ws.addEventListener('close', () => {
       wsRef.current = null
-      if (!isOpen) {
+      if (!isActive) {
         setConnectionStatus('disconnected')
         return
       }
@@ -171,10 +176,10 @@ export function useChatSession({
       setConnectionStatus('reconnecting')
       reconnectRef.current = setTimeout(connectSocket, delay)
     })
-  }, [isOpen, showPendingChange, subscribe, token])
+  }, [isActive, showPendingChange, subscribe, token])
 
   const loadSession = useCallback(async () => {
-    if (!isOpen || loadedRef.current) return
+    if (!isActive || loadedRef.current) return
 
     const storedSessionId = sessionStorage.getItem(sessionKey(projectId))
     if (!storedSessionId) {
@@ -186,9 +191,26 @@ export function useChatSession({
     sessionIdRef.current = session.sessionId
     sessionStorage.setItem(sessionKey(projectId), session.sessionId)
     setMessages(session.messages)
+
+    const storedPending = sessionStorage.getItem(pendingKey(projectId))
+    if (storedPending) {
+      try {
+        const raw = JSON.parse(storedPending) as Record<string, string>
+        if (raw.documentType && raw.documentId) {
+          setPendingChange({
+            documentType: raw.documentType,
+            documentId: raw.documentId,
+            oldContent: raw.oldContent ?? '',
+            newContent: raw.newContent ?? '',
+            lines: diffLines(raw.oldContent ?? '', raw.newContent ?? ''),
+          })
+        }
+      } catch { /* ignore parse errors */ }
+    }
+
     loadedRef.current = true
     subscribe()
-  }, [isOpen, projectId, subscribe])
+  }, [isActive, projectId, subscribe])
 
   useEffect(() => {
     setMessages([])
@@ -202,7 +224,7 @@ export function useChatSession({
   }, [projectId, closeSocket])
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isActive) {
       closeSocket()
       return
     }
@@ -213,7 +235,7 @@ export function useChatSession({
     return () => {
       if (reconnectRef.current) clearTimeout(reconnectRef.current)
     }
-  }, [closeSocket, connectSocket, isOpen, loadSession, t])
+  }, [closeSocket, connectSocket, isActive, loadSession, t])
 
   const ensureSession = useCallback(async () => {
     if (sessionIdRef.current) return sessionIdRef.current
@@ -249,6 +271,9 @@ export function useChatSession({
         }
         return message
       }))
+      if (response.pendingChange) {
+        showPendingChange(response.pendingChange)
+      }
     } catch (err) {
       setMessages((prev) => prev.map((message) => (
         message.id === localAssistantId
@@ -271,6 +296,7 @@ export function useChatSession({
   const rejectChange = useCallback(async () => {
     if (!pendingChange) return
     setPendingChange(null)
+    sessionStorage.removeItem(pendingKey(projectId))
     await sendUserMessage(
       `Please discard the proposed edit for ${pendingChange.documentType}:${pendingChange.documentId} and try a different approach.`,
     )
@@ -287,6 +313,7 @@ export function useChatSession({
         pendingChange.newContent,
       )
       setPendingChange(null)
+      sessionStorage.removeItem(pendingKey(projectId))
     } catch (err) {
       setError(err instanceof Error ? err.message : t('chat.errors.apply'))
     } finally {
@@ -296,14 +323,15 @@ export function useChatSession({
 
   const startNewConversation = useCallback(() => {
     sessionStorage.removeItem(sessionKey(projectId))
+    sessionStorage.removeItem(pendingKey(projectId))
     sessionIdRef.current = null
     streamingMessageRef.current = null
     setMessages([])
     setPendingChange(null)
     setError(null)
     closeSocket()
-    if (isOpen) connectSocket()
-  }, [closeSocket, connectSocket, isOpen, projectId])
+    if (isActive) connectSocket()
+  }, [closeSocket, connectSocket, isActive, projectId])
 
   const triggerBuildPreview = useCallback(async () => {
     await buildProject(projectId)

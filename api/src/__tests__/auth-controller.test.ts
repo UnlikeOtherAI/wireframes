@@ -6,6 +6,11 @@ mock.module("../config.js", () => ({
     databaseUrl: "",
     corsOrigins: [],
     jwtSecret: "test-secret",
+    devAuthEnabled: false,
+    devAuthUserEmail: "dev@wireframes.local",
+    devAuthUserName: "Local Developer",
+    devAuthUserSubject: "dev-local-user",
+    devAuthProjectName: "Local Demo Project",
     ssoVerifyUrl: "https://sso.test/verify",
   },
 }));
@@ -27,14 +32,26 @@ mock.module("../services/user.js", () => ({
   findOrCreateUser: async () => ({
     userId: "user-id-1",
     email: "user@example.com",
+    displayName: "Test User",
+    locale: "en",
   }),
 }));
 
-import { ssoCallback } from "../controllers/auth.js";
+mock.module("../services/dev-auth.js", () => ({
+  loginAsDevUser: async () => ({
+    userId: "dev-user-1",
+    email: "dev@wireframes.local",
+    displayName: "Local Developer",
+    locale: "en",
+  }),
+}));
+
+import { ssoCallback, devLogin } from "../controllers/auth.js";
 import { errorHandler } from "../middleware/error-handler.js";
 import { verifyJwt } from "../services/jwt.js";
 
 const handler = errorHandler((req) => ssoCallback(req));
+const devHandler = errorHandler((req) => devLogin(req));
 
 function makePostRequest(body: unknown): Request {
   return new Request("http://localhost/auth/sso", {
@@ -50,6 +67,12 @@ describe("auth controller - ssoCallback", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.token).toBeTruthy();
+    expect(body.user).toEqual({
+      id: "user-id-1",
+      email: "user@example.com",
+      displayName: "Test User",
+      locale: "en",
+    });
 
     const payload = verifyJwt(body.token, "test-secret");
     expect(payload).toEqual({ userId: "user-id-1", email: "user@example.com" });
@@ -78,5 +101,12 @@ describe("auth controller - ssoCallback", () => {
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.error).toBe("Invalid JSON body");
+  });
+
+  test("returns JWT and user for local dev login", async () => {
+    const res = await devHandler(
+      new Request("http://localhost/auth/dev-login", { method: "POST" }),
+    );
+    expect(res.status).toBe(404);
   });
 });

@@ -4,6 +4,8 @@ import type { SsoUserInfo } from "./sso.js";
 export interface AuthUser {
   userId: string;
   email: string;
+  displayName: string;
+  locale: string;
 }
 
 export async function findOrCreateUser(info: SsoUserInfo): Promise<AuthUser> {
@@ -12,5 +14,10 @@ export async function findOrCreateUser(info: SsoUserInfo): Promise<AuthUser> {
     email: info.email,
     displayName: info.displayName,
   });
-  return { userId: user.id, email: user.email };
+  return {
+    userId: user.id,
+    email: user.email,
+    displayName: user.displayName ?? "",
+    locale: user.locale ?? "en",
+  };
 }

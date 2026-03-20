@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronLeft, faCode, faEye, faFloppyDisk } from '@fortawesome/free-solid-svg-icons'
 import { YamlEditor, type YamlEditorHandle } from './editor/YamlEditor'
 import { DocumentTree } from './editor/DocumentTree'
 import { ProblemsPanel } from './editor/ProblemsPanel'
 import { ConflictDialog } from './editor/ConflictDialog'
+import { CreateFileDialog } from './editor/CreateFileDialog'
 import { PreviewBreadcrumb } from './editor/PreviewBreadcrumb'
 import { PreviewToolbar } from './editor/PreviewToolbar'
 import { useDocumentManager, type Problem } from './editor/useDocumentManager'
@@ -13,70 +16,24 @@ import {
   type DeviceType,
   type RenderMode,
 } from './editor/usePreviewRenderer'
-import type { Diagnostic } from '@codemirror/lint'
 import { ChatPopup } from './chat/ChatPopup'
 import { WorkspacePreview } from './workspace/WorkspacePreview'
 import { NodeTree } from './workspace/NodeTree'
 import { SitemapView } from './workspace/SitemapView'
 import { buildNodeIdToAddressMap, useResolvedNodes, useSitemapNodes } from './workspace/useWorkspaceData'
+import { buildStarterDocument } from './editor/documentTemplates'
+import { ResizeHandle } from './editor/ResizeHandle'
+import { buildYamlFilesMap, problemsToDiagnostics, statusStyles } from './editor/projectEditorUtils'
+import { usePaneLayout } from './editor/usePaneLayout'
+import { getCookie, setCookie } from '../utils/cookies'
+import {
+  adminColors,
+  adminRadii,
+  cardSurfaceStyle,
+  secondaryButtonStyle,
+} from '../styles/adminTheme'
 
-function lineColToPos(doc: string, line: number, col: number): number {
-  let pos = 0
-  let currentLine = 1
-  for (let i = 0; i < doc.length; i++) {
-    if (currentLine === line) {
-      return pos + Math.min(col - 1, doc.length - pos)
-    }
-    if (doc[i] === '\n') {
-      currentLine++
-    }
-    pos++
-  }
-  return pos
-}
-
-function problemsToDiagnostics(problems: Problem[], docContent: string): Diagnostic[] {
-  return problems.map((p) => {
-    let from = 0
-    let to = 0
-    if (p.line != null && p.line > 0) {
-      from = lineColToPos(docContent, p.line, p.column ?? 1)
-      const lineEnd = docContent.indexOf('\n', from)
-      to = lineEnd === -1 ? docContent.length : lineEnd
-      if (to === from) to = Math.min(from + 1, docContent.length)
-    }
-    return {
-      from,
-      to,
-      severity: p.severity === 'warning' ? ('warning' as const) : ('error' as const),
-      message: p.message,
-    }
-  })
-}
-
-const STATUS_STYLES: Record<string, { color: string }> = {
-  saving: { color: '#888' },
-  saved: { color: '#4caf50' },
-  unsaved: { color: '#f57c00' },
-  error: { color: '#d32f2f' },
-  conflict: { color: '#d32f2f' },
-}
-
-function buildYamlFilesMap(
-  docStates: Map<string, { documentType: string; documentId: string; current: string }>,
-): Record<string, string> {
-  const files: Record<string, string> = {}
-  for (const [, state] of docStates) {
-    if (state.documentType === 'page') {
-      files[`pages/${state.documentId}.yaml`] = state.current
-    } else if (state.documentType === 'dataset') {
-      files[`data/${state.documentId}.yaml`] = state.current
-    } else {
-      files[`${state.documentType}.yaml`] = state.current
-    }
-  }
-  return files
-}
+type CenterView = 'source' | 'preview'
 
 export function ProjectEditorPage() {
   const { id: projectId } = useParams<{ id: string }>()
@@ -91,6 +48,15 @@ export function ProjectEditorPage() {
   const [previewPageId, setPreviewPageId] = useState<string | null>(null)
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
   const [workspaceMode, setWorkspaceMode] = useState<'preview' | 'tree' | 'sitemap'>('preview')
+  const [chatPinned, setChatPinned] = useState(() => getCookie('wf_editor_chat_pinned') === 'true')
+  const [createFileOpen, setCreateFileOpen] = useState(false)
+  const [centerView, setCenterView] = useState<CenterView>('preview')
+  const { containerRef, navWidth, chatWidth, startResize } = usePaneLayout(chatPinned)
+
+  const handleChatPinnedChange = useCallback((nextPinned: boolean) => {
+    setChatPinned(nextPinned)
+    setCookie('wf_editor_chat_pinned', String(nextPinned))
+  }, [])
 
   const handleRenderModeChange = useCallback((mode: RenderMode) => {
     setRenderMode(mode)
@@ -113,12 +79,12 @@ export function ProjectEditorPage() {
     updateContent,
     saveDocument,
     applyDocumentContent,
+    createDocument,
     resolveConflict,
     dismissConflict,
     isUnsaved,
   } = useDocumentManager(projectId ?? '')
 
-  // Load all document contents for preview when document list is available
   const [allDocsLoaded, setAllDocsLoaded] = useState(false)
   useEffect(() => {
     if (!loading && documents.length > 0 && !allDocsLoaded) {
@@ -126,7 +92,6 @@ export function ProjectEditorPage() {
     }
   }, [loading, documents, allDocsLoaded, loadAllDocuments])
 
-  // Auto-select first page for preview when documents are loaded
   useEffect(() => {
     if (allDocsLoaded && previewPageId === null) {
       const firstPage = documents.find((d) => d.documentType === 'page')
@@ -134,7 +99,6 @@ export function ProjectEditorPage() {
     }
   }, [allDocsLoaded, previewPageId, documents])
 
-  // When editing a page document, switch the preview to that page
   useEffect(() => {
     if (activeDoc?.documentType === 'page') {
       setPreviewPageId(activeDoc.documentId)
@@ -194,6 +158,15 @@ export function ProjectEditorPage() {
     scheduleRender()
   }, [applyDocumentContent, scheduleRender])
 
+  const handleCreateDocument = useCallback(async (documentType: string, documentId: string) => {
+    await createDocument(
+      documentType,
+      documentId,
+      buildStarterDocument(documentType, documentId),
+    )
+    scheduleRender()
+  }, [createDocument, scheduleRender])
+
   const displayStatus = activeDoc && saveStatus === 'idle' && isUnsaved(activeDoc.documentType, activeDoc.documentId)
     ? 'unsaved'
     : saveStatus
@@ -202,220 +175,250 @@ export function ProjectEditorPage() {
 
   if (loading) {
     return (
-      <main>
-        <h1>{t('editor.title')}</h1>
-        <div aria-busy="true" aria-label={t('common.loading')}>
+      <main style={{ padding: 24 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 600 }}>{t('editor.title')}</h1>
+        <div aria-busy="true" aria-label={t('common.loading')} style={{ color: adminColors.textSecondary }}>
           {t('common.loading')}
         </div>
       </main>
     )
   }
 
+  const tabStyle = (mode: 'preview' | 'tree' | 'sitemap') => ({
+    border: workspaceMode === mode ? 'none' : `1px solid ${adminColors.border}`,
+    borderRadius: adminRadii.pill,
+    background: workspaceMode === mode ? adminColors.primary : adminColors.cardBg,
+    color: workspaceMode === mode ? '#fff' : adminColors.textPrimary,
+    padding: '6px 14px',
+    fontSize: 13,
+    fontWeight: 500 as const,
+    cursor: 'pointer' as const,
+    minHeight: 32,
+  })
+
+  const chatScope = {
+    projectId,
+    activePage: previewPageId ?? undefined,
+    selectedNode: selectedNode ?? undefined,
+    workspaceMode,
+    device,
+    renderMode,
+  }
+
   return (
-    <main style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      {/* Toolbar */}
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '8px 16px',
-          borderBottom: '1px solid #ddd',
-          minHeight: '48px',
-        }}
-      >
-        <h1 style={{ fontSize: '16px', margin: 0, flex: 1 }}>{t('editor.title')}</h1>
+    <main style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+      {/* Editor toolbar */}
+      <header style={headerStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Link to="/" aria-label={t('editor.backToDashboard')} style={iconButtonStyle}>
+            <FontAwesomeIcon icon={faChevronLeft} style={{ fontSize: 14 }} />
+          </Link>
+          <h1 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: adminColors.textPrimary }}>
+            {t('editor.title')}
+          </h1>
 
-        {/* Auto-save toggle */}
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '13px',
-            cursor: 'pointer',
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={autoSaveEnabled}
-            onChange={(e) => setAutoSaveEnabled(e.target.checked)}
-            aria-label={t('editor.autoSave')}
-          />
-          {t('editor.autoSave')}
-        </label>
+          {/* Source / Preview toggle */}
+          <div style={viewToggleContainerStyle}>
+            <button
+              type="button"
+              aria-label={t('editor.viewSource')}
+              data-testid="view-source-btn"
+              onClick={() => setCenterView('source')}
+              style={viewToggleBtnStyle(centerView === 'source')}
+            >
+              <FontAwesomeIcon icon={faCode} />
+            </button>
+            <button
+              type="button"
+              aria-label={t('editor.viewPreview')}
+              data-testid="view-preview-btn"
+              onClick={() => setCenterView('preview')}
+              style={viewToggleBtnStyle(centerView === 'preview')}
+            >
+              <FontAwesomeIcon icon={faEye} />
+            </button>
+          </div>
+        </div>
 
-        {/* Save button */}
-        <button
-          onClick={handleSave}
-          disabled={saveStatus === 'saving' || !activeDoc}
-          style={{
-            padding: '6px 16px',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            background: '#fff',
-            cursor: 'pointer',
-            minHeight: '36px',
-          }}
-        >
-          {saveStatus === 'saving' ? t('editor.saving') : t('common.save')}
-        </button>
-
-        {/* Save status */}
-        {displayStatus !== 'idle' && (
-          <span
-            data-testid="save-status"
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer', color: adminColors.textSecondary }}>
+            <input
+              type="checkbox"
+              checked={autoSaveEnabled}
+              onChange={(e) => setAutoSaveEnabled(e.target.checked)}
+              aria-label={t('editor.autoSave')}
+            />
+            {t('editor.autoSave')}
+          </label>
+          <button
+            onClick={handleSave}
+            disabled={saveStatus === 'saving' || !activeDoc}
             style={{
-              fontSize: '13px',
-              ...STATUS_STYLES[displayStatus],
+              ...secondaryButtonStyle,
+              minHeight: 36,
+              padding: '6px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              opacity: (saveStatus === 'saving' || !activeDoc) ? 0.5 : 1,
+              cursor: (saveStatus === 'saving' || !activeDoc) ? 'not-allowed' : 'pointer',
             }}
           >
-            {t(`editor.status.${displayStatus}`)}
-          </span>
-        )}
+            <FontAwesomeIcon icon={faFloppyDisk} style={{ fontSize: 13 }} />
+            {saveStatus === 'saving' ? t('editor.saving') : t('common.save')}
+          </button>
+          {displayStatus !== 'idle' && (
+            <span
+              data-testid="save-status"
+              style={{ fontSize: 13, fontWeight: 500, ...statusStyles[displayStatus] }}
+            >
+              {t(`editor.status.${displayStatus}`)}
+            </span>
+          )}
+        </div>
       </header>
 
-      {/* Main layout: sidebar + editor + preview */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Document tree sidebar */}
-        <DocumentTree
-          documents={documents}
-          activeDocType={activeDoc?.documentType ?? null}
-          activeDocId={activeDoc?.documentId ?? null}
-          onSelect={loadDocument}
-          isUnsaved={isUnsaved}
-        />
-
-        {/* Editor area */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {activeDoc ? (
-            <>
-              <div style={{ flex: 1, overflow: 'hidden' }}>
-                <YamlEditor
-                  ref={editorRef}
-                  value={content}
-                  onChange={handleContentChange}
-                  diagnostics={diagnostics}
-                />
-              </div>
-              <ProblemsPanel
-                problems={problems}
-                onClickProblem={handleClickProblem}
-              />
-            </>
-          ) : (
-            <div
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#888',
-              }}
-            >
-              {t('editor.selectDocument')}
-            </div>
-          )}
+      {/* Workspace panes */}
+      <div ref={containerRef} style={workspaceStyle}>
+        {/* Document tree pane */}
+        <div style={{ width: navWidth, flexShrink: 0, ...cardSurfaceStyle, overflow: 'hidden' }}>
+          <DocumentTree
+            documents={documents}
+            activeDocType={activeDoc?.documentType ?? null}
+            activeDocId={activeDoc?.documentId ?? null}
+            onSelect={(type, id) => { loadDocument(type, id); setCenterView('source') }}
+            isUnsaved={isUnsaved}
+            onNewFile={() => setCreateFileOpen(true)}
+          />
         </div>
+        <ResizeHandle testId="resize-nav-handle" onMouseDown={startResize('nav')} />
 
-        {/* Preview area */}
-        <div
-          data-testid="preview-area"
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            borderLeft: '1px solid #ddd',
-            overflow: 'hidden',
-          }}
-        >
-          <PreviewToolbar
-            device={device}
-            onDeviceChange={setDevice}
-            renderMode={renderMode}
-            onRenderModeChange={handleRenderModeChange}
-            pageIds={previewState.pageIds}
-            activePage={previewPageId}
-            onPageChange={setPreviewPageId}
-          />
-          <PreviewBreadcrumb
-            pageId={previewPageId}
-            templateName={previewState.templateName}
-            routePath={previewState.routePath}
-          />
-          <div
-            role="tablist"
-            aria-label={t('chat.scopeMode')}
-            style={{ display: 'flex', gap: '8px', padding: '8px 12px', borderBottom: '1px solid #eee' }}
-          >
-            {(['preview', 'tree', 'sitemap'] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                role="tab"
-                aria-selected={workspaceMode === mode}
-                onClick={() => setWorkspaceMode(mode)}
-                style={{
-                  border: '1px solid #ddd',
-                  borderRadius: '999px',
-                  background: workspaceMode === mode ? '#17324d' : '#fff',
-                  color: workspaceMode === mode ? '#fff' : '#17324d',
-                  padding: '6px 12px',
-                }}
+        {/* Center content area — toggles between source and preview */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', ...cardSurfaceStyle }}>
+          {centerView === 'source' ? (
+            /* Source code view */
+            activeDoc ? (
+              <>
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <YamlEditor
+                    ref={editorRef}
+                    value={content}
+                    onChange={handleContentChange}
+                    diagnostics={diagnostics}
+                  />
+                </div>
+                <ProblemsPanel
+                  problems={problems}
+                  onClickProblem={handleClickProblem}
+                />
+              </>
+            ) : (
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: adminColors.textTertiary, fontSize: 14 }}>
+                {t('editor.selectDocument')}
+              </div>
+            )
+          ) : (
+            /* Preview view */
+            <div data-testid="preview-area" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <PreviewToolbar
+                device={device}
+                onDeviceChange={setDevice}
+                renderMode={renderMode}
+                onRenderModeChange={handleRenderModeChange}
+                pageIds={previewState.pageIds}
+                activePage={previewPageId}
+                onPageChange={setPreviewPageId}
+              />
+              <PreviewBreadcrumb
+                pageId={previewPageId}
+                templateName={previewState.templateName}
+                routePath={previewState.routePath}
+              />
+              <div
+                role="tablist"
+                aria-label={t('chat.scopeMode')}
+                style={{ display: 'flex', gap: 8, padding: '8px 12px', borderBottom: `1px solid ${adminColors.border}` }}
               >
-                {mode === 'preview' ? t('preview.title') : t(`workspace.tab${mode === 'tree' ? 'Tree' : 'Sitemap'}`)}
-              </button>
-            ))}
-          </div>
-          {workspaceMode === 'preview' && (
-            <div data-testid="preview-pane" style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
-              {problems.length > 0 && (
-                <div
-                  data-testid="preview-warning-banner"
-                  role="alert"
-                  style={{
-                    padding: '8px 12px',
-                    background: '#fff8e1',
-                    borderBottom: '1px solid #ffe082',
-                    color: '#6d4c00',
-                    fontSize: '13px',
-                  }}
-                >
-                  {t('preview.validationWarnings')}
+                {(['preview', 'tree', 'sitemap'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    role="tab"
+                    aria-selected={workspaceMode === mode}
+                    onClick={() => setWorkspaceMode(mode)}
+                    style={tabStyle(mode)}
+                  >
+                    {mode === 'preview' ? t('preview.title') : t(`workspace.tab${mode === 'tree' ? 'Tree' : 'Sitemap'}`)}
+                  </button>
+                ))}
+              </div>
+              {workspaceMode === 'preview' && (
+                <div data-testid="preview-pane" style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+                  {problems.length > 0 && (
+                    <div
+                      data-testid="preview-warning-banner"
+                      role="alert"
+                      style={{
+                        padding: '8px 12px',
+                        background: adminColors.warningBg,
+                        borderBottom: `1px solid ${adminColors.warningBorder}`,
+                        color: adminColors.warningText,
+                        fontSize: 13,
+                      }}
+                    >
+                      {t('preview.validationWarnings')}
+                    </div>
+                  )}
+                  <WorkspacePreview
+                    yamlFiles={yamlFiles}
+                    activePage={previewPageId ?? ''}
+                    device={device}
+                    renderMode={renderMode}
+                    onNavigate={handlePreviewNavigate}
+                    onNodeSelect={setSelectedNode}
+                    highlightedNode={selectedNode}
+                    nodeIdToAddress={nodeIdToAddress}
+                  />
                 </div>
               )}
-              <WorkspacePreview
-                yamlFiles={yamlFiles}
-                activePage={previewPageId ?? ''}
-                device={device}
-                renderMode={renderMode}
-                onNavigate={handlePreviewNavigate}
-                onNodeSelect={setSelectedNode}
-                highlightedNode={selectedNode}
-                nodeIdToAddress={nodeIdToAddress}
-              />
+              {workspaceMode === 'tree' && (
+                <div style={{ flex: 1, overflow: 'auto' }}>
+                  <NodeTree
+                    nodes={resolvedNodes}
+                    onNodeSelect={setSelectedNode}
+                    selectedNode={selectedNode}
+                  />
+                </div>
+              )}
+              {workspaceMode === 'sitemap' && (
+                <SitemapView
+                  nodes={sitemapNodes}
+                  activePage={previewPageId ?? ''}
+                  onPageChange={handlePreviewNavigate}
+                />
+              )}
             </div>
-          )}
-          {workspaceMode === 'tree' && (
-            <div style={{ flex: 1, overflow: 'auto' }}>
-              <NodeTree
-                nodes={resolvedNodes}
-                onNodeSelect={setSelectedNode}
-                selectedNode={selectedNode}
-              />
-            </div>
-          )}
-          {workspaceMode === 'sitemap' && (
-            <SitemapView
-              nodes={sitemapNodes}
-              activePage={previewPageId ?? ''}
-              onPageChange={handlePreviewNavigate}
-            />
           )}
         </div>
+
+        {/* Pinned chat pane */}
+        {chatPinned && (
+          <>
+            <ResizeHandle testId="resize-chat-handle" onMouseDown={startResize('chat')} />
+            <div style={{ width: chatWidth, flexShrink: 0 }}>
+              <ChatPopup
+                projectId={projectId}
+                pinned
+                onPinnedChange={handleChatPinnedChange}
+                scope={chatScope}
+                onApplyDocument={handleApplyChatDocument}
+              />
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Conflict Dialog */}
+      {/* Modals and overlays */}
       {conflict && (
         <ConflictDialog
           conflict={conflict}
@@ -423,18 +426,81 @@ export function ProjectEditorPage() {
           onDismiss={dismissConflict}
         />
       )}
-      <ChatPopup
-        projectId={projectId}
-        scope={{
-          projectId,
-          activePage: previewPageId ?? undefined,
-          selectedNode: selectedNode ?? undefined,
-          workspaceMode,
-          device,
-          renderMode,
-        }}
-        onApplyDocument={handleApplyChatDocument}
+      <CreateFileDialog
+        open={createFileOpen}
+        documents={documents}
+        onClose={() => setCreateFileOpen(false)}
+        onCreateDocument={handleCreateDocument}
       />
+      {!chatPinned && (
+        <ChatPopup
+          projectId={projectId}
+          pinned={false}
+          onPinnedChange={handleChatPinnedChange}
+          scope={chatScope}
+          onApplyDocument={handleApplyChatDocument}
+        />
+      )}
     </main>
   )
+}
+
+const headerStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
+  padding: '8px 16px',
+  borderBottom: `1px solid ${adminColors.border}`,
+  minHeight: 48,
+  background: adminColors.cardBg,
+}
+
+const iconButtonStyle: React.CSSProperties = {
+  display: 'grid',
+  placeItems: 'center',
+  width: 36,
+  height: 36,
+  borderRadius: adminRadii.button,
+  border: `1px solid ${adminColors.border}`,
+  background: adminColors.cardBg,
+  color: adminColors.textSecondary,
+  textDecoration: 'none',
+  cursor: 'pointer',
+  transition: 'background 150ms ease',
+}
+
+const viewToggleContainerStyle: React.CSSProperties = {
+  display: 'flex',
+  background: adminColors.surfaceMuted,
+  borderRadius: adminRadii.pill,
+  padding: 2,
+  gap: 2,
+  marginLeft: 4,
+}
+
+function viewToggleBtnStyle(active: boolean): React.CSSProperties {
+  return {
+    display: 'grid',
+    placeItems: 'center',
+    width: 32,
+    height: 28,
+    borderRadius: adminRadii.pill,
+    border: 'none',
+    background: active ? adminColors.cardBg : 'transparent',
+    color: active ? adminColors.primary : adminColors.textTertiary,
+    cursor: 'pointer',
+    fontSize: 13,
+    boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+    transition: 'all 150ms ease',
+  }
+}
+
+const workspaceStyle: React.CSSProperties = {
+  display: 'flex',
+  flex: 1,
+  overflow: 'hidden',
+  gap: 8,
+  padding: 12,
+  background: adminColors.pageBg,
 }

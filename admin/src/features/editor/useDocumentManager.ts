@@ -385,6 +385,53 @@ export function useDocumentManager(projectId: string) {
     }
   }, [activeDoc, updateDocumentSummary])
 
+  const createDocument = useCallback(async (
+    documentType: string,
+    documentId: string,
+    content: string,
+  ) => {
+    const key = docKey(documentType, documentId)
+    if (docStateRef.current.has(key)) {
+      throw new Error('Document already exists')
+    }
+
+    const result = await upsertDocument(
+      projectId,
+      documentType,
+      documentId,
+      content,
+    )
+
+    if (result.validationErrors && result.validationErrors.length > 0) {
+      throw new ApiError(422, JSON.stringify({ details: result.validationErrors }))
+    }
+
+    docStateRef.current.set(key, {
+      documentType,
+      documentId,
+      original: content,
+      current: content,
+      contentHash: result.document.contentHash,
+      problems: [],
+      serverProblems: [],
+    })
+
+    setDocuments((prev) => [
+      ...prev,
+      {
+        id: result.document.id,
+        documentType,
+        documentId,
+        contentHash: result.document.contentHash,
+        updatedAt: result.document.updatedAt,
+      },
+    ])
+
+    setActiveDoc({ documentType, documentId, key })
+    setProblems([])
+    setSaveStatus('saved')
+  }, [projectId])
+
   // Cleanup timers
   useEffect(() => {
     return () => {
@@ -410,6 +457,7 @@ export function useDocumentManager(projectId: string) {
     saveDocument,
     applyDocumentContent,
     syncDocumentContent,
+    createDocument,
     resolveConflict,
     dismissConflict,
     isUnsaved,

@@ -8,6 +8,7 @@ const requestUsers = new WeakMap<Request, JwtPayload>();
 const PUBLIC_ROUTES: Array<{ method: string; pattern: RegExp }> = [
   { method: "GET", pattern: /^\/health$/ },
   { method: "POST", pattern: /^\/auth\/sso$/ },
+  { method: "POST", pattern: /^\/auth\/dev-login$/ },
   { method: "GET", pattern: /^\/preview\/[^/]+(\/.*)?$/ },
   { method: "POST", pattern: /^\/preview\/[^/]+\/auth$/ },
 ];

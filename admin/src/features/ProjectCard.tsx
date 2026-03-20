@@ -1,18 +1,23 @@
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import type { Project } from '../api/projects'
+import {
+  adminColors,
+  adminRadii,
+  cardSurfaceStyle,
+} from '../styles/adminTheme'
 
 const cardStyle: React.CSSProperties = {
+  ...cardSurfaceStyle,
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
   aspectRatio: '1',
-  padding: 16,
-  border: '1px solid #ddd',
-  borderRadius: 8,
+  padding: 20,
   cursor: 'pointer',
   minHeight: 180,
   minWidth: 180,
+  transition: 'box-shadow 150ms ease, transform 150ms ease',
 }
 
 const nameStyle: React.CSSProperties = {
@@ -22,33 +27,27 @@ const nameStyle: React.CSSProperties = {
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
+  color: adminColors.textPrimary,
 }
 
-const badgeStyle: React.CSSProperties = {
-  display: 'inline-block',
-  fontSize: 12,
-  padding: '2px 8px',
-  borderRadius: 4,
-  fontWeight: 500,
+const roleColors: Record<string, { bg: string; text: string; border: string }> = {
+  owner: { bg: adminColors.primaryTint, text: adminColors.primary, border: `rgba(245, 101, 34, 0.2)` },
+  editor: { bg: adminColors.successBg, text: adminColors.successText, border: `rgba(34, 197, 94, 0.2)` },
+  viewer: { bg: adminColors.surfaceMuted, text: adminColors.textSecondary, border: adminColors.border },
 }
 
-const footerStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  fontSize: 12,
-  color: '#666',
-}
-
-function roleBadgeColor(role: string): string {
-  switch (role) {
-    case 'owner':
-      return '#e8f0fe'
-    case 'editor':
-      return '#e6f4ea'
-    default:
-      return '#f1f3f4'
-  }
+function roleBadge(role: string) {
+  const colors = roleColors[role] ?? roleColors.viewer
+  return {
+    display: 'inline-block',
+    fontSize: 12,
+    fontWeight: 500,
+    padding: '4px 10px',
+    borderRadius: adminRadii.pill,
+    backgroundColor: colors.bg,
+    color: colors.text,
+    border: `1px solid ${colors.border}`,
+  } as React.CSSProperties
 }
 
 function roleLabel(t: (key: string) => string, role: string): string {
@@ -60,21 +59,6 @@ function roleLabel(t: (key: string) => string, role: string): string {
     default:
       return t('dashboard.roleViewer')
   }
-}
-
-function RoleIcon({ role }: { role: string }) {
-  if (role === 'viewer') {
-    return (
-      <span aria-hidden="true" style={{ fontSize: 18 }}>
-        &#x1F441;
-      </span>
-    )
-  }
-  return (
-    <span aria-hidden="true" style={{ fontSize: 18 }}>
-      &#x270F;
-    </span>
-  )
 }
 
 function formatDate(dateStr: string): string {
@@ -94,6 +78,12 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
+  const initials = project.name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('')
+
   return (
     <div
       role="link"
@@ -106,19 +96,45 @@ export function ProjectCard({ project }: ProjectCardProps) {
           navigate(`/projects/${project.id}`)
         }
       }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)'
+        e.currentTarget.style.transform = 'translateY(-1px)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = 'none'
+        e.currentTarget.style.transform = 'none'
+      }}
       aria-label={project.name}
     >
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 8 }}>
           <h2 style={nameStyle}>{project.name}</h2>
-          <RoleIcon role={project.role} />
+          <div
+            aria-hidden="true"
+            style={{
+              width: 36,
+              height: 36,
+              display: 'grid',
+              placeItems: 'center',
+              borderRadius: adminRadii.button,
+              background: adminColors.primaryTint,
+              color: adminColors.primary,
+              fontSize: 13,
+              fontWeight: 600,
+              flexShrink: 0,
+            }}
+          >
+            {initials}
+          </div>
         </div>
-        <span style={{ ...badgeStyle, backgroundColor: roleBadgeColor(project.role) }}>
-          {roleLabel(t, project.role)}
-        </span>
+        <div style={{ marginTop: 8 }}>
+          <span style={roleBadge(project.role)}>
+            {roleLabel(t, project.role)}
+          </span>
+        </div>
       </div>
-      <div style={footerStyle}>
-        <span>{t('dashboard.lastUpdated', { date: formatDate(project.updatedAt) })}</span>
+      <div style={{ fontSize: 12, color: adminColors.textTertiary }}>
+        {t('dashboard.lastUpdated', { date: formatDate(project.updatedAt) })}
       </div>
     </div>
   )

@@ -6,6 +6,11 @@ mock.module("../config.js", () => ({
     databaseUrl: "",
     corsOrigins: [],
     jwtSecret: "test-secret",
+    devAuthEnabled: true,
+    devAuthUserEmail: "dev@wireframes.local",
+    devAuthUserName: "Local Developer",
+    devAuthUserSubject: "dev-local-user",
+    devAuthProjectName: "Local Demo Project",
     ssoVerifyUrl: "https://sso.test/verify",
   },
 }));
@@ -27,6 +32,17 @@ mock.module("../services/user.js", () => ({
   findOrCreateUser: async () => ({
     userId: "uid-1",
     email: "user@example.com",
+    displayName: "User",
+    locale: "en",
+  }),
+}));
+
+mock.module("../services/dev-auth.js", () => ({
+  loginAsDevUser: async () => ({
+    userId: "dev-user-1",
+    email: "dev@wireframes.local",
+    displayName: "Local Developer",
+    locale: "en",
   }),
 }));
 
@@ -66,6 +82,23 @@ describe("auth route", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.token).toBeTruthy();
+    expect(body.user.email).toBe("user@example.com");
+  });
+
+  test("handles POST /auth/dev-login", async () => {
+    const result = handleAuthRoute(makeRequest("/auth/dev-login", "POST"));
+    expect(result).not.toBeNull();
+
+    const res = await result!;
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.token).toBeTruthy();
+    expect(body.user).toEqual({
+      id: "dev-user-1",
+      email: "dev@wireframes.local",
+      displayName: "Local Developer",
+      locale: "en",
+    });
   });
 
   test("rate limits POST /auth/sso after 10 requests", async () => {

@@ -32,7 +32,12 @@ coverage/
 # Playwright
 .playwright-cli/
 .playwright-mcp/
+playwright-report/
+test-results/
 
 # Steroids
 .steroids/
 .ninja/
+
+# Local runtime
+.run/

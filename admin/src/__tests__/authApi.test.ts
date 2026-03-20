@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useAuthStore } from '../stores/authStore'
-import { exchangeSsoToken, updateLocale } from '../api/auth'
+import { devLogin, exchangeSsoToken, updateLocale } from '../api/auth'
 
 describe('auth API', () => {
   beforeEach(() => {
@@ -38,5 +38,23 @@ describe('auth API', () => {
     expect((url as string).endsWith('/users/me/locale')).toBe(true)
     expect(init?.method).toBe('PATCH')
     expect(JSON.parse(init?.body as string)).toEqual({ locale: 'fr' })
+  })
+
+  it('devLogin calls POST /auth/dev-login', async () => {
+    const mockResponse = {
+      token: 'jwt-dev',
+      user: { id: '1', email: 'dev@wireframes.local', displayName: 'Local Developer', locale: 'en' },
+    }
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(mockResponse), { status: 200 }),
+    )
+
+    const result = await devLogin()
+
+    const [url, init] = vi.mocked(globalThis.fetch).mock.calls[0]
+    expect((url as string).endsWith('/auth/dev-login')).toBe(true)
+    expect(init?.method).toBe('POST')
+    expect(result).toEqual(mockResponse)
   })
 })

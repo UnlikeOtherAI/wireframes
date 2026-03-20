@@ -3,6 +3,7 @@ import { DeviceSelector } from './DeviceSelector'
 import { PageSelector } from './PageSelector'
 import { RenderModeToggle } from './RenderModeToggle'
 import type { DeviceType, RenderMode } from './usePreviewRenderer'
+import { adminColors } from '../../styles/adminTheme'
 
 interface PreviewToolbarProps {
   device: DeviceType
@@ -32,10 +33,10 @@ export function PreviewToolbar({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '12px',
+        gap: 12,
         padding: '6px 12px',
-        borderBottom: '1px solid #ddd',
-        minHeight: '44px',
+        borderBottom: `1px solid ${adminColors.border}`,
+        minHeight: 44,
         flexWrap: 'wrap',
       }}
     >

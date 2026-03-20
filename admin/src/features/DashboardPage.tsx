@@ -8,6 +8,12 @@ import type { PendingInvite } from '../api/invites'
 import { ProjectCard } from './ProjectCard'
 import { InviteCard } from './InviteCard'
 import { CreateProjectDialog } from './CreateProjectDialog'
+import {
+  adminColors,
+  adminRadii,
+  primaryButtonStyle,
+  secondaryButtonStyle,
+} from '../styles/adminTheme'
 
 const gridStyle: React.CSSProperties = {
   display: 'grid',
@@ -22,21 +28,23 @@ const newCardStyle: React.CSSProperties = {
   justifyContent: 'center',
   aspectRatio: '1',
   padding: 16,
-  border: '2px dashed #ccc',
-  borderRadius: 8,
+  border: `2px dashed ${adminColors.border}`,
+  borderRadius: adminRadii.card,
   cursor: 'pointer',
   minHeight: 180,
   minWidth: 180,
-  color: '#666',
+  color: adminColors.textTertiary,
   fontSize: 14,
+  background: adminColors.cardBg,
+  transition: 'border-color 150ms ease, background 150ms ease',
 }
 
 const skeletonCardStyle: React.CSSProperties = {
   aspectRatio: '1',
   padding: 16,
-  border: '1px solid #eee',
-  borderRadius: 8,
-  backgroundColor: '#f5f5f5',
+  border: `1px solid ${adminColors.border}`,
+  borderRadius: adminRadii.card,
+  backgroundColor: adminColors.surfaceMuted,
   minHeight: 180,
   minWidth: 180,
   animation: 'pulse 1.5s ease-in-out infinite',
@@ -45,7 +53,7 @@ const skeletonCardStyle: React.CSSProperties = {
 const emptyStyle: React.CSSProperties = {
   textAlign: 'center',
   padding: '64px 16px',
-  color: '#666',
+  color: adminColors.textSecondary,
 }
 
 const errorBannerStyle: React.CSSProperties = {
@@ -53,21 +61,10 @@ const errorBannerStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: '12px 16px',
-  backgroundColor: '#fce8e6',
-  borderRadius: 8,
+  backgroundColor: adminColors.dangerBg,
+  borderRadius: adminRadii.button,
   marginBottom: 16,
-  color: '#c5221f',
-}
-
-const buttonBase: React.CSSProperties = {
-  minWidth: 44,
-  minHeight: 44,
-  padding: '8px 16px',
-  borderRadius: 4,
-  border: 'none',
-  cursor: 'pointer',
-  fontWeight: 500,
-  fontSize: 14,
+  color: adminColors.dangerText,
 }
 
 type LoadState = 'loading' | 'loaded' | 'error'
@@ -123,7 +120,7 @@ export function DashboardPage() {
   if (loadState === 'loading') {
     return (
       <main style={{ padding: 24 }}>
-        <h1 style={{ marginBottom: 24 }}>{t('dashboard.title')}</h1>
+        <h1 style={{ marginBottom: 24, fontSize: 20, fontWeight: 600, color: adminColors.textPrimary }}>{t('dashboard.title')}</h1>
         <div style={gridStyle} aria-busy="true" aria-label={t('common.loading')}>
           {Array.from({ length: 6 }, (_, i) => (
             <div key={i} style={skeletonCardStyle} />
@@ -136,13 +133,13 @@ export function DashboardPage() {
   if (loadState === 'error') {
     return (
       <main style={{ padding: 24 }}>
-        <h1 style={{ marginBottom: 24 }}>{t('dashboard.title')}</h1>
+        <h1 style={{ marginBottom: 24, fontSize: 20, fontWeight: 600, color: adminColors.textPrimary }}>{t('dashboard.title')}</h1>
         <div style={errorBannerStyle} role="alert">
           <span>{t('dashboard.networkError')}</span>
           <button
             type="button"
             onClick={loadData}
-            style={{ ...buttonBase, backgroundColor: 'transparent', color: '#c5221f' }}
+            style={{ ...secondaryButtonStyle, minHeight: 36, padding: '6px 16px', background: 'transparent', color: adminColors.dangerText, border: 'none' }}
           >
             {t('dashboard.retry')}
           </button>
@@ -156,14 +153,14 @@ export function DashboardPage() {
   if (isEmpty) {
     return (
       <main style={{ padding: 24 }}>
-        <h1 style={{ marginBottom: 24 }}>{t('dashboard.title')}</h1>
+        <h1 style={{ marginBottom: 24, fontSize: 20, fontWeight: 600, color: adminColors.textPrimary }}>{t('dashboard.title')}</h1>
         <div style={emptyStyle}>
           <p style={{ fontSize: 18, marginBottom: 8 }}>{t('dashboard.noProjects')}</p>
           <p style={{ marginBottom: 16 }}>{t('dashboard.createFirst')}</p>
           <button
             type="button"
             onClick={() => setDialogOpen(true)}
-            style={{ ...buttonBase, backgroundColor: '#1a73e8', color: '#fff' }}
+            style={primaryButtonStyle}
           >
             {t('dashboard.createProject')}
           </button>
@@ -180,7 +177,7 @@ export function DashboardPage() {
 
   return (
     <main style={{ padding: 24 }}>
-      <h1 style={{ marginBottom: 24 }}>{t('dashboard.title')}</h1>
+      <h1 style={{ marginBottom: 24, fontSize: 20, fontWeight: 600, color: adminColors.textPrimary }}>{t('dashboard.title')}</h1>
       <div style={gridStyle}>
         {invites.map((invite) => (
           <InviteCard
@@ -206,7 +203,7 @@ export function DashboardPage() {
           }}
           aria-label={t('dashboard.newProject')}
         >
-          <span style={{ fontSize: 36, lineHeight: 1 }}>+</span>
+          <span style={{ fontSize: 36, lineHeight: 1, color: adminColors.textTertiary }}>+</span>
           <span style={{ marginTop: 8 }}>{t('dashboard.newProject')}</span>
         </div>
       </div>

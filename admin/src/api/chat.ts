@@ -29,9 +29,17 @@ export interface ChatSessionResponse {
   messages: ChatMessage[]
 }
 
+export interface PendingChangeResponse {
+  documentType: string
+  documentId: string
+  oldContent: string
+  newContent: string
+}
+
 export interface SendChatMessageResponse {
   userMessage: ChatMessage
   assistantMessage: ChatMessage
+  pendingChange?: PendingChangeResponse
 }
 
 export function createChatSession(

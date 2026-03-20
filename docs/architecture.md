@@ -67,6 +67,7 @@ Bun HTTP server. RESTful JSON API.
 - **ORM:** Drizzle ORM (better Bun compatibility than Prisma, TypeScript-first, SQL-like syntax)
 - **Migrations:** drizzle-kit
 - **Auth:** SSO via `authenticator.unlikeother.ai`
+- **Local dev auth:** optional env-gated dev login for localhost-only development
 
 #### Core Entities
 
@@ -126,6 +127,7 @@ React CSR single-page application. Online wireframe editor.
 - **Routing:** React Router
 - **State:** Zustand or similar
 - **Auth:** SSO via `authenticator.unlikeother.ai`
+- **Local dev auth:** optional `Dev login` button when explicitly enabled in local development
 
 #### Internationalization (i18n)
 

@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { adminColors } from '../../styles/adminTheme'
 
 interface PreviewBreadcrumbProps {
   pageId: string | null
@@ -22,18 +23,18 @@ export function PreviewBreadcrumb({ pageId, templateName, routePath }: PreviewBr
       data-testid="preview-breadcrumb"
       style={{
         padding: '4px 12px',
-        fontSize: '12px',
-        color: '#666',
-        borderBottom: '1px solid #eee',
+        fontSize: 12,
+        color: adminColors.textTertiary,
+        borderBottom: `1px solid ${adminColors.borderSubtle}`,
         display: 'flex',
         alignItems: 'center',
-        gap: '4px',
-        minHeight: '28px',
+        gap: 4,
+        minHeight: 28,
       }}
     >
       {parts.map((part, i) => (
-        <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          {i > 0 && <span aria-hidden="true" style={{ color: '#ccc' }}>/</span>}
+        <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {i > 0 && <span aria-hidden="true" style={{ color: adminColors.border }}>/</span>}
           <span>{part}</span>
         </span>
       ))}

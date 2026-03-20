@@ -222,14 +222,14 @@ describe('Preview Pane', () => {
     })
   })
 
-  it('renders preview with split-pane layout (editor left, preview right)', async () => {
+  it('renders preview in center area with source/preview toggle', async () => {
     mockFetchResponses()
     renderEditor()
     await waitFor(() => {
       expect(screen.getByTestId('preview-area')).toBeInTheDocument()
     })
-    const previewArea = screen.getByTestId('preview-area')
-    expect(previewArea.style.borderLeft).toContain('1px solid')
+    expect(screen.getByTestId('view-source-btn')).toBeInTheDocument()
+    expect(screen.getByTestId('view-preview-btn')).toBeInTheDocument()
   })
 
   it('auto-selects first page for preview', async () => {
@@ -249,12 +249,16 @@ describe('Preview Pane', () => {
     await waitFor(() => {
       expect(screen.getByText('about.yaml')).toBeInTheDocument()
     })
-    // Click on about page to edit it
+    // Click on about page to edit it (auto-switches to source view)
     await act(async () => {
       fireEvent.click(screen.getByText('about.yaml'))
     })
     await waitFor(() => {
       expect(screen.getByTestId('yaml-editor')).toBeInTheDocument()
+    })
+    // Switch back to preview to check page selector
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('view-preview-btn'))
     })
     // Page selector should switch to about
     await waitFor(() => {
@@ -286,6 +290,11 @@ describe('Preview Pane', () => {
     // Advance timers past validation debounce (500ms)
     await act(async () => {
       vi.advanceTimersByTime(600)
+    })
+
+    // Switch to preview to see the warning banner
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('view-preview-btn'))
     })
 
     // Warning banner should appear (problems exist but mocked renderer succeeds)

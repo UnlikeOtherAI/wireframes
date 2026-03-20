@@ -13,6 +13,12 @@ export function exchangeSsoToken(ssoToken: string): Promise<SsoResponse> {
   })
 }
 
+export function devLogin(): Promise<SsoResponse> {
+  return apiFetch<SsoResponse>('/auth/dev-login', {
+    method: 'POST',
+  })
+}
+
 export function updateLocale(locale: string): Promise<void> {
   return apiFetch<void>('/users/me/locale', {
     method: 'PATCH',
