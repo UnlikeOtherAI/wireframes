@@ -1,7 +1,7 @@
 import { describe, test, expect, mock, beforeEach } from "bun:test";
 
 let gcsState = {
-  uploaded: [] as Array<{ path: string; buffer: Buffer; contentType: string }>,
+  uploaded: [] as Array<{ path: string; buffer: Buffer; contentType: string; cacheControl?: string }>,
 };
 
 function resetGcsState() {
@@ -30,6 +30,7 @@ let buildResult: Record<string, unknown> = {
 };
 
 let previewState: Record<string, unknown> | null = null;
+let emailActions: Array<{ action: string; emails?: string[] }> = [];
 
 mock.module("../config.js", () => ({
   config: {
@@ -64,8 +65,8 @@ mock.module("../services/engine.js", () => ({
 }));
 
 mock.module("../services/gcs.js", () => ({
-  uploadBuffer: async (path: string, buffer: Buffer, contentType: string) => {
-    gcsState.uploaded.push({ path, buffer, contentType });
+  uploadBuffer: async (path: string, buffer: Buffer, contentType: string, cacheControl?: string) => {
+    gcsState.uploaded.push({ path, buffer, contentType, cacheControl });
   },
   listFiles: async () => [],
   deleteFile: async () => {},
@@ -96,8 +97,12 @@ mock.module("../repositories/preview.js", () => ({
     return previewState;
   },
   findPreviewAccessEmails: async () => [],
-  replacePreviewAccessEmails: async () => {},
-  clearPreviewAccessEmails: async () => {},
+  replacePreviewAccessEmails: async (_id: string, emails: string[]) => {
+    emailActions.push({ action: "replace", emails });
+  },
+  clearPreviewAccessEmails: async () => {
+    emailActions.push({ action: "clear" });
+  },
 }));
 
 import {
@@ -105,6 +110,7 @@ import {
   assembleBuildFiles,
   collectFontAwesomeFiles,
   publishPreview,
+  updatePreviewSettings,
 } from "../services/preview.js";
 
 describe("rewritePreviewAssetUrls", () => {
@@ -294,6 +300,7 @@ describe("publishPreview", () => {
     membershipState = null;
     previewState = null;
     documentRows = [];
+    emailActions = [];
     validationResult = { ok: true, errors: [], warnings: [] };
     buildResult = {
       ok: true,
@@ -487,5 +494,78 @@ describe("publishPreview", () => {
 
     const result = await publishPreview("user1", "proj1");
     expect(result.slug).toBeTruthy();
+  });
+
+  test("uploads preview files with private, max-age=3600 cache control", async () => {
+    membershipState = { role: "editor" };
+    documentRows = [
+      {
+        id: "d1",
+        projectId: "p1",
+        documentType: "page",
+        documentId: "home",
+        content: "page:\n  template: main",
+        contentHash: "abc",
+      },
+    ];
+
+    await publishPreview("user1", "proj1");
+
+    expect(gcsState.uploaded.length).toBeGreaterThan(0);
+    for (const upload of gcsState.uploaded) {
+      expect(upload.cacheControl).toBe("private, max-age=3600");
+    }
+  });
+});
+
+describe("updatePreviewSettings", () => {
+  beforeEach(() => {
+    resetGcsState();
+    membershipState = null;
+    previewState = null;
+    emailActions = [];
+  });
+
+  test("clears email list when switching to SSO without providing emails", async () => {
+    membershipState = { role: "editor" };
+    previewState = {
+      id: "preview-1",
+      projectId: "proj1",
+      slug: "testslug",
+      accessMode: "public",
+      passwordHash: null,
+      buildUrl: "previews/testslug/",
+      publishedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    await updatePreviewSettings("user1", "proj1", { accessMode: "sso" });
+
+    expect(emailActions).toEqual([{ action: "clear" }]);
+  });
+
+  test("replaces email list when switching to SSO with emails provided", async () => {
+    membershipState = { role: "editor" };
+    previewState = {
+      id: "preview-1",
+      projectId: "proj1",
+      slug: "testslug",
+      accessMode: "public",
+      passwordHash: null,
+      buildUrl: "previews/testslug/",
+      publishedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    await updatePreviewSettings("user1", "proj1", {
+      accessMode: "sso",
+      emails: ["a@test.com", "b@test.com"],
+    });
+
+    expect(emailActions).toEqual([
+      { action: "replace", emails: ["a@test.com", "b@test.com"] },
+    ]);
   });
 });

@@ -153,6 +153,7 @@ async function uploadPreviewFiles(
       .filter((p) => p !== "index.html"),
   );
 
+  const previewCacheControl = "private, max-age=3600";
   const allFiles: Array<{ gcsPath: string; content: Buffer; contentType: string }> = [];
 
   for (const file of buildFiles) {
@@ -174,7 +175,7 @@ async function uploadPreviewFiles(
   }
 
   await Promise.all(
-    allFiles.map((f) => uploadBuffer(f.gcsPath, f.content, f.contentType)),
+    allFiles.map((f) => uploadBuffer(f.gcsPath, f.content, f.contentType, previewCacheControl)),
   );
 }
 
@@ -282,6 +283,8 @@ export async function updatePreviewSettings(
     });
     if (body.emails) {
       await replacePreviewAccessEmails(preview.id, body.emails);
+    } else {
+      await clearPreviewAccessEmails(preview.id);
     }
   } else if (body.accessMode === "public") {
     await updatePreviewAccess(projectId, {

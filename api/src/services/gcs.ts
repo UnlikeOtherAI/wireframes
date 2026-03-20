@@ -25,13 +25,14 @@ export async function uploadBuffer(
   filePath: string,
   buffer: Buffer,
   contentType: string,
+  cacheControl: string = "private, max-age=31536000",
 ): Promise<void> {
   const bucket = getBucket();
   const file = bucket.file(filePath);
   await file.save(buffer, {
     metadata: {
       contentType,
-      cacheControl: "private, max-age=31536000",
+      cacheControl,
     },
   });
 }
