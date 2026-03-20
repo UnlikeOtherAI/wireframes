@@ -96,6 +96,9 @@ export function useDocumentManager(projectId: string) {
         state.original = state.current
         state.contentHash = result.document.contentHash
         setSaveStatus('saved')
+      } else {
+        // 422 validation response — server rejected but content is still unsaved
+        setSaveStatus('unsaved')
       }
 
       // Update visible problems

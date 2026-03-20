@@ -268,6 +268,72 @@ describe('ProjectEditorPage', () => {
     })
   })
 
+  it('recovers saveStatus and re-enables Save button after 422 validation response', async () => {
+    mockFetchResponses({ saveStatus: 422 })
+    renderEditor()
+    await waitFor(() => {
+      expect(screen.getByText('manifest.yaml')).toBeInTheDocument()
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByText('manifest.yaml'))
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('yaml-editor')).toBeInTheDocument()
+    })
+    // Modify content so save is meaningful
+    await act(async () => {
+      lastEditorProps?.onChange('modified: true\n')
+    })
+    // Click Save — this will hit the 422 mock
+    const saveBtn = screen.getByText('Save')
+    await act(async () => {
+      fireEvent.click(saveBtn)
+    })
+    // After 422, status should recover to 'unsaved' and Save button should be enabled
+    await waitFor(() => {
+      expect(screen.getByTestId('save-status')).toHaveTextContent('Unsaved changes')
+    })
+    expect(saveBtn).not.toBeDisabled()
+    // Validation errors from the 422 should appear in the problems panel
+    await waitFor(() => {
+      const panel = screen.getByTestId('problems-panel')
+      expect(panel.querySelectorAll('button[role="listitem"]').length).toBeGreaterThan(0)
+    })
+  })
+
+  it('shows two same-type documents with independent unsaved state', async () => {
+    mockFetchResponses()
+    renderEditor()
+    await waitFor(() => {
+      expect(screen.getByText('home.yaml')).toBeInTheDocument()
+    })
+    // Load home page
+    await act(async () => {
+      fireEvent.click(screen.getByText('home.yaml'))
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('yaml-editor')).toBeInTheDocument()
+    })
+    // Modify home page content
+    await act(async () => {
+      lastEditorProps?.onChange('modified-home: true\n')
+    })
+    // home.yaml should show unsaved indicator
+    const homeButtons = screen.getAllByText('home.yaml')
+    const homeButton = homeButtons[0].closest('button')!
+    expect(homeButton.querySelector('[aria-label="unsaved changes"]')).toBeInTheDocument()
+    // Switch to about page — should NOT have unsaved indicator
+    await act(async () => {
+      fireEvent.click(screen.getByText('about.yaml'))
+    })
+    await waitFor(() => {
+      expect(lastEditorProps?.value).toBe('title: "About Page"\nlayout: row\n')
+    })
+    const aboutButtons = screen.getAllByText('about.yaml')
+    const aboutButton = aboutButtons[0].closest('button')!
+    expect(aboutButton.querySelector('[aria-label="unsaved changes"]')).not.toBeInTheDocument()
+  })
+
   it('diagnostics have correct from/to positions based on line numbers', async () => {
     const invalidYaml = 'line1: ok\nline2: bad: :[["\nline3: ok\n'
     mockFetchResponses({ getDocContent: invalidYaml })
