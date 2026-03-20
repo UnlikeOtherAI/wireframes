@@ -7,6 +7,11 @@ let downloadResult: { buffer: Buffer; contentType: string } = {
   contentType: "text/html; charset=utf-8",
 };
 let downloadError: Error | null = null;
+let ssoValidateResult: {
+  ssoSubject: string;
+  email: string;
+  displayName: string | null;
+} | null = null;
 
 mock.module("../config.js", () => ({
   config: {
@@ -32,6 +37,10 @@ mock.module("../repositories/preview.js", () => ({
   updatePreviewAccess: async () => previewState,
   replacePreviewAccessEmails: async () => {},
   clearPreviewAccessEmails: async () => {},
+}));
+
+mock.module("../services/sso.js", () => ({
+  validateSsoToken: async () => ssoValidateResult,
 }));
 
 mock.module("../services/gcs.js", () => ({
@@ -90,6 +99,7 @@ describe("viewPreview", () => {
       contentType: "text/html; charset=utf-8",
     };
     downloadError = null;
+    ssoValidateResult = null;
   });
 
   test("returns 404 for non-existent slug", async () => {
@@ -234,12 +244,43 @@ describe("viewPreview", () => {
     expect(result.allowed).toBe(true);
     expect(result.contentType).toBe("text/css; charset=utf-8");
   });
+
+  test("rejects path traversal with ..", async () => {
+    previewState = {
+      id: "p1",
+      slug: "testslug",
+      accessMode: "public",
+      passwordHash: null,
+      publishedAt: new Date(),
+      buildUrl: "previews/testslug/",
+    };
+
+    await expect(
+      viewPreview("testslug", "../other/file.html", null),
+    ).rejects.toThrow(/Invalid path/);
+  });
+
+  test("rejects path starting with /", async () => {
+    previewState = {
+      id: "p1",
+      slug: "testslug",
+      accessMode: "public",
+      passwordHash: null,
+      publishedAt: new Date(),
+      buildUrl: "previews/testslug/",
+    };
+
+    await expect(
+      viewPreview("testslug", "/etc/passwd", null),
+    ).rejects.toThrow(/Invalid path/);
+  });
 });
 
 describe("authenticatePreview", () => {
   beforeEach(() => {
     previewState = null;
     emailList = [];
+    ssoValidateResult = null;
   });
 
   test("returns 404 for non-existent preview", async () => {
@@ -309,7 +350,7 @@ describe("authenticatePreview", () => {
     expect(payload!.previewId).toBe("p1");
   });
 
-  test("returns 400 when email not provided for sso mode", async () => {
+  test("returns 400 when ssoToken not provided for sso mode", async () => {
     previewState = {
       id: "p1",
       slug: "ssoslug",
@@ -320,11 +361,27 @@ describe("authenticatePreview", () => {
     };
 
     await expect(authenticatePreview("ssoslug", {})).rejects.toThrow(
-      /Email is required/,
+      /SSO token is required/,
     );
   });
 
-  test("returns 403 for email not in access list", async () => {
+  test("returns 401 for invalid SSO token", async () => {
+    previewState = {
+      id: "p1",
+      slug: "ssoslug",
+      accessMode: "sso",
+      passwordHash: null,
+      publishedAt: new Date(),
+      buildUrl: "previews/ssoslug/",
+    };
+    ssoValidateResult = null;
+
+    await expect(
+      authenticatePreview("ssoslug", { ssoToken: "invalid-token" }),
+    ).rejects.toThrow(/Invalid SSO token/);
+  });
+
+  test("returns 403 for verified SSO email not in access list", async () => {
     previewState = {
       id: "p1",
       slug: "ssoslug",
@@ -334,13 +391,18 @@ describe("authenticatePreview", () => {
       buildUrl: "previews/ssoslug/",
     };
     emailList = ["allowed@test.com"];
+    ssoValidateResult = {
+      ssoSubject: "sub-1",
+      email: "denied@test.com",
+      displayName: null,
+    };
 
     await expect(
-      authenticatePreview("ssoslug", { email: "denied@test.com" }),
+      authenticatePreview("ssoslug", { ssoToken: "valid-token" }),
     ).rejects.toThrow(/not in access list/);
   });
 
-  test("returns token for email in access list", async () => {
+  test("returns token for verified SSO email in access list", async () => {
     previewState = {
       id: "p1",
       slug: "ssoslug",
@@ -350,15 +412,20 @@ describe("authenticatePreview", () => {
       buildUrl: "previews/ssoslug/",
     };
     emailList = ["allowed@test.com"];
+    ssoValidateResult = {
+      ssoSubject: "sub-1",
+      email: "allowed@test.com",
+      displayName: "Test User",
+    };
 
     const result = await authenticatePreview("ssoslug", {
-      email: "allowed@test.com",
+      ssoToken: "valid-token",
     });
     expect(result.token).toBeTruthy();
     expect(result.slug).toBe("ssoslug");
   });
 
-  test("email comparison is case-insensitive", async () => {
+  test("SSO email comparison is case-insensitive", async () => {
     previewState = {
       id: "p1",
       slug: "ssoslug",
@@ -368,9 +435,14 @@ describe("authenticatePreview", () => {
       buildUrl: "previews/ssoslug/",
     };
     emailList = ["Allowed@Test.com"];
+    ssoValidateResult = {
+      ssoSubject: "sub-1",
+      email: "allowed@test.com",
+      displayName: null,
+    };
 
     const result = await authenticatePreview("ssoslug", {
-      email: "allowed@test.com",
+      ssoToken: "valid-token",
     });
     expect(result.token).toBeTruthy();
   });

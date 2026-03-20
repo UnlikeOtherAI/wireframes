@@ -2,6 +2,7 @@ import { createHmac } from "node:crypto";
 import { config } from "../config.js";
 import { ApiError } from "../middleware/error-handler.js";
 import { downloadFile } from "./gcs.js";
+import { validateSsoToken } from "./sso.js";
 import {
   findPreviewBySlug,
   findPreviewAccessEmails,
@@ -140,6 +141,10 @@ export async function viewPreview(
     }
   }
 
+  if (subPath.includes("..") || subPath.startsWith("/")) {
+    throw new ApiError(400, "Invalid path");
+  }
+
   const gcsPath = `previews/${slug}/${subPath}`;
   const file = await downloadFile(gcsPath);
 
@@ -152,7 +157,7 @@ export async function viewPreview(
 
 export async function authenticatePreview(
   slug: string,
-  body: { password?: string; email?: string },
+  body: { password?: string; ssoToken?: string },
 ): Promise<{ token: string; slug: string }> {
   const preview = await findPreviewBySlug(slug);
   if (!preview) {
@@ -177,12 +182,17 @@ export async function authenticatePreview(
   }
 
   if (preview.accessMode === "sso") {
-    if (!body.email) {
-      throw new ApiError(400, "Email is required");
+    if (!body.ssoToken) {
+      throw new ApiError(400, "SSO token is required");
+    }
+
+    const ssoUser = await validateSsoToken(body.ssoToken);
+    if (!ssoUser) {
+      throw new ApiError(401, "Invalid SSO token");
     }
 
     const allowedEmails = await findPreviewAccessEmails(preview.id);
-    const emailLower = body.email.toLowerCase();
+    const emailLower = ssoUser.email.toLowerCase();
     const isAllowed = allowedEmails.some(
       (e) => e.toLowerCase() === emailLower,
     );

@@ -6,6 +6,11 @@ let downloadResult: { buffer: Buffer; contentType: string } = {
   buffer: Buffer.from("<html>preview</html>"),
   contentType: "text/html; charset=utf-8",
 };
+let ssoValidateResult: {
+  ssoSubject: string;
+  email: string;
+  displayName: string | null;
+} | null = null;
 
 mock.module("../config.js", () => ({
   config: {
@@ -31,6 +36,10 @@ mock.module("../repositories/preview.js", () => ({
   updatePreviewAccess: async () => previewState,
   replacePreviewAccessEmails: async () => {},
   clearPreviewAccessEmails: async () => {},
+}));
+
+mock.module("../services/sso.js", () => ({
+  validateSsoToken: async () => ssoValidateResult,
 }));
 
 mock.module("../services/gcs.js", () => ({
@@ -64,6 +73,7 @@ describe("preview view route", () => {
   beforeEach(() => {
     previewState = null;
     emailList = [];
+    ssoValidateResult = null;
     downloadResult = {
       buffer: Buffer.from("<html>preview</html>"),
       contentType: "text/html; charset=utf-8",
@@ -164,6 +174,7 @@ describe("preview auth route", () => {
   beforeEach(() => {
     previewState = null;
     emailList = [];
+    ssoValidateResult = null;
   });
 
   test("returns null for GET /preview/:slug/auth", () => {
@@ -215,5 +226,89 @@ describe("preview auth route", () => {
     const res = await limited!;
     expect(res.status).toBe(429);
     expect(res.headers.get("Retry-After")).toBeTruthy();
+  });
+
+  test("handles POST /preview/:slug/auth for SSO mode with valid token", async () => {
+    previewState = {
+      id: "p1",
+      slug: "ssoslug",
+      accessMode: "sso",
+      passwordHash: null,
+      publishedAt: new Date(),
+      buildUrl: "previews/ssoslug/",
+    };
+    emailList = ["user@test.com"];
+    ssoValidateResult = {
+      ssoSubject: "sub-1",
+      email: "user@test.com",
+      displayName: "Test User",
+    };
+
+    const result = handlePreviewRoute(
+      makeRequest("/preview/ssoslug/auth", "POST", {
+        body: { ssoToken: "valid-sso-token" },
+      }),
+    );
+    expect(result).not.toBeNull();
+    const res = await result!;
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.authenticated).toBe(true);
+    expect(res.headers.get("Set-Cookie")).toContain("preview_session_ssoslug=");
+  });
+
+  test("rejects POST /preview/:slug/auth for SSO mode with invalid token", async () => {
+    previewState = {
+      id: "p1",
+      slug: "ssoslug",
+      accessMode: "sso",
+      passwordHash: null,
+      publishedAt: new Date(),
+      buildUrl: "previews/ssoslug/",
+    };
+    ssoValidateResult = null;
+
+    const result = handlePreviewRoute(
+      makeRequest("/preview/ssoslug/auth", "POST", {
+        body: { ssoToken: "bad-token" },
+      }),
+    );
+    expect(result).not.toBeNull();
+    try {
+      await result!;
+      expect(true).toBe(false);
+    } catch (err: any) {
+      expect(err.statusCode).toBe(401);
+    }
+  });
+
+  test("rejects POST /preview/:slug/auth for SSO mode when email not in allowlist", async () => {
+    previewState = {
+      id: "p1",
+      slug: "ssoslug",
+      accessMode: "sso",
+      passwordHash: null,
+      publishedAt: new Date(),
+      buildUrl: "previews/ssoslug/",
+    };
+    emailList = ["other@test.com"];
+    ssoValidateResult = {
+      ssoSubject: "sub-1",
+      email: "unauthorized@test.com",
+      displayName: null,
+    };
+
+    const result = handlePreviewRoute(
+      makeRequest("/preview/ssoslug/auth", "POST", {
+        body: { ssoToken: "valid-token" },
+      }),
+    );
+    expect(result).not.toBeNull();
+    try {
+      await result!;
+      expect(true).toBe(false);
+    } catch (err: any) {
+      expect(err.statusCode).toBe(403);
+    }
   });
 });
