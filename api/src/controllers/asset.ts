@@ -1,6 +1,6 @@
 import { ApiError } from "../middleware/error-handler.js";
 import { getUser } from "../middleware/auth.js";
-import { uploadAsset, listAssets, deleteAsset } from "../services/asset.js";
+import { uploadAsset, listAssets, deleteAsset, getAsset } from "../services/asset.js";
 
 function requireUser(req: Request) {
   const user = getUser(req);
@@ -60,4 +60,21 @@ export async function deleteAssetController(
   const user = requireUser(req);
   await deleteAsset(user.userId, projectId, filename);
   return new Response(null, { status: 204 });
+}
+
+export async function getAssetController(
+  req: Request,
+  projectId: string,
+  filename: string,
+): Promise<Response> {
+  const user = requireUser(req);
+  const result = await getAsset(user.userId, projectId, filename);
+
+  return new Response(new Uint8Array(result.buffer), {
+    status: 200,
+    headers: {
+      "Content-Type": result.contentType,
+      "Cache-Control": "private, max-age=31536000",
+    },
+  });
 }

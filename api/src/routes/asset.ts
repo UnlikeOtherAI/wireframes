@@ -2,6 +2,7 @@ import {
   uploadAssetController,
   listAssetsController,
   deleteAssetController,
+  getAssetController,
 } from "../controllers/asset.js";
 
 const ASSETS_PATTERN = /^\/projects\/([0-9a-f-]{36})\/assets$/;
@@ -22,6 +23,8 @@ export function handleAssetRoute(req: Request): Promise<Response> | null {
   if (fileMatch) {
     const projectId = fileMatch[1];
     const filename = fileMatch[2];
+    if (req.method === "GET")
+      return getAssetController(req, projectId, filename);
     if (req.method === "DELETE")
       return deleteAssetController(req, projectId, filename);
     return null;

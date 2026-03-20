@@ -4,7 +4,7 @@ import {
   uploadBuffer,
   listFiles,
   deleteFile,
-  getPublicUrl,
+  downloadFile,
 } from "./gcs.js";
 
 const ALLOWED_CONTENT_TYPES = new Set([
@@ -21,6 +21,10 @@ const FILENAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
 
 function gcsPath(projectId: string, filename: string): string {
   return `assets/${projectId}/${filename}`;
+}
+
+function proxyUrl(projectId: string, filename: string): string {
+  return `/projects/${projectId}/assets/${filename}`;
 }
 
 export function sanitizeFilename(raw: string): string {
@@ -64,7 +68,7 @@ export async function uploadAsset(
   await uploadBuffer(path, buffer, contentType);
 
   return {
-    url: getPublicUrl(path),
+    url: proxyUrl(projectId, sanitized),
     filename: sanitized,
     contentType,
     size: buffer.length,
@@ -77,13 +81,16 @@ export async function listAssets(userId: string, projectId: string) {
   const prefix = `assets/${projectId}/`;
   const files = await listFiles(prefix);
 
-  return files.map((f) => ({
-    filename: f.name.replace(prefix, ""),
-    url: getPublicUrl(f.name),
-    contentType: f.contentType,
-    size: f.size,
-    uploadedAt: f.updated,
-  }));
+  return files.map((f) => {
+    const filename = f.name.replace(prefix, "");
+    return {
+      filename,
+      url: proxyUrl(projectId, filename),
+      contentType: f.contentType,
+      size: f.size,
+      uploadedAt: f.updated,
+    };
+  });
 }
 
 export async function deleteAsset(
@@ -98,11 +105,23 @@ export async function deleteAsset(
   await deleteFile(path);
 }
 
+export async function getAsset(
+  userId: string,
+  projectId: string,
+  filename: string,
+) {
+  await requireProjectAccess(userId, projectId);
+
+  const sanitized = sanitizeFilename(filename);
+  const path = gcsPath(projectId, sanitized);
+  return downloadFile(path);
+}
+
 export function rewriteAssetUrls(html: string, projectId: string): string {
   return html.replace(
     /(?:src|href)=(["'])assets\/([^"']+)\1/g,
     (match, quote, filename) => {
-      const url = getPublicUrl(gcsPath(projectId, filename));
+      const url = proxyUrl(projectId, filename);
       return `${match.split("=")[0]}=${quote}${url}${quote}`;
     },
   );

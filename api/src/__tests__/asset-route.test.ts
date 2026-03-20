@@ -45,6 +45,14 @@ describe("asset route matching", () => {
     result?.catch(() => {});
   });
 
+  test("matches GET /projects/:uuid/assets/logo.png (proxy)", () => {
+    const result = handleAssetRoute(
+      makeRequest(`/projects/${uuid}/assets/logo.png`, "GET"),
+    );
+    expect(result).not.toBeNull();
+    result?.catch(() => {});
+  });
+
   test("does not match PUT /projects/:uuid/assets", () => {
     const result = handleAssetRoute(
       makeRequest(`/projects/${uuid}/assets`, "PUT"),
@@ -71,9 +79,9 @@ describe("asset route matching", () => {
     expect(result).toBeNull();
   });
 
-  test("does not match GET on file endpoint", () => {
+  test("does not match PUT on file endpoint", () => {
     const result = handleAssetRoute(
-      makeRequest(`/projects/${uuid}/assets/logo.png`, "GET"),
+      makeRequest(`/projects/${uuid}/assets/logo.png`, "PUT"),
     );
     expect(result).toBeNull();
   });

@@ -5,11 +5,12 @@ let gcsState = {
   uploaded: [] as Array<{ path: string; buffer: Buffer; contentType: string }>,
   files: [] as Array<{ name: string; contentType: string; size: number; updated: string }>,
   deleted: [] as string[],
+  stored: new Map<string, { buffer: Buffer; contentType: string }>(),
 };
 
 function resetState() {
   membershipState = null;
-  gcsState = { uploaded: [], files: [], deleted: [] };
+  gcsState = { uploaded: [], files: [], deleted: [], stored: new Map() };
 }
 
 mock.module("../config.js", () => ({
@@ -38,19 +39,24 @@ mock.module("../repositories/project.js", () => ({
 mock.module("../services/gcs.js", () => ({
   uploadBuffer: async (path: string, buffer: Buffer, contentType: string) => {
     gcsState.uploaded.push({ path, buffer, contentType });
+    gcsState.stored.set(path, { buffer, contentType });
   },
   listFiles: async () => gcsState.files,
   deleteFile: async (path: string) => {
     gcsState.deleted.push(path);
   },
-  getPublicUrl: (path: string) =>
-    `https://storage.googleapis.com/test-bucket/${path}`,
+  downloadFile: async (path: string) => {
+    const entry = gcsState.stored.get(path);
+    if (!entry) throw new Error("File not found");
+    return { buffer: entry.buffer, contentType: entry.contentType };
+  },
 }));
 
 import {
   uploadAssetController,
   listAssetsController,
   deleteAssetController,
+  getAssetController,
 } from "../controllers/asset.js";
 import { errorHandler } from "../middleware/error-handler.js";
 import { auth } from "../middleware/auth.js";
@@ -74,6 +80,12 @@ function makeListHandler() {
 function makeDeleteHandler(filename: string) {
   return errorHandler(
     auth((r) => deleteAssetController(r, projectId, filename)),
+  );
+}
+
+function makeGetHandler(filename: string) {
+  return errorHandler(
+    auth((r) => getAssetController(r, projectId, filename)),
   );
 }
 
@@ -108,7 +120,7 @@ describe("uploadAssetController", () => {
     expect(body.error).toContain("Missing file");
   });
 
-  test("returns 201 with valid upload", async () => {
+  test("returns 201 with valid upload and proxy URL", async () => {
     membershipState = { role: "editor" };
     const handler = makeUploadHandler();
     const formData = new FormData();
@@ -127,7 +139,7 @@ describe("uploadAssetController", () => {
     expect(body.filename).toBe("logo.png");
     expect(body.contentType).toBe("image/png");
     expect(body.size).toBe(13);
-    expect(body.url).toContain("test-bucket");
+    expect(body.url).toBe(`/projects/${projectId}/assets/logo.png`);
   });
 
   test("returns 403 for viewer upload attempt", async () => {
@@ -240,5 +252,65 @@ describe("deleteAssetController", () => {
       }),
     );
     expect(res.status).toBe(403);
+  });
+});
+
+describe("getAssetController", () => {
+  beforeEach(resetState);
+
+  test("returns 401 without auth", async () => {
+    const handler = makeGetHandler("logo.png");
+    const res = await handler(
+      new Request("http://localhost/projects/p/assets/logo.png"),
+    );
+    expect(res.status).toBe(401);
+  });
+
+  test("returns file with correct content-type and cache-control for member", async () => {
+    membershipState = { role: "viewer" };
+    gcsState.stored.set(`assets/${projectId}/logo.png`, {
+      buffer: Buffer.from("fake-png-data"),
+      contentType: "image/png",
+    });
+
+    const handler = makeGetHandler("logo.png");
+    const res = await handler(
+      new Request("http://localhost/projects/p/assets/logo.png", {
+        headers: authedHeaders(),
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toBe("image/png");
+    expect(res.headers.get("Cache-Control")).toBe("private, max-age=31536000");
+    const body = await res.arrayBuffer();
+    expect(Buffer.from(body).toString()).toBe("fake-png-data");
+  });
+
+  test("returns 403 for non-member", async () => {
+    membershipState = null;
+    const handler = makeGetHandler("logo.png");
+    const res = await handler(
+      new Request("http://localhost/projects/p/assets/logo.png", {
+        headers: authedHeaders(),
+      }),
+    );
+    expect(res.status).toBe(403);
+  });
+
+  test("editor can get assets", async () => {
+    membershipState = { role: "editor" };
+    gcsState.stored.set(`assets/${projectId}/photo.jpg`, {
+      buffer: Buffer.from("jpg-data"),
+      contentType: "image/jpeg",
+    });
+
+    const handler = makeGetHandler("photo.jpg");
+    const res = await handler(
+      new Request("http://localhost/projects/p/assets/photo.jpg", {
+        headers: authedHeaders(),
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toBe("image/jpeg");
   });
 });

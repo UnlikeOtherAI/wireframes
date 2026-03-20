@@ -21,10 +21,6 @@ function getBucket() {
   return getStorage().bucket(config.gcsBucket);
 }
 
-export function getPublicUrl(filePath: string): string {
-  return `https://storage.googleapis.com/${config.gcsBucket}/${filePath}`;
-}
-
 export async function uploadBuffer(
   filePath: string,
   buffer: Buffer,
@@ -35,7 +31,7 @@ export async function uploadBuffer(
   await file.save(buffer, {
     metadata: {
       contentType,
-      cacheControl: "public, max-age=31536000",
+      cacheControl: "private, max-age=31536000",
     },
   });
 }
@@ -61,4 +57,20 @@ export async function listFiles(prefix: string): Promise<GcsFileInfo[]> {
 export async function deleteFile(filePath: string): Promise<void> {
   const bucket = getBucket();
   await bucket.file(filePath).delete();
+}
+
+export interface GcsDownloadResult {
+  buffer: Buffer;
+  contentType: string;
+}
+
+export async function downloadFile(filePath: string): Promise<GcsDownloadResult> {
+  const bucket = getBucket();
+  const file = bucket.file(filePath);
+  const [contents] = await file.download();
+  const [metadata] = await file.getMetadata();
+  return {
+    buffer: Buffer.from(contents),
+    contentType: (metadata.contentType as string) || "application/octet-stream",
+  };
 }
