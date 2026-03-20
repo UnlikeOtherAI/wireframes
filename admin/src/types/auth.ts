@@ -11,4 +11,5 @@ export interface AuthState {
   isAuthenticated: boolean
   login: (token: string, user: User) => void
   logout: () => void
+  updateUser: (user: User) => void
 }

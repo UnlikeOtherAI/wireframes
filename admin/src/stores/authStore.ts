@@ -57,4 +57,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     storage?.removeItem(USER_KEY)
     set({ token: null, user: null, isAuthenticated: false })
   },
+
+  updateUser: (user: User) => {
+    getStorage()?.setItem(USER_KEY, JSON.stringify(user))
+    set({ user })
+  },
 }))

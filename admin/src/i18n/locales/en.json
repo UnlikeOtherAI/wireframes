@@ -108,6 +108,27 @@
     "readOnlyNotice": "You have view-only access to this project."
   },
   "account": {
-    "title": "Account Settings"
+    "title": "Account Settings",
+    "backToDashboard": "Back to dashboard",
+    "profile": "Profile",
+    "displayName": "Display name",
+    "displayNameRequired": "Display name is required",
+    "displayNameMaxLength": "Display name must be 100 characters or less",
+    "email": "Email",
+    "emailReadOnly": "Email is managed by your SSO provider",
+    "saving": "Saving...",
+    "saved": "Changes saved",
+    "language": "Language",
+    "languageDescription": "Changes take effect immediately",
+    "english": "English",
+    "sessions": "Sessions",
+    "currentSession": "Current session",
+    "loggedInSince": "Logged in since {{date}}",
+    "dangerZone": "Danger Zone",
+    "deleteAccount": "Delete account",
+    "deleteAccountDescription": "Once deleted, your account and all owned projects cannot be recovered.",
+    "deleteAccountConfirm": "Type your email to confirm deletion:",
+    "deleteAccountEmailMismatch": "Email does not match",
+    "deleting": "Deleting..."
   }
 }
