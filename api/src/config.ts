@@ -14,4 +14,6 @@ export const config = {
   ssoVerifyUrl:
     process.env.SSO_VERIFY_URL ||
     "https://authenticator.unlikeother.ai/verify",
+  gcsBucket: process.env.GCS_BUCKET || "",
+  gcsServiceAccountKey: process.env.GCS_SERVICE_ACCOUNT_KEY || "",
 } as const;

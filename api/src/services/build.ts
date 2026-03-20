@@ -4,6 +4,7 @@ import { requireProjectAccess } from "./project.js";
 import { findDocumentsByProjectId } from "../repositories/document.js";
 import type { DocumentRow } from "../repositories/document.js";
 import { validateProject, buildProject } from "./engine.js";
+import { rewriteAssetUrls } from "./asset.js";
 
 interface DocumentMap {
   manifest: object | null;
@@ -84,12 +85,22 @@ export async function buildProjectFromDb(
     throw new ApiError(422, result.error);
   }
 
+  const pages = result.pages.map((p: { pageId: string; platform: string; html: string }) => ({
+    ...p,
+    html: rewriteAssetUrls(p.html, projectId),
+  }));
+
   return {
-    pages: result.pages,
+    pages,
     css: result.css,
     js: result.js,
     routeTable: result.routeTable,
-    indexHtml: result.indexHtml,
-    platformIndexes: result.platformIndexes,
+    indexHtml: rewriteAssetUrls(result.indexHtml, projectId),
+    platformIndexes: Object.fromEntries(
+      Object.entries(result.platformIndexes).map(([k, v]) => [
+        k,
+        rewriteAssetUrls(v as string, projectId),
+      ]),
+    ),
   };
 }

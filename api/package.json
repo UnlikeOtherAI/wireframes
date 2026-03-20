@@ -11,6 +11,7 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.14.0",
     "@wireframes/engine": "workspace:*",
     "drizzle-orm": "^0.38.0",
     "js-yaml": "^4.1.0",
