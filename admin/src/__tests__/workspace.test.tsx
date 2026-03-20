@@ -203,8 +203,10 @@ describe('Workspace', () => {
     renderWorkspace({ onNodeSelect, showTree: true })
 
     // Simulate a wf:nodeClick message from the preview iframe with a bare nodeId
+    const iframe = screen.getByTestId('workspace-preview-iframe') as HTMLIFrameElement
     window.dispatchEvent(
       new MessageEvent('message', {
+        source: iframe.contentWindow,
         data: {
           type: 'wf:nodeClick',
           nodeId: 'title',

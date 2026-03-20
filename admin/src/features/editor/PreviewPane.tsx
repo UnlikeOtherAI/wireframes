@@ -19,6 +19,7 @@ export function PreviewPane({ html, error, hasWarnings, device, onNavigate }: Pr
   // Listen for navigation messages from the preview iframe
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
+      if (event.source !== iframeRef.current?.contentWindow) return
       if (event.data?.type === 'wf:navigate' && typeof event.data.routeId === 'string') {
         onNavigate?.(event.data.routeId)
       }
