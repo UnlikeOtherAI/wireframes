@@ -6,11 +6,12 @@ import { DEVICE_VIEWPORTS } from './usePreviewRenderer'
 interface PreviewPaneProps {
   html: string | null
   error: string | null
+  hasWarnings?: boolean
   device: DeviceType
   onNavigate?: (routeId: string) => void
 }
 
-export function PreviewPane({ html, error, device, onNavigate }: PreviewPaneProps) {
+export function PreviewPane({ html, error, hasWarnings, device, onNavigate }: PreviewPaneProps) {
   const { t } = useTranslation()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const viewport = DEVICE_VIEWPORTS[device]
@@ -39,7 +40,7 @@ export function PreviewPane({ html, error, device, onNavigate }: PreviewPaneProp
 
   useEffect(() => {
     if (error) {
-      writeToIframe(buildErrorHtml(error))
+      writeToIframe(buildErrorHtml(t('preview.yamlError'), error))
     } else if (html) {
       writeToIframe(html)
     } else {
@@ -47,19 +48,44 @@ export function PreviewPane({ html, error, device, onNavigate }: PreviewPaneProp
     }
   }, [html, error, writeToIframe, t])
 
+  const showWarningBanner = hasWarnings && html && !error
+
   return (
     <div
       data-testid="preview-pane"
       style={{
         flex: 1,
         display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
+        flexDirection: 'column',
+        alignItems: 'center',
         overflow: 'auto',
         background: '#f0f0f0',
         padding: '16px',
       }}
     >
+      {showWarningBanner && (
+        <div
+          data-testid="preview-warning-banner"
+          role="alert"
+          style={{
+            width: '100%',
+            maxWidth: viewport.width,
+            padding: '8px 12px',
+            marginBottom: '8px',
+            background: '#fff8e1',
+            border: '1px solid #ffe082',
+            borderRadius: '4px',
+            color: '#6d4c00',
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          <span aria-hidden="true">{'\u26A0'}</span>
+          {t('preview.validationWarnings')}
+        </div>
+      )}
       <div
         data-testid="device-frame"
         style={{
@@ -90,8 +116,12 @@ export function PreviewPane({ html, error, device, onNavigate }: PreviewPaneProp
   )
 }
 
-function buildErrorHtml(message: string): string {
-  const escaped = message
+function buildErrorHtml(title: string, message: string): string {
+  const escapedTitle = title
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+  const escapedMessage = message
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -103,8 +133,8 @@ body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; }
 .error-message { font-size: 13px; white-space: pre-wrap; word-break: break-word; }
 </style></head><body>
 <div class="error">
-  <div class="error-title">YAML Error</div>
-  <div class="error-message">${escaped}</div>
+  <div class="error-title">${escapedTitle}</div>
+  <div class="error-message">${escapedMessage}</div>
 </div>
 </body></html>`
 }

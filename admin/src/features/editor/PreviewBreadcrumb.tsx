@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 interface PreviewBreadcrumbProps {
   pageId: string | null
   templateName: string | null
@@ -5,6 +7,8 @@ interface PreviewBreadcrumbProps {
 }
 
 export function PreviewBreadcrumb({ pageId, templateName, routePath }: PreviewBreadcrumbProps) {
+  const { t } = useTranslation()
+
   if (!pageId) return null
 
   const parts: string[] = []
@@ -14,7 +18,7 @@ export function PreviewBreadcrumb({ pageId, templateName, routePath }: PreviewBr
 
   return (
     <nav
-      aria-label="Preview breadcrumb"
+      aria-label={t('preview.breadcrumb')}
       data-testid="preview-breadcrumb"
       style={{
         padding: '4px 12px',

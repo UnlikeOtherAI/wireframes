@@ -309,6 +309,7 @@ export function ProjectEditorPage() {
           <PreviewPane
             html={previewState.html}
             error={previewState.error}
+            hasWarnings={problems.length > 0}
             device={device}
             onNavigate={handlePreviewNavigate}
           />

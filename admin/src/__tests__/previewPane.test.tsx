@@ -264,4 +264,42 @@ describe('Preview Pane', () => {
       }
     })
   })
+
+  it('shows warning banner when validation problems exist but preview renders', async () => {
+    mockFetchResponses()
+    renderEditor()
+    await waitFor(() => {
+      expect(screen.getByText('home.yaml')).toBeInTheDocument()
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByText('home.yaml'))
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('yaml-editor')).toBeInTheDocument()
+    })
+
+    // Type invalid YAML to trigger a validation error
+    await act(async () => {
+      lastEditorProps?.onChange('invalid: yaml: content: [')
+    })
+
+    // Advance timers past validation debounce (500ms)
+    await act(async () => {
+      vi.advanceTimersByTime(600)
+    })
+
+    // Warning banner should appear (problems exist but mocked renderer succeeds)
+    await waitFor(() => {
+      expect(screen.getByTestId('preview-warning-banner')).toBeInTheDocument()
+    })
+  })
+
+  it('does not show warning banner when there are no problems', async () => {
+    mockFetchResponses()
+    renderEditor()
+    await waitFor(() => {
+      expect(screen.getByTestId('preview-pane')).toBeInTheDocument()
+    })
+    expect(screen.queryByTestId('preview-warning-banner')).not.toBeInTheDocument()
+  })
 })

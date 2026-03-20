@@ -134,12 +134,16 @@
   "preview": {
     "title": "Preview",
     "toolbar": "Preview controls",
+    "breadcrumb": "Preview breadcrumb",
     "selectPage": "Select a page to preview",
     "device": "Device",
     "page": "Page",
     "renderMode": "Render mode",
     "modeLine": "Line",
     "modeCard": "Card",
+    "yamlError": "YAML Error",
+    "rendererUnavailable": "Renderer library not available",
+    "validationWarnings": "Preview may be incomplete due to validation errors",
     "devices": {
       "web": "Web",
       "tablet_portrait": "Tablet Portrait",

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { DocumentSummary } from '../../api/documents'
 
 export type DeviceType =
@@ -89,6 +90,7 @@ export function usePreviewRenderer(
   device: DeviceType,
   renderMode: RenderMode,
 ) {
+  const { t } = useTranslation()
   const [previewState, setPreviewState] = useState<PreviewState>({
     html: null,
     error: null,
@@ -132,7 +134,7 @@ export function usePreviewRenderer(
 
     const renderer = await getRenderer()
     if (!renderer) {
-      setPreviewState({ ...empty, error: 'Renderer library not available' })
+      setPreviewState({ ...empty, error: t('preview.rendererUnavailable') })
       return
     }
 
@@ -161,7 +163,7 @@ export function usePreviewRenderer(
         ...breadcrumb,
       }))
     }
-  }, [activePageId, renderMode, docStateRef, getRenderer])
+  }, [activePageId, renderMode, docStateRef, getRenderer, t])
 
   // Re-render on mode/device/page changes (immediate)
   useEffect(() => {
