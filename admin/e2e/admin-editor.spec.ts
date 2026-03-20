@@ -14,7 +14,7 @@ test('shows a centered login card with authenticator and dev login actions', asy
 
   const card = page.getByTestId('login-card')
   await expect(card).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Get started' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Dev login' })).toBeVisible()
 
   const box = await card.boundingBox()

@@ -33,9 +33,9 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     )
     expect(screen.getByTestId('login-card')).toBeInTheDocument()
-    const button = screen.getByRole('button', { name: 'Sign in' })
+    const button = screen.getByRole('button', { name: 'Get started' })
     expect(button).toBeInTheDocument()
-    expect(button).toHaveTextContent('Sign in')
+    expect(button).toHaveTextContent('Get started')
   })
 
   it('redirects to SSO provider on click', () => {
@@ -44,7 +44,7 @@ describe('LoginPage', () => {
         <LoginPage />
       </MemoryRouter>,
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Get started' }))
     expect(window.location.href).toContain('authenticator.unlikeother.ai')
     expect(window.location.href).toContain('callback')
   })
@@ -55,7 +55,7 @@ describe('LoginPage', () => {
         <LoginPage />
       </MemoryRouter>,
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Get started' }))
     const href = window.location.href
     expect(href).toContain('returnUrl')
     const callbackParam = new URL(href).searchParams.get('callback')!
@@ -69,7 +69,7 @@ describe('LoginPage', () => {
         <LoginPage />
       </MemoryRouter>,
     )
-    const button = screen.getByRole('button', { name: 'Sign in' })
+    const button = screen.getByRole('button', { name: 'Get started' })
     expect(button.style.minWidth).toBe('44px')
     expect(button.style.minHeight).toBe('44px')
   })

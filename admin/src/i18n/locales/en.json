@@ -14,7 +14,7 @@
     "logout": "Log out"
   },
   "auth": {
-    "signIn": "Sign in",
+    "signIn": "Get started",
     "signingIn": "Signing in...",
     "devLogin": "Dev login",
     "devSigningIn": "Signing in with dev login...",
