@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   createChatSession,
   resumeChatSession,
@@ -45,6 +46,7 @@ export function useChatSession({
   isOpen,
   onApplyDocument,
 }: UseChatSessionOptions) {
+  const { t } = useTranslation()
   const [messages, setMessages] = useState<LocalMessage[]>([])
   const [input, setInput] = useState('')
   const [pendingChange, setPendingChange] = useState<PendingChange | null>(null)
@@ -198,12 +200,12 @@ export function useChatSession({
     }
     connectSocket()
     loadSession().catch((err: unknown) => {
-      setError(err instanceof Error ? err.message : 'Chat session failed')
+      setError(err instanceof Error ? err.message : t('chat.errors.session'))
     })
     return () => {
       if (reconnectRef.current) clearTimeout(reconnectRef.current)
     }
-  }, [closeSocket, connectSocket, isOpen, loadSession])
+  }, [closeSocket, connectSocket, isOpen, loadSession, t])
 
   const ensureSession = useCallback(async () => {
     if (sessionIdRef.current) return sessionIdRef.current
@@ -245,12 +247,12 @@ export function useChatSession({
           ? { ...message, localStatus: 'error' }
           : message
       )))
-      setError(err instanceof Error ? err.message : 'Message failed')
+      setError(err instanceof Error ? err.message : t('chat.errors.message'))
       streamingMessageRef.current = null
     } finally {
       setIsSending(false)
     }
-  }, [ensureSession, projectId, scope])
+  }, [ensureSession, projectId, scope, t])
 
   const submit = useCallback(async () => {
     const content = input
@@ -278,11 +280,11 @@ export function useChatSession({
       )
       setPendingChange(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Apply failed')
+      setError(err instanceof Error ? err.message : t('chat.errors.apply'))
     } finally {
       setIsApplying(false)
     }
-  }, [onApplyDocument, pendingChange])
+  }, [onApplyDocument, pendingChange, t])
 
   const startNewConversation = useCallback(() => {
     sessionStorage.removeItem(sessionKey(projectId))

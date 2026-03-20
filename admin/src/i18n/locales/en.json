@@ -209,6 +209,11 @@
       "editPage": "Edit the current page {{page}}. Keep the structure consistent with the rest of the project.",
       "explainNode": "Explain what the selected node {{node}} does and how it fits into the current page."
     },
+    "errors": {
+      "session": "Chat session failed",
+      "message": "Message failed",
+      "apply": "Apply failed"
+    },
     "diff": {
       "title": "Pending document change",
       "document": "Pending change for {{document}}",

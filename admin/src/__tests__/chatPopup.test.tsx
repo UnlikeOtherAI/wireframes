@@ -232,4 +232,45 @@ describe('ChatPopup', () => {
       expect(screen.queryByText('Saved history')).not.toBeInTheDocument()
     })
   })
+
+  it('shows translated message fallback errors when send fails without an Error object', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input)
+      const method = init?.method ?? 'GET'
+
+      if (url.endsWith('/chat/sessions') && method === 'POST') {
+        throw 'session-failed'
+      }
+
+      return new Response('Not found', { status: 404 })
+    })
+
+    renderPopup()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open chat' }))
+    fireEvent.change(screen.getByLabelText('Chat message'), { target: { value: 'Update the hero' } })
+    fireEvent.submit(screen.getByRole('button', { name: 'Send' }).closest('form')!)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Message failed')
+  })
+
+  it('shows translated session fallback errors when resume fails without an Error object', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input)
+      const method = init?.method ?? 'GET'
+
+      if (url.includes('/chat/sessions/session-1') && method === 'GET') {
+        throw 'resume-failed'
+      }
+
+      return new Response('Not found', { status: 404 })
+    })
+
+    sessionStorage.setItem('wf_chat_session:project-1', 'session-1')
+    renderPopup()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open chat' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Chat session failed')
+  })
 })
