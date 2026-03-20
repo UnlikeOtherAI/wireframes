@@ -11,6 +11,7 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.2.0",
     "@google-cloud/storage": "^7.14.0",
     "@wireframes/engine": "workspace:*",
     "drizzle-orm": "^0.38.0",

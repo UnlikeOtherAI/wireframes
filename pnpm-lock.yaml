@@ -59,6 +59,9 @@ importers:
 
   api:
     dependencies:
+      '@fortawesome/fontawesome-free':
+        specifier: ^7.2.0
+        version: 7.2.0
       '@google-cloud/storage':
         specifier: ^7.14.0
         version: 7.19.0
