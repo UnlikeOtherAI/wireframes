@@ -1,5 +1,15 @@
 import { describe, test, expect, mock } from "bun:test";
 
+mock.module("../config.js", () => ({
+  config: {
+    port: 3001,
+    databaseUrl: "",
+    corsOrigins: [],
+    jwtSecret: "test-secret",
+    ssoVerifyUrl: "https://sso.test/verify",
+  },
+}));
+
 mock.module("../db/index.js", () => ({
   db: {},
   verifyConnection: async () => true,
