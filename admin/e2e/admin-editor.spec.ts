@@ -35,14 +35,14 @@ test('consistent top bar with logo across dashboard and editor', async ({ page }
   await expect(page.getByRole('heading', { name: 'Projects' })).toBeVisible()
 
   // Top bar logo should be visible on dashboard
-  await expect(page.getByRole('link', { name: 'Wireframes' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'W Wireframes' })).toBeVisible()
 
   // Navigate to editor
   await page.getByRole('link', { name: 'Local Demo Project' }).click()
   await expect(page.getByRole('heading', { name: 'Project Editor' })).toBeVisible()
 
   // Top bar logo should still be visible in editor
-  await expect(page.getByRole('link', { name: 'Wireframes' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'W Wireframes' })).toBeVisible()
 
   // Back button navigates to dashboard
   await page.getByLabel('Back to dashboard').click()

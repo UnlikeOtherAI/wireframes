@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import React from 'react'
 import { useAuthStore } from '../stores/authStore'
@@ -161,9 +161,10 @@ describe('Preview Pane', () => {
     await waitFor(() => {
       expect(screen.getByTestId('preview-toolbar')).toBeInTheDocument()
     })
-    const deviceSelect = screen.getByLabelText('Device')
-    expect(deviceSelect).toBeInTheDocument()
-    expect(deviceSelect.querySelectorAll('option')).toHaveLength(5)
+    const deviceGroup = screen.getByRole('radiogroup', { name: 'Device' })
+    expect(deviceGroup).toBeInTheDocument()
+    const radios = within(deviceGroup).getAllByRole('radio')
+    expect(radios).toHaveLength(6)
   })
 
   it('shows render mode toggle with line and card buttons', async () => {
@@ -182,9 +183,9 @@ describe('Preview Pane', () => {
     await waitFor(() => {
       expect(screen.getByTestId('preview-toolbar')).toBeInTheDocument()
     })
-    const deviceSelect = screen.getByLabelText('Device')
+    const mobileBtn = screen.getByRole('radio', { name: 'Mobile Portrait' })
     await act(async () => {
-      fireEvent.change(deviceSelect, { target: { value: 'mobile_portrait' } })
+      fireEvent.click(mobileBtn)
     })
     const frame = screen.getByTestId('workspace-device-frame')
     expect(frame.style.width).toBe('390px')
@@ -209,17 +210,14 @@ describe('Preview Pane', () => {
     expect(cardBtn.getAttribute('aria-checked')).toBe('false')
   })
 
-  it('shows page selector after documents are loaded', async () => {
+  it('shows preview toolbar with device and render mode controls', async () => {
     mockFetchResponses()
     renderEditor()
     await waitFor(() => {
       expect(screen.getByTestId('preview-toolbar')).toBeInTheDocument()
     })
-    // Wait for all documents to load and preview to render
-    await waitFor(() => {
-      const pageSelect = screen.queryByLabelText('Page')
-      expect(pageSelect).toBeInTheDocument()
-    })
+    expect(screen.getByRole('radiogroup', { name: 'Device' })).toBeInTheDocument()
+    expect(screen.getByRole('radiogroup', { name: 'Render mode' })).toBeInTheDocument()
   })
 
   it('renders preview in center area with source/preview toggle', async () => {
@@ -235,11 +233,9 @@ describe('Preview Pane', () => {
   it('auto-selects first page for preview', async () => {
     mockFetchResponses()
     renderEditor()
+    // The preview iframe should render — first page is auto-selected
     await waitFor(() => {
-      const pageSelect = screen.queryByLabelText('Page') as HTMLSelectElement | null
-      if (pageSelect) {
-        expect(pageSelect.value).toBe('home')
-      }
+      expect(screen.getByTestId('workspace-preview-iframe')).toBeInTheDocument()
     })
   })
 

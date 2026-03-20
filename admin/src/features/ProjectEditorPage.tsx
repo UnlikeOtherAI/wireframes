@@ -40,9 +40,13 @@ export function ProjectEditorPage() {
   const { t } = useTranslation()
   const editorRef = useRef<YamlEditorHandle>(null)
 
-  const [device, setDevice] = useState<DeviceType>('web')
+  const [device, setDevice] = useState<DeviceType>(() => {
+    const stored = getCookie('wf_editor_device')
+    const valid: DeviceType[] = ['mobile_portrait', 'mobile_landscape', 'tablet_portrait', 'tablet_landscape', 'web', 'full_scale']
+    return valid.includes(stored as DeviceType) ? stored as DeviceType : 'web'
+  })
   const [renderMode, setRenderMode] = useState<RenderMode>(() => {
-    const stored = localStorage.getItem('wf_preview_mode')
+    const stored = getCookie('wf_editor_render_mode')
     return stored === 'line' || stored === 'card' ? stored : 'card'
   })
   const [previewPageId, setPreviewPageId] = useState<string | null>(null)
@@ -50,7 +54,10 @@ export function ProjectEditorPage() {
   const [workspaceMode, setWorkspaceMode] = useState<'preview' | 'tree' | 'sitemap'>('preview')
   const [chatPinned, setChatPinned] = useState(() => getCookie('wf_editor_chat_pinned') === 'true')
   const [createFileOpen, setCreateFileOpen] = useState(false)
-  const [centerView, setCenterView] = useState<CenterView>('preview')
+  const [centerView, setCenterView] = useState<CenterView>(() => {
+    const stored = getCookie('wf_editor_center_view')
+    return stored === 'source' || stored === 'preview' ? stored : 'preview'
+  })
   const { containerRef, navWidth, chatWidth, startResize } = usePaneLayout(chatPinned)
 
   const handleChatPinnedChange = useCallback((nextPinned: boolean) => {
@@ -58,9 +65,19 @@ export function ProjectEditorPage() {
     setCookie('wf_editor_chat_pinned', String(nextPinned))
   }, [])
 
+  const handleDeviceChange = useCallback((d: DeviceType) => {
+    setDevice(d)
+    setCookie('wf_editor_device', d)
+  }, [])
+
   const handleRenderModeChange = useCallback((mode: RenderMode) => {
     setRenderMode(mode)
-    localStorage.setItem('wf_preview_mode', mode)
+    setCookie('wf_editor_render_mode', mode)
+  }, [])
+
+  const handleCenterViewChange = useCallback((view: CenterView) => {
+    setCenterView(view)
+    setCookie('wf_editor_center_view', view)
   }, [])
 
   const {
@@ -223,7 +240,7 @@ export function ProjectEditorPage() {
               type="button"
               aria-label={t('editor.viewSource')}
               data-testid="view-source-btn"
-              onClick={() => setCenterView('source')}
+              onClick={() => handleCenterViewChange('source')}
               style={viewToggleBtnStyle(centerView === 'source')}
             >
               <FontAwesomeIcon icon={faCode} />
@@ -232,7 +249,7 @@ export function ProjectEditorPage() {
               type="button"
               aria-label={t('editor.viewPreview')}
               data-testid="view-preview-btn"
-              onClick={() => setCenterView('preview')}
+              onClick={() => handleCenterViewChange('preview')}
               style={viewToggleBtnStyle(centerView === 'preview')}
             >
               <FontAwesomeIcon icon={faEye} />
@@ -286,7 +303,7 @@ export function ProjectEditorPage() {
             documents={documents}
             activeDocType={activeDoc?.documentType ?? null}
             activeDocId={activeDoc?.documentId ?? null}
-            onSelect={(type, id) => { loadDocument(type, id); setCenterView('source') }}
+            onSelect={(type, id) => { loadDocument(type, id); handleCenterViewChange('source') }}
             isUnsaved={isUnsaved}
             onNewFile={() => setCreateFileOpen(true)}
           />
@@ -322,12 +339,9 @@ export function ProjectEditorPage() {
             <div data-testid="preview-area" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <PreviewToolbar
                 device={device}
-                onDeviceChange={setDevice}
+                onDeviceChange={handleDeviceChange}
                 renderMode={renderMode}
                 onRenderModeChange={handleRenderModeChange}
-                pageIds={previewState.pageIds}
-                activePage={previewPageId}
-                onPageChange={setPreviewPageId}
               />
               <PreviewBreadcrumb
                 pageId={previewPageId}

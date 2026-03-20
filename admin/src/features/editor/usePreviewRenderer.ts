@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next'
 import type { DocumentSummary } from '../../api/documents'
 
 export type DeviceType =
-  | 'web'
-  | 'tablet_portrait'
-  | 'tablet_landscape'
   | 'mobile_portrait'
   | 'mobile_landscape'
+  | 'tablet_portrait'
+  | 'tablet_landscape'
+  | 'web'
+  | 'full_scale'
 
 export interface DeviceViewport {
   width: number
@@ -16,12 +17,22 @@ export interface DeviceViewport {
 }
 
 export const DEVICE_VIEWPORTS: Record<DeviceType, DeviceViewport> = {
-  web: { width: 1280, minHeight: 900, label: 'Web' },
-  tablet_portrait: { width: 820, minHeight: 1180, label: 'Tablet Portrait' },
-  tablet_landscape: { width: 1180, minHeight: 820, label: 'Tablet Landscape' },
   mobile_portrait: { width: 390, minHeight: 844, label: 'Mobile Portrait' },
   mobile_landscape: { width: 844, minHeight: 390, label: 'Mobile Landscape' },
+  tablet_portrait: { width: 820, minHeight: 1180, label: 'Tablet Portrait' },
+  tablet_landscape: { width: 1180, minHeight: 820, label: 'Tablet Landscape' },
+  web: { width: 1280, minHeight: 900, label: 'Web' },
+  full_scale: { width: 1920, minHeight: 1080, label: 'Full Scale' },
 }
+
+export const DEVICE_ORDER: DeviceType[] = [
+  'mobile_portrait',
+  'mobile_landscape',
+  'tablet_portrait',
+  'tablet_landscape',
+  'web',
+  'full_scale',
+]
 
 export type RenderMode = 'line' | 'card'
 

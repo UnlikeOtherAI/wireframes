@@ -160,11 +160,12 @@
     "rendererUnavailable": "Renderer library not available",
     "validationWarnings": "Preview may be incomplete due to validation errors",
     "devices": {
-      "web": "Web",
+      "mobile_portrait": "Mobile Portrait",
+      "mobile_landscape": "Mobile Landscape",
       "tablet_portrait": "Tablet Portrait",
       "tablet_landscape": "Tablet Landscape",
-      "mobile_portrait": "Mobile Portrait",
-      "mobile_landscape": "Mobile Landscape"
+      "web": "Web",
+      "full_scale": "Full Scale"
     }
   },
   "workspace": {
@@ -188,11 +189,12 @@
     "expand": "Expand",
     "zoom": "Zoom",
     "devices": {
-      "web": "Web",
+      "mobile_portrait": "Mobile Portrait",
+      "mobile_landscape": "Mobile Landscape",
       "tablet_portrait": "Tablet Portrait",
       "tablet_landscape": "Tablet Landscape",
-      "mobile_portrait": "Mobile Portrait",
-      "mobile_landscape": "Mobile Landscape"
+      "web": "Web",
+      "full_scale": "Full Scale"
     }
   },
   "chat": {

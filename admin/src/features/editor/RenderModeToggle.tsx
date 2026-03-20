@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import type { RenderMode } from './usePreviewRenderer'
+import { adminColors, adminRadii } from '../../styles/adminTheme'
 
 interface RenderModeToggleProps {
   value: RenderMode
@@ -13,46 +14,43 @@ export function RenderModeToggle({ value, onChange }: RenderModeToggleProps) {
     <div
       role="radiogroup"
       aria-label={t('preview.renderMode')}
-      style={{
-        display: 'flex',
-        border: '1px solid #ddd',
-        borderRadius: '4px',
-        overflow: 'hidden',
-      }}
+      style={containerStyle}
     >
-      <button
-        role="radio"
-        aria-checked={value === 'line'}
-        onClick={() => onChange('line')}
-        style={{
-          padding: '4px 12px',
-          border: 'none',
-          background: value === 'line' ? '#e3f2fd' : '#fff',
-          cursor: 'pointer',
-          fontSize: '13px',
-          minHeight: '32px',
-          fontWeight: value === 'line' ? 600 : 400,
-        }}
-      >
-        {t('preview.modeLine')}
-      </button>
-      <button
-        role="radio"
-        aria-checked={value === 'card'}
-        onClick={() => onChange('card')}
-        style={{
-          padding: '4px 12px',
-          border: 'none',
-          borderLeft: '1px solid #ddd',
-          background: value === 'card' ? '#e3f2fd' : '#fff',
-          cursor: 'pointer',
-          fontSize: '13px',
-          minHeight: '32px',
-          fontWeight: value === 'card' ? 600 : 400,
-        }}
-      >
-        {t('preview.modeCard')}
-      </button>
+      {(['line', 'card'] as const).map((mode) => (
+        <button
+          key={mode}
+          role="radio"
+          aria-checked={value === mode}
+          onClick={() => onChange(mode)}
+          style={btnStyle(value === mode)}
+        >
+          {t(mode === 'line' ? 'preview.modeLine' : 'preview.modeCard')}
+        </button>
+      ))}
     </div>
   )
+}
+
+const containerStyle: React.CSSProperties = {
+  display: 'flex',
+  background: adminColors.surfaceMuted,
+  borderRadius: adminRadii.pill,
+  padding: 2,
+  gap: 2,
+}
+
+function btnStyle(active: boolean): React.CSSProperties {
+  return {
+    padding: '4px 14px',
+    borderRadius: adminRadii.pill,
+    border: 'none',
+    background: active ? adminColors.cardBg : 'transparent',
+    color: active ? adminColors.textPrimary : adminColors.textTertiary,
+    cursor: 'pointer',
+    fontSize: 13,
+    fontWeight: active ? 600 : 400,
+    minHeight: 28,
+    boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+    transition: 'all 150ms ease',
+  }
 }
