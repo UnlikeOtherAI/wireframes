@@ -42,7 +42,8 @@ export function getDocument(
 
 export async function upsertDocument(
   projectId: string,
-  type: string,
+  documentType: string,
+  documentId: string,
   content: string,
   contentHash?: string,
 ): Promise<SaveResult> {
@@ -53,10 +54,10 @@ export async function upsertDocument(
 
   try {
     const document = await apiFetch<DocumentFull>(
-      `/projects/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(type)}`,
+      `/projects/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(documentType)}`,
       {
         method: 'PUT',
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ documentId, content }),
         headers,
       },
     )
@@ -64,15 +65,38 @@ export async function upsertDocument(
   } catch (err) {
     if (err instanceof ApiError && err.status === 422) {
       const parsed = tryParseJson(err.message)
-      if (parsed && Array.isArray(parsed.errors)) {
-        return {
-          document: { id: '', documentType: type, documentId: '', content, contentHash: '', updatedAt: '' },
-          validationErrors: parsed.errors,
+      if (parsed) {
+        const problems = extractValidationProblems(parsed)
+        if (problems.length > 0) {
+          return {
+            document: { id: '', documentType, documentId, content, contentHash: '', updatedAt: '' },
+            validationErrors: problems,
+          }
         }
       }
     }
     throw err
   }
+}
+
+function extractValidationProblems(parsed: Record<string, unknown>): ValidationProblem[] {
+  // Handle { error: "msg", details: [...] } shape (API error handler with validation details)
+  if (Array.isArray(parsed.details)) {
+    return (parsed.details as ValidationProblem[]).filter(
+      (d) => d && typeof d.message === 'string',
+    )
+  }
+  // Handle { errors: [...] } shape
+  if (Array.isArray(parsed.errors)) {
+    return (parsed.errors as ValidationProblem[]).filter(
+      (d) => d && typeof d.message === 'string',
+    )
+  }
+  // Fallback: single error message
+  if (typeof parsed.error === 'string') {
+    return [{ severity: 'error', message: parsed.error }]
+  }
+  return []
 }
 
 function tryParseJson(text: string): Record<string, unknown> | null {

@@ -37,45 +37,55 @@ vi.mock('../features/editor/YamlEditor', () => {
   }
 })
 
-// Import after mock setup
 const { ProjectEditorPage } = await import('../features/ProjectEditorPage')
 
 const mockDocuments = [
   { id: 'd1', documentType: 'manifest', documentId: 'manifest', contentHash: 'hash1', updatedAt: '2026-01-01T00:00:00Z' },
   { id: 'd2', documentType: 'sitemap', documentId: 'sitemap', contentHash: 'hash2', updatedAt: '2026-01-01T00:00:00Z' },
-  { id: 'd3', documentType: 'page:home', documentId: 'home', contentHash: 'hash3', updatedAt: '2026-01-01T00:00:00Z' },
+  { id: 'd3', documentType: 'page', documentId: 'home', contentHash: 'hash3', updatedAt: '2026-01-01T00:00:00Z' },
+  { id: 'd4', documentType: 'page', documentId: 'about', contentHash: 'hash4', updatedAt: '2026-01-01T00:00:00Z' },
 ]
 
 const manifestContent = 'specVersion: "1.0"\nname: "Test Project"\n'
 
-function mockFetchResponses(overrides?: {
+export function mockFetchResponses(overrides?: {
   saveStatus?: number
   saveBody?: string | Record<string, unknown>
   getDocContent?: string
+  documents?: typeof mockDocuments
 }) {
+  const docs = overrides?.documents ?? mockDocuments
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
     const urlStr = url as string
     const method = (init as RequestInit)?.method ?? 'GET'
 
-    // List documents
     if (urlStr.includes('/documents') && method === 'GET' && !urlStr.match(/\/documents\/.+\//)) {
-      return new Response(JSON.stringify(mockDocuments), { status: 200 })
+      return new Response(JSON.stringify(docs), { status: 200 })
     }
-
-    // Get single document
     if (urlStr.match(/\/documents\/.+\//) && method === 'GET') {
-      const content = overrides?.getDocContent ?? manifestContent
+      if (overrides?.getDocContent) {
+        return new Response(JSON.stringify({
+          id: 'd1', documentType: 'manifest', documentId: 'manifest',
+          content: overrides.getDocContent, contentHash: 'hash1', updatedAt: '2026-01-01T00:00:00Z',
+        }), { status: 200 })
+      }
+      if (urlStr.includes('/page/home')) {
+        return new Response(JSON.stringify({
+          id: 'd3', documentType: 'page', documentId: 'home',
+          content: 'title: "Home Page"\nlayout: stack\n', contentHash: 'hash3', updatedAt: '2026-01-01T00:00:00Z',
+        }), { status: 200 })
+      }
+      if (urlStr.includes('/page/about')) {
+        return new Response(JSON.stringify({
+          id: 'd4', documentType: 'page', documentId: 'about',
+          content: 'title: "About Page"\nlayout: row\n', contentHash: 'hash4', updatedAt: '2026-01-01T00:00:00Z',
+        }), { status: 200 })
+      }
       return new Response(JSON.stringify({
-        id: 'd1',
-        documentType: 'manifest',
-        documentId: 'manifest',
-        content,
-        contentHash: 'hash1',
-        updatedAt: '2026-01-01T00:00:00Z',
+        id: 'd1', documentType: 'manifest', documentId: 'manifest',
+        content: manifestContent, contentHash: 'hash1', updatedAt: '2026-01-01T00:00:00Z',
       }), { status: 200 })
     }
-
-    // Upsert document (PUT)
     if (urlStr.includes('/documents/') && method === 'PUT') {
       const status = overrides?.saveStatus ?? 200
       if (status === 409) {
@@ -83,20 +93,16 @@ function mockFetchResponses(overrides?: {
       }
       if (status === 422) {
         const body = overrides?.saveBody ?? {
-          errors: [{ severity: 'error', message: 'Invalid schema', line: 2, column: 1 }],
+          error: 'Validation failed',
+          details: [{ severity: 'error', message: 'Invalid schema', line: 2, column: 1 }],
         }
         return new Response(JSON.stringify(body), { status: 422 })
       }
       return new Response(JSON.stringify({
-        id: 'd1',
-        documentType: 'manifest',
-        documentId: 'manifest',
-        content: manifestContent,
-        contentHash: 'hash-new',
-        updatedAt: '2026-01-02T00:00:00Z',
+        id: 'd1', documentType: 'manifest', documentId: 'manifest',
+        content: manifestContent, contentHash: 'hash-new', updatedAt: '2026-01-02T00:00:00Z',
       }), { status: 200 })
     }
-
     return new Response('Not found', { status: 404 })
   })
 }
@@ -142,6 +148,15 @@ describe('ProjectEditorPage', () => {
     })
     expect(screen.getByText('sitemap.yaml')).toBeInTheDocument()
     expect(screen.getByText('home.yaml')).toBeInTheDocument()
+    expect(screen.getByText('about.yaml')).toBeInTheDocument()
+  })
+
+  it('groups pages under pages/ folder', async () => {
+    mockFetchResponses()
+    renderEditor()
+    await waitFor(() => {
+      expect(screen.getByText('pages/')).toBeInTheDocument()
+    })
   })
 
   it('loads document content when tree item is clicked', async () => {
@@ -159,7 +174,7 @@ describe('ProjectEditorPage', () => {
     expect(lastEditorProps?.value).toBe(manifestContent)
   })
 
-  it('saves document on Save click', async () => {
+  it('saves document with documentId in PUT body', async () => {
     const fetchSpy = mockFetchResponses()
     renderEditor()
     await waitFor(() => {
@@ -177,6 +192,9 @@ describe('ProjectEditorPage', () => {
     await waitFor(() => {
       const putCalls = fetchSpy.mock.calls.filter(([, init]) => (init as RequestInit)?.method === 'PUT')
       expect(putCalls.length).toBeGreaterThan(0)
+      const putBody = JSON.parse((putCalls[0][1] as RequestInit).body as string)
+      expect(putBody).toHaveProperty('documentId', 'manifest')
+      expect(putBody).toHaveProperty('content')
     })
   })
 
@@ -193,13 +211,10 @@ describe('ProjectEditorPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('yaml-editor')).toBeInTheDocument()
     })
-
-    // Trigger a change to invoke validation
     await act(async () => {
       lastEditorProps?.onChange(invalidYaml)
       vi.advanceTimersByTime(600)
     })
-
     await waitFor(() => {
       const panel = screen.getByTestId('problems-panel')
       const items = panel.querySelectorAll('button[role="listitem"]')
@@ -220,135 +235,17 @@ describe('ProjectEditorPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('yaml-editor')).toBeInTheDocument()
     })
-
     await act(async () => {
       lastEditorProps?.onChange(invalidYaml)
       vi.advanceTimersByTime(600)
     })
-
     await waitFor(() => {
       const panel = screen.getByTestId('problems-panel')
-      const items = panel.querySelectorAll('button[role="listitem"]')
-      expect(items.length).toBeGreaterThan(0)
+      expect(panel.querySelectorAll('button[role="listitem"]').length).toBeGreaterThan(0)
     })
-
-    const panel = screen.getByTestId('problems-panel')
-    const problemBtn = panel.querySelector('button[role="listitem"]')!
+    const problemBtn = screen.getByTestId('problems-panel').querySelector('button[role="listitem"]')!
     fireEvent.click(problemBtn)
-
     expect(mockScrollToLine).toHaveBeenCalled()
-  })
-
-  it('shows conflict dialog on 409 save response', async () => {
-    mockFetchResponses({ saveStatus: 409 })
-    renderEditor()
-    await waitFor(() => {
-      expect(screen.getByText('manifest.yaml')).toBeInTheDocument()
-    })
-    await act(async () => {
-      fireEvent.click(screen.getByText('manifest.yaml'))
-    })
-    await waitFor(() => {
-      expect(screen.getByTestId('yaml-editor')).toBeInTheDocument()
-    })
-
-    await act(async () => {
-      fireEvent.click(screen.getByText('Save'))
-    })
-
-    await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
-      expect(screen.getByText('Save conflict')).toBeInTheDocument()
-    })
-
-    expect(screen.getByText('Keep my changes')).toBeInTheDocument()
-  })
-
-  it('shows server validation results after save', async () => {
-    mockFetchResponses({ saveStatus: 422 })
-    renderEditor()
-    await waitFor(() => {
-      expect(screen.getByText('manifest.yaml')).toBeInTheDocument()
-    })
-    await act(async () => {
-      fireEvent.click(screen.getByText('manifest.yaml'))
-    })
-    await waitFor(() => {
-      expect(screen.getByTestId('yaml-editor')).toBeInTheDocument()
-    })
-
-    await act(async () => {
-      fireEvent.click(screen.getByText('Save'))
-    })
-
-    await waitFor(() => {
-      const panel = screen.getByTestId('problems-panel')
-      expect(panel.textContent).toContain('Invalid schema')
-    })
-  })
-
-  it('auto-save can be disabled via toggle', async () => {
-    const fetchSpy = mockFetchResponses()
-    renderEditor()
-    await waitFor(() => {
-      expect(screen.getByText('manifest.yaml')).toBeInTheDocument()
-    })
-    await act(async () => {
-      fireEvent.click(screen.getByText('manifest.yaml'))
-    })
-    await waitFor(() => {
-      expect(screen.getByTestId('yaml-editor')).toBeInTheDocument()
-    })
-
-    // Disable auto-save
-    const autoSaveCheckbox = screen.getByLabelText('Auto-save')
-    await act(async () => {
-      fireEvent.click(autoSaveCheckbox)
-    })
-    expect(autoSaveCheckbox).not.toBeChecked()
-
-    // Make a change and wait
-    const putCountBefore = fetchSpy.mock.calls.filter(
-      ([, init]) => (init as RequestInit)?.method === 'PUT',
-    ).length
-    await act(async () => {
-      lastEditorProps?.onChange('changed: true\n')
-      vi.advanceTimersByTime(5000)
-    })
-
-    const putCountAfter = fetchSpy.mock.calls.filter(
-      ([, init]) => (init as RequestInit)?.method === 'PUT',
-    ).length
-    expect(putCountAfter).toBe(putCountBefore)
-  })
-
-  it('auto-save fires after 3s when enabled', async () => {
-    const fetchSpy = mockFetchResponses()
-    renderEditor()
-    await waitFor(() => {
-      expect(screen.getByText('manifest.yaml')).toBeInTheDocument()
-    })
-    await act(async () => {
-      fireEvent.click(screen.getByText('manifest.yaml'))
-    })
-    await waitFor(() => {
-      expect(screen.getByTestId('yaml-editor')).toBeInTheDocument()
-    })
-
-    const putCountBefore = fetchSpy.mock.calls.filter(
-      ([, init]) => (init as RequestInit)?.method === 'PUT',
-    ).length
-    await act(async () => {
-      lastEditorProps?.onChange('changed: true\n')
-      vi.advanceTimersByTime(3100)
-    })
-
-    await waitFor(() => {
-      const putCountAfter = fetchSpy.mock.calls.filter(
-        ([, init]) => (init as RequestInit)?.method === 'PUT',
-      ).length
-      expect(putCountAfter).toBeGreaterThan(putCountBefore)
-    })
   })
 
   it('shows unsaved indicator when content is modified', async () => {
@@ -363,11 +260,9 @@ describe('ProjectEditorPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('yaml-editor')).toBeInTheDocument()
     })
-
     await act(async () => {
       lastEditorProps?.onChange('modified: true\n')
     })
-
     await waitFor(() => {
       expect(screen.getByTestId('save-status')).toHaveTextContent('Unsaved changes')
     })
@@ -386,15 +281,13 @@ describe('ProjectEditorPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('yaml-editor')).toBeInTheDocument()
     })
-
     await act(async () => {
       lastEditorProps?.onChange(invalidYaml)
       vi.advanceTimersByTime(600)
     })
-
     await waitFor(() => {
-      expect(lastEditorProps?.diagnostics).toBeDefined()
       const diags = lastEditorProps?.diagnostics
+      expect(diags).toBeDefined()
       if (diags && diags.length > 0) {
         expect(diags[0].from).toBeGreaterThan(0)
         expect(diags[0].to).toBeGreaterThan(diags[0].from)

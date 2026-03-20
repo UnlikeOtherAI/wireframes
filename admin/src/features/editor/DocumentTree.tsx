@@ -4,8 +4,9 @@ import type { DocumentSummary } from '../../api/documents'
 interface DocumentTreeProps {
   documents: DocumentSummary[]
   activeDocType: string | null
-  onSelect: (docType: string) => void
-  isUnsaved: (docType: string) => boolean
+  activeDocId: string | null
+  onSelect: (documentType: string, documentId: string) => void
+  isUnsaved: (documentType: string, documentId: string) => boolean
 }
 
 const DOC_ORDER = ['manifest', 'sitemap', 'templates', 'components']
@@ -16,9 +17,9 @@ function groupDocuments(documents: DocumentSummary[]) {
   const data: DocumentSummary[] = []
 
   for (const doc of documents) {
-    if (doc.documentType.startsWith('page:')) {
+    if (doc.documentType === 'page') {
       pages.push(doc)
-    } else if (doc.documentType.startsWith('dataset:')) {
+    } else if (doc.documentType === 'dataset') {
       data.push(doc)
     } else {
       root.push(doc)
@@ -31,32 +32,36 @@ function groupDocuments(documents: DocumentSummary[]) {
     return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
   })
 
-  pages.sort((a, b) => a.documentType.localeCompare(b.documentType))
-  data.sort((a, b) => a.documentType.localeCompare(b.documentType))
+  pages.sort((a, b) => a.documentId.localeCompare(b.documentId))
+  data.sort((a, b) => a.documentId.localeCompare(b.documentId))
 
   return { root, pages, data }
 }
 
-function docLabel(docType: string): string {
-  if (docType.startsWith('page:')) return docType.slice(5) + '.yaml'
-  if (docType.startsWith('dataset:')) return docType.slice(8) + '.yaml'
-  return docType + '.yaml'
+function docLabel(doc: DocumentSummary): string {
+  if (doc.documentType === 'page' || doc.documentType === 'dataset') {
+    return doc.documentId + '.yaml'
+  }
+  return doc.documentType + '.yaml'
 }
 
-export function DocumentTree({ documents, activeDocType, onSelect, isUnsaved }: DocumentTreeProps) {
+export function DocumentTree({ documents, activeDocType, activeDocId, onSelect, isUnsaved }: DocumentTreeProps) {
   const { t } = useTranslation()
   const { root, pages, data } = groupDocuments(documents)
+
+  const isActive = (doc: DocumentSummary) =>
+    activeDocType === doc.documentType && activeDocId === doc.documentId
 
   return (
     <nav aria-label={t('editor.documentTree')} style={{ width: '220px', borderRight: '1px solid #ddd', overflow: 'auto' }}>
       <ul style={{ listStyle: 'none', margin: 0, padding: '8px 0' }}>
         {root.map((doc) => (
           <TreeItem
-            key={doc.documentType}
-            docType={doc.documentType}
-            label={docLabel(doc.documentType)}
-            active={activeDocType === doc.documentType}
-            unsaved={isUnsaved(doc.documentType)}
+            key={`${doc.documentType}:${doc.documentId}`}
+            doc={doc}
+            label={docLabel(doc)}
+            active={isActive(doc)}
+            unsaved={isUnsaved(doc.documentType, doc.documentId)}
             onSelect={onSelect}
           />
         ))}
@@ -69,11 +74,11 @@ export function DocumentTree({ documents, activeDocType, onSelect, isUnsaved }: 
             <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
               {pages.map((doc) => (
                 <TreeItem
-                  key={doc.documentType}
-                  docType={doc.documentType}
-                  label={docLabel(doc.documentType)}
-                  active={activeDocType === doc.documentType}
-                  unsaved={isUnsaved(doc.documentType)}
+                  key={`${doc.documentType}:${doc.documentId}`}
+                  doc={doc}
+                  label={docLabel(doc)}
+                  active={isActive(doc)}
+                  unsaved={isUnsaved(doc.documentType, doc.documentId)}
                   onSelect={onSelect}
                 />
               ))}
@@ -89,11 +94,11 @@ export function DocumentTree({ documents, activeDocType, onSelect, isUnsaved }: 
             <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
               {data.map((doc) => (
                 <TreeItem
-                  key={doc.documentType}
-                  docType={doc.documentType}
-                  label={docLabel(doc.documentType)}
-                  active={activeDocType === doc.documentType}
-                  unsaved={isUnsaved(doc.documentType)}
+                  key={`${doc.documentType}:${doc.documentId}`}
+                  doc={doc}
+                  label={docLabel(doc)}
+                  active={isActive(doc)}
+                  unsaved={isUnsaved(doc.documentType, doc.documentId)}
                   onSelect={onSelect}
                 />
               ))}
@@ -106,18 +111,18 @@ export function DocumentTree({ documents, activeDocType, onSelect, isUnsaved }: 
 }
 
 interface TreeItemProps {
-  docType: string
+  doc: DocumentSummary
   label: string
   active: boolean
   unsaved: boolean
-  onSelect: (docType: string) => void
+  onSelect: (documentType: string, documentId: string) => void
 }
 
-function TreeItem({ docType, label, active, unsaved, onSelect }: TreeItemProps) {
+function TreeItem({ doc, label, active, unsaved, onSelect }: TreeItemProps) {
   return (
     <li>
       <button
-        onClick={() => onSelect(docType)}
+        onClick={() => onSelect(doc.documentType, doc.documentId)}
         aria-current={active ? 'page' : undefined}
         style={{
           display: 'flex',

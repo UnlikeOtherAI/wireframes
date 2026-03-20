@@ -29,7 +29,6 @@ function problemsToDiagnostics(problems: Problem[], docContent: string): Diagnos
     let to = 0
     if (p.line != null && p.line > 0) {
       from = lineColToPos(docContent, p.line, p.column ?? 1)
-      // Underline the rest of the line or at least one char
       const lineEnd = docContent.indexOf('\n', from)
       to = lineEnd === -1 ? docContent.length : lineEnd
       if (to === from) to = Math.min(from + 1, docContent.length)
@@ -58,7 +57,7 @@ export function ProjectEditorPage() {
 
   const {
     documents,
-    activeDocType,
+    activeDoc,
     loading,
     saveStatus,
     problems,
@@ -90,6 +89,11 @@ export function ProjectEditorPage() {
   const handleSave = useCallback(() => {
     saveDocument()
   }, [saveDocument])
+
+  // Determine the effective display status: show "Unsaved changes" when dirty + idle
+  const displayStatus = activeDoc && saveStatus === 'idle' && isUnsaved(activeDoc.documentType, activeDoc.documentId)
+    ? 'unsaved'
+    : saveStatus
 
   if (!projectId) return null
 
@@ -141,7 +145,7 @@ export function ProjectEditorPage() {
         {/* Save button */}
         <button
           onClick={handleSave}
-          disabled={saveStatus === 'saving' || !activeDocType}
+          disabled={saveStatus === 'saving' || !activeDoc}
           style={{
             padding: '6px 16px',
             border: '1px solid #ddd',
@@ -155,15 +159,15 @@ export function ProjectEditorPage() {
         </button>
 
         {/* Save status */}
-        {saveStatus !== 'idle' && (
+        {displayStatus !== 'idle' && (
           <span
             data-testid="save-status"
             style={{
               fontSize: '13px',
-              ...STATUS_STYLES[saveStatus],
+              ...STATUS_STYLES[displayStatus],
             }}
           >
-            {t(`editor.status.${saveStatus}`)}
+            {t(`editor.status.${displayStatus}`)}
           </span>
         )}
       </header>
@@ -173,14 +177,15 @@ export function ProjectEditorPage() {
         {/* Document tree sidebar */}
         <DocumentTree
           documents={documents}
-          activeDocType={activeDocType}
+          activeDocType={activeDoc?.documentType ?? null}
+          activeDocId={activeDoc?.documentId ?? null}
           onSelect={loadDocument}
           isUnsaved={isUnsaved}
         />
 
         {/* Editor area */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {activeDocType ? (
+          {activeDoc ? (
             <>
               <div style={{ flex: 1, overflow: 'hidden' }}>
                 <YamlEditor
