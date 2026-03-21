@@ -60,6 +60,7 @@
   "settings": {
     "title": "Project Settings",
     "backToDashboard": "Back to dashboard",
+    "backToProject": "Back to project",
     "networkError": "Failed to load project settings. Please try again.",
     "retry": "Retry",
     "general": "General",
@@ -137,6 +138,7 @@
     "autoSave": "Auto-save",
     "viewSource": "Source code",
     "viewPreview": "Preview",
+    "settings": "Project settings",
     "conflictTitle": "Save conflict",
     "conflictDescription": "The document \"{{type}}\" was modified on the server since you last loaded it.",
     "viewServerVersion": "View server version",

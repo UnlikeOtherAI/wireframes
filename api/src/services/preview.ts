@@ -239,7 +239,7 @@ export async function getPreviewSettings(userId: string, projectId: string) {
 
   const result: Record<string, unknown> = {
     slug: preview.slug,
-    url: `/preview/${preview.slug}`,
+    url: preview.buildUrl ? `/preview/${preview.slug}` : null,
     accessMode: preview.accessMode,
     publishedAt: preview.publishedAt,
   };
@@ -258,9 +258,15 @@ export async function updatePreviewSettings(
 ) {
   await requireProjectAccess(userId, projectId, "editor");
 
-  const preview = await findPreviewByProjectId(projectId);
+  let preview = await findPreviewByProjectId(projectId);
   if (!preview) {
-    throw new ApiError(404, "No preview exists for this project");
+    preview = await createPreview({
+      projectId,
+      slug: generateSlug(),
+      accessMode: "public",
+      buildUrl: "",
+      publishedAt: null,
+    });
   }
 
   if (body.accessMode === "password") {
@@ -297,7 +303,7 @@ export async function updatePreviewSettings(
   const updated = await findPreviewByProjectId(projectId);
   return {
     slug: updated!.slug,
-    url: `/preview/${updated!.slug}`,
+    url: updated!.buildUrl ? `/preview/${updated!.slug}` : null,
     accessMode: updated!.accessMode,
     publishedAt: updated!.publishedAt,
   };

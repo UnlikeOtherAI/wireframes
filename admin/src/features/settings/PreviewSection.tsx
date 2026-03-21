@@ -92,12 +92,11 @@ export function PreviewSection({ projectId, preview, onPreviewChanged, readOnly 
 
   async function handleAccessModeChange(mode: string) {
     setAccessMode(mode)
+    setError('')
     if (mode === 'password') {
-      setError(t('settings.passwordRequired'))
       return
     }
     setSaving(true)
-    setError('')
     try {
       const settings: { accessMode: string; emails?: string[] } = { accessMode: mode }
       if (mode === 'sso') {

@@ -4,13 +4,15 @@ import {
   useImperativeHandle,
   useRef,
 } from 'react'
-import { EditorState } from '@codemirror/state'
+import { Annotation, EditorState } from '@codemirror/state'
 import { EditorView, keymap, lineNumbers } from '@codemirror/view'
 import { yaml } from '@codemirror/lang-yaml'
 import { lintGutter, setDiagnostics, type Diagnostic } from '@codemirror/lint'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { search, searchKeymap } from '@codemirror/search'
 import { bracketMatching, indentOnInput, syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
+
+const ExternalSync = Annotation.define<boolean>()
 
 export interface YamlEditorHandle {
   scrollToLine(line: number): void
@@ -47,7 +49,7 @@ export const YamlEditor = forwardRef<YamlEditorHandle, YamlEditorProps>(
       if (!containerRef.current) return
 
       const updateListener = EditorView.updateListener.of((update) => {
-        if (update.docChanged) {
+        if (update.docChanged && !update.transactions.some(tr => tr.annotation(ExternalSync))) {
           onChangeRef.current(update.state.doc.toString())
         }
       })
@@ -91,6 +93,7 @@ export const YamlEditor = forwardRef<YamlEditorHandle, YamlEditorProps>(
       if (current !== value) {
         view.dispatch({
           changes: { from: 0, to: current.length, insert: value },
+          annotations: ExternalSync.of(true),
         })
       }
     }, [value])

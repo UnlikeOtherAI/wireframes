@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronLeft, faCode, faEye, faFloppyDisk } from '@fortawesome/free-solid-svg-icons'
+import { faChevronLeft, faCode, faEye, faFloppyDisk, faGear } from '@fortawesome/free-solid-svg-icons'
 import { YamlEditor, type YamlEditorHandle } from './editor/YamlEditor'
 import { DocumentTree } from './editor/DocumentTree'
 import { ProblemsPanel } from './editor/ProblemsPanel'
@@ -130,6 +130,12 @@ export function ProjectEditorPage() {
     renderMode,
   )
 
+  // Re-render once all docs are loaded into docStateRef (docStateRef is a ref, not state,
+  // so the renderer doesn't auto-detect when scaffold files finish loading)
+  useEffect(() => {
+    if (allDocsLoaded) scheduleRender()
+  }, [allDocsLoaded, scheduleRender])
+
   const content = getActiveContent()
   const yamlFiles = useMemo(() => buildYamlFilesMap(docStateRef.current), [docStateRef, documents, previewState])
   const resolvedNodes = useResolvedNodes(yamlFiles, previewPageId ?? '')
@@ -233,6 +239,9 @@ export function ProjectEditorPage() {
           <h1 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: adminColors.textPrimary }}>
             {t('editor.title')}
           </h1>
+          <Link to={`/projects/${projectId}/settings`} aria-label={t('editor.settings')} style={iconButtonStyle}>
+            <FontAwesomeIcon icon={faGear} style={{ fontSize: 14 }} />
+          </Link>
 
           {/* Source / Preview toggle */}
           <div style={viewToggleContainerStyle}>

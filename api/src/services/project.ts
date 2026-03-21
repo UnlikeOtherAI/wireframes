@@ -69,8 +69,9 @@ export async function renameProject(
   projectId: string,
   name: string,
 ) {
-  await requireProjectAccess(userId, projectId, "editor");
-  return updateProject(projectId, { name });
+  const role = await requireProjectAccess(userId, projectId, "editor");
+  const updated = await updateProject(projectId, { name });
+  return { ...updated, role };
 }
 
 export async function removeProject(userId: string, projectId: string) {

@@ -43,7 +43,7 @@ export async function createPreview(data: {
   slug: string;
   accessMode: AccessMode;
   buildUrl: string;
-  publishedAt: Date;
+  publishedAt?: Date | null;
 }): Promise<PreviewRow> {
   const [row] = await db.insert(previews).values(data).returning();
   return row as PreviewRow;

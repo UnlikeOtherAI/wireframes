@@ -10,7 +10,7 @@ export function AppShell() {
   const location = useLocation()
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
-  const isEditor = location.pathname.startsWith('/projects/') && !location.pathname.includes('/settings') && !location.pathname.includes('/members') && !location.pathname.includes('/preview')
+  const isEditor = location.pathname.startsWith('/projects/') && !location.pathname.includes('/settings')
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: adminColors.pageBg }}>

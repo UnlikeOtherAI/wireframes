@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../stores/authStore'
 import { updateProfile, deleteAccount } from '../api/account'
@@ -82,7 +82,6 @@ const backLinkStyle: React.CSSProperties = {
 
 export function AccountPage() {
   const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const updateUser = useAuthStore((s) => s.updateUser)
@@ -160,9 +159,9 @@ export function AccountPage() {
 
   return (
     <main style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
-      <button type="button" style={backLinkStyle} onClick={() => navigate('/')}>
+      <Link to="/" style={backLinkStyle}>
         {t('account.backToDashboard')}
-      </button>
+      </Link>
       <h1 style={{ marginBottom: 24 }}>{t('account.title')}</h1>
 
       {/* Profile Section */}

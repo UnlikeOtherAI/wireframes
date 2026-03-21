@@ -19,6 +19,10 @@ export default defineConfig(({ mode }) => {
       exclude: ['@wireframes/renderer'],
     },
     server: {
+      watch: {
+        usePolling: true,
+        interval: 300,
+      },
       proxy: {
         '/api': {
           target: env.VITE_API_URL || 'http://localhost:3000',

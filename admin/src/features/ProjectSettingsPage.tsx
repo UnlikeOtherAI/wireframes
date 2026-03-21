@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getProject } from '../api/projects'
 import type { Project } from '../api/projects'
@@ -126,9 +126,9 @@ export function ProjectSettingsPage() {
 
   return (
     <main style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
-      <button type="button" style={backLinkStyle} onClick={() => navigate('/')}>
-        {t('settings.backToDashboard')}
-      </button>
+      <Link to={`/projects/${id}`} style={backLinkStyle}>
+        {t('settings.backToProject')}
+      </Link>
       <h1 style={{ marginBottom: 24 }}>{t('settings.title')}</h1>
 
       {!isEditorOrAbove && (

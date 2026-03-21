@@ -5,6 +5,8 @@ import { listProjects, createProject } from '../api/projects'
 import type { Project } from '../api/projects'
 import { listPendingInvites } from '../api/invites'
 import type { PendingInvite } from '../api/invites'
+import { upsertDocument } from '../api/documents'
+import { buildStarterDocument } from './editor/documentTemplates'
 import { ProjectCard } from './ProjectCard'
 import { InviteCard } from './InviteCard'
 import { CreateProjectDialog } from './CreateProjectDialog'
@@ -97,6 +99,12 @@ export function DashboardPage() {
     setCreating(true)
     try {
       const project = await createProject(name)
+      await Promise.all([
+        upsertDocument(project.id, 'manifest', 'manifest', buildStarterDocument('manifest', 'manifest')),
+        upsertDocument(project.id, 'sitemap', 'sitemap', buildStarterDocument('sitemap', 'sitemap')),
+        upsertDocument(project.id, 'templates', 'templates', buildStarterDocument('templates', 'templates')),
+        upsertDocument(project.id, 'components', 'components', buildStarterDocument('components', 'components')),
+      ])
       setProjects((prev) => [project, ...prev])
       setDialogOpen(false)
       navigate(`/projects/${project.id}`)

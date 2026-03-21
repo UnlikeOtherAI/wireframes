@@ -29,10 +29,7 @@ export async function getPreviewController(
   }
 
   const result = await getPreviewSettings(user.userId, projectId);
-  if (!result) {
-    return Response.json({ error: "No preview found" }, { status: 404 });
-  }
-  return Response.json(result);
+  return Response.json(result ?? null);
 }
 
 export async function updatePreviewController(
