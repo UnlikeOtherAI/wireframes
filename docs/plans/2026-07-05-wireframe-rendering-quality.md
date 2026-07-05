@@ -63,9 +63,10 @@ All references are to the current implementation.
 ### 2.2 Form field labels are dropped
 
 - `engine/renderer/node-primitives.js:150-187` — `input`, `textarea`,
-  `select` render only the control and placeholder. `props.label` (38
-  occurrences in `admin_wireframes` alone) is ignored. There is no
-  label element in the output at all.
+  `select` render only the control and placeholder. `props.label` (23
+  occurrences in `admin_wireframes`: 12 inputs, 2 textareas, 9 selects) is
+  ignored. There is no label element in the output at all. (`checkbox`,
+  `radio`, `toggle` do render their labels.)
 
 ### 2.3 Everything is a surface (box soup)
 
@@ -110,7 +111,11 @@ note this also lives in an odd home, see §4.8):
   is no primary/secondary distinction, so mocks have no visible call to
   action.
 - Line mode buttons render as `[ Save ]` with literal bracket characters baked
-  into the markup (`engine/renderer/node-primitives.js:102-104`).
+  into the markup (`engine/renderer/node-primitives.js:102-104`). Note: this
+  matches the current spec (rendering-modes.md §3.1/§6.2 mandates brackets) —
+  removing them (§4.5) is a deliberate **spec change**, tracked in §8, not a
+  divergence fix. A Playwright test asserts the bracket output
+  (`cli/test/rendering-modes.test.js:348`) and must be updated with it.
 
 ### 2.6 Unresolved content has no placeholder affordance
 
@@ -186,9 +191,30 @@ are caught:
   Lint skips `use:` nodes for this rule.)
 - New lint rules:
   - `UNKNOWN_PROP` (warning): prop not in the primitive's contract on a
-    primitive node.
+    primitive node. Applies only when `node.component` is in
+    `PRIMITIVE_COMPONENTS` — custom components are referenced via
+    `component: <id>` and receive free-form params, so non-primitive
+    components are skipped entirely.
   - `MISSING_TEXT` (info): text primitive with neither `text` nor `label`.
   - `UNLABELED_FIELD` (info): `input`/`select`/`textarea` without `label`.
+
+**Lint engine extension (prerequisite).** `engine/lint/index.js` today is a
+single procedural file that walks node *ids* only, and the shared result
+shape (doctor/lint/CLI) has only `errors` and `warnings` — no `info`
+severity exists anywhere. Required groundwork:
+
+- Add an `info` array to the lint result shape; CLI prints infos in a
+  separate, non-failing block. `--strict` promotion applies to warnings
+  only — infos are never promoted (they are conventions, not defects).
+  `UNKNOWN_PROP` is a warning and therefore *does* fail strict builds;
+  that is intentional (strict means strict), and the alias design in §4.1
+  keeps `label` a *known* prop so existing projects stay clean.
+- Add a props-aware node traversal pass (component + props visitor) beside
+  the existing id walk; new rules live in `engine/lint/rules/` as one module
+  per rule to respect the 500-line file limit (`index.js` is at 309 lines).
+- `runLint` currently skips all lint checks when doctor reports errors;
+  after §4.7 removes the spurious `data/` error this is acceptable behavior
+  and stays as-is.
 
 ### 4.3 Surface hierarchy
 
@@ -202,35 +228,49 @@ between content cards.
 
 **(b) Nesting-aware section demotion.**
 A `section` renders as a **surface card** only when it is a *top-level*
-surface in its context; nested sections render as **plain groups**
-(transparent, no border/shadow, keep layout/padding/gap). Precise rule,
-applied at render time while walking the tree:
+surface in its context or a *tile* in a grid; other nested sections render as
+**plain groups** (transparent, no border/shadow, keep layout/padding/gap).
+Precise rule, applied at render time while walking the tree:
 
 ```
-surfaceDepth = number of ancestor nodes (within the same root) that
-               rendered as a surface
+surfaceDepth = number of ancestors (including the template region root
+               when that root renders as a surface) that rendered as a
+               surface
 
 section renders as surface  ⇔  node.surface === true
-                              OR (node.surface !== false AND surfaceDepth == 0)
+                              OR (node.surface !== false AND
+                                  (surfaceDepth == 0
+                                   OR parent layout.type == 'grid'))
 ```
 
-- Explicit `node.surface: true|false` always wins (schema already has it).
+- Explicit `node.surface: true|false` always wins (schema already has it,
+  no project sets it today — verified).
+- **Grid exception**: direct children of a `layout.type: grid` container
+  render as surfaces — grid children are tiles by construction. This keeps
+  the dashboard's `projects_grid` cards as cards without YAML edits.
+- **Region roots count toward depth**: persistent regions (header/nav/footer)
+  render as surfaces, so sections directly inside them start at
+  `surfaceDepth = 1` and demote — no white-on-white cards inside chrome.
+  Slot roots are not surfaces (§4.3a), so slot content starts at depth 0.
 - `props.title` does **not** force a surface; a nested titled section renders
   its title as a group label (§4.5 section row).
 - Implementation: pass `surfaceDepth` down through render options
-  (`renderNode` → `renderChildren`), increment when a node actually renders
-  with `wf-surface`. Overlay content roots reset `surfaceDepth` to 0 (a modal
-  card is a surface). Pane panels and `table` count as surfaces for depth
-  purposes.
+  (`renderNode` → `renderChildren`; the collection clone path re-enters
+  `renderNode` with spread options, so it flows through — verified).
+  Increment when a node actually renders with `wf-surface`. Overlay content
+  roots reset `surfaceDepth` to 0 (a modal card is a surface). Pane panels
+  and `table` count as surfaces for depth purposes.
 - `tab_bar` / `bottom_tab_bar` keep their surface treatment regardless of
   depth (they are chrome, and flush tab strips need their frame).
 
-This single rule converts the current box soup into: grey page → white cards →
-flat grouped content inside cards. Authors who want a card-in-card (e.g. the
-dashboard invite tiles inside the invites banner) write `surface: true` on the
-inner section — lint rule `NESTED_SURFACE` (info) points at demoted sections
-that set an explicit `size.height`, which usually indicates the author
-expected a tile.
+This converts the current box soup into: grey page → white cards → flat
+grouped content inside cards, with grids of tiles preserved. Authors who want
+a card-in-card outside a grid (e.g. the dashboard invite tiles, which sit in
+a `row`) write `surface: true` on the inner section — this design includes
+those **targeted YAML edits** to the repo's own projects (see amended
+Non-Goals, §7). Lint rule `NESTED_SURFACE` (info) points at demoted sections
+that set an explicit `size.width` **or** `size.height`, which usually
+indicates the author expected a tile (the invite tiles set only `width`).
 
 **(c) `.wf-node` legacy fallback stays for mode-less contexts only.** No
 change to behavior, but the new CSS must ensure mode contexts never rely on
@@ -268,11 +308,11 @@ rendering-modes.md must be updated to match (§8).
 | `checkbox` | `label` | 16px box, `accent-color` grey-600, label 14px grey-700, 8px gap. | — |
 | `radio` | `label` | Same as checkbox. | — |
 | `toggle` | `label` | Track 36×20, radius 10, grey-300 bg (off) / grey-600 (on via state); thumb white 16px with shadow. Label 14px grey-700. | Track outline-only. |
-| `section` | `title` | Surface (per §4.3): white card, grey-200 border, shadow token, radius token, **default padding 16px** when `layout.padding` unset. Group (demoted): transparent, no default padding. Title: when `props.title` present render `wf-section-title` — 13px/600 grey-800 with 8px bottom gap (inside the card, above body); **no default title** when absent (fix `renderSectionTitle` fallback). | Surface = hairline outline, transparent bg. Same title rules. |
+| `section` | `title` | Surface (per §4.3): white card, grey-200 border, shadow token, radius token, **default padding 16px** when `layout.padding` unset. Group (demoted): transparent, no default padding. Title: when `props.title` present render `wf-section-title` — 13px/600 grey-800 with 8px bottom gap (inside the card, above body); **no default title** when absent. The `'Section'` fallback exists in **two places** and both must change: `renderSectionTitle` (`render-attrs.js:201-206`) *and* its caller `renderSection` (`node-primitives.js:220-227`), which also emits the title div unconditionally — make emission conditional on `props.title`. | Surface = hairline outline, transparent bg. Same title rules. |
 | `image` | `src`, `alt`, `width`, `height` | Resolvable src: render `<img>` with grey-200 hairline border, radius token. Placeholder: grey-50 bg, grey-300 border, diagonal cross (existing), centered `image` icon + alt text 12px grey-400; **default min-height 120px** and `width:100%` when no explicit size, so images read as media blocks instead of collapsing. | Same, radius 0. |
 | `icon` | `name`, `style`, `size` | FA glyph, grey-700. Sizes map to FA size classes (existing). | grey-600. |
 | `divider` | — | 1px grey-200 full-width, `margin: 4px 0`. | 1px grey-400. |
-| `spacer` | `size` | Invisible. Numeric size → px on the parent axis. **Percentage size (`"100%"`) or missing size in a flex parent → `flex:1 1 auto`** (true flexible spacer; today `width:100%` misbehaves in rows). | — |
+| `spacer` | `size` | Invisible. Numeric size → px on the parent axis; missing size stays a fixed 16px gap (unchanged). **Percentage size (`"100%"`) in a flex parent → `flex:1 1 auto`** (true flexible spacer). Today `renderSpacer` (`node-primitives.js:256`) coerces non-numeric sizes via `Number(size) \|\| 16`, so `"100%"` silently renders as 16px — authors who wrote `width: "100%"` (e.g. `dash_spacer`, `nav_spacer`) clearly meant "push siblings apart"; this change honors that intent without touching bare spacers. | — |
 | `table` | `columns[]`, `rows[]` / binding, `surface` | Existing renderer kept: header row grey-100 bg 12px/600, zebra body rows, cell padding 10/12. Surface per §4.3 depth rule (top-level table = card). | Header grey-50; outline frame. |
 | `chart` | `chartType`, `title`, `data` | Existing placeholder SVGs kept; title 12px grey-500. Add **default min-height 120px** so charts hold space. | — |
 | `tab_bar` | — (children are buttons) | Buttons inside render as tabs: transparent bg, grey-600 text, active (selection/`wf-selected`) gets grey-900 text + 2px bottom border grey-800. Bar itself: white surface, 1px grey-200 bottom border only (not a full card). | Hairline outline bar. |
@@ -305,8 +345,13 @@ Usage (deterministic — widths derived from component type, never random):
 - `heading` with no text: skeleton of 12ch.
 - `text` with no text: skeleton of 8ch.
 - `paragraph` with no text: two stacked skeletons (100% and 60% width).
-- A `{{binding}}` token that resolves to `undefined`/empty: skeleton of 8ch
-  in place of the token (`renderBoundText` in `render-utils.js`).
+- A **props/item** `{{binding}}` token that resolves to `undefined`/empty:
+  skeleton of 8ch in place of the token (`renderBoundText` in
+  `render-utils.js`). **Exemption:** `{{state.*}}` / `{{appState.*}}` tokens
+  are runtime-bound — they deliberately emit `<span data-bind="...">`
+  (`render-utils.js:172-173`) that the interactions runtime populates
+  (`interactions.js`). These are *not* "unresolved" and must never be
+  replaced by skeletons, or the runtime binding breaks.
 - `button` with no label and no icon: label skeleton of 6ch.
 
 This makes missing data *look intentional* (classic wireframe greeking) and
@@ -330,8 +375,13 @@ the 500-line file limit and it is not a screenshots concern:
   exporting a CSS string: `base.js` (reset, page shell, modes, tokens),
   `components.js` (per-primitive rules), `overlays.js` (existing overlay CSS
   stays where it is if already separate). `buildWireframeStyles()` in
-  `engine/renderer/styles/index.js` concatenates; `screenshots/renderer.js`,
-  `build/index.js`, `serve/index.js` import from the new location.
+  `engine/renderer/styles/index.js` concatenates. Consumers to repoint:
+  `screenshots/renderer.js`, `build/index.js`, **`build/fs-writer.js`**
+  (imports it at lines 20/152/190), `serve/index.js`.
+- Naming: the new `engine/renderer/styles/` (mode CSS strings) is distinct
+  from the existing `engine/renderer/wireframe-styles.js` (per-node
+  wireframeStyle *override* helpers). Keep both; do not merge them — a
+  comment in each pointing at the other is enough.
 - Pure move + concatenation; no framework, no build step, engine rules
   (no fs/process/console) unchanged.
 
@@ -380,6 +430,10 @@ Phases are independently shippable; each ends green (`pnpm test`,
    - §4.5 remaining table rows: heading scale, margins removal, buttons +
      variants (schema addition), tab active states, image/chart min-heights,
      spacer flex behavior, line-mode button de-bracketing.
+   - Update existing tests that assert the old output:
+     `cli/test/rendering-modes.test.js:348` (bracket button label) and the
+     `buildWireframeStyles` token assertions in the same file (~:234-266);
+     `renderer/test/layout-modes.test.mjs` (bracket/mode assertions).
 6. **Schema + lint hardening**
    - §4.2 typed props, lint rules (`UNKNOWN_PROP`, `MISSING_TEXT`,
      `UNLABELED_FIELD`, `TEXT_PROP_ALIAS`).
@@ -397,9 +451,12 @@ in one commit.
 
 - **Both `text` and `label` set** on a text primitive → `text` wins;
   lint info notes the redundancy.
-- **Custom components** (`use:`) receive free-form params via `props` →
-  `UNKNOWN_PROP` lint skips nodes with `use:`; typed props apply only to
-  primitive nodes after component expansion works on the expanded primitives.
+- **Custom components** are referenced via `component: <id>` (schema
+  `Node.component` is `anyOf: [PrimitiveComponent, Id]`; nothing in the repo
+  uses a `use:` key) and receive free-form params via `props` →
+  `UNKNOWN_PROP` lint skips any node whose `component` is not in
+  `PRIMITIVE_COMPONENTS`; typed props apply to the expanded primitive nodes
+  after component expansion.
 - **Section demotion vs explicit styling**: a demoted section with
   `wireframeStyle` border overrides still honors the explicit override
   (author asked for a visible box) — `wireframeNodeStyleOverrides` output is
@@ -421,10 +478,12 @@ in one commit.
 - **Percentage spacer in grid parent**: `flex:1` is meaningless in grid;
   spacer falls back to `min-height:12px` (current behavior) — lint could flag
   later, out of scope.
-- **`wireframe_studio` project** already uses `props.text` — alias change is
-  backward compatible; its build output must be pixel-identical except where
-  §4.5 CSS changes apply globally (expected diff, covered by gallery
-  baselines).
+- **`wireframe_studio` project** already uses `props.text`, so the alias
+  change is a no-op for it — but its output is **not** otherwise unchanged:
+  its `app_shell.main_area` is a *persistent* region containing sections, so
+  §4.3(b) demotion (region roots count toward depth) and the §4.5 CSS both
+  alter its pages. Expected; review visually against gallery baselines and
+  do not treat wireframe_studio diffs as regressions by default.
 - **Determinism**: skeleton widths derive from component type constants;
   no randomness, no timestamps (repo rule).
 
@@ -437,9 +496,13 @@ in one commit.
   outline stays the sole accent.
 - **No responsive/breakpoint rendering changes.**
 - **No admin editor (React) UI work** — this is engine/CLI rendering only.
-- **No YAML migrations of existing projects.** The alias makes existing
-  documents render correctly as-is. (A follow-up codemod converging on
-  `text` is optional and out of scope.)
+- **No bulk YAML migrations of existing projects.** The alias makes existing
+  documents render their text correctly as-is; no `label` → `text` codemod
+  (optional follow-up, out of scope). **Exception (in scope):** the small
+  number of *targeted, additive* edits called out by §4.3(b) — `surface: true`
+  on card-in-card tiles that live outside grids (dashboard invite tiles and
+  any siblings `NESTED_SURFACE` lint surfaces during Phase 3). These are part
+  of Phase 3 and follow the wireframe/brief sync rule.
 - **No interactions/runtime changes** beyond CSS class hooks already
   described (active tab uses the existing selection mechanism).
 - **No redesign of line mode's philosophy** — it stays a blueprint; it just
@@ -488,10 +551,36 @@ pages (2026-07-05, card mode):
 Prop usage counts (repo-wide, 2026-07-05): heading/paragraph/text with
 `props.label` — admin_wireframes 195, web_wireframes 44, wireframe_studio 0;
 with `props.text` — wireframe_studio 88, others 0. Labeled form fields
-ignored by renderer: 38 in admin_wireframes.
+ignored by renderer: 23 in admin_wireframes (12 inputs, 2 textareas,
+9 selects).
 
 ## Appendix B — Review
 
-Adversarial review performed by a second agent (internal; cross-provider
-review per AGENTS.md still recommended before implementation if available).
-Findings and dispositions are appended below by the reviewing pass.
+Adversarial review performed by an independent agent pass (internal;
+cross-provider review per AGENTS.md was not available in this environment —
+run one before implementation if the tooling exists). All 11 findings were
+verified against the codebase and **adopted**; the doc body above already
+reflects them. Record of findings and dispositions:
+
+| # | Severity | Finding | Disposition |
+|---|---|---|---|
+| 1 | high | Original surfaceDepth rule demoted the dashboard's `projects_grid` tiles and `inv_1`/`inv_2` invite tiles to flat groups, while Non-Goals forbade the YAML edits needed to restore them — contradictory. | **Adopted.** §4.3(b) gained the grid-children exception (grid children are tiles → surfaces); invite tiles (row children) get explicit `surface: true` via targeted YAML edits now allowed by amended §7. |
+| 2 | high | `NESTED_SURFACE` lint keyed on `size.height` only; the invite tiles set only `size.width` and would be missed. | **Adopted.** Rule triggers on explicit width **or** height. |
+| 3 | med-high | Lint engine has no rule framework and no `info` severity; `--strict` promotes warnings to errors; `runLint` skips when doctor errors. | **Adopted.** §4.2 gained a "Lint engine extension" subsection: `info` channel, `engine/lint/rules/` modules, strict-mode semantics (infos never promoted; `UNKNOWN_PROP` warning intentionally strict-fatal), `runLint` skip behavior kept. |
+| 4 | medium | Blanket skeletons in `renderBoundText` would break `{{state.*}}`/`{{appState.*}}` runtime bindings (data-bind spans populated by interactions runtime). | **Adopted.** §4.6 exempts state/appState tokens; skeletons apply to props/item bindings only. |
+| 5 | medium | `'Section'` fallback exists in both `renderSectionTitle` and its caller `renderSection`, which also emits the title div unconditionally; fixing one is not enough. | **Adopted.** §4.5 section row names both call sites and makes emission conditional. |
+| 6 | medium | `cli/test/rendering-modes.test.js:348` asserts `[ Filters ]`; CSS token assertions also break in Phase 5; bracket removal is a spec change, not a divergence fix. | **Adopted.** §2.5 reframed; Phase 5 lists the test updates explicitly. |
+| 7 | low-med | Chrome regions keeping `wf-surface` left sections inside persistent regions at depth 0 → white-on-white preserved; also falsified the "wireframe_studio pixel-identical" edge-case claim (its `main_area` is a persistent region with sections). | **Adopted.** Region roots count toward `surfaceDepth`; wireframe_studio edge case rewritten as expected-diff. |
+| 8 | low | Labeled-field count was 38; actual is 23 (checkbox/radio/toggle already render labels and were miscounted). | **Adopted.** §2.2 and Appendix A corrected. |
+| 9 | low | Spacer claim wrong: `"100%"` coerces to 16px today (`Number(size) \|\| 16`), it never emits `width:100%`; and "missing size → flex:1" was an unexamined global behavior change affecting 31 bare spacers. | **Adopted.** §4.5 spacer row corrected: percentage → `flex:1 1 auto`; bare spacers keep fixed 16px. |
+| 10 | low | §4.8 missed `build/fs-writer.js` as a `buildWireframeStyles` consumer; new `styles/` dir name-collides conceptually with `wireframe-styles.js`. | **Adopted.** Consumer added; naming distinction documented. |
+| 11 | low | `UNKNOWN_PROP` skip rule referenced a `use:` key that doesn't exist; custom components come through `component: <id>`. | **Adopted.** Skip rule is now "component not in `PRIMITIVE_COMPONENTS`" (§4.2, §6). |
+
+Claims from §2 independently re-verified by the reviewer and confirmed
+accurate: all renderer file:line fallback references; slot-root
+`wf-surface` vs spec §5.1; the three CSS divergences; template layout
+dropping everything but `type`; the `data/` doctor error; the 195/44/88
+text-prop counts; `layoutToCss` supporting align/justify/gap/padding
+(§4.4 implementable); options flowing through the collection clone path
+(§4.3(b) implementable); the custom schema validator supporting
+`$ref`/`allOf`/`if`/`then` (§4.2 expressible).
