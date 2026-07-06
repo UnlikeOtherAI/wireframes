@@ -112,7 +112,7 @@ sitemap.yaml           — routes + appState
 templates.yaml         — page shells (persistent regions + slots)
 components.yaml        — reusable node trees
 pages/<page_id>.yaml   — individual page content
-data/<dataset_id>.yaml — mock data for tables/lists
+data/<dataset_id>.yaml — optional mock data for tables/lists
 \`\`\`
 
 ## Page YAML Structure
@@ -136,7 +136,7 @@ page:
         - id: heading_1
           component: heading
           props:
-            label: "Dashboard"
+            text: "Dashboard"
         - id: user_table
           component: table
           props:
@@ -178,7 +178,7 @@ size:
 children:                        # nested Node array
   - id: child_1
     component: text
-    props: { label: "Hello" }
+    props: { text: "Hello" }
 interaction:                     # array of interactions (NOT "interactions")
   - type: navigation
     targetRoute: dashboard       # route id from sitemap.yaml
@@ -196,23 +196,25 @@ ${primitives.map((p) => `- ${p}`).join('\n')}
 
 ### Component Props Quick Reference
 
-- heading: { label, level: 1-6 }
-- paragraph: { label }
-- text: { label }
+- heading: { text, label alias, level: 1-6 }
+- paragraph: { text, label alias }
+- text: { text, label alias, variant: body|meta }
 - image: { src, alt, width, height }
 - icon: { name: "house", style: solid|regular|brands, size: xs|sm|lg|xl|2xl }
-- button: { label, icon: "icon-name", variant: primary|secondary|ghost }
-- input: { label, placeholder, type: text|email|password|number }
-- textarea: { label, placeholder }
+- button: { label, icon: "icon-name", iconStyle, iconSize, variant: primary|secondary|ghost|danger }
+- input: { label, placeholder, inputType: text|email|password|number|search }
+- textarea: { label, placeholder, rows }
 - select: { label, placeholder, options: [{ value, label }] }
 - checkbox: { label }
+- radio: { label }
 - toggle: { label }
+- chart: { chartType: line|bar|vertical|horizontal|gauge|donut, label }
 - section: { title }
 - table: { columns: [{ key, label, width? }], rows: [{ ...values }], emptyText? }
 - tab_bar: (in-page tabs — children with button nodes, 8px gap, NOT stretched)
 - bottom_tab_bar: (iOS-style bottom navigation — children stretch equally, icon stacked above label, 4px gap)
 - divider: (no props)
-- spacer: (no props, use size.height)
+- spacer: { size }
 
 ## Interactions
 

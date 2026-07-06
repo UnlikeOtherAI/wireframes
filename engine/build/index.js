@@ -3,8 +3,8 @@
 const { resolveTemplatePage } = require('../resolver');
 const {
   renderWireframeMarkup,
-  buildWireframeStyles,
 } = require('../screenshots/renderer');
+const { buildWireframeStyles } = require('../renderer/styles');
 const {
   buildInteractionRuntimeFromWindowContext,
 } = require('../renderer/interactions');
@@ -120,11 +120,13 @@ function resolvePageTree(documentMap, pageId) {
 
   const templateLayout = isObject(template.layout) ? template.layout : {};
   const bodyLayoutType = templateLayout.type === 'row' ? 'row' : 'stack';
+  const bodyLayout = { ...templateLayout };
 
   return {
     ok: true,
     roots: Array.isArray(resolved.roots) ? resolved.roots : [],
     bodyLayoutType,
+    bodyLayout,
     page,
     templateId,
   };
@@ -289,6 +291,7 @@ function renderPage(documentMap, pageId, options = {}) {
     rendering: resolvePageRendering(page),
     defaultGridColumns,
     bodyLayoutType: treeResult.bodyLayoutType,
+    bodyLayout: treeResult.bodyLayout,
     dataSources,
     assetUrlPrefix: options.assetUrlPrefix || '',
     imageResolver: options.imageResolver || null,
@@ -364,6 +367,7 @@ function buildProject(documentMap, options = {}) {
       rendering: resolvePageRendering(page),
       defaultGridColumns,
       bodyLayoutType: treeResult.bodyLayoutType,
+      bodyLayout: treeResult.bodyLayout,
       roots: treeResult.roots,
     });
   }
@@ -396,6 +400,7 @@ function buildProject(documentMap, options = {}) {
         rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
         bodyLayoutType: target.bodyLayoutType || 'row',
+        bodyLayout: target.bodyLayout || {},
         dataSources: target.dataSources,
         wireframeCssHref: './_shared/wireframe.css',
         fontAwesomeCssHref: './_shared/fa/css/all.min.css',

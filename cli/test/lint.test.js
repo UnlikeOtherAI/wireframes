@@ -47,6 +47,56 @@ test('wf lint warns on non-snake and ambiguous ids', () => {
   assert.ok(strictResult.errors.some((entry) => entry.code === 'STRICT_AMBIGUOUS_ID'));
 });
 
+test('wf lint reports primitive prop contract diagnostics without failing info', () => {
+  const projectPath = createTempProject('Lint Primitive Props');
+  const homePath = path.join(projectPath, 'pages', 'home.yaml');
+  const homeDoc = loadYaml(homePath);
+
+  homeDoc.page.slots[0].content = [
+    {
+      id: 'alias_title',
+      component: 'heading',
+      props: { label: 'Alias title', mystery: true },
+    },
+    {
+      id: 'empty_text',
+      component: 'text',
+      props: {},
+    },
+    {
+      id: 'email_field',
+      component: 'input',
+      props: { placeholder: 'Email' },
+    },
+    {
+      id: 'nested_parent',
+      component: 'section',
+      children: [
+        {
+          id: 'nested_tile',
+          component: 'section',
+          size: { width: 160 },
+        },
+      ],
+    },
+  ];
+  writeYaml(homePath, homeDoc);
+
+  const result = runLint({ projectPath });
+
+  assert.equal(result.ok, true);
+  assert.ok(result.warnings.some((entry) => entry.code === 'UNKNOWN_PROP'));
+  assert.ok(result.info.some((entry) => entry.code === 'TEXT_PROP_ALIAS'));
+  assert.ok(result.info.some((entry) => entry.code === 'MISSING_TEXT'));
+  assert.ok(result.info.some((entry) => entry.code === 'UNLABELED_FIELD'));
+  assert.ok(result.info.some((entry) => entry.code === 'NESTED_SURFACE'));
+
+  const strictResult = runLint({ projectPath, strict: true });
+  assert.equal(strictResult.ok, false);
+  assert.ok(strictResult.errors.some((entry) => entry.code === 'STRICT_UNKNOWN_PROP'));
+  assert.ok(!strictResult.errors.some((entry) => entry.code === 'STRICT_MISSING_TEXT'));
+});
+
 test('wf validate strict fails on unused dataset and component usage', () => {
   const projectPath = createTempProject('Lint Validate Warnings');
   const componentsPath = path.join(projectPath, 'components.yaml');

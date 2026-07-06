@@ -74,6 +74,33 @@ describe('Text primitives', () => {
     assert.ok(html.includes('wf-heading'), 'should have heading class');
   });
 
+  it('renders label alias on text primitives', () => {
+    const html = renderContent(`
+        - component: heading
+          id: h_alias
+          props:
+            label: Alias title
+            level: 2
+        - component: paragraph
+          id: p_alias
+          props:
+            label: Alias paragraph`);
+    assert.ok(html.includes('Alias title'), 'should render heading label alias');
+    assert.ok(html.includes('Alias paragraph'), 'should render paragraph label alias');
+  });
+
+  it('renders skeletons for missing text', () => {
+    const html = renderContent(`
+        - component: heading
+          id: h_missing
+        - component: paragraph
+          id: p_missing
+        - component: text
+          id: t_missing`);
+    assert.ok(html.includes('wf-skeleton'), 'should render skeleton placeholders');
+    assert.ok(!html.includes('Heading'), 'should not render fake fallback text');
+  });
+
   it('renders paragraph', () => {
     const html = renderContent(`
         - component: paragraph
@@ -152,8 +179,11 @@ describe('Form primitives', () => {
           id: inp1
           props:
             inputType: email
+            label: Email address
             placeholder: Email`);
     assert.ok(html.includes('type="email"'), 'should have email type');
+    assert.ok(html.includes('wf-field-label'), 'should render field label');
+    assert.ok(html.includes('Email address'), 'should include field label text');
     assert.ok(html.includes('placeholder="Email"'), 'should have placeholder');
     assert.ok(html.includes('wf-input'), 'should have input class');
   });
@@ -163,9 +193,11 @@ describe('Form primitives', () => {
         - component: textarea
           id: ta1
           props:
+            label: Message
             placeholder: Type here
             rows: 5`);
     assert.ok(html.includes('<textarea'), 'should render textarea');
+    assert.ok(html.includes('Message'), 'should include field label text');
     assert.ok(html.includes('rows="5"'), 'should have rows');
     assert.ok(html.includes('wf-textarea'), 'should have textarea class');
   });
@@ -175,6 +207,7 @@ describe('Form primitives', () => {
         - component: select
           id: sel1
           props:
+            label: Choice
             placeholder: Choose
             options:
               - label: Option A
@@ -182,6 +215,7 @@ describe('Form primitives', () => {
               - label: Option B
                 value: b`);
     assert.ok(html.includes('<select>'), 'should render select');
+    assert.ok(html.includes('Choice'), 'should include field label text');
     assert.ok(html.includes('Option A'), 'should have options');
     assert.ok(html.includes('wf-select'), 'should have select class');
   });

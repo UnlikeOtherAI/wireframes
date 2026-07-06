@@ -1,0 +1,45 @@
+documentType: templates
+specVersion: "1.1"
+id: templates
+templates:
+  app_shell:
+    layout:
+      type: stack
+      gap: 16
+    regions:
+      - id: header
+        kind: persistent
+        layout:
+          type: row
+          align: center
+          justify: space-between
+          padding: 12
+        children:
+          - id: gallery_brand
+            component: heading
+            props:
+              text: Renderer Gallery
+              level: 2
+          - id: header_action
+            component: button
+            props:
+              label: Export
+              variant: primary
+      - id: main
+        kind: slot
+        layout:
+          type: stack
+          gap: 16
+  auth_shell:
+    layout:
+      type: stack
+      align: center
+      justify: center
+      gap: 16
+      padding: 24
+    regions:
+      - id: main
+        kind: slot
+        layout:
+          type: stack
+          align: center

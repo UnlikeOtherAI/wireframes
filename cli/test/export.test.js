@@ -22,8 +22,30 @@ function createTempProject(projectName) {
 
 function listZipEntries(zipPath) {
   const result = childProcess.spawnSync('unzip', ['-Z1', zipPath], { encoding: 'utf8' });
-  assert.equal(result.status, 0, `unzip failed for ${zipPath}: ${result.stderr}`);
-  return result.stdout.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (result.status === 0) {
+    return result.stdout.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  }
+
+  const extractDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wireframe-export-list-'));
+  const command = [
+    '$ErrorActionPreference = "Stop"',
+    'Expand-Archive -Path $env:WF_ZIP -DestinationPath $env:WF_DEST -Force',
+    'Get-ChildItem -Path $env:WF_DEST -Recurse -File | ForEach-Object { $_.FullName.Substring($env:WF_DEST.Length + 1).Replace("\\", "/") }',
+  ].join('; ');
+  const fallback = childProcess.spawnSync('powershell', ['-NoProfile', '-Command', command], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      WF_ZIP: zipPath,
+      WF_DEST: extractDir,
+    },
+  });
+  try {
+    assert.equal(fallback.status, 0, `archive listing failed for ${zipPath}: ${fallback.stderr || result.stderr}`);
+    return fallback.stdout.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  } finally {
+    fs.rmSync(extractDir, { recursive: true, force: true });
+  }
 }
 
 function writeYaml(filePath, value) {

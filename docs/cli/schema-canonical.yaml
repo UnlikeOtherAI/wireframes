@@ -48,12 +48,13 @@ projectStructure:
     - .wfrc.yaml
   requiredFolders:
     - /pages
-    - /data
   optionalFolders:
+    - /data
     - /assets
   notes:
     - additional documentType: components files may live anywhere under the project root
     - reusable component lookup is driven by explicit imports, not folder names
+    - data/ is only required when pages reference datasets
 
 # ============================================================
 # 3. ID RULES
@@ -283,19 +284,19 @@ stateBindings:
 
 primitives:
   text:
-    - heading       # props: level (1-6), text
-    - paragraph     # props: text
-    - text          # props: text
+    - heading       # props: level (1-6), text; label accepted as text alias
+    - paragraph     # props: text; label accepted as text alias
+    - text          # props: text, variant (body|meta); label accepted as text alias
   media:
     - image         # props: src, alt, width, height
     - icon          # props: name (Font Awesome), style (solid|regular|brands), size (xs|sm|lg|xl|2xl)
   interactive:
-    - button        # props: label, icon (optional Font Awesome name), iconStyle, iconSize
+    - button        # props: label, icon (optional Font Awesome name), iconStyle, iconSize, variant (primary|secondary|ghost|danger)
     - tab_bar       # in-page tabs — button children, gap 8px, not stretched
     - bottom_tab_bar # iOS-style bottom nav — button children stretch equally, icon stacked above label
-    - input         # props: placeholder, inputType (text|password|email|number|search)
-    - textarea      # props: placeholder, rows
-    - select        # props: placeholder, options
+    - input         # props: label, placeholder, inputType (text|password|email|number|search)
+    - textarea      # props: label, placeholder, rows
+    - select        # props: label, placeholder, options
     - checkbox      # props: label
     - radio         # props: label
     - toggle        # props: label
@@ -710,6 +711,13 @@ validation:
     - orphan routes
     - empty slots
     - naming convention violations
+    - unknown primitive props
+
+  info:
+    - missing text on heading/paragraph/text
+    - text primitive using label alias instead of canonical text
+    - input/select/textarea without label
+    - demoted nested section with explicit width or height
 
   safetyLimits:
     maxTreeDepth: 100
@@ -727,7 +735,7 @@ export:
     - templates.yaml
     - components.yaml
     - pages/
-    - data/
+    - data/                    # when present
     - assets/
     - additional imported component documents under the project root
   excludes:

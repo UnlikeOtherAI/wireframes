@@ -7,7 +7,7 @@ const { spawn } = require('node:child_process');
 const { startWatchers } = require('./watch');
 const { loadWfrcConfig, resolveTargets, DEFAULT_PORT } = require('./snapshot');
 const { createServeRequestHandler, broadcastReload } = require('./handler');
-const { buildWireframeStyles } = require(path.resolve(__dirname, '..', 'screenshots', 'renderer'));
+const { buildWireframeStyles } = require(path.resolve(__dirname, '..', 'renderer', 'styles'));
 const { buildInteractionRuntimeFromWindowContext } = require(path.resolve(__dirname, '..', 'renderer', 'interactions'));
 
 const VALID_PLATFORMS = new Set(['all', 'web', 'mobile', 'tablet']);

@@ -15,7 +15,15 @@ var WF_PLATFORM = String(WF_RUNTIME_CONTEXT.platform || 'web');
 var WF_APP_PREFIX = 'wf_app_';
 var WF_PAGE_STATE = {};
 var WF_APP_STATE = {};
-var WF_HAS_SESSION = !!(typeof window !== 'undefined' && window.sessionStorage);
+function safeSessionStorage() {
+  try {
+    return typeof window !== 'undefined' && window && window.sessionStorage ? window.sessionStorage : null;
+  } catch (_err) {
+    return null;
+  }
+}
+var WF_SESSION_STORAGE = safeSessionStorage();
+var WF_HAS_SESSION = !!WF_SESSION_STORAGE;
 var WF_PANES = [];
 
 function isObj(v) { return v !== null && typeof v === 'object' && !Array.isArray(v); }
@@ -165,13 +173,13 @@ function appStorageKey(path) { return WF_APP_PREFIX + String(path).replace(/[^a-
 function storageRead(path, fallback) {
   if (!WF_HAS_SESSION) return fallback;
   try {
-    var raw = sessionStorage.getItem(appStorageKey(path));
+    var raw = WF_SESSION_STORAGE.getItem(appStorageKey(path));
     return raw === null ? fallback : JSON.parse(raw);
   } catch (_err) { return fallback; }
 }
 function storageWrite(path, value) {
   if (!WF_HAS_SESSION) return;
-  try { sessionStorage.setItem(appStorageKey(path), JSON.stringify(value)); } catch (_err) {}
+  try { WF_SESSION_STORAGE.setItem(appStorageKey(path), JSON.stringify(value)); } catch (_err) {}
 }
 function resolveExpr(expr, eventContext, scopeState) {
   if (typeof expr !== 'string') return expr;
@@ -185,7 +193,10 @@ function resolveExpr(expr, eventContext, scopeState) {
 }
 function evalCondition(condition, eventContext) {
   if (!isObj(condition) || typeof condition.type !== 'string') return false;
-  if (condition.type === 'state_equals') return resolveExpr('{{' + condition.scope + '.' + condition.key + '}}', eventContext) === condition.equals;
+  if (condition.type === 'state_equals') {
+    var eScope = condition.scope === 'app' || condition.scope === 'appState' ? 'appState' : 'state';
+    return resolveExpr('{{' + eScope + '.' + condition.key + '}}', eventContext) === condition.equals;
+  }
   if (condition.type === 'route_match') return String(condition.routeId || '') === String(WF_ROUTE_ID || '');
   if (condition.type === 'compare') {
     var left = resolveExpr(condition.left, eventContext, WF_PAGE_STATE);
@@ -309,6 +320,76 @@ function overlayDismissList(node) {
     return Array.isArray(d) ? d : [];
   } catch (_err) { return []; }
 }
+function overlayType(node) {
+  return node && node.getAttribute ? String(node.getAttribute('data-wf-overlay-type') || '') : '';
+}
+function overlayPlacement(node) {
+  return node && node.getAttribute ? String(node.getAttribute('data-wf-overlay-placement') || '') : '';
+}
+function overlayTriggerNode(node) {
+  if (!node || !node.getAttribute) return null;
+  var triggerId = String(node.getAttribute('data-wf-overlay-trigger') || '');
+  return triggerId ? document.getElementById(triggerId) : null;
+}
+function isAnchoredOverlayType(type) {
+  return type === 'dropdown' || type === 'popover' || type === 'menu' || type === 'tooltip';
+}
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+function positionAnchoredOverlay(node) {
+  if (!node) return;
+  var type = overlayType(node);
+  if (!isAnchoredOverlayType(type)) return;
+  var trigger = overlayTriggerNode(node);
+  if (!trigger) return;
+
+  var prevVisibility = node.style.visibility;
+  node.style.visibility = 'hidden';
+  node.style.left = '0px';
+  node.style.top = '0px';
+  node.style.right = 'auto';
+  node.style.bottom = 'auto';
+
+  var triggerRect = trigger.getBoundingClientRect();
+  var overlayRect = node.getBoundingClientRect();
+  var width = overlayRect.width || 0;
+  var height = overlayRect.height || 0;
+  var gap = 8;
+  var placement = overlayPlacement(node) || 'bottom';
+  var left = triggerRect.left;
+  var top = triggerRect.bottom + gap;
+
+  if (placement === 'top') {
+    top = triggerRect.top - height - gap;
+    if (top < gap) top = triggerRect.bottom + gap;
+  } else if (placement === 'left') {
+    left = triggerRect.left - width - gap;
+    top = triggerRect.top;
+    if (left < gap) left = triggerRect.right + gap;
+  } else if (placement === 'right') {
+    left = triggerRect.right + gap;
+    top = triggerRect.top;
+    if (left + width > window.innerWidth - gap) left = triggerRect.left - width - gap;
+  } else if (placement === 'center') {
+    left = triggerRect.left + ((triggerRect.width - width) / 2);
+    top = triggerRect.top + ((triggerRect.height - height) / 2);
+  } else {
+    top = triggerRect.bottom + gap;
+    left = triggerRect.left;
+    if (top + height > window.innerHeight - gap) top = triggerRect.top - height - gap;
+  }
+
+  left = clamp(left, gap, Math.max(gap, window.innerWidth - width - gap));
+  top = clamp(top, gap, Math.max(gap, window.innerHeight - height - gap));
+
+  node.style.left = Math.round(left) + 'px';
+  node.style.top = Math.round(top) + 'px';
+  if (type === 'menu' || type === 'dropdown') {
+    node.style.minWidth = Math.max(Math.round(triggerRect.width), 160) + 'px';
+  }
+  node.style.visibility = prevVisibility || '';
+}
 function setOverlayVisible(node, show) {
   if (!node) return;
   node.classList.toggle('wf-visible', !!show);
@@ -335,6 +416,24 @@ function bindOverlayDismiss(node, overlayId, list) {
     };
     document.addEventListener('keydown', node._wfEscHandler);
   }
+  if (list.indexOf('outside') >= 0 && !node._wfOutsideHandler) {
+    node._wfOutsideHandler = function (event) {
+      var trigger = overlayTriggerNode(node);
+      var target = event && event.target ? event.target : null;
+      if (!target) return;
+      if (node.contains(target)) return;
+      if (trigger && trigger.contains && trigger.contains(target)) return;
+      closeOverlay(overlayId);
+    };
+    document.addEventListener('mousedown', node._wfOutsideHandler);
+  }
+  if (isAnchoredOverlayType(overlayType(node)) && !node._wfPositionHandler) {
+    node._wfPositionHandler = function () {
+      if (node.classList.contains('wf-visible')) positionAnchoredOverlay(node);
+    };
+    window.addEventListener('resize', node._wfPositionHandler);
+    window.addEventListener('scroll', node._wfPositionHandler, true);
+  }
 }
 function unbindOverlayDismiss(node, overlayId) {
   var backdrop = node ? node.querySelector('.wf-overlay-backdrop') : null;
@@ -346,6 +445,15 @@ function unbindOverlayDismiss(node, overlayId) {
     document.removeEventListener('keydown', node._wfEscHandler);
     node._wfEscHandler = null;
   }
+  if (node._wfOutsideHandler) {
+    document.removeEventListener('mousedown', node._wfOutsideHandler);
+    node._wfOutsideHandler = null;
+  }
+  if (node._wfPositionHandler) {
+    window.removeEventListener('resize', node._wfPositionHandler);
+    window.removeEventListener('scroll', node._wfPositionHandler, true);
+    node._wfPositionHandler = null;
+  }
   if (node._wfDismissTimer) {
     clearTimeout(node._wfDismissTimer);
     node._wfDismissTimer = null;
@@ -356,6 +464,7 @@ function openOverlay(id) {
   if (!node) { console.warn('Missing overlay:', id); return; }
   var dismiss = overlayDismissList(node);
   setOverlayVisible(node, true);
+  positionAnchoredOverlay(node);
   if (dismiss.indexOf('timeout') >= 0) {
     node._wfDismissTimer = setTimeout(function () { closeOverlay(id); }, 3000);
   }
@@ -368,6 +477,12 @@ function closeOverlay(id) {
   unbindOverlayDismiss(node, id);
 }
 function wfNavigate(id) {
+  try {
+    if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'wf:navigate', routeId: id }, '*');
+      return;
+    }
+  } catch (_err) {}
   var target = WF_ROUTES[id];
   if (!target) { console.warn('Missing target route:', id); return; }
   window.location.href = target;
@@ -447,6 +562,22 @@ function bindInteractions() {
     node.addEventListener('click', function (event) {
       for (var j = 0; j < nonGestures.length; j++) runInteraction(nonGestures[j], node, event);
     });
+    var tagName = typeof node.tagName === 'string' ? node.tagName.toLowerCase() : '';
+    var hasNativeTarget = tagName === 'a' || tagName === 'button' || tagName === 'input' || tagName === 'select' || tagName === 'textarea';
+    if (!hasNativeTarget) {
+      try {
+        hasNativeTarget = !!node.querySelector('a,button,input,select,textarea');
+      } catch (_err) {}
+    }
+    if (!hasNativeTarget) {
+      if (node.getAttribute && !node.getAttribute('tabindex')) node.setAttribute('tabindex', '0');
+      if (node.getAttribute && !node.getAttribute('role')) node.setAttribute('role', 'button');
+      node.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        if (event.preventDefault) event.preventDefault();
+        for (var k = 0; k < nonGestures.length; k++) runInteraction(nonGestures[k], node, event);
+      });
+    }
     bindGestures(node, gestures);
   });
 }
@@ -501,7 +632,8 @@ function refreshSelection() {
   each('.wf-selectable[data-selection-key]', function (node) {
     var scope = node.getAttribute('data-selection-scope') || 'page';
     var key = node.getAttribute('data-selection-key') || '';
-    var current = resolveExpr('{{' + scope + '.' + key + '}}', null, WF_PAGE_STATE);
+    var exprScope = (scope === 'app' || scope === 'appState') ? 'appState' : 'state';
+    var current = resolveExpr('{{' + exprScope + '.' + key + '}}', null, WF_PAGE_STATE);
     var expected = selectionValueForNode(node);
     if (current === expected) node.classList.add('wf-selected');
     else node.classList.remove('wf-selected');
@@ -526,6 +658,8 @@ function init() {
   bindSelection();
   bindInteractions();
 }
-init();
-window.addEventListener('load', init);
+var _wfInitDone = false;
+function safeInit() { if (_wfInitDone) return; _wfInitDone = true; init(); }
+safeInit();
+window.addEventListener('load', safeInit);
 })();

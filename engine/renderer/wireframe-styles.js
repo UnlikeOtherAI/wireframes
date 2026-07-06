@@ -1,5 +1,7 @@
 'use strict';
 
+// Per-node wireframeStyle overrides live here; rendering-mode CSS lives in ./styles/.
+
 const { toPx } = require('./layout');
 const CARD_SHADOWS = {
   0: 'none',

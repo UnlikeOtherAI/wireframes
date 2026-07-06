@@ -308,7 +308,8 @@ Collection renderers must define:
 
 ### Datasets (Mock Data)
 
-Datasets are defined in `data/<datasetId>.yaml`. Each dataset contains
+Datasets are defined in `data/<datasetId>.yaml`. The `data/` directory is
+optional for projects with no dataset bindings. Each dataset contains
 an array of plain key-value objects (items) identified by a `primaryKey`.
 
 Items are always passed and stored as **whole objects** — no field-by-field
@@ -350,9 +351,10 @@ or a reusable component composed from them.
     text: "Save Changes"
 ```
 
-* `heading` — title text. Required: `level`, `text`.
-* `paragraph` — body text block. Required: `text`.
-* `text` — inline text span. Required: `text`.
+* `heading` — title text. Props: `level` (1-6), `text`; `label` is accepted as a text alias.
+* `paragraph` — body text block. Props: `text`; `label` is accepted as a text alias.
+* `text` — inline text span. Props: `text`, `variant: body|meta`; `label` is accepted as a text alias.
+* Missing text renders a deterministic skeleton placeholder rather than fake fallback copy.
 
 ## Image
 
@@ -433,11 +435,12 @@ or a reusable component composed from them.
 ```
 
 * `button` — clickable wireframe box. Required: `label`. Optional: `icon` (Font Awesome name, renders before label).
+  Optional `variant`: `primary`, `secondary`, `ghost`, `danger`.
 * `tab_bar` — in-page tab navigation. Child buttons are laid out in a row with gap, NOT stretched.
 * `bottom_tab_bar` — iOS-style bottom navigation bar. Child buttons stretch equally to fill width, icon stacks above label. Use with `icon` prop on buttons.
-* `input` — text input field. Optional: `placeholder`, `inputType` (text, password, email, number, search; defaults to text).
-* `textarea` — multi-line input. Optional: `placeholder`, `rows`.
-* `select` — dropdown selector. Optional: `placeholder`, `options`.
+* `input` — text input field. Optional: `label`, `placeholder`, `inputType` (text, password, email, number, search; defaults to text).
+* `textarea` — multi-line input. Optional: `label`, `placeholder`, `rows`.
+* `select` — dropdown selector. Optional: `label`, `placeholder`, `options`.
 * `checkbox` — checkbox with label. Required: `label`.
 * `radio` — radio button with label. Required: `label`.
 * `toggle` — on/off switch. Required: `label`.
@@ -514,7 +517,16 @@ Warnings:
 * Orphan routes
 * Empty slots (slot declared in template but page provides no content)
 * ID naming convention violations (uppercase, non-snake_case, reserved keywords)
+* `UNKNOWN_PROP` for props not defined on a primitive component
 
+Info diagnostics:
+
+* `MISSING_TEXT` for `heading`/`paragraph`/`text` without `text` or `label`
+* `TEXT_PROP_ALIAS` when text primitives use `label` instead of canonical `text`
+* `UNLABELED_FIELD` for `input`/`select`/`textarea` without `label`
+* `NESTED_SURFACE` when a demoted nested section has explicit width or height
+
+`--strict` promotes warnings only. Info diagnostics never fail validation.
 Safety limits:
 
 ```

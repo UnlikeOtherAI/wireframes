@@ -23,8 +23,8 @@ Mode can be overridden per-page via `page.rendering.mode` or the shorthand
 
 | Mode   | Character                       | Page background | Surface treatment          | Button style       |
 |--------|---------------------------------|-----------------|----------------------------|--------------------|
-| `line` | Blueprint / schematic           | `#ffffff`        | Transparent + outline      | Bracketed label    |
-| `card` | Greyscale product mock          | `#f3f4f6`        | White + border + shadow    | Filled grey block  |
+| `line` | Blueprint / schematic           | `#ffffff`        | Transparent + outline      | Bordered label     |
+| `card` | Greyscale product mock          | `#f3f4f6`        | White + border + shadow    | Variant grey block |
 
 **Line mode** is a pure structural skeleton. Every surface is a single hairline
 outline. No fills. Sharp or minimally-rounded corners. The output reads as a
@@ -157,11 +157,12 @@ which means adjacent outlines never double up.
 **Button rendering in line mode:**
 
 ```html
-<div class="wf-button">[ Save ]</div>
+<div class="wf-button wf-button-primary"><button>Save</button></div>
 ```
 
-Buttons render as label text with bracket delimiters or a hairline border.
-No fill. This keeps the schematic aesthetic.
+Buttons render as plain label text inside a hairline border. There are no
+literal bracket characters in the markup. Primary line buttons use a 2px border;
+other variants use 1px.
 
 ### 3.2 Card Mode
 
@@ -429,16 +430,20 @@ No inner `overflow: scroll` container. No clipping.
 
 **What gets `wf-surface`:**
 
-- `table` component
+- Top-level `table` component
 - `tab_bar` component
 - `bottom_tab_bar` component
-- `section` component
-- Template region containers (persistent and slot)
-- Pane panels (`node.pane` is defined)
+- Top-level `section` component
+- Direct children of grid layouts when they are `section`/`table`
+- Template persistent region containers
+- Pane panels when they are rendered as section/table surfaces
 - Overlay containers (modal, drawer, popover, etc.)
+- `surface: true`
 
 **What does NOT get `wf-surface`:**
 
+- Template slot region containers
+- Nested `section`/`table` nodes inside an existing surface unless `surface: true`
 - `text`, `heading`, `paragraph` — inline content
 - `button` — handled separately (see 6.2)
 - `spacer`, `divider` — structural only
@@ -459,7 +464,7 @@ Card mode: identical HTML — CSS variables drive the visual difference.
 
 ```html
 <div class="wf-button wf-button-line">
-  <button>[ Save ]</button>
+  <button>Save</button>
 </div>
 ```
 
@@ -548,15 +553,21 @@ the intrinsic form control appearance is sufficient at wireframe fidelity.
 No surface box. Text-only. Font size and weight driven by component type.
 
 ```css
-.wf-heading h1 { font-size: 20px; font-weight: 600; }
-.wf-heading h2 { font-size: 18px; font-weight: 600; }
+.wf-heading h1 { font-size: 24px; font-weight: 650; }
+.wf-heading h2 { font-size: 20px; font-weight: 600; }
 .wf-heading h3 { font-size: 16px; font-weight: 600; }
-.wf-heading h4,
-.wf-heading h5,
-.wf-heading h6 { font-size: 14px; font-weight: 600; }
-.wf-paragraph p { font-size: 14px; color: #374151; }
+.wf-heading h4 { font-size: 14px; font-weight: 600; }
+.wf-heading h5 { font-size: 13px; font-weight: 600; }
+.wf-heading h6 { font-size: 12px; font-weight: 600; text-transform: uppercase; }
+.wf-paragraph p { font-size: 14px; color: #4b5563; line-height: 1.6; }
 .wf-text       { font-size: 14px; }
+.wf-text-meta  { font-size: 12px; color: #6b7280; }
 ```
+
+`props.text` is canonical. `props.label` is accepted as an alias for text
+primitives. Missing text and unresolved `props.*`/`item.*` bindings render
+deterministic skeleton bars; `state.*` and `appState.*` bindings remain runtime
+bound spans.
 
 ### 6.6 Images
 
@@ -608,7 +619,8 @@ alternates row fills between white and a very light grey. Columns come from
 </div>
 ```
 
-Use `surface: false` when embedding a table inside an already framed card.
+Tables nested inside an existing surface demote to frameless groups by default.
+Use `surface: true` when a nested table should keep its frame.
 
 ### 6.10 Charts
 
@@ -640,24 +652,21 @@ and card mode.
 
 ### 6.11 Section with title
 
-`section` renders title text above the body in both modes. The title uses the
-`meta` type scale (12px, grey-500) as a label over the content area.
+`section` renders title text above the body in both modes when `props.title` is
+present. No default "Section" title is emitted.
 
 ```html
 <div class="wf-section wf-surface">
-  <div class="wf-section-title">Settings</div>  <!-- 12px, grey-500 -->
+  <div class="wf-section-title">Settings</div>  <!-- 13px, grey-800 -->
   <div class="wf-section-body">
     <!-- children -->
   </div>
 </div>
 ```
 
-In line mode, the section title is outside the outline box (above it), so the
-outline frames just the content body. In card mode, the title is inside the
-card surface.
-
-Actually, to keep rendering simple and consistent: the section title is always
-inside the surface container, at the top, styled as `wf-text-meta`.
+The section title is always inside the section container, at the top. Surface
+sections default to 16px body padding when no layout padding is authored;
+demoted `wf-group` sections are transparent and have no default padding.
 
 ---
 
@@ -860,7 +869,9 @@ When implementing these schema additions, update ALL of the following:
    a. Map layout → CSS classes
    b. Map component → HTML element + class
    c. Map wireframeStyle overrides → inline CSS
-   d. Mark surfaces: add "wf-surface" to section / region / pane / overlay containers
+   d. Mark surfaces using the hierarchy rule: slots are transparent, persistent
+      regions count as surfaces, top-level sections/tables and grid children
+      are surfaces, nested sections/tables demote unless `surface: true`
    e. Encode interactions → data-wf-interactions
    f. Encode state bindings → data-wf-state-bindings
    g. Encode visibility conditions → data-wf-visibility
@@ -873,14 +884,16 @@ When implementing these schema additions, update ALL of the following:
 
 A node gets the `wf-surface` class if ANY of the following is true:
 
-- `component: section`
-- The node is a template region root (persistent or slot)
-- `pane` is defined on the node
+- `component: section` or `component: table` and it is top-level in its context
+- `component: section` or `component: table` and its parent layout is `grid`
+- The node is a template persistent region root
 - The node is the root of an overlay content tree
 - `surface: true`
 
 A node does NOT get `wf-surface` if:
 
+- The node is a template slot region root
+- It is a nested `section`/`table` inside an existing surface and is not a grid child
 - `component` is any text primitive (`heading`, `paragraph`, `text`)
 - `component: button`, `input`, `textarea`, `select`, `checkbox`, `radio`, `toggle`, `icon`
 - `component: chart` (borderless placeholder — see Section 6.10)

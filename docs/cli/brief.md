@@ -140,6 +140,8 @@ Checks project health:
 * No broken page/component/dataset references
 * Schema version compatible with CLI
 
+The `data/` directory is optional unless pages reference datasets.
+
 ### wf schema
 
 Prints supported schema reference:
@@ -159,6 +161,9 @@ Checks naming conventions:
 * No uppercase in IDs
 * No ambiguous names
 * No reserved keywords
+* Unknown primitive props (`UNKNOWN_PROP`, warning)
+* Informational authoring hints for missing text, text `label` aliases,
+  unlabeled fields, and nested sections that demote to groups
 
 ---
 
@@ -455,7 +460,7 @@ Or:
 Flags:
 
 * `--json` — machine-readable output
-* `--strict` — fails on warnings (unused components, unused datasets, empty slots)
+* `--strict` — fails on warnings (unused components, unused datasets, empty slots, unknown primitive props). Informational lint hints are never promoted.
 
 No auto-fixing.
 No guessing.

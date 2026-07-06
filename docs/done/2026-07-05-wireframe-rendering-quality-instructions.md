@@ -11,6 +11,9 @@ into the design; do not re-litigate them).
 Work through the phases **in order**. Each phase ends with all tests green
 and its own commit(s). Do not mix phases in a commit.
 
+Status: **completed and visually accepted on 2026-07-06**. These instructions
+were carried through Phase 7 before being moved to `docs/done/`.
+
 ---
 
 ## Phase 0 — Setup and baseline

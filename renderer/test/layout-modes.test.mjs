@@ -199,14 +199,15 @@ describe('Rendering modes', () => {
     assert.ok(html.includes('wf-mode-line'), 'should have line mode class');
   });
 
-  it('line mode buttons use bracket notation', () => {
+  it('line mode buttons use bordered plain labels', () => {
     const html = getPageHtml(buildPageYaml('web', 'line', `
         - component: button
           id: btn1
           props:
             label: Save`));
-    assert.ok(html.includes('[ '), 'line mode buttons should have bracket prefix');
-    assert.ok(html.includes(' ]'), 'line mode buttons should have bracket suffix');
+    assert.ok(!html.includes('[ Save ]'), 'line mode buttons should not have bracket markup');
+    assert.ok(html.includes('Save'), 'line mode buttons should contain the label');
+    assert.ok(html.includes('border:1px solid #4b5563'), 'line mode buttons should be visibly outlined by CSS');
   });
 
   it('card mode buttons do not use brackets', () => {

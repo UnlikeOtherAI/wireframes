@@ -1,0 +1,15 @@
+documentType: manifest
+specVersion: "1.1"
+id: manifest
+manifest:
+  projectId: renderer_gallery
+  name: Renderer Gallery
+  schemaVersion: "1.1"
+  defaultGridColumns: 12
+  defaultWireframeStyle:
+    border:
+      style: solid
+      width: thin
+    corner:
+      style: rounded
+      radius: 8
