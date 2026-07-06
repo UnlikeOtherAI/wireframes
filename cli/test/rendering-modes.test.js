@@ -9,6 +9,7 @@ const yaml = require('js-yaml');
 
 const { initProject } = require('../../engine/init');
 const { resolvePageTargets } = require('../../engine/screenshots');
+const { launchChromium } = require('../../engine/screenshots/playwright-launcher');
 const { renderWireframeMarkup, buildWireframeStyles } = require('../../engine/screenshots/renderer');
 
 function writeYaml(filePath, value) {
@@ -199,7 +200,7 @@ function getRenderTarget(projectPath, pageId) {
 
 async function renderTargetInBrowser(target) {
   const playwright = require('playwright');
-  const browser = await playwright.chromium.launch({ headless: true });
+  const browser = await launchChromium(playwright, { headless: true });
   const page = await browser.newPage({
     viewport: {
       width: target.viewport.width,
@@ -333,6 +334,7 @@ test('Playwright verifies compact line mode uses a single dashed divider without
         overlap: Math.max(0, leftRect.right - rightRect.left),
         dividerInsideRow: rightRect.left >= rowRect.left && rightRect.left <= rowRect.right,
         buttonLabel: document.querySelector('#filters_button button')?.textContent || '',
+        buttonBorderStyle: window.getComputedStyle(document.querySelector('#filters_button button')).borderStyle,
       };
     });
 
@@ -345,7 +347,8 @@ test('Playwright verifies compact line mode uses a single dashed divider without
     assert.equal(metrics.sameTop, true);
     assert.equal(metrics.overlap, 0);
     assert.equal(metrics.dividerInsideRow, true);
-    assert.equal(metrics.buttonLabel, '[ Filters ]');
+    assert.equal(metrics.buttonLabel, 'Filters');
+    assert.equal(metrics.buttonBorderStyle, 'solid');
   } finally {
     await page.close();
     await browser.close();

@@ -173,7 +173,15 @@ function renderBoundText(value, options = {}) {
       parts.push(`<span data-bind="${escapeAttr(`${type}.${path}`)}"></span>`);
     } else {
       const resolved = resolveTemplateToken(type, path, options);
-      parts.push(escapeHtml(resolved == null ? '' : String(resolved)));
+      const itemVariable = typeof options.itemVar === 'string' && options.itemVar.trim() !== ''
+        ? options.itemVar.trim()
+        : 'item';
+      const shouldSkeleton = type === 'props' || type === 'item' || type === itemVariable;
+      if (shouldSkeleton && (resolved == null || String(resolved) === '')) {
+        parts.push(renderSkeleton(8));
+      } else {
+        parts.push(escapeHtml(resolved == null ? '' : String(resolved)));
+      }
     }
 
     cursor = match.index + match[0].length;
@@ -190,6 +198,15 @@ function renderBoundText(value, options = {}) {
   }
 
   return parts.join('');
+}
+
+function renderSkeleton(width) {
+  const cssWidth = typeof width === 'number' && Number.isFinite(width)
+    ? `${width}ch`
+    : typeof width === 'string' && width.trim() !== ''
+      ? width.trim()
+      : '8ch';
+  return `<span class="wf-skeleton" style="width:${escapeAttr(cssWidth)}"></span>`;
 }
 
 function resolveAttributeValue(value, options = {}, stateBindings = null, stateProperty = '') {
@@ -342,6 +359,7 @@ module.exports = {
   getPathValue,
   resolveTemplateToken,
   renderBoundText,
+  renderSkeleton,
   resolveAttributeValue,
   normalizeChildren,
   normalizePaneSide,

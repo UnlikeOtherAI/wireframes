@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const childProcess = require('node:child_process');
 const yaml = require('js-yaml');
@@ -108,6 +109,7 @@ function runZipCommand(projectPath, args) {
   if (result.error) {
     return {
       ok: false,
+      missingCommand: result.error.code === 'ENOENT',
       error: result.error.message,
     };
   }
@@ -123,6 +125,69 @@ function runZipCommand(projectPath, args) {
   return {
     ok: true,
   };
+}
+
+function shouldSkipArchiveEntry(relativePath, includeAssets, relativeOutput) {
+  const normalized = relativePath.split(path.sep).join('/');
+  if (normalized === '.wfrc.yaml') {
+    return true;
+  }
+  if (!includeAssets && (normalized === 'assets' || normalized.startsWith('assets/'))) {
+    return true;
+  }
+  return relativeOutput && normalized === relativeOutput;
+}
+
+function copyArchiveEntries(sourceDir, targetDir, includeAssets, relativeOutput, baseDir = sourceDir) {
+  fs.mkdirSync(targetDir, { recursive: true });
+  for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
+    const sourcePath = path.join(sourceDir, entry.name);
+    const relativePath = path.relative(baseDir, sourcePath);
+    if (shouldSkipArchiveEntry(relativePath, includeAssets, relativeOutput)) {
+      continue;
+    }
+    const targetPath = path.join(targetDir, relativePath);
+    if (entry.isDirectory()) {
+      copyArchiveEntries(sourcePath, targetDir, includeAssets, relativeOutput, baseDir);
+    } else if (entry.isFile()) {
+      fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+      fs.copyFileSync(sourcePath, targetPath);
+    }
+  }
+}
+
+function createArchiveWithPowerShell({
+  projectPath,
+  outputPath,
+  includeAssets,
+}) {
+  const stageRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'wireframe-export-stage-'));
+  const relativeOutput = path.relative(projectPath, outputPath).split(path.sep).join('/');
+  try {
+    copyArchiveEntries(projectPath, stageRoot, includeAssets, relativeOutput);
+    const command = [
+      '$ErrorActionPreference = "Stop"',
+      'Compress-Archive -Path (Join-Path $env:WF_STAGE "*") -DestinationPath $env:WF_ZIP -Force',
+    ].join('; ');
+    const result = childProcess.spawnSync('powershell', ['-NoProfile', '-Command', command], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        WF_STAGE: stageRoot,
+        WF_ZIP: outputPath,
+      },
+      maxBuffer: 5_000_000,
+    });
+    if (result.error) {
+      return { ok: false, error: result.error.message };
+    }
+    if (result.status !== 0) {
+      return { ok: false, error: (result.stderr && result.stderr.trim()) || 'Failed to create zip package.' };
+    }
+    return { ok: true };
+  } finally {
+    fs.rmSync(stageRoot, { recursive: true, force: true });
+  }
 }
 
 function createExportArchive({
@@ -145,7 +210,17 @@ function createExportArchive({
 
   const zipResult = runZipCommand(projectPath, args);
   if (!zipResult.ok) {
-    return zipResult;
+    if (!zipResult.missingCommand) {
+      return zipResult;
+    }
+    const fallbackResult = createArchiveWithPowerShell({
+      projectPath,
+      outputPath,
+      includeAssets,
+    });
+    if (!fallbackResult.ok) {
+      return fallbackResult;
+    }
   }
 
   if (!fs.existsSync(outputPath)) {

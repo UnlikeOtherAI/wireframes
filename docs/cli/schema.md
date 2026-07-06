@@ -33,7 +33,7 @@ sitemap.yaml
 templates.yaml
 components.yaml
 /pages/*.yaml
-/data/*.yaml
+/data/*.yaml        # optional unless a page references datasets
 ```
 
 Additional reusable component documents may live anywhere under the project
@@ -333,6 +333,7 @@ Not part of the schema contract. Not included in export.
 ## 3.7 data/<datasetId>.yaml
 
 Defines a dataset of mock data items used to populate wireframe UI.
+Projects without dataset bindings do not need a `data/` directory.
 
 Must contain:
 
@@ -466,6 +467,20 @@ The built-in primitive component set is documented in
 containers such as `tab_bar` for reusable route-backed navigation patterns,
 `table` for striped tabular data, and `chart` for grayscale chart placeholders
 (requires `chartType`: line, bar, vertical, horizontal, gauge, donut).
+
+Primitive `props` are typed by component. Unknown primitive props are lint
+warnings rather than schema errors, so reusable components can still accept
+free-form params. Text-bearing primitives use `props.text` as canonical content
+and accept `props.label` as a compatibility alias; `text` wins when both are set.
+
+| Component | Props |
+|-----------|-------|
+| `heading` | `text`, `label` alias, `level` 1-6 |
+| `paragraph` | `text`, `label` alias |
+| `text` | `text`, `label` alias, `variant: body|meta` |
+| `button` | `label`, `icon`, `iconStyle`, `iconSize`, `variant: primary|secondary|ghost|danger` |
+| `input`, `textarea`, `select` | `label`, placeholders/options/rows as appropriate |
+| `image`, `icon`, `checkbox`, `radio`, `toggle`, `chart`, `table`, `section`, `divider`, `spacer` | See [schema-systems.md](schema-systems.md#15-primitive-components) |
 
 ---
 

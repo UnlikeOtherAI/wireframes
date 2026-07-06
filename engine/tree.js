@@ -182,6 +182,7 @@ function buildPageTree(projectPath, pageId) {
   const roots = Array.isArray(resolved.roots) ? [...resolved.roots] : [];
   const templateLayout = isObject(template.layout) ? template.layout : {};
   const bodyLayoutType = templateLayout.type === 'row' ? 'row' : 'stack';
+  const bodyLayout = { ...templateLayout };
   const templateOverlays = buildOverlayRoots(template.overlays, componentRegistry.components, 'template');
   if (!templateOverlays.ok) {
     return templateOverlays;
@@ -198,6 +199,7 @@ function buildPageTree(projectPath, pageId) {
         id: pageId,
         templateId,
         bodyLayoutType,
+        bodyLayout,
         roots: [
           ...roots,
           ...templateOverlays.roots,

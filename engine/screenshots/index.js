@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
 const { renderWireframeMarkup } = require(path.resolve(__dirname, 'renderer'));
+const { launchChromium } = require(path.resolve(__dirname, 'playwright-launcher'));
 const { fsImageResolver } = require(path.resolve(__dirname, '..', 'renderer', 'fs-image-resolver'));
 
 const { runValidate } = require(path.resolve(__dirname, '..', 'validate', 'cli-adapter'));
@@ -295,10 +296,14 @@ function resolvePageTargets(projectPath, pageId) {
 
   const rootsById = new Map();
   const bodyLayoutById = new Map();
+  const bodyLayoutObjectById = new Map();
   for (const tree of trees.trees) {
     rootsById.set(tree.id, tree.roots || []);
     if (tree.bodyLayoutType) {
       bodyLayoutById.set(tree.id, tree.bodyLayoutType);
+    }
+    if (tree.bodyLayout) {
+      bodyLayoutObjectById.set(tree.id, tree.bodyLayout);
     }
   }
 
@@ -332,6 +337,7 @@ function resolvePageTargets(projectPath, pageId) {
       rendering: resolvePageRendering(page),
       defaultGridColumns,
       bodyLayoutType: bodyLayoutById.get(id) || 'row',
+      bodyLayout: bodyLayoutObjectById.get(id) || {},
       roots,
       projectPath,
     });
@@ -369,7 +375,7 @@ async function captureScreenshots(targets, outputPath, frame) {
   const playwrightResult = await getPlaywright();
   if (!playwrightResult.ok) return playwrightResult;
 
-  const browser = await playwrightResult.module.chromium.launch({ headless: true });
+  const browser = await launchChromium(playwrightResult.module, { headless: true });
   try {
     for (const target of targets) {
       const browserPage = await browser.newPage();
@@ -394,6 +400,7 @@ async function captureScreenshots(targets, outputPath, frame) {
         rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
         bodyLayoutType: target.bodyLayoutType || 'row',
+        bodyLayout: target.bodyLayout || {},
         projectPath: target.projectPath,
         frame,
         imageResolver: fsImageResolver,

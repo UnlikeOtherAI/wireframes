@@ -20,7 +20,7 @@ Font Awesome Free icons are supported via the `icon` component and `icon` prop o
 
 The rendering pipeline:
 
-1. Load project YAML (manifest, sitemap, templates, components, pages, data)
+1. Load project YAML (manifest, sitemap, templates, components, pages, optional data)
 2. Resolve component import graphs from `templates.yaml`, page documents, and component documents
 3. Resolve template + page (fill slots, inject injectables, expand components)
 4. Walk resolved node tree and emit HTML
@@ -60,7 +60,7 @@ If `--platform` is specified, only matching pages are built.
 ### Pre-conditions
 
 * Project must pass `wf validate` (blocking errors abort build)
-* All referenced templates, components, datasets must resolve
+* All referenced templates, components, datasets must resolve. Projects with no dataset references do not need a `data/` directory.
 * Schema version must be compatible with CLI
 
 ### Imported component documents
@@ -276,7 +276,7 @@ stretch to the full page height and what allows sticky headers/footers to work.
       <nav class="wf-region">    ← persistent sidebar — stretches to full row height automatically
         ...
       </nav>
-      <main class="wf-region">   ← slot region — flex: 1, fills remaining width
+      <main class="wf-region">   ← slot region — transparent, flex: 1, fills remaining width
         ...
       </main>
     </div>
@@ -389,8 +389,13 @@ paragraph → <div class="wf-paragraph">
               <p>{text}</p>
             </div>
 
-text      → <span class="wf-text">{text}</span>
+text      → <span class="wf-text wf-text-{variant}">{text}</span>
 ```
+
+`props.text` is canonical. `props.label` is accepted as an alias for
+`heading`, `paragraph`, and `text`; `text` wins when both are set. Missing
+text renders deterministic skeleton bars (`wf-skeleton`) instead of fake words
+or invisible empty strings.
 
 ## Image
 
@@ -439,15 +444,18 @@ bottom_tab_bar → <div class="wf-bottom-tab-bar wf-surface">
                  icon stacks above label. Use with `icon` prop on buttons.
 
 input     → <div class="wf-input">
+              <label class="wf-field-label">{label}</label>
               <input type="{inputType}" placeholder="{placeholder}" />
             </div>
             inputType values: text (default), password, email, number, search.
 
 textarea  → <div class="wf-textarea">
+              <label class="wf-field-label">{label}</label>
               <textarea placeholder="{placeholder}" rows="{rows}"></textarea>
             </div>
 
 select    → <div class="wf-select">
+              <label class="wf-field-label">{label}</label>
               <select>
                 <option value="">{placeholder}</option>
                 <option value="{value}">{label}</option>
@@ -486,8 +494,8 @@ table     → <div class="wf-table wf-surface?">
             `props.columns` defines grid columns. Rows come from `props.rows`
             or `binding.source`. Body rows alternate white and very light grey.
 
-section   → <div class="wf-section">
-              <div class="wf-section-title">{title}</div>
+section   → <div class="wf-section wf-surface|wf-group">
+              <div class="wf-section-title">{title}</div>   # only emitted when title is present
               <div class="wf-section-body">{children}</div>
             </div>
 
@@ -499,6 +507,7 @@ spacer    → <div class="wf-spacer" style="height:{size}px"></div>
             In stack layout: uses height.
             In row layout: uses width instead (style="width:{size}px").
             In grid layout: spans one cell with the given height.
+            Percentage size in stack/row layout becomes flex: 1 1 auto.
 
 chart     → <div class="wf-chart">
               <div class="wf-chart-title">{label}</div>
@@ -601,7 +610,10 @@ else inherits from the page style.
 Additional render-only controls:
 
 * `page.renderMode` is a shorthand alias for `page.rendering.mode`
-* `node.surface: true|false` forces or suppresses surface framing
+* `node.surface: true|false` forces or suppresses surface framing. Without an
+  explicit value, top-level sections/tables are surfaces, grid children are
+  surfaces, and nested sections/tables inside surfaces render as transparent
+  `wf-group` nodes.
 * `node.elevation: 0-3` selects the card-mode surface shadow token
 
 ---

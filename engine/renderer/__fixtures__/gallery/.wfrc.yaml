@@ -1,0 +1,7 @@
+cli:
+  strictValidation: true
+  failOnWarnings: false
+  build:
+    outputDir: wireframes/build
+    clean: true
+    basePath: /

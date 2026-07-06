@@ -17,6 +17,23 @@ function sectionBodyDividerClass(layout) {
   return type === 'row' ? ' wf-divide-x' : ' wf-divide-y';
 }
 
+function textProp(props) {
+  if (typeof props?.text === 'string' && props.text.trim() !== '') {
+    return props.text;
+  }
+  if (typeof props?.label === 'string' && props.label.trim() !== '') {
+    return props.label;
+  }
+  return null;
+}
+
+function renderFieldLabel(props, bindingContext, f) {
+  if (typeof props?.label !== 'string' || props.label.trim() === '') {
+    return '';
+  }
+  return `<label class="wf-field-label">${f.renderBoundText(props.label, bindingContext)}</label>`;
+}
+
 /**
  * All primitive render functions.
  *
@@ -35,10 +52,8 @@ function sectionBodyDividerClass(layout) {
 
 function renderHeading(c, f) {
   const classes = f.buildNodeClasses(c.node, 'heading', c.safeHeadingLevel, c.paneSide);
-  const headingText = f.renderBoundText(
-    typeof c.props.text === 'string' ? c.props.text : 'Heading',
-    c.bindingContext,
-  );
+  const rawText = textProp(c.props);
+  const headingText = rawText ? f.renderBoundText(rawText, c.bindingContext) : f.renderSkeleton(12);
   const headingContent = c.navigationTarget
     ? `<a${f.joinAttrs(null, 'wf-inline-link', null, f.navigationAttrs(c.navigationTarget))}>${headingText}</a>`
     : headingText;
@@ -49,7 +64,10 @@ function renderHeading(c, f) {
 
 function renderParagraph(c, f) {
   const classes = f.buildNodeClasses(c.node, 'paragraph', null, c.paneSide);
-  const paragraphText = f.renderBoundText(typeof c.props.text === 'string' ? c.props.text : '', c.bindingContext);
+  const rawText = textProp(c.props);
+  const paragraphText = rawText
+    ? f.renderBoundText(rawText, c.bindingContext)
+    : `<span class="wf-skeleton-lines">${f.renderSkeleton('100%')}${f.renderSkeleton('60%')}</span>`;
   const paragraphContent = c.navigationTarget
     ? `<a${f.joinAttrs(null, 'wf-inline-link', null, f.navigationAttrs(c.navigationTarget))}>${paragraphText}</a>`
     : paragraphText;
@@ -59,7 +77,8 @@ function renderParagraph(c, f) {
 
 function renderText(c, f) {
   const classes = f.buildNodeClasses(c.node, 'text', null, c.paneSide);
-  const textContent = f.renderBoundText(typeof c.props.text === 'string' ? c.props.text : '', c.bindingContext);
+  const rawText = textProp(c.props);
+  const textContent = rawText ? f.renderBoundText(rawText, c.bindingContext) : f.renderSkeleton(8);
   const textBody = c.navigationTarget
     ? `<a${f.joinAttrs(null, 'wf-inline-link', null, f.navigationAttrs(c.navigationTarget))}>${textContent}</a>`
     : textContent;
@@ -89,19 +108,19 @@ function renderIcon(c, f) {
 
 function renderButton(c, f) {
   const classes = f.buildNodeClasses(c.node, 'button', null, c.paneSide);
+  const variant = typeof c.props.variant === 'string' ? c.props.variant.trim() : '';
+  const isDanger = variant === 'danger';
   const hasIcon = typeof c.props.icon === 'string' && c.props.icon.trim() !== '';
-  const rawLabel = typeof c.props.label === 'string' ? c.props.label : (hasIcon ? '' : 'Button');
-  const buttonLabel = f.renderBoundText(rawLabel, c.bindingContext);
-  const iconName = typeof c.props.icon === 'string' ? c.props.icon.trim() : '';
+  const rawLabel = typeof c.props.label === 'string' && c.props.label.trim() !== '' ? c.props.label : '';
+  const buttonLabel = rawLabel ? f.renderBoundText(rawLabel, c.bindingContext) : (!hasIcon && !isDanger ? f.renderSkeleton(6) : '');
+  const iconName = hasIcon ? c.props.icon.trim() : (isDanger ? 'triangle-exclamation' : '');
   const iconStyleProp = typeof c.props.iconStyle === 'string' ? c.props.iconStyle.trim() : 'solid';
   const iconPrefix = iconStyleProp === 'regular' ? 'fa-regular' : iconStyleProp === 'brands' ? 'fa-brands' : 'fa-solid';
   const iconSizeClass = typeof c.props.iconSize === 'string' ? ` fa-${f.escapeAttr(c.props.iconSize)}` : '';
   const iconHtml = iconName !== ''
     ? `<i class="${iconPrefix} fa-${f.escapeAttr(iconName)}${iconSizeClass}"></i> `
     : '';
-  const renderedLabel = c.options.mode === 'line'
-    ? `[ ${iconHtml}${buttonLabel} ]`
-    : `${iconHtml}${buttonLabel}`;
+  const renderedLabel = `${iconHtml}${buttonLabel}`;
   const buttonMarkup = c.navigationTarget
     ? `<a${f.joinAttrs(null, 'wf-button-link', null, f.navigationAttrs(c.navigationTarget))}>${renderedLabel}</a>`
     : `<button>${renderedLabel}</button>`;
@@ -156,8 +175,9 @@ function renderInput(c, f) {
     c.stateBindings,
     'placeholder',
   );
+  const label = renderFieldLabel(c.props, c.bindingContext, f);
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
-  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}><input type="${inputType}" placeholder="${f.escapeAttr(placeholder)}" /></div>`;
+  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}>${label}<input type="${inputType}" placeholder="${f.escapeAttr(placeholder)}" /></div>`;
 }
 
 function renderTextarea(c, f) {
@@ -169,8 +189,9 @@ function renderTextarea(c, f) {
     c.stateBindings,
     'placeholder',
   );
+  const label = renderFieldLabel(c.props, c.bindingContext, f);
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
-  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}><textarea placeholder="${f.escapeAttr(placeholder)}" rows="${rows}"></textarea>${f.renderChildren(c.node, c.options)}</div>`;
+  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}>${label}<textarea placeholder="${f.escapeAttr(placeholder)}" rows="${rows}"></textarea>${f.renderChildren(c.node, c.options)}</div>`;
 }
 
 function renderSelect(c, f) {
@@ -182,8 +203,9 @@ function renderSelect(c, f) {
     'placeholder',
   );
   const optionsMarkup = f.renderSelectOptions(Array.isArray(c.props.options) ? c.props.options : []);
+  const label = renderFieldLabel(c.props, c.bindingContext, f);
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
-  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}><select><option value="">${f.escapeHtml(placeholder)}</option>${optionsMarkup}</select>${f.renderChildren(c.node, c.options)}</div>`;
+  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}>${label}<select><option value="">${f.escapeHtml(placeholder)}</option>${optionsMarkup}</select>${f.renderChildren(c.node, c.options)}</div>`;
 }
 
 function renderCheckbox(c, f) {
@@ -211,20 +233,23 @@ function renderToggle(c, f) {
 }
 
 function renderSection(c, f) {
-  const classes = f.buildNodeClasses(c.node, 'section', null, c.paneSide);
+  const classes = f.buildNodeClasses(c.node, 'section', null, c.paneSide, c.isSurface);
   const sectionLayoutType = f.isObject(c.node.layout) ? c.node.layout.type || 'stack' : 'stack';
+  const bodyLayout = c.isSurface && c.layout.padding == null ? { ...c.layout, padding: 16 } : c.layout;
   const children = f.renderChildren(c.node, {
     ...c.options,
+    surfaceDepth: c.childSurfaceDepth,
     parentLayoutType: sectionLayoutType,
   });
+  const resolvedTitle = f.resolveAttributeValue(
+    typeof c.props.title === 'string' ? c.props.title : '',
+    c.bindingContext,
+    c.stateBindings,
+    'title',
+  );
   const sectionTitle = f.renderSectionTitle(
     {
-      title: f.resolveAttributeValue(
-        typeof c.props.title === 'string' ? c.props.title : 'Section',
-        c.bindingContext,
-        c.stateBindings,
-        'title',
-      ),
+      title: resolvedTitle,
     },
     c.bindingContext,
   );
@@ -237,8 +262,8 @@ function renderSection(c, f) {
     (c.isBorderless || c.options.mode) ? '' : c.wfNodeBorderStyle,
     c.nodeWireframeOverrides,
   ].filter(Boolean).join(';');
-  const bodyLayoutCss = layoutToCss(c.layout, {}, { defaultGridColumns: c.defaultGridColumns, density: c.options.density });
-  const bodyDividerClass = sectionBodyDividerClass(c.layout);
+  const bodyLayoutCss = layoutToCss(bodyLayout, {}, { defaultGridColumns: c.defaultGridColumns, density: c.options.density });
+  const bodyDividerClass = sectionBodyDividerClass(bodyLayout);
   const bodyClass = `wf-section-body${bodyDividerClass}`;
   const bodyStyleAttr = bodyLayoutCss ? ` style="${f.escapeAttr(bodyLayoutCss)}"` : '';
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
@@ -253,6 +278,16 @@ function renderDivider(c, f) {
 
 function renderSpacer(c, f) {
   const classes = f.buildNodeClasses(c.node, 'spacer', null, c.paneSide);
+  const rawSize = c.props.size;
+  if (
+    typeof rawSize === 'string'
+    && /^\d+(\.\d+)?%$/.test(rawSize.trim())
+    && (c.options.parentLayoutType === 'row' || c.options.parentLayoutType === 'stack')
+  ) {
+    const spacerStyle = `${c.childStyle}${c.childStyle ? ';' : ''}flex:1 1 auto`;
+    const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
+    return `<div${f.joinAttrs(c.node.id, classes, spacerStyle)}${dataAttrs}></div>`;
+  }
   const spacerSize = toPx(Number.isFinite(c.props.size) ? Number(c.props.size) : Number(c.props.size) || 16);
   const orientation = c.options.parentLayoutType === 'row' ? 'width' : 'height';
   const spacerStyle = spacerSize ? `${c.childStyle}${c.childStyle ? ';' : ''}${orientation}:${spacerSize}` : c.childStyle;

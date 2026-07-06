@@ -1,0 +1,17 @@
+documentType: sitemap
+specVersion: "1.1"
+id: sitemap
+defaultTemplate: app_shell
+routes:
+  - id: gallery_card
+    path: /card
+    page: gallery_card
+  - id: gallery_line
+    path: /line
+    page: gallery_line
+  - id: auth_card
+    path: /auth-card
+    page: auth_card
+  - id: auth_line
+    path: /auth-line
+    page: auth_line
