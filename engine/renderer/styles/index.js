@@ -1,12 +1,21 @@
 'use strict';
 
 const { baseStyles } = require('./base');
-const { componentStyles } = require('./components');
+const { containerStyles } = require('./containers');
+const { contentStyles } = require('./content');
+const { controlStyles } = require('./controls');
+const { navigationStyles } = require('./navigation');
+const { dataStyles } = require('./data');
 
 function buildWireframeStyles() {
-  return [baseStyles, componentStyles].filter(Boolean).join('\n');
+  return [
+    baseStyles,
+    containerStyles,
+    contentStyles,
+    controlStyles,
+    navigationStyles,
+    dataStyles,
+  ].filter(Boolean).join('\n');
 }
 
-module.exports = {
-  buildWireframeStyles,
-};
+module.exports = { buildWireframeStyles };

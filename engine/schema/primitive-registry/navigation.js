@@ -1,0 +1,118 @@
+'use strict';
+
+const navigationPrimitives = [
+  {
+    name: 'tab_bar',
+    family: 'navigation',
+    frame: 'E',
+    summary: 'In-page tabs. Pass tabs[] for one line, or children for full control.',
+    props: {
+      tabs: { type: 'array', primary: true },
+      variant: { enum: ['underline', 'pill', 'enclosed'] },
+    },
+    aliases: { tabs: 'tab_bar' },
+    sizing: ['tabbar.height'],
+    example: '- tab_bar: { tabs: [{ label: Overview, active: true }, { label: Billing }] }',
+  },
+  {
+    name: 'bottom_tab_bar',
+    family: 'navigation',
+    frame: 'E',
+    summary: 'Mobile bottom tab bar, icon above label.',
+    props: {
+      tabs: { type: 'array', primary: true },
+    },
+    sizing: ['tabbar.height'],
+    example: '- bottom_tab_bar: { tabs: [{ icon: house, label: Home, active: true }] }',
+  },
+  {
+    name: 'breadcrumb',
+    family: 'navigation',
+    frame: 'N',
+    summary: 'Breadcrumb trail.',
+    props: {
+      items: { type: 'array', primary: true },
+      separator: { type: 'string' },
+    },
+    example: '- breadcrumb: { items: [Projects, Acme, Settings] }',
+  },
+  {
+    name: 'pagination',
+    family: 'navigation',
+    frame: 'N',
+    summary: 'Page controls; variant dots doubles as carousel/onboarding dots.',
+    props: {
+      page: { type: 'number', primary: true },
+      pages: { type: 'number' },
+      variant: { enum: ['numbers', 'simple', 'dots'] },
+    },
+    example: '- pagination: { page: 2, pages: 9 }',
+  },
+  {
+    name: 'stepper',
+    family: 'navigation',
+    frame: 'N',
+    summary: 'Wizard progress through named steps.',
+    props: {
+      steps: { type: 'array', primary: true },
+      current: { type: 'number' },
+      orientation: { enum: ['row', 'stack'] },
+    },
+    aliases: { wizard: 'stepper' },
+    example: '- stepper: { steps: [Account, Plan, Done], current: 2 }',
+  },
+  {
+    name: 'nav',
+    family: 'navigation',
+    frame: 'N',
+    summary: 'Vertical side navigation; collapsed renders an icon rail.',
+    props: {
+      items: { type: 'array', primary: true },
+      collapsed: { type: 'boolean' },
+      groups: { type: 'boolean' },
+    },
+    aliases: { sidenav: 'nav' },
+    sizing: ['sidebar.width'],
+    example: '- nav: { items: [{ icon: gauge, label: Dashboard, active: true }, { label: Settings }] }',
+  },
+  {
+    name: 'menu',
+    family: 'navigation',
+    frame: 'N',
+    summary: 'Menu item list for a dropdown or context overlay; the overlay owns the frame.',
+    props: {
+      items: { type: 'array', primary: true },
+    },
+    example: '- menu: { items: [Rename, { label: Delete, danger: true }] }',
+  },
+  {
+    name: 'app_bar',
+    family: 'navigation',
+    frame: 'E',
+    summary: 'Mobile top chrome: leading glyph, title, trailing actions.',
+    props: {
+      title: { type: 'string', primary: true },
+      subtitle: { type: 'string' },
+      leading: { type: 'string' },
+      actions: { type: 'array' },
+    },
+    sizing: ['header.height'],
+    example: '- app_bar: { title: Inbox, leading: arrow-left, actions: [search] }',
+  },
+  {
+    name: 'page_header',
+    family: 'navigation',
+    frame: 'N',
+    summary: 'Page title block: breadcrumb, title, subtitle, actions and tabs.',
+    props: {
+      title: { type: 'string', primary: true },
+      subtitle: { type: 'string' },
+      breadcrumb: { type: 'array' },
+      actions: { type: 'array' },
+      tabs: { type: 'array' },
+    },
+    example: '- page_header: { title: Projects, actions: [{ label: New, variant: primary }] }',
+  },
+];
+
+module.exports = { navigationPrimitives };
