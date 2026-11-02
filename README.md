@@ -484,6 +484,15 @@ if the bundle outgrows its size budget.
 Also `page`, `template`, `component`, `node`, `overlay`, `state` and `data` for
 editing a project without opening a file.
 
+```bash
+node cli/bin/wf.js --help
+```
+
+Commands are declared once in `cli/commands/registry.js`, so `wf --help`,
+`wf help <command>` and `wf <command> --help` all come from the same place and a
+test fails if a command ships undocumented. Asking for help never runs the
+command.
+
 ---
 
 ## Examples in this repo
