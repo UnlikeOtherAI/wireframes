@@ -118,6 +118,7 @@ function renderNode(node, options = {}) {
           selectionValue: nextSelectionValue,
           itemContext: isObject(item) ? item : {},
           itemVar: collectionData.bindingItemVar,
+          rowIndex: index,
         });
       })
       .join('\n');
@@ -141,6 +142,8 @@ function renderNode(node, options = {}) {
     viewport: options.viewport,
     sizing: options.sizing,
     explain: options.explain === true,
+    annotateSource: options.annotateSource === true,
+    rowIndex: options.rowIndex,
   };
 
   const shell = buildShell(node, element, shellCtx);

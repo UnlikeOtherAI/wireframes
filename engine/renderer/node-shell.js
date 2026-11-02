@@ -4,7 +4,7 @@ const { layoutToCss, layoutItemCss, absoluteChildStyle } = require('./layout');
 const { surfaceElevationOverride, wireframeNodeStyleOverrides } = require('./wireframe-styles');
 const { decideFrame } = require('./frame-rules');
 const { token, scale } = require('./sizing-tokens');
-const { buildNodeDataAttributes, joinAttrs, navigationAttrs } = require('./render-attrs');
+const { buildNodeDataAttributes, joinAttrs, navigationAttrs, sourceAttrs } = require('./render-attrs');
 const { isObject, toSafeClass, paneMetaToStyle } = require('./render-utils');
 const { frameClass, resolvePrimitiveName } = require('../schema/primitive-registry');
 
@@ -203,6 +203,8 @@ function buildShell(node, element, ctx) {
     attrs.push(`data-wf-why="${decision.rule}:${decision.reason}"`);
   }
   if (ctx.parentDivides === true) attrs.push('data-wf-edge="after"');
+  const source = sourceAttrs(node, ctx).trim();
+  if (source) attrs.push(source);
 
   return { decision, layout, layoutCss, style, stackStyle, classes, attrs };
 }

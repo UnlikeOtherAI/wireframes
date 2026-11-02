@@ -318,3 +318,11 @@ wireframes/
     ├── architecture.md       this file
     └── cli/                  CLI-specific docs
 ```
+
+## Mobile
+
+`mobile/` holds the offline native app. See [the plan](plans/2026-11-02-offline-wireframe-app/implementation-ios.md).
+
+- `mobile/core`: C++ with a C ABI. Model selection, digest checks, project history, compaction and the llama.cpp engine.
+- `mobile/web`: runs the shared engine and renderer inside the app's web view, with the validated YAML edit engine.
+- `mobile/ios`: the SwiftUI app. Run `scripts/build-core.sh` on a Mac, then `xcodegen generate`.

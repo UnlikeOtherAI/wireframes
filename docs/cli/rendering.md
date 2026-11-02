@@ -259,6 +259,8 @@ in a browser tab:
 | tablet | landscape | 1180px | 820px |
 | web | — | 1280px | 900px |
 
+The renderer's `adaptive` option, off by default and used by the native app, rearranges a page drawn on a smaller device than its own `viewport.device`. On a phone the sidebar becomes a bar across the top, rows of panels stack, grids reflow and tables scroll sideways. On a tablet grids and rows reflow. It is a render-time view of the page and is never written to a document.
+
 Responsive contexts declared in `sitemap.yaml` (with `minWidth`/`maxWidth`)
 apply within these viewport dimensions — they control responsive overrides
 (visibility, span, gap, align) but do not change the viewport dimensions.

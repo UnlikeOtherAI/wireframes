@@ -1,6 +1,7 @@
 'use strict';
 
 const { toPx } = require('./layout');
+const { sourceAttrs } = require('./render-attrs');
 
 const OVERLAY_TYPES = new Set([
   'modal',
@@ -162,7 +163,7 @@ function renderOverlay(node, options, childStyle, ctx) {
     .filter(Boolean)
     .join(';');
   const stateBindings = isObject(node.stateBindings) ? { ...node.stateBindings } : {};
-  const dataAttrs = ctx.buildNodeDataAttributes(node, stateBindings);
+  const dataAttrs = ctx.buildNodeDataAttributes(node, stateBindings) + sourceAttrs(node, options);
   // Overlay chrome owns the frame, so its own children must not draw one too.
   const children = ctx.renderChildren(node, { ...options, surfaceDepth: 1, isOverlayChild: true });
   const backdrop = overlayTypeNeedsBackdrop(overlayType)
