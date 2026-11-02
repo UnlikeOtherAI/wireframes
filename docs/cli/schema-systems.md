@@ -308,8 +308,10 @@ Collection renderers must define:
 
 ### Datasets (Mock Data)
 
-Datasets are defined in `data/<datasetId>.yaml`. Each dataset contains
-an array of plain key-value objects (items) identified by a `primaryKey`.
+Datasets are defined in optional `data/<datasetId>.yaml` files. A project can
+omit the `data/` directory entirely when no page references datasets. Each
+dataset contains an array of plain key-value objects (items) identified by a
+`primaryKey`.
 
 Items are always passed and stored as **whole objects** — no field-by-field
 construction or mutation. To update an item, replace the entire object.
@@ -350,9 +352,9 @@ or a reusable component composed from them.
     text: "Save Changes"
 ```
 
-* `heading` — title text. Required: `level`, `text`.
-* `paragraph` — body text block. Required: `text`.
-* `text` — inline text span. Required: `text`.
+* `heading` — title text. Canonical props: `level`, `text`; `label` is accepted as an alias.
+* `paragraph` — body text block. Canonical prop: `text`; `label` is accepted as an alias.
+* `text` — inline text span. Canonical prop: `text`; `label` is accepted as an alias. Optional `variant: body|meta`.
 
 ## Image
 
@@ -395,22 +397,26 @@ or a reusable component composed from them.
   props:
     label: "Save"
     icon: floppy-disk        # optional: Font Awesome icon before label
+    variant: primary         # primary|secondary|ghost|danger
 
 - id: email_field
   component: input
   props:
+    label: "Email"
     placeholder: "Enter email"
     inputType: text         # text|password|email|number|search
 
 - id: bio_field
   component: textarea
   props:
+    label: "Bio"
     placeholder: "Enter bio"
     rows: 4
 
 - id: role_select
   component: select
   props:
+    label: "Role"
     placeholder: "Choose role"
     options:
       - { value: admin, label: "Admin" }
@@ -432,12 +438,12 @@ or a reusable component composed from them.
     label: "Enable notifications"
 ```
 
-* `button` — clickable wireframe box. Required: `label`. Optional: `icon` (Font Awesome name, renders before label).
+* `button` — clickable wireframe control. Required: `label`. Optional: `icon` (Font Awesome name, renders before label), `iconStyle`, `iconSize`, `variant` (`primary`, `secondary`, `ghost`, `danger`; default `secondary`).
 * `tab_bar` — in-page tab navigation. Child buttons are laid out in a row with gap, NOT stretched.
 * `bottom_tab_bar` — iOS-style bottom navigation bar. Child buttons stretch equally to fill width, icon stacks above label. Use with `icon` prop on buttons.
-* `input` — text input field. Optional: `placeholder`, `inputType` (text, password, email, number, search; defaults to text).
-* `textarea` — multi-line input. Optional: `placeholder`, `rows`.
-* `select` — dropdown selector. Optional: `placeholder`, `options`.
+* `input` — text input field. Optional: `label`, `placeholder`, `inputType` (text, password, email, number, search; defaults to text).
+* `textarea` — multi-line input. Optional: `label`, `placeholder`, `rows`.
+* `select` — dropdown selector. Optional: `label`, `placeholder`, `options`.
 * `checkbox` — checkbox with label. Required: `label`.
 * `radio` — radio button with label. Required: `label`.
 * `toggle` — on/off switch. Required: `label`.
@@ -473,10 +479,11 @@ or a reusable component composed from them.
 * `table` — tabular data with a header row and alternating body-row fills. Required: `columns`. Optional: `rows`, `emptyText`. May also use `binding.source` to render dataset-backed rows.
 * `section` — named container frame. Optional: `title`. May have children.
 * `divider` — horizontal rule. No props required.
-* `spacer` — empty space. Optional: `size` (pixels).
+* `spacer` — empty space. Optional: `size` (pixels). Percentage sizes in flex parents render as flexible spacers.
 
-All primitives render as wireframes: bordered rectangles with text labels.
-No production styling.
+Primitives render as wireframes. Surface primitives get frames according to the
+surface-depth rules; content primitives such as headings, paragraphs, text,
+charts, dividers, and spacers stay unboxed unless explicitly promoted.
 
 ---
 
@@ -514,6 +521,14 @@ Warnings:
 * Orphan routes
 * Empty slots (slot declared in template but page provides no content)
 * ID naming convention violations (uppercase, non-snake_case, reserved keywords)
+* Unknown primitive props (`UNKNOWN_PROP`)
+
+Info diagnostics:
+
+* Text primitive with no `text` or `label` (`MISSING_TEXT`)
+* Input/select/textarea without `label` (`UNLABELED_FIELD`)
+* Text primitive using `label` alias instead of canonical `text` (`TEXT_PROP_ALIAS`)
+* Demoted nested section with explicit width or height (`NESTED_SURFACE`)
 
 Safety limits:
 
@@ -535,7 +550,7 @@ ZIP containing:
 * templates.yaml
 * components.yaml
 * pages/
-* data/
+* data/ (when present)
 * assets/
 * any additional imported `documentType: components` files under the project root
 

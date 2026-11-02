@@ -84,7 +84,7 @@ function tableGridTemplate(columns) {
  *   { bindingContext, paneSide, stateBindings, selectionValue, paneData }
  */
 function renderTable(node, props, childStyle, options, ctx, extra) {
-  const classes = ctx.buildNodeClasses(node, 'table', null, extra.paneSide);
+  const classes = ctx.buildNodeClasses(node, 'table', null, extra.paneSide, extra.isSurface);
   const columns = normalizeTableColumns(props);
   const rows = resolveTableRows(node, props, options, ctx);
   const itemVar = typeof node?.binding?.itemVar === 'string' && node.binding.itemVar.trim() !== ''

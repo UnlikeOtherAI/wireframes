@@ -144,6 +144,13 @@ function resolveTemplateToken(type, path, options = {}) {
   return undefined;
 }
 
+function renderSkeleton(width) {
+  const cssWidth = typeof width === 'number' && Number.isFinite(width)
+    ? `${width}ch`
+    : String(width || '8ch');
+  return `<span class="wf-skeleton" style="width:${escapeAttr(cssWidth)}"></span>`;
+}
+
 function renderBoundText(value, options = {}) {
   const source = typeof value === 'string' ? value : '';
   if (source === '') {
@@ -173,7 +180,8 @@ function renderBoundText(value, options = {}) {
       parts.push(`<span data-bind="${escapeAttr(`${type}.${path}`)}"></span>`);
     } else {
       const resolved = resolveTemplateToken(type, path, options);
-      parts.push(escapeHtml(resolved == null ? '' : String(resolved)));
+      const rendered = resolved == null ? '' : String(resolved);
+      parts.push(rendered === '' ? renderSkeleton(8) : escapeHtml(rendered));
     }
 
     cursor = match.index + match[0].length;
@@ -341,6 +349,7 @@ module.exports = {
   renderCollectionNode,
   getPathValue,
   resolveTemplateToken,
+  renderSkeleton,
   renderBoundText,
   resolveAttributeValue,
   normalizeChildren,

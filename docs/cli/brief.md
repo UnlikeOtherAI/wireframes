@@ -8,21 +8,23 @@ The output is **literal wireframes**. Not styled UI. Not production screens.
 Everything renders as skeleton frames you can click through:
 
 * A button is a wireframe box with text inside
-* A heading is framed text at a given level
+* A heading is text at a given level
 * An image is a frame showing the picture (e.g. a client logo) or alt text
 * A sidebar is a frame with a border
 * A dropdown is a frame
 * A card is a frame
 * A modal is a frame on top of another frame
-* A navigation bar is a row of framed text links
+* A navigation bar is a row of wireframe controls
 * An input is a framed placeholder field
 
 Built-in primitives: `heading`, `paragraph`, `text`, `image`, `icon`, `button`,
 `tab_bar`, `bottom_tab_bar`, `input`, `textarea`, `select`, `checkbox`, `radio`,
 `toggle`, `chart`, `table`, `section`, `divider`, `spacer`.
 
-Every element is a bordered rectangle (solid or dashed) with text labels or content.
-Images can reference a URL or a file in `assets/` (e.g. a client logo).
+Surface elements are framed rectangles; content primitives such as headings,
+paragraphs, text, charts, dividers, and spacers stay unboxed unless explicitly
+promoted. Images can reference a URL or a file in `assets/` (e.g. a client
+logo).
 If a layout is defined as resizable, it stretches like HTML would — but it is still
 a wireframe. No colors, no icons beyond what's in assets, no production styling.
 Just frames, text, images, and structure.
@@ -32,7 +34,7 @@ This is a clickable skeleton of a web application.
 It:
 
 * Creates projects
-* Generates pages/templates/components/data
+* Generates pages/templates/components and optional data
 * Validates structure
 * Exports a complete wireframe package (ZIP)
 
@@ -90,7 +92,7 @@ Creates:
   templates.yaml
   components.yaml
   /pages
-  /data
+  /data        # optional; only needed for datasets
   /assets
 ```
 
@@ -159,6 +161,9 @@ Checks naming conventions:
 * No uppercase in IDs
 * No ambiguous names
 * No reserved keywords
+* Unknown props on primitive components (`UNKNOWN_PROP`, warning)
+* Missing text, unlabeled fields, label-alias usage, and demoted nested
+  surfaces (`info`, never strict-fatal)
 
 ---
 

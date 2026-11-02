@@ -345,7 +345,7 @@ test('Playwright verifies compact line mode uses a single dashed divider without
     assert.equal(metrics.sameTop, true);
     assert.equal(metrics.overlap, 0);
     assert.equal(metrics.dividerInsideRow, true);
-    assert.equal(metrics.buttonLabel, '[ Filters ]');
+    assert.equal(metrics.buttonLabel, 'Filters');
   } finally {
     await page.close();
     await browser.close();

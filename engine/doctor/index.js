@@ -104,6 +104,7 @@ function runDoctor({ projectPath } = {}) {
     ok: true,
     errors: [],
     warnings: [],
+    info: [],
     projectPath: path.resolve(projectPath || process.cwd()),
   };
 
@@ -116,7 +117,6 @@ function runDoctor({ projectPath } = {}) {
     { path: 'templates.yaml', type: 'file' },
     { path: 'components.yaml', type: 'file' },
     { path: 'pages', type: 'dir' },
-    { path: 'data', type: 'dir' },
   ];
 
   for (const item of requiredFiles) {
@@ -196,8 +196,6 @@ function runDoctor({ projectPath } = {}) {
         addDiagnostic(result, 'errors', 'INVALID_DATASET_ID', `Dataset document at ${abs} has no valid id.`);
       }
     }
-  } else {
-    addDiagnostic(result, 'errors', 'MISSING_REQUIRED_FILE', 'data directory is missing required dataset sources.');
   }
 
   if (manifest && manifest.document?.manifest?.schemaVersion) {

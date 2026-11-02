@@ -1,0 +1,37 @@
+documentType: sitemap
+specVersion: "1.1"
+id: sitemap
+defaultTemplate: app_shell
+routes:
+  - id: card_text_forms
+    path: /card/text-forms
+    page: card_text_forms
+    template: app_shell
+  - id: line_text_forms
+    path: /line/text-forms
+    page: line_text_forms
+    template: app_shell
+  - id: card_structure
+    path: /card/structure
+    page: card_structure
+    template: app_shell
+  - id: line_structure
+    path: /line/structure
+    page: line_structure
+    template: app_shell
+  - id: card_media_charts
+    path: /card/media-charts
+    page: card_media_charts
+    template: app_shell
+  - id: line_media_charts
+    path: /line/media-charts
+    page: line_media_charts
+    template: app_shell
+  - id: card_auth
+    path: /card/auth
+    page: card_auth
+    template: auth_shell
+  - id: line_auth
+    path: /line/auth
+    page: line_auth
+    template: auth_shell

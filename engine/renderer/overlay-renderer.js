@@ -163,7 +163,7 @@ function renderOverlay(node, options, childStyle, ctx) {
     .join(';');
   const stateBindings = isObject(node.stateBindings) ? { ...node.stateBindings } : {};
   const dataAttrs = ctx.buildNodeDataAttributes(node, stateBindings);
-  const children = ctx.renderChildren(node, options);
+  const children = ctx.renderChildren(node, { ...options, surfaceDepth: 0 });
   const backdrop = overlayTypeNeedsBackdrop(overlayType)
     ? '<div class="wf-overlay-backdrop" aria-hidden="true" style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:none;"></div>'
     : '';

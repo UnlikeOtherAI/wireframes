@@ -17,8 +17,8 @@ const {
 } = require(path.resolve(__dirname, '..', 'screenshots'));
 const {
   renderWireframeMarkup,
-  buildWireframeStyles,
 } = require(path.resolve(__dirname, '..', 'screenshots', 'renderer'));
+const { buildWireframeStyles } = require(path.resolve(__dirname, '..', 'renderer', 'styles'));
 const {
   normalizeBasePath,
   joinBasePath,
@@ -208,6 +208,7 @@ function writePlatformArtifacts(platformResult, outputDir, assetUrlPrefix) {
       rendering: page.rendering || {},
       defaultGridColumns: page.defaultGridColumns,
       bodyLayoutType: page.bodyLayoutType || 'row',
+      bodyLayout: page.bodyLayout,
       projectPath: platformResult.projectPath,
       dataSources: page.dataSources,
       wireframeCssHref: './_shared/wireframe.css',
@@ -329,6 +330,7 @@ function runBuild({
         rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
         bodyLayoutType: target.bodyLayoutType || 'row',
+        bodyLayout: target.bodyLayout,
         projectPath: normalizedProjectPath,
       });
     }

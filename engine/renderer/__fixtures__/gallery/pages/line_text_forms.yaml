@@ -1,0 +1,113 @@
+documentType: page
+specVersion: "1.1"
+id: line_text_forms
+page:
+  id: line_text_forms
+  template: app_shell
+  viewport:
+    device: web
+  renderMode: line
+  pageState:
+    selected_tab: line_text_tab
+  wireframeStyle:
+    border:
+      style: dashed
+      width: thin
+    corner:
+      style: sharp
+  slots:
+    - slotId: main
+      content:
+        - id: line_text_forms_panel
+          component: section
+          props:
+            title: Line text and forms
+          layout:
+            type: stack
+            gap: 14
+          children:
+            - id: line_h1
+              component: heading
+              props:
+                level: 1
+                text: Line heading
+            - id: line_alias_text
+              component: text
+              props:
+                label: Alias body text
+            - id: line_missing_text
+              component: text
+            - id: line_tabs
+              component: tab_bar
+              children:
+                - id: line_text_tab
+                  component: button
+                  selection:
+                    scope: page
+                    stateKey: selected_tab
+                  props:
+                    label: Text
+                    variant: primary
+                - id: line_forms_tab
+                  component: button
+                  selection:
+                    scope: page
+                    stateKey: selected_tab
+                  props:
+                    label: Forms
+            - id: line_buttons
+              component: section
+              layout:
+                type: row
+                gap: 8
+              children:
+                - id: line_primary_btn
+                  component: button
+                  props:
+                    label: Primary
+                    variant: primary
+                - id: line_ghost_btn
+                  component: button
+                  props:
+                    label: Ghost
+                    variant: ghost
+                - id: line_danger_btn
+                  component: button
+                  props:
+                    label: Danger
+                    variant: danger
+            - id: line_fields
+              component: section
+              layout:
+                type: grid
+                columns: 12
+                gap: 16
+              children:
+                - id: line_email_input
+                  component: input
+                  gridItem:
+                    span: 6
+                  props:
+                    label: Email
+                    placeholder: person@example.com
+                    inputType: email
+                - id: line_status_select
+                  component: select
+                  gridItem:
+                    span: 6
+                  props:
+                    label: Status
+                    placeholder: Select status
+                    options:
+                      - value: draft
+                        label: Draft
+                      - value: live
+                        label: Live
+                - id: line_body_textarea
+                  component: textarea
+                  gridItem:
+                    span: 12
+                  props:
+                    label: Body
+                    placeholder: Multiline text
+                    rows: 3

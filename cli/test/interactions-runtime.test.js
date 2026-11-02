@@ -92,6 +92,100 @@ test('renderWireframeMarkup emits overlay roots as actual overlay containers', (
   assert.equal(html.includes('menu_item'), true);
 });
 
+test('renderWireframeMarkup keeps slot roots frameless and counts persistent roots as surfaces', () => {
+  const html = renderWireframeMarkup({
+    roots: [
+      {
+        id: 'body',
+        kind: 'slot',
+        nodes: [
+          { id: 'slot_card', component: 'section', children: [] },
+        ],
+      },
+      {
+        id: 'header',
+        kind: 'persistent',
+        nodes: [
+          { id: 'header_group', component: 'section', children: [] },
+        ],
+      },
+    ],
+    pageViewport: { width: 390, height: 844, device: 'mobile' },
+    pageRouteId: 'home',
+    routeTable: { home: 'home.html' },
+    appStateDefaults: {},
+    pageStateDefaults: {},
+    projectPath: process.cwd(),
+  });
+
+  const slotRoot = html.match(/<section class="wf-root wf-root-container wf-root-slot"/);
+  const headerRoot = html.match(/<section class="wf-root wf-root-container wf-surface"/);
+  const slotCard = html.match(/id="slot_card" class="([^"]+)"/);
+  const headerGroup = html.match(/id="header_group" class="([^"]+)"/);
+
+  assert.ok(slotRoot);
+  assert.ok(headerRoot);
+  assert.equal(slotCard?.[1].includes('wf-surface'), true);
+  assert.equal(headerGroup?.[1].includes('wf-group'), true);
+  assert.equal(headerGroup?.[1].includes('wf-surface'), false);
+});
+
+test('renderWireframeMarkup applies full template body layout styles', () => {
+  const html = renderWireframeMarkup({
+    roots: [
+      {
+        id: 'body',
+        kind: 'slot',
+        nodes: [{ id: 'login_card', component: 'section', children: [] }],
+      },
+    ],
+    pageViewport: { width: 390, height: 844, device: 'mobile' },
+    pageRouteId: 'login',
+    routeTable: { login: 'login.html' },
+    appStateDefaults: {},
+    pageStateDefaults: {},
+    projectPath: process.cwd(),
+    bodyLayoutType: 'stack',
+    bodyLayout: {
+      type: 'stack',
+      align: 'center',
+      justify: 'center',
+      gap: 24,
+      padding: 32,
+    },
+  });
+
+  assert.equal(html.includes('class="wf-body-column" style="display:flex;flex-direction:column'), true);
+  assert.equal(html.includes('align-items:center'), true);
+  assert.equal(html.includes('justify-content:center'), true);
+  assert.equal(html.includes('gap:24px'), true);
+  assert.equal(html.includes('padding:32px'), true);
+});
+
+test('renderWireframeMarkup resets surface depth inside overlays', () => {
+  const html = renderWireframeMarkup({
+    roots: [
+      {
+        id: 'menu_overlay',
+        kind: 'overlay',
+        type: 'modal',
+        nodes: [
+          { id: 'modal_card', component: 'section', children: [] },
+        ],
+      },
+    ],
+    pageViewport: { width: 390, height: 844, device: 'mobile' },
+    pageRouteId: 'home',
+    routeTable: { home: 'home.html' },
+    appStateDefaults: {},
+    pageStateDefaults: {},
+    projectPath: process.cwd(),
+  });
+
+  const modalCard = html.match(/id="modal_card" class="([^"]+)"/);
+  assert.equal(modalCard?.[1].includes('wf-surface'), true);
+});
+
 test('renderNode renders anchor fallbacks for navigation buttons and text links', () => {
   const buttonHtml = renderNode({
     id: 'go_dashboard',
@@ -196,6 +290,71 @@ test('renderNode resolves route, props, item, and state bindings in text', () =>
   assert.equal(html.includes('data-bind=\"state.mode\"'), true);
 });
 
+test('renderNode accepts label alias on text primitives and keeps text authoritative', () => {
+  const labelOnly = renderNode({
+    id: 'label_heading',
+    component: 'heading',
+    props: { label: 'Alias title', level: 2 },
+  });
+  const textWins = renderNode({
+    id: 'text_heading',
+    component: 'heading',
+    props: { text: 'Canonical title', label: 'Alias title', level: 2 },
+  });
+
+  assert.equal(labelOnly.includes('Alias title'), true);
+  assert.equal(textWins.includes('Canonical title'), true);
+  assert.equal(textWins.includes('Alias title'), false);
+});
+
+test('renderNode emits skeletons for missing text content and unresolved props/item bindings', () => {
+  const missingHeading = renderNode({
+    id: 'missing_heading',
+    component: 'heading',
+    props: { level: 3 },
+  });
+  const missingParagraph = renderNode({
+    id: 'missing_paragraph',
+    component: 'paragraph',
+    props: {},
+  });
+  const missingText = renderNode({
+    id: 'missing_text',
+    component: 'text',
+    props: {},
+  });
+  const missingButton = renderNode({
+    id: 'missing_button',
+    component: 'button',
+    props: {},
+  });
+  const unresolvedBinding = renderNode({
+    id: 'unresolved',
+    component: 'text',
+    props: { text: 'Owner {{props.owner}} / {{item.status}}' },
+  });
+
+  assert.equal(missingHeading.includes('wf-skeleton'), true);
+  assert.equal(missingHeading.includes('Heading'), false);
+  assert.equal(missingParagraph.includes('width:100%'), true);
+  assert.equal(missingParagraph.includes('width:60%'), true);
+  assert.equal(missingText.includes('width:8ch'), true);
+  assert.equal(missingButton.includes('width:6ch'), true);
+  assert.equal(unresolvedBinding.match(/wf-skeleton/g)?.length, 2);
+});
+
+test('renderBoundText skeleton fallback does not replace runtime state bindings', () => {
+  const html = renderNode({
+    id: 'stateful_text',
+    component: 'text',
+    props: { text: '{{state.mode}} {{appState.user}} {{props.missing}}' },
+  });
+
+  assert.equal(html.includes('data-bind=\"state.mode\"'), true);
+  assert.equal(html.includes('data-bind=\"appState.user\"'), true);
+  assert.equal(html.includes('wf-skeleton'), true);
+});
+
 test('renderNode renders collection bindings with custom itemVar and nested item paths', () => {
   const html = renderNode({
     id: 'product_list',
@@ -243,6 +402,34 @@ test('renderNode serializes state-bound attributes for runtime updates', () => {
     true,
   );
   assert.equal(html.includes('placeholder=\"Find \"'), true);
+});
+
+test('renderNode renders labels for text input, textarea, and select controls', () => {
+  const inputHtml = renderNode({
+    id: 'project_name',
+    component: 'input',
+    props: { label: 'Project Name', placeholder: 'Acme' },
+  });
+  const textareaHtml = renderNode({
+    id: 'project_notes',
+    component: 'textarea',
+    props: { label: 'Notes', placeholder: 'Internal notes' },
+  });
+  const selectHtml = renderNode({
+    id: 'project_status',
+    component: 'select',
+    props: { label: 'Status', options: ['Draft'] },
+  });
+  const unlabeledHtml = renderNode({
+    id: 'search',
+    component: 'input',
+    props: { placeholder: 'Search' },
+  });
+
+  assert.equal(inputHtml.includes('<label class="wf-field-label">Project Name</label>'), true);
+  assert.equal(textareaHtml.includes('<label class="wf-field-label">Notes</label>'), true);
+  assert.equal(selectHtml.includes('<label class="wf-field-label">Status</label>'), true);
+  assert.equal(unlabeledHtml.includes('wf-field-label'), false);
 });
 
 test('renderNode stores selection value for collection-bound items', () => {

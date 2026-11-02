@@ -10,6 +10,11 @@ const {
 } = require('../../engine/renderer/layout');
 const { renderNode } = require('../../engine/renderer/primitives');
 
+function classListFor(html, id) {
+  const match = html.match(new RegExp(`id="${id}" class="([^"]+)"`));
+  return match ? match[1] : '';
+}
+
 test('layoutToCss reads sizing from size object', () => {
   const css = layoutToCss(
     { type: 'stack', gap: 8 },
@@ -138,4 +143,120 @@ test('renderNode respects explicit surface flags and elevation overrides', () =>
   assert.equal(noSurface.includes('wf-surface'), false);
   assert.equal(forcedSurface.includes('wf-surface'), true);
   assert.equal(forcedSurface.includes('--wf-surface-shadow:0 12px 28px rgba(0,0,0,0.16)'), true);
+});
+
+test('renderNode demotes nested sections but keeps top-level and grid child surfaces', () => {
+  const html = renderNode({
+    id: 'top_card',
+    component: 'section',
+    children: [
+      {
+        id: 'nested_group',
+        component: 'section',
+        children: [{ id: 'nested_text', component: 'text', props: { text: 'Nested' } }],
+      },
+      {
+        id: 'grid_parent',
+        component: 'section',
+        layout: { type: 'grid', columns: 2 },
+        children: [
+          { id: 'grid_tile', component: 'section', children: [] },
+        ],
+      },
+    ],
+  }, {
+    mode: 'card',
+    rendering: { mode: 'card' },
+  });
+
+  assert.equal(classListFor(html, 'top_card').includes('wf-surface'), true);
+  assert.equal(classListFor(html, 'nested_group').includes('wf-group'), true);
+  assert.equal(classListFor(html, 'nested_group').includes('wf-surface'), false);
+  assert.equal(classListFor(html, 'grid_parent').includes('wf-group'), true);
+  assert.equal(classListFor(html, 'grid_tile').includes('wf-surface'), true);
+});
+
+test('renderNode explicit surface flags override depth demotion', () => {
+  const html = renderNode({
+    id: 'top',
+    component: 'section',
+    children: [
+      { id: 'forced_card', component: 'section', surface: true, children: [] },
+      { id: 'forced_group', component: 'section', surface: false, children: [] },
+    ],
+  }, {
+    mode: 'card',
+    rendering: { mode: 'card' },
+  });
+
+  assert.equal(classListFor(html, 'forced_card').includes('wf-surface'), true);
+  assert.equal(classListFor(html, 'forced_group').includes('wf-surface'), false);
+  assert.equal(classListFor(html, 'forced_group').includes('wf-group'), true);
+});
+
+test('renderNode collection clones preserve surface depth for children', () => {
+  const html = renderNode({
+    id: 'collection_card',
+    component: 'section',
+    binding: { source: 'cards' },
+    children: [
+      { id: 'collection_child', component: 'section', children: [] },
+    ],
+  }, {
+    mode: 'card',
+    rendering: { mode: 'card' },
+    dataSources: {
+      cards: [{ id: 1 }],
+    },
+  });
+
+  assert.equal(classListFor(html, 'collection_card_0').includes('wf-surface'), true);
+  assert.equal(classListFor(html, 'collection_child_0').includes('wf-group'), true);
+  assert.equal(classListFor(html, 'collection_child_0').includes('wf-surface'), false);
+});
+
+test('renderNode maps button variants and line mode uses plain labels', () => {
+  const dangerHtml = renderNode({
+    id: 'delete_button',
+    component: 'button',
+    props: { label: 'Delete', variant: 'danger' },
+  }, {
+    mode: 'card',
+    rendering: { mode: 'card' },
+  });
+  const lineHtml = renderNode({
+    id: 'filters_button',
+    component: 'button',
+    props: { label: 'Filters', variant: 'primary' },
+  }, {
+    mode: 'line',
+    rendering: { mode: 'line' },
+  });
+
+  assert.equal(classListFor(dangerHtml, 'delete_button').includes('wf-button-danger'), true);
+  assert.equal(dangerHtml.includes('fa-triangle-exclamation'), true);
+  assert.equal(classListFor(lineHtml, 'filters_button').includes('wf-button-primary'), true);
+  assert.equal(lineHtml.includes('[ Filters ]'), false);
+  assert.equal(lineHtml.includes('>Filters<'), true);
+});
+
+test('renderNode treats percentage spacers in flex layouts as flexible space', () => {
+  const flexSpacer = renderNode({
+    id: 'nav_spacer',
+    component: 'spacer',
+    props: { size: '100%' },
+  }, {
+    parentLayoutType: 'row',
+  });
+  const gridSpacer = renderNode({
+    id: 'grid_spacer',
+    component: 'spacer',
+    props: { size: '100%' },
+  }, {
+    parentLayoutType: 'grid',
+  });
+
+  assert.equal(flexSpacer.includes('flex:1 1 auto'), true);
+  assert.equal(gridSpacer.includes('flex:1 1 auto'), false);
+  assert.equal(gridSpacer.includes('height:16px'), true);
 });

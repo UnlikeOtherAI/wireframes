@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
 const { runDoctor } = require(path.resolve(__dirname, '..', 'doctor'));
+const { validatePrimitiveProps } = require('./rules/primitive-props');
 
 const RESERVED_KEYWORDS = new Set([
   'page',
@@ -140,6 +141,11 @@ function validateNodeIds(result, node, context, includeUsage) {
   }
 }
 
+function validateNode(result, node, context) {
+  validateNodeIds(result, node, context, {});
+  validatePrimitiveProps(result, node, context);
+}
+
 function loadYamlSafe(filePath, result) {
   const content = fs.readFileSync(filePath, 'utf8');
   try {
@@ -186,7 +192,7 @@ function collectLintTargets(projectPath, result) {
       if (region && typeof region.id === 'string') {
         validateIdentifier(result, `template "${templateId}" region`, region.id);
       }
-      validateNodeIds(result, region, `template "${templateId}" region`, {});
+      validateNode(result, region, `template "${templateId}" region`);
     }
     if (Array.isArray(templateDoc.overlays)) {
       for (const overlay of templateDoc.overlays) {
@@ -196,7 +202,7 @@ function collectLintTargets(projectPath, result) {
         if (typeof overlay.id === 'string') {
           validateIdentifier(result, `template "${templateId}" overlay`, overlay.id);
         }
-        validateNodeIds(result, overlay, `template "${templateId}" overlay`, {});
+        validateNode(result, overlay, `template "${templateId}" overlay`);
       }
     }
   }
@@ -205,7 +211,7 @@ function collectLintTargets(projectPath, result) {
   for (const [componentId, componentDoc] of Object.entries(componentMap)) {
     validateIdentifier(result, `component "${componentId}"`, componentId);
     if (isObject(componentDoc) && isObject(componentDoc.root)) {
-      validateNodeIds(result, componentDoc.root, `component "${componentId}" root`, {});
+      validateNode(result, componentDoc.root, `component "${componentId}" root`);
     }
   }
 
@@ -236,7 +242,7 @@ function collectLintTargets(projectPath, result) {
           validateIdentifier(result, `page "${pageData.id}" slot`, slot.slotId);
           if (Array.isArray(slot.content)) {
             for (const node of slot.content) {
-              validateNodeIds(result, node, `page "${pageData.id}" slot "${slot.slotId}"`, {});
+              validateNode(result, node, `page "${pageData.id}" slot "${slot.slotId}" > ${node.id ?? 'node'}`);
             }
           }
         }
@@ -248,7 +254,7 @@ function collectLintTargets(projectPath, result) {
           validateIdentifier(result, `page "${pageData.id}" injectable`, injectable.injectableId);
           if (Array.isArray(injectable.content)) {
             for (const node of injectable.content) {
-              validateNodeIds(result, node, `page "${pageData.id}" injectable "${injectable.injectableId}"`, {});
+              validateNode(result, node, `page "${pageData.id}" injectable "${injectable.injectableId}" > ${node.id ?? 'node'}`);
             }
           }
         }
@@ -264,7 +270,7 @@ function collectLintTargets(projectPath, result) {
         }
         if (Array.isArray(overlay.content)) {
           for (const node of overlay.content) {
-            validateNodeIds(result, node, `page "${pageData.id}" overlay "${overlay.id}"`, {});
+            validateNode(result, node, `page "${pageData.id}" overlay "${overlay.id}" > ${node.id ?? 'node'}`);
           }
         }
       }
