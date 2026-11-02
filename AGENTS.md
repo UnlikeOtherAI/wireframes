@@ -27,6 +27,7 @@
 /api       Bun + PostgreSQL API (Drizzle ORM)
 /admin     React CSR — online wireframe editor
 /web       SSR landing page
+/mobile    Native apps: shared C++ core, web view host, iOS app
 /docs      All documentation
 ```
 

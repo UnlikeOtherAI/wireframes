@@ -1,6 +1,7 @@
 'use strict';
 
 const { renderNode, renderNodes } = require('../renderer/primitives');
+const { sourceAttrs } = require('../renderer/render-attrs');
 const { buildInteractionRuntime } = require('../renderer/interactions');
 const {
   layoutToCss,
@@ -12,6 +13,7 @@ const {
   wireframeRootStyle,
 } = require('../renderer/wireframe-styles');
 const { buildWireframeStyles } = require('../renderer/styles');
+const { adaptiveStyles } = require('../renderer/styles/adaptive');
 const { decideFrame } = require('../renderer/frame-rules');
 const { regionSizingCss, token } = require('../renderer/sizing-tokens');
 const { normalizePlatform, statusBarMarkup, homeIndicatorMarkup } = require('../renderer/platform');
@@ -151,7 +153,7 @@ function renderRoot(root, options) {
 
   const rootId = typeof root.id === 'string' && root.id.trim() !== '' ? ` id="${escapeAttr(root.id.trim())}"` : '';
 
-  return `<section${rootId} class="wf-root ${kindClass}${slotClass}${surfaceClass}${roleClass}${tabBarClass}"${styleAttr}${stickyAttr}${frameAttr}>
+  return `<section${rootId}${sourceAttrs(root, options)} class="wf-root ${kindClass}${slotClass}${surfaceClass}${roleClass}${tabBarClass}"${styleAttr}${stickyAttr}${frameAttr}>
       <div class="wf-root-title">${escapeHtml(rootLabel)}</div>
       <div class="wf-root-body${bodyDividerClass}"${bodyStyle}${bodyDivides}>${content}</div>
     </section>`;
@@ -176,13 +178,13 @@ function renderPageShell(roots, viewportWidth, viewportHeight, renderOptions, bo
   const bodyStyle = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
 
   return `<div class="wf-page" style="width:${viewportWidth}px;min-height:${viewportHeight}px;">
-  ${statusBarMarkup(platform)}
+  ${renderOptions.deviceChrome === false ? '' : statusBarMarkup(platform)}
   ${topHtml}
   <div class="${bodyClass}"${bodyStyle}>
     ${bodyHtml}
   </div>
   ${bottomHtml}
-  ${homeIndicatorMarkup(platform)}
+  ${renderOptions.deviceChrome === false ? '' : homeIndicatorMarkup(platform)}
 </div>`;
 }
 
@@ -226,6 +228,9 @@ function renderWireframeMarkup({
   imageResolver = null,
   sizing = {},
   explain = false,
+  annotateSource = false,
+  deviceChrome = true,
+  adaptTo = null,
 }) {
   const mode = rendering?.mode === 'line' ? 'line' : 'card';
   const density = rendering?.density === 'compact' ? 'compact' : 'comfortable';
@@ -238,6 +243,8 @@ function renderWireframeMarkup({
   const shellHeight = Number.isFinite(frame?.height) && frame.height > 0 ? frame.height : viewportHeight;
 
   const renderOptions = {
+    annotateSource,
+    deviceChrome,
     pageStyle,
     projectPath,
     dataSources,
@@ -294,7 +301,8 @@ function renderWireframeMarkup({
       platform: pageViewport?.device || 'web',
     })}</script>`;
 
-  const styles = buildWireframeStyles();
+  const styles = adaptTo ? `${buildWireframeStyles()}\n${adaptiveStyles}` : buildWireframeStyles();
+  const adaptClass = adaptTo ? ` wf-adapt-${escapeAttr(adaptTo)}` : '';
   const styleMarkup = wireframeCssHref
     ? `<link rel="stylesheet" href="${escapeAttr(wireframeCssHref)}" />`
     : `<style>${styles}</style>`;
@@ -312,7 +320,7 @@ function renderWireframeMarkup({
     ${fontAwesomeLink}
     ${styleMarkup}
   </head>
-  <body class="wf wf-mode-${escapeAttr(mode)} wf-platform-${escapeAttr(renderOptions.platform)} wf-density-${escapeAttr(density)}" style="${escapeAttr(platformVars(renderOptions))}">
+  <body class="wf${adaptClass} wf-mode-${escapeAttr(mode)} wf-platform-${escapeAttr(renderOptions.platform)} wf-density-${escapeAttr(density)}" style="${escapeAttr(platformVars(renderOptions))}">
     ${shellMarkup}
     ${runtimeScript}
   </body>

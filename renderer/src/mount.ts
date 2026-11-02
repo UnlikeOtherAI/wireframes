@@ -119,6 +119,7 @@ export function createWireframe(
   }
 
   const listener: Listener = (event) => {
+    if (event.source !== frame.contentWindow) return;
     const data = event.data as { type?: string; routeId?: string } | null;
     if (!data || data.type !== 'wf:navigate' || typeof data.routeId !== 'string') return;
     const target = pageByRoute.get(data.routeId);
