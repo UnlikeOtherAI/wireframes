@@ -12,6 +12,8 @@ const {
   wireframeRootStyle,
 } = require('../renderer/wireframe-styles');
 const { buildWireframeStyles } = require('../renderer/styles');
+const { decideFrame } = require('../renderer/frame-rules');
+const { regionSizingCss, token } = require('../renderer/sizing-tokens');
 
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
@@ -79,7 +81,17 @@ function renderRoot(root, options) {
   const rootLayoutType = rootLayout.type || 'stack';
   const isOverlay = root.kind === 'overlay';
   const isSlot = root.kind === 'slot';
-  const rootRendersSurface = !isOverlay && !isSlot;
+  const role = typeof root.role === 'string' && root.role.trim() !== '' ? root.role.trim() : null;
+
+  const decision = decideFrame(root, {
+    element: '',
+    isRegionRoot: true,
+    regionKind: root.kind,
+    role,
+    surfaceDepth: 0,
+  });
+  const rootRendersSurface = decision.frame === 'surface';
+
   const content = renderNodes(children, {
     ...options,
     routeId: options.routeId || '',
@@ -87,10 +99,24 @@ function renderRoot(root, options) {
     dataSources: options.dataSources || {},
     parentLayoutType: rootLayoutType,
     parentLayoutIsGrid: rootLayoutType === 'grid',
+    parentDivides: shouldRenderParentSeparators(rootLayout),
     surfaceDepth: rootRendersSurface ? 1 : 0,
   });
 
-  const rootStyle = wireframeRootStyle(options.pageStyle, root.wireframeStyle, options.rendering);
+  // Region proportions: the author's `size` wins; otherwise the role's token
+  // supplies a width/height and stops the region collapsing to content width.
+  const sizeCss = layoutToCss({ type: 'none' }, isObject(root.size) ? root.size : {}, {});
+  const roleCss = regionSizingCss(role, root.size, options.viewport, options.sizing);
+  const padCss = rootRendersSurface && rootLayout.padding == null
+    ? `padding:${token('card.padding', options.viewport, options.sizing) || 16}px`
+    : '';
+
+  const rootStyle = [
+    wireframeRootStyle(options.pageStyle, root.wireframeStyle, options.rendering),
+    sizeCss,
+    roleCss,
+    padCss,
+  ].filter(Boolean).join(';');
   const styleAttr = rootStyle ? ` style="${escapeAttr(rootStyle)}"` : '';
 
   const bodyLayoutCss = layoutToCss(rootLayout, {}, { density: options.density });
@@ -99,13 +125,17 @@ function renderRoot(root, options) {
 
   const kindClass = isOverlay ? 'wf-root-overlay' : 'wf-root-container';
   const slotClass = isSlot ? ' wf-root-slot' : '';
-  const surfaceClass = rootRendersSurface ? ' wf-surface' : '';
+  const surfaceClass = rootRendersSurface ? ' wf-surface' : ' wf-group';
+  const roleClass = role ? ` wf-role-${toSafeClass(role)}` : '';
 
   const stickyAttr = (root.sticky === 'top' || root.sticky === 'bottom')
     ? ` data-sticky="${escapeAttr(root.sticky)}"`
     : '';
+  const frameAttr = ` data-wf-frame="${decision.frame}"${
+    options.explain === true ? ` data-wf-why="${escapeAttr(`${decision.rule}:${decision.reason}`)}"` : ''
+  }`;
 
-  return `<section class="wf-root ${kindClass}${slotClass}${surfaceClass}"${styleAttr}${stickyAttr}>
+  return `<section class="wf-root ${kindClass}${slotClass}${surfaceClass}${roleClass}"${styleAttr}${stickyAttr}${frameAttr}>
       <div class="wf-root-title">${escapeHtml(rootLabel)}</div>
       <div class="wf-root-body${bodyDividerClass}"${bodyStyle}>${content}</div>
     </section>`;
@@ -158,6 +188,8 @@ function renderWireframeMarkup({
   bodyLayoutType = 'row',
   bodyLayout = {},
   imageResolver = null,
+  sizing = {},
+  explain = false,
 }) {
   const mode = rendering?.mode === 'line' ? 'line' : 'card';
   const density = rendering?.density === 'compact' ? 'compact' : 'comfortable';
@@ -176,10 +208,14 @@ function renderWireframeMarkup({
     defaultGridColumns,
     assetUrlPrefix,
     routeId: pageRouteId,
+    routeTable,
     mode,
     density,
     rendering,
     imageResolver,
+    viewport: pageViewport,
+    sizing,
+    explain: explain === true || rendering?.explain === true,
   };
 
   let shellMarkup;

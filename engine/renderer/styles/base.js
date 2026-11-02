@@ -1,110 +1,111 @@
 'use strict';
 
-// Mode CSS strings live here; per-node wireframeStyle overrides live in ../wireframe-styles.js.
+// Page shell, frame treatment and typography.
+// Frames are keyed on [data-wf-frame], which the renderer decides. CSS never
+// infers a box from nesting or adjacency.
 
 const baseStyles = [
-    '*{box-sizing:border-box}',
-    'body{margin:0;font-family:system-ui,sans-serif}',
+  '*{box-sizing:border-box}',
+  'body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#374151}',
 
-    // --- Mode: page background ---
-    '.wf-mode-line{background:#ffffff}',
-    '.wf-mode-card{background:#f3f4f6}',
+  // --- Tokens ---
+  ':root{--wf-ink:#111827;--wf-ink-2:#374151;--wf-ink-3:#6b7280;--wf-ink-4:#9ca3af;'
+    + '--wf-line:#d1d5db;--wf-line-2:#e5e7eb;--wf-line-strong:#4b5563;--wf-fill:#f3f4f6;--wf-fill-2:#f9fafb}',
 
-    // --- Page shell ---
-    // Flex column, centered at device width, min-height (not fixed height — browser scrolls it)
-    '.wf-page{display:flex;flex-direction:column;margin:0 auto}',
-    '.wf-mode-card .wf-page{padding:16px;gap:16px}',
-    // Body row: fill remaining height, stretch all children (sidebars fill full height)
-    '.wf-body-row{flex:1;display:flex;flex-direction:row;align-items:stretch;min-height:0}',
-    // Body column: stack template — regions stack vertically
-    '.wf-body-column{flex:1;display:flex;flex-direction:column;min-height:0}',
-    '.wf-mode-card .wf-body-row,.wf-mode-card .wf-body-column{gap:16px}',
+  // --- Mode: page background ---
+  '.wf-mode-line{background:#ffffff}',
+  '.wf-mode-card{background:var(--wf-fill)}',
 
-    // --- Sticky regions ---
-    '.wf-root[data-sticky="top"]{position:sticky;top:0;z-index:10;flex-shrink:0}',
-    '.wf-root[data-sticky="bottom"]{position:sticky;bottom:0;z-index:10;flex-shrink:0}',
+  // --- Page shell ---
+  '.wf-page{display:flex;flex-direction:column;margin:0 auto;min-width:0}',
+  '.wf-mode-card .wf-page{padding:16px;gap:16px}',
+  '.wf-body-row{flex:1;display:flex;flex-direction:row;align-items:stretch;min-height:0;min-width:0}',
+  '.wf-body-column{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0}',
+  '.wf-mode-card .wf-body-row,.wf-mode-card .wf-body-column{gap:16px}',
 
-    // --- Root wrappers ---
-    '.wf-root{border:none;padding:0;margin:0}',
-    '.wf-root-slot{flex:1;min-width:0}',
-    '.wf-root-title{display:none}',
-    '.wf-root-body{display:block}',
-    '.wf-node-children{display:contents}',
+  // --- Sticky regions ---
+  '.wf-root[data-sticky="top"]{position:sticky;top:0;z-index:10;flex-shrink:0}',
+  '.wf-root[data-sticky="bottom"]{position:sticky;bottom:0;z-index:10;flex-shrink:0}',
 
-    // --- Surface: template regions, section components ---
-    // Line mode: transparent bg, single outline (outline doesn't affect box model)
-    '.wf-mode-line .wf-surface{background:transparent;outline:var(--wf-border-width,1px) var(--wf-border-style,solid) #4b5563;border-radius:var(--wf-surface-radius,0px)}',
-    // Card mode: white card with border and subtle shadow
-    '.wf-mode-card .wf-surface{background:#ffffff;border:var(--wf-border-width,1px) var(--wf-border-style,solid) #e5e7eb;box-shadow:var(--wf-surface-shadow,0 1px 3px rgba(0,0,0,0.08));border-radius:var(--wf-surface-radius,4px)}',
+  // --- Roots ---
+  '.wf-root{border:none;margin:0;min-width:0}',
+  '.wf-root-slot{flex:1 1 auto;min-width:0}',
+  '.wf-root-title{display:none}',
+  '.wf-root-body{display:block;min-width:0}',
+  '.wf-node-children{display:contents}',
 
-    // --- Structural nodes ---
-    // Fallback (no mode class): retain original bordered appearance for any context without a mode
-    '.wf-node{background:#fff;border:var(--wf-border-width,1px) var(--wf-border-style,solid) #333;border-radius:var(--wf-surface-radius,0px);padding:6px;margin:4px;min-height:22px}',
+  // --- The frame contract ---
+  // Only [data-wf-frame="surface"] draws a container box.
+  '.wf-node,.wf-root{background:transparent;border:none;min-width:0}',
+  '.wf-mode-line [data-wf-frame="surface"]{background:transparent;'
+    + 'outline:var(--wf-border-width,1px) var(--wf-border-style,dashed) var(--wf-line-strong);'
+    + 'outline-offset:-1px;border-radius:var(--wf-surface-radius,0px)}',
+  '.wf-mode-card [data-wf-frame="surface"]{background:#ffffff;'
+    + 'border:var(--wf-border-width,1px) var(--wf-border-style,solid) var(--wf-line-2);'
+    + 'box-shadow:var(--wf-surface-shadow,0 1px 2px rgba(17,24,39,0.06));'
+    + 'border-radius:var(--wf-surface-radius,6px)}',
+  '[data-wf-frame="group"],[data-wf-frame="content"],[data-wf-frame="control"]{background:transparent;border:none;box-shadow:none;outline:none}',
+  // Edge elements draw one rule, never a box.
+  '[data-wf-frame="edge"]{background:transparent;border:none;box-shadow:none;outline:none}',
+  // Separators between the children of a divided container.
+  '.wf-mode-line [data-wf-edge="after"]{border-bottom:1px dashed var(--wf-line-strong)}',
+  '.wf-mode-card [data-wf-edge="after"]{border-bottom:1px solid var(--wf-line-2)}',
+  '.wf-mode-line [style*="flex-direction:row"]>.wf-node-children>[data-wf-edge="after"]{border-bottom:none;border-right:1px dashed var(--wf-line-strong)}',
+  '.wf-mode-card [style*="flex-direction:row"]>.wf-node-children>[data-wf-edge="after"]{border-bottom:none;border-right:1px solid var(--wf-line-2)}',
 
-    // In both rendering modes, only explicit surfaces (wf-surface) show frames.
-    // Generic container nodes are transparent layout wrappers — no border, no background.
-    // This prevents frames appearing on labels, wrappers, and other non-frame containers.
-    '.wf-mode-line .wf-node:not(.wf-surface){border:none;background:transparent}',
-    '.wf-mode-card .wf-node:not(.wf-surface){border:none;background:transparent}',
+  // --- Typography ---
+  '.wf-heading h1,.wf-heading h2,.wf-heading h3,.wf-heading h4,.wf-heading h5,.wf-heading h6{margin:0;color:var(--wf-ink)}',
+  '.wf-heading h1{font-size:26px;font-weight:650;line-height:1.2}',
+  '.wf-heading h2{font-size:21px;font-weight:620;line-height:1.25}',
+  '.wf-heading h3{font-size:17px;font-weight:600;line-height:1.3}',
+  '.wf-heading h4{font-size:15px;font-weight:600;line-height:1.35}',
+  '.wf-heading h5{font-size:13px;font-weight:600;line-height:1.35}',
+  '.wf-heading h6{font-size:12px;font-weight:600;line-height:1.35;text-transform:uppercase;letter-spacing:.04em;color:var(--wf-ink-3)}',
+  '.wf-paragraph p{margin:0;font-size:14px;line-height:1.6;color:var(--wf-ink-2);max-width:68ch}',
+  '.wf-text{font-size:14px;line-height:1.45;color:var(--wf-ink-2)}',
+  '.wf-text-meta,.wf-text-caption{font-size:12px;color:var(--wf-ink-3)}',
+  '.wf-text-label{font-size:12px;font-weight:600;color:var(--wf-ink-3);text-transform:uppercase;letter-spacing:.04em}',
+  '.wf-text-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}',
+  '.wf-inline-link{color:inherit;text-decoration:underline;text-underline-offset:2px}',
+  '.wf-interactive{cursor:pointer}',
 
-    // Explicit surface treatment (sections + template regions) — mode-specific borders
-    '.wf-mode-line .wf-node.wf-surface{border:none;background:transparent;box-shadow:none;outline:var(--wf-border-width,1px) var(--wf-border-style,solid) #4b5563;border-radius:var(--wf-surface-radius,0px)}',
-    '.wf-mode-card .wf-node.wf-surface{border:var(--wf-border-width,1px) var(--wf-border-style,solid) #e5e7eb;background:#ffffff;box-shadow:var(--wf-surface-shadow,0 1px 3px rgba(0,0,0,0.08));border-radius:var(--wf-surface-radius,4px)}',
+  // --- Skeletons: the wireframe placeholder vocabulary ---
+  '.wf-skeleton{display:inline-block;height:.85em;min-width:1.5em;border-radius:2px;'
+    + 'background:var(--wf-skeleton-bg,var(--wf-line-2));vertical-align:middle}',
+  '.wf-mode-line .wf-skeleton{background:transparent;border:1px dashed var(--wf-line)}',
+  '.wf-skeleton-row{display:block;margin-bottom:6px}',
+  '.wf-skeleton-lines{display:block;flex:1 1 auto;min-width:0}',
+  '.wf-skeleton{}',
+  '.wf-skeleton-avatar{display:inline-block;width:36px;height:36px;border-radius:50%;background:var(--wf-line-2);margin-right:10px;vertical-align:top}',
 
-    // --- Borderless primitives (no box) ---
-    '.wf-heading,.wf-paragraph,.wf-text,.wf-image,.wf-icon,.wf-button,.wf-input,.wf-textarea,.wf-select,.wf-checkbox,.wf-radio,.wf-toggle{border:none;background:transparent;padding:2px 0;min-height:0}',
-    '.wf-heading h1,.wf-heading h2,.wf-heading h3,.wf-heading h4,.wf-heading h5,.wf-heading h6,.wf-paragraph p{margin:0}',
-    '.wf-heading h1{font-size:24px;font-weight:650;line-height:1.2;color:#111827}',
-    '.wf-heading h2{font-size:20px;font-weight:600;line-height:1.25;color:#111827}',
-    '.wf-heading h3{font-size:16px;font-weight:600;line-height:1.3;color:#111827}',
-    '.wf-heading h4{font-size:14px;font-weight:600;line-height:1.35;color:#111827}',
-    '.wf-heading h5{font-size:13px;font-weight:600;line-height:1.35;color:#111827}',
-    '.wf-heading h6{font-size:12px;font-weight:600;line-height:1.35;text-transform:uppercase;letter-spacing:0;color:#6b7280}',
-    '.wf-paragraph p{font-size:14px;font-weight:400;line-height:1.6;color:#4b5563;max-width:65ch}',
-    '.wf-text{font-size:14px;line-height:1.4;color:#374151}',
-    '.wf-text-meta{font-size:12px;color:#6b7280}',
-    '.wf-icon{display:inline-flex;align-items:center;justify-content:center;color:#374151}',
-    '.wf-button,.wf-checkbox,.wf-radio,.wf-toggle{width:fit-content}',
-    '.wf-input,.wf-textarea,.wf-select{width:100%}',
-    '.wf-button i.fa-solid,.wf-button i.fa-regular,.wf-button i.fa-brands{margin-right:4px}',
-    '.wf-interactive{cursor:pointer}',
-    '.wf-inline-link{color:inherit;text-decoration:underline;text-underline-offset:2px}',
-    '.wf-button-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:inherit}',
+  // --- Icons: readable with or without the icon font ---
+  '.wf-ico{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}',
+  '.wf-icon-glyph{display:inline-flex;align-items:center;justify-content:center;color:var(--wf-ink-2);font-size:16px;width:1em;min-width:1em;line-height:1}',
+  '.wf-icon-glyph:not([class*="fa-"]):before,.wf-icon-glyph.fa-solid:not(.fa-classic):before{}',
+  // Fallback box drawn only when the icon font left the glyph empty.
+  '.wf-icon-glyph:empty:not(.fa-solid):not(.fa-regular):not(.fa-brands):after{content:attr(data-wf-glyph);'
+    + 'display:inline-flex;align-items:center;justify-content:center;width:1em;height:1em;'
+    + 'border:1px solid var(--wf-line);border-radius:2px;font-size:.7em;font-family:system-ui,sans-serif}',
 
-    // --- Buttons: mode-specific styling ---
-    '.wf-button button,.wf-button .wf-button-link{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:6px 14px;font-size:13px;font-weight:500;line-height:1.3;cursor:pointer;font-family:inherit}',
-    '.wf-mode-line .wf-button button,.wf-mode-line .wf-button .wf-button-link{background:transparent;border:1px solid #4b5563;color:#111827;border-radius:0}',
-    '.wf-mode-line .wf-button-primary button,.wf-mode-line .wf-button-primary .wf-button-link{border-width:2px}',
-    '.wf-mode-card .wf-button button,.wf-mode-card .wf-button .wf-button-link{background:#e5e7eb;border:1px solid transparent;color:#374151;border-radius:var(--wf-corner-radius,6px)}',
-    '.wf-mode-card .wf-button-primary button,.wf-mode-card .wf-button-primary .wf-button-link,.wf-mode-card .wf-button-danger button,.wf-mode-card .wf-button-danger .wf-button-link{background:#1f2937;color:#ffffff}',
-    '.wf-mode-card .wf-button-secondary button,.wf-mode-card .wf-button-secondary .wf-button-link{background:#e5e7eb;color:#374151}',
-    '.wf-mode-card .wf-button-ghost button,.wf-mode-card .wf-button-ghost .wf-button-link{background:transparent;color:#374151}',
-    // Fallback button (no mode)
-    '.wf-button button,.wf-button .wf-button-link{cursor:pointer;font-family:inherit}',
+  // --- Block headers shared by card, section, form ---
+  '.wf-block-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;min-width:0}',
+  '.wf-block-text{min-width:0}',
+  '.wf-block-title,.wf-section-title,.wf-card-title,.wf-form-title{margin:0;color:var(--wf-ink);font-size:14px;font-weight:600;line-height:1.3}',
+  '.wf-block-desc{margin-top:2px;color:var(--wf-ink-3);font-size:12px;line-height:1.45}',
+  '.wf-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}',
 
-    // --- Tab bars (in-page tabs — buttons not stretched) ---
-    '.wf-tab-bar{padding:0;margin:0;overflow:hidden}',
-    '.wf-tab-bar-body{min-height:0}',
-    '.wf-tab-bar .wf-node-children{display:flex;flex:1 1 auto;min-width:0}',
-    '.wf-tab-bar .wf-button,.wf-tab-bar .wf-section,.wf-tab-bar .wf-text{margin:0}',
-    '.wf-mode-card .wf-tab-bar .wf-button .wf-button-link,.wf-mode-card .wf-tab-bar .wf-button button{min-width:0;border-radius:0;background:#f3f4f6}',
-    '.wf-mode-line .wf-tab-bar .wf-button .wf-button-link,.wf-mode-line .wf-tab-bar .wf-button button{min-width:0}',
-    '.wf-tab-bar .wf-selected{outline:none}',
-    '.wf-tab-bar .wf-selected button,.wf-tab-bar .wf-selected .wf-button-link{color:#111827;border-bottom:2px solid #1f2937}',
-
-    // --- Bottom tab bar (iOS-style — buttons stretched, icon above text) ---
-    '.wf-bottom-tab-bar{padding:0;margin:0;overflow:hidden}',
-    '.wf-bottom-tab-bar-body{min-height:0}',
-    '.wf-bottom-tab-bar .wf-node-children{display:flex;flex:1 1 auto;min-width:0}',
-    '.wf-bottom-tab-bar .wf-node-children>*{flex:1 1 0;min-width:0}',
-    '.wf-bottom-tab-bar .wf-button,.wf-bottom-tab-bar .wf-section,.wf-bottom-tab-bar .wf-text{margin:0}',
-    '.wf-bottom-tab-bar .wf-button,.wf-bottom-tab-bar .wf-button .wf-button-link,.wf-bottom-tab-bar .wf-button button{width:100%}',
-    '.wf-mode-card .wf-bottom-tab-bar .wf-button .wf-button-link,.wf-mode-card .wf-bottom-tab-bar .wf-button button{min-width:0;border-radius:0;background:#f3f4f6}',
-    '.wf-mode-line .wf-bottom-tab-bar .wf-button .wf-button-link,.wf-mode-line .wf-bottom-tab-bar .wf-button button{min-width:0}',
-    '.wf-bottom-tab-bar .wf-button button,.wf-bottom-tab-bar .wf-button .wf-button-link{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;font-size:11px}',
-    '.wf-bottom-tab-bar .wf-button i{margin-right:0;font-size:16px}',
+  // --- The shared action button, used inside composite elements ---
+  '.wf-act{display:inline-flex;align-items:center;justify-content:center;gap:6px;'
+    + 'min-height:32px;min-width:var(--wf-control-min,80px);padding:6px 14px;'
+    + 'font:inherit;font-size:13px;font-weight:500;line-height:1.2;white-space:nowrap;cursor:pointer}',
+  '.wf-act-icon{min-width:32px;padding:6px}',
+  '.wf-mode-line .wf-act{background:transparent;border:1px solid var(--wf-line-strong);color:var(--wf-ink);border-radius:0}',
+  '.wf-mode-line .wf-button-primary.wf-act{border-width:2px}',
+  '.wf-mode-card .wf-act{background:var(--wf-line-2);border:1px solid transparent;color:var(--wf-ink-2);border-radius:var(--wf-corner-radius,6px)}',
+  '.wf-mode-card .wf-button-primary.wf-act{background:#1f2937;color:#ffffff}',
+  '.wf-mode-card .wf-button-danger.wf-act{background:#1f2937;color:#ffffff}',
+  '.wf-mode-card .wf-button-ghost.wf-act{background:transparent;color:var(--wf-ink-2)}',
+  '.wf-mode-card .wf-button-link.wf-act{background:transparent;color:var(--wf-ink);text-decoration:underline;min-width:0;padding:0}',
 ].join('\n');
 
-module.exports = {
-  baseStyles,
-};
+module.exports = { baseStyles };

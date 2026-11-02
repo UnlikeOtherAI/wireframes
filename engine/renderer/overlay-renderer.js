@@ -163,15 +163,55 @@ function renderOverlay(node, options, childStyle, ctx) {
     .join(';');
   const stateBindings = isObject(node.stateBindings) ? { ...node.stateBindings } : {};
   const dataAttrs = ctx.buildNodeDataAttributes(node, stateBindings);
-  const children = ctx.renderChildren(node, { ...options, surfaceDepth: 0 });
+  // Overlay chrome owns the frame, so its own children must not draw one too.
+  const children = ctx.renderChildren(node, { ...options, surfaceDepth: 1, isOverlayChild: true });
   const backdrop = overlayTypeNeedsBackdrop(overlayType)
-    ? '<div class="wf-overlay-backdrop" aria-hidden="true" style="position:absolute;inset:0;background:rgba(0,0,0,0.3);display:none;"></div>'
+    ? '<div class="wf-overlay-backdrop" aria-hidden="true" style="position:absolute;inset:0;background:rgba(17,24,39,0.35);display:none;"></div>'
     : '';
 
-  const contentSizeStyle = overlaySizeStyle(node.size);
+  const props = isObject(node.props) ? node.props : {};
+  const title = typeof props.title === 'string' && props.title.trim() !== '' ? props.title.trim() : '';
+  const header = title
+    ? `<header class="wf-overlay-head"><div class="wf-overlay-title">${ctx.escapeHtml(title)}</div>${
+      node.dismissOn ? '<button class="wf-overlay-close">×</button>' : ''
+    }</header>`
+    : '';
+  const actions = Array.isArray(props.actions) && props.actions.length > 0
+    ? `<footer class="wf-overlay-foot">${props.actions.map((action) => {
+      const entry = isObject(action) ? action : { label: String(action) };
+      const variant = typeof entry.variant === 'string' ? entry.variant : 'secondary';
+      return `<button class="wf-act wf-button-${ctx.toSafeClass(variant)}">${ctx.escapeHtml(String(entry.label ?? ''))}</button>`;
+    }).join('')}</footer>`
+    : '';
+
+  const contentSizeStyle = [
+    overlaySizeStyle(node.size),
+    overlayDefaultSize(overlayType, node.size, options),
+  ].filter(Boolean).join(';');
   const contentStyleAttr = contentSizeStyle ? ` style="${ctx.escapeAttr(contentSizeStyle)}"` : '';
 
-  return `<div${ctx.joinAttrs(node.id, overlayClasses, overlayStyle)}${dataAttrs}>${backdrop}<div class="wf-overlay-content"${contentStyleAttr}>${children}</div></div>`;
+  return `<div${ctx.joinAttrs(node.id, overlayClasses, overlayStyle)}${dataAttrs}>${backdrop}<div class="wf-overlay-content" data-wf-frame="surface"${contentStyleAttr}>${header}${children}${actions}</div></div>`;
+}
+
+const { token } = require('./sizing-tokens');
+
+/** Width/height a modal, drawer or sheet gets when the author sets none. */
+function overlayDefaultSize(type, size, options) {
+  if (isObject(size) && size.width != null) return '';
+  const viewport = options?.viewport;
+  if (type === 'modal' || type === 'alert') {
+    const width = token('modal.width', viewport, options?.sizing);
+    return width ? `width:min(${width}px, calc(100% - 32px))` : 'width:calc(100% - 32px)';
+  }
+  if (type === 'drawer_left' || type === 'drawer_right') {
+    const width = token('drawer.width', viewport, options?.sizing);
+    return width ? `width:min(${width}px, 85vw)` : '';
+  }
+  if (type === 'bottom_sheet') {
+    const max = token('sheet.maxHeight', viewport, options?.sizing);
+    return max ? `max-height:${max}vh` : 'max-height:70vh';
+  }
+  return '';
 }
 
 module.exports = {
