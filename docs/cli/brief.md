@@ -588,6 +588,7 @@ wf where-used <componentId>
 wf where-used <datasetId>
 wf routes
 wf stats
+wf why <nodeId> [--page <pageId>] [--json]
 ```
 
 Read-only. No mutations.
@@ -595,6 +596,38 @@ Read-only. No mutations.
 * `where-used` — shows all pages/templates referencing a component or dataset
 * `routes` — lists all routes with page and template mappings
 * `stats` — total pages, templates, components, unused components, dataset sizes
+* `why` — explains how one node rendered: its frame, the rule behind it, the
+  resolved sizing tokens, and the single edit that would change it. It reads the
+  rendered markup rather than re-deriving the decision, so it cannot disagree
+  with the output.
+
+---
+
+## Packaging
+
+```bash
+wf pack [--out <file.wf>]
+wf unpack <file.wf> [--out <dir>]
+```
+
+`.wf` is the whole project in one text file: a multi-document YAML stream with
+`format: wf/1` on the manifest. Both directions are lossless. See
+[wf-format.md](wf-format.md).
+
+---
+
+## Reference for agents
+
+```bash
+wf llm                      # the full generated reference
+wf llm --short              # a ~1,100-token cheat sheet
+wf llm --element <name>     # one element, with an example
+wf llm --family <name>      # containers | text | controls | navigation | data | feedback
+```
+
+Generated from `engine/schema/primitive-registry/`, so the reference cannot
+drift from the code. The human-readable twin is
+[agent-guide.md](agent-guide.md).
 
 ---
 

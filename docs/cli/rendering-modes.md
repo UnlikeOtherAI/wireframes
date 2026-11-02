@@ -59,8 +59,14 @@ is a renderer concern, not a schema concern.
 | s6    | 24  | `--wf-s6: 24px`    | Major section spacing                  |
 | s8    | 32  | `--wf-s8: 32px`    | Page-level spacing blocks              |
 
-The renderer snaps `layout.gap` and `layout.padding` values to the nearest
-token. Authors use raw pixel numbers in YAML; the renderer handles the mapping.
+Authors write raw pixel numbers and the renderer passes them through unchanged:
+snapping was specified here once but never implemented, and adding it now would
+silently move every existing layout. The tokens above are the values the
+built-in defaults use, not a grid that author values are rounded onto.
+
+Structural sizes — sidebar widths, header heights, control and row heights — do
+come from tokens, resolved per device class and per platform in
+`engine/renderer/sizing-tokens.js`. See [schema.md §4.3](schema.md).
 
 ### 2.2 Stroke tokens
 
@@ -144,7 +150,7 @@ background. Typography is grey, not black — it should recede behind the struct
 Surfaces (`section`, template regions, form containers, pane panels) render with:
 
 ```css
-.wf-mode-line .wf-surface {
+.wf-mode-line [data-wf-frame="surface"] {
   outline: var(--wf-surface-stroke);
   background: var(--wf-surface-bg);
   border-radius: var(--wf-surface-radius);
@@ -198,7 +204,7 @@ needed between sibling cards when they have gap > 0.
 **Surface rendering in card mode:**
 
 ```css
-.wf-mode-card .wf-surface {
+.wf-mode-card [data-wf-frame="surface"] {
   background:    var(--wf-surface-bg);
   border:        var(--wf-surface-stroke);
   border-radius: var(--wf-surface-radius);
@@ -245,10 +251,10 @@ CSS implementation:
 
 ```css
 /* Horizontal siblings (row layout) */
-.wf-divide-x > * + * { border-left: 1px solid var(--wf-divider-color); }
+[data-wf-divides="row"] > [data-wf-edge="after"] { border-right: 1px solid var(--wf-divider-color); }
 
 /* Vertical siblings (stack layout) */
-.wf-divide-y > * + * { border-top: 1px solid var(--wf-divider-color); }
+[data-wf-divides="stack"] > [data-wf-edge="after"] { border-bottom: 1px solid var(--wf-divider-color); }
 ```
 
 This is the CSS equivalent of Tailwind's `divide-x` / `divide-y`. Only one
@@ -277,7 +283,8 @@ for each layout container:
 
   else if gap == 0 and separators == "between":
     → Strategy 2: parent dividers.
-       Apply wf-divide-x (row) or wf-divide-y (stack) to parent.
+       The renderer marks the children wrapper data-wf-divides and tags
+       every child but the last data-wf-edge="after".
        Remove any border/outline from child surfaces that would double-up.
 
   else:
@@ -293,7 +300,9 @@ pass:
 1. Find all container elements with `data-wf-layout-type` and `data-wf-gap`.
 2. For containers with `gap > 0`: confirm layout uses CSS `gap` property — done.
 3. For containers with `gap == 0` and `data-wf-separators="between"`:
-   - Add `wf-divide-x` or `wf-divide-y` class to the container.
+   - The renderer marks the container `data-wf-divides` and tags each child
+     but the last `data-wf-edge="after"`. Children that would otherwise frame
+     are demoted, so a divided row is one block with rules, not a row of boxes.
    - Remove surface outline/border from direct children (the parent divider replaces them).
 4. Selected nodes get `outline: var(--wf-selected-outline)` via the selection runtime (never `border`, which would cause reflow).
 
@@ -390,17 +399,17 @@ No inner `overflow: scroll` container. No clipping.
   background:    var(--wf-surface-bg);
   border-radius: var(--wf-surface-radius);
 }
-.wf-mode-card .wf-surface {
+.wf-mode-card [data-wf-frame="surface"] {
   border:     var(--wf-surface-stroke);
   box-shadow: var(--wf-surface-shadow);
 }
-.wf-mode-line .wf-surface {
+.wf-mode-line [data-wf-frame="surface"] {
   outline: var(--wf-surface-stroke);
 }
 
 /* Dividers */
-.wf-divide-x > * + * { border-left:  var(--wf-divider-width) solid var(--wf-divider-color); }
-.wf-divide-y > * + * { border-top:   var(--wf-divider-width) solid var(--wf-divider-color); }
+[data-wf-divides="row"] > [data-wf-edge="after"] { border-right: var(--wf-divider-width) solid var(--wf-divider-color); }
+[data-wf-divides="stack"] > [data-wf-edge="after"] { border-bottom: var(--wf-divider-width) solid var(--wf-divider-color); }
 
 /* Selection indicator */
 .wf-selected { outline: var(--wf-selected-outline) !important; }
@@ -420,8 +429,8 @@ No inner `overflow: scroll` container. No clipping.
 | `layout.columns: N`      | `grid-template-columns: repeat(N, 1fr)` |
 | `layout.justify: X`      | `justify-content: X`                    |
 | `layout.align: X`        | `align-items: X`                        |
-| `layout.separators: between` (row) | `wf-divide-x` class on container |
-| `layout.separators: between` (stack) | `wf-divide-y` class on container |
+| `layout.separators: between` (row) | `data-wf-divides="row"` on the children wrapper |
+| `layout.separators: between` (stack) | `data-wf-divides="stack"` on the children wrapper |
 
 ---
 
@@ -765,9 +774,11 @@ layout:
 - If `separatorPolicy: divide` and `gap == 0`: render parent dividers.
 - If `separatorPolicy: none`: no gutters, no parent dividers.
 - If `gap > 0`: gutters are the separator. `separators` is ignored.
-- If `gap == 0` and `separators: between`: parent dividers are rendered
-  (`wf-divide-x` for rows, `wf-divide-y` for stacks). Child surface strokes
-  on the shared edge are suppressed.
+- If `gap == 0` and `separators: between`: the parent draws the dividers. Its
+  children wrapper is marked `data-wf-divides="row"` or `"stack"`, and every
+  child but the last carries `data-wf-edge="after"`. Children that would
+  otherwise frame are demoted to groups, so the result is one block with rules
+  rather than a line of boxes.
 - If `gap == 0` and `separators: none`: truly flush adjacency. No separator.
 
 `separatorPolicy` is the higher-level control; `separators` remains the explicit
@@ -977,11 +988,12 @@ slots:
 
 Rendered HTML structure:
 ```html
-<div class="wf-section wf-surface wf-divide-x" data-wf-id="panel_row"
-     data-wf-layout-type="row" data-wf-gap="0" data-wf-separators="between"
-     style="display:flex; flex-direction:row">
-  <!-- children do NOT get wf-surface (suppressed by stroke resolution) -->
-  <div class="wf-section" data-wf-id="left_panel" style="flex:1; padding:16px">
+<div id="panel_row" class="wf-node wf-section wf-group" data-wf-frame="group"
+     style="display:flex; flex-direction:row; gap:0">
+  <div class="wf-node-children" data-wf-divides="row">
+    <!-- children render as groups: the parent owns the strokes -->
+    <div id="left_panel" class="wf-node wf-section wf-group"
+         data-wf-frame="group" data-wf-edge="after" style="flex:1; padding:16px">
     <div class="wf-section-title">Left</div>
   </div>
   <div class="wf-section" data-wf-id="right_panel" style="flex:1; padding:16px">
