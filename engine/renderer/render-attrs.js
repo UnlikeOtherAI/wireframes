@@ -123,6 +123,16 @@ function buildNodeClasses(node, primitive, level = null, paneSide = null, isSurf
   return classList.join(' ');
 }
 
+/** Where a rendered node came from. Empty unless the render asked for it. */
+function sourceAttrs(node, options) {
+  if (options?.annotateSource !== true || !isObject(node)) return '';
+  const entries = [];
+  if (typeof node.__source === 'string') entries.push(`data-wf-source="${escapeAttr(node.__source)}"`);
+  if (typeof node.__definition === 'string') entries.push(`data-wf-definition="${escapeAttr(node.__definition)}"`);
+  if (Number.isInteger(options.rowIndex)) entries.push(`data-wf-row="${options.rowIndex}"`);
+  return entries.length > 0 ? ` ${entries.join(' ')}` : '';
+}
+
 function joinAttrs(nodeId, classes, style, extraAttrs = []) {
   const attrs = [];
   if (typeof nodeId === 'string' && nodeId.trim() !== '') {
@@ -246,6 +256,7 @@ module.exports = {
   buildNodeDataAttributes,
   buildNodeClasses,
   joinAttrs,
+  sourceAttrs,
   primaryNavigationTarget,
   navigationAttrs,
   renderImageElement,

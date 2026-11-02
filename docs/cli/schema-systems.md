@@ -57,7 +57,7 @@ Responsive values allowed for:
 * align
 * visibility
 
-No implicit breakpoints.
+No implicit breakpoints in a document. The renderer's opt-in `adaptive` option is a view of a page, described in rendering.md, and is not part of the schema.
 
 ---
 

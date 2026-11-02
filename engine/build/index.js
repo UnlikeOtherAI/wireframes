@@ -2,6 +2,7 @@
 
 const { normalizePlatform: resolveChromePlatform } = require('../renderer/platform');
 const { resolveTemplatePage } = require('../resolver');
+const { stampDocumentSources } = require('./source-stamps');
 const {
   renderWireframeMarkup,
 } = require('../screenshots/renderer');
@@ -248,14 +249,26 @@ function buildMasterIndexHtml(platformEntries, options = {}) {
 </html>`;
 }
 
+const DEVICE_SIZE = { mobile: 1, tablet: 2, web: 3 };
+
+/** The layout to fall back to when a page is drawn smaller than it was designed for. */
+function adaptiveLayout(page, viewport, options) {
+  if (options.adaptive !== true) return null;
+  const designed = DEVICE_SIZE[page.viewport?.device] ?? DEVICE_SIZE.web;
+  const shown = DEVICE_SIZE[viewport.device] ?? DEVICE_SIZE.web;
+  return shown < designed ? viewport.device : null;
+}
+
 function renderPage(documentMap, pageId, options = {}) {
-  const treeResult = resolvePageTree(documentMap, pageId);
+  const treeSource = options.annotateSource === true ? stampDocumentSources(documentMap) : documentMap;
+  const treeResult = resolvePageTree(treeSource, pageId);
   if (!treeResult.ok) {
     return { ok: false, error: treeResult.error };
   }
 
   const page = treeResult.page;
-  const viewportResult = resolveViewport(page.viewport);
+  const override = isObject(options.viewportOverride) ? options.viewportOverride : null;
+  const viewportResult = resolveViewport(override ? { ...page.viewport, ...override } : page.viewport);
   if (!viewportResult.ok) {
     return { ok: false, error: viewportResult.error };
   }
@@ -286,14 +299,17 @@ function renderPage(documentMap, pageId, options = {}) {
   const html = renderWireframeMarkup({
     roots: treeResult.roots,
     pageViewport: {
-      width: viewportResult.width,
-      height: viewportResult.height,
+      width: Number.isFinite(override?.width) ? override.width : viewportResult.width,
+      height: Number.isFinite(override?.height) ? override.height : viewportResult.height,
       device: viewportResult.device,
       orientation: viewportResult.orientation,
       platform: viewportResult.platform,
     },
     pageRouteId: routeInfo.id || pageId,
     routeTable: options.routeTable || {},
+    annotateSource: options.annotateSource === true,
+    deviceChrome: options.deviceChrome !== false,
+    adaptTo: adaptiveLayout(page, viewportResult, options),
     appStateDefaults,
     pageStateDefaults: isObject(page.pageState) ? page.pageState : {},
     pageStyle: page.wireframeStyle || defaultWireframeStyle,
