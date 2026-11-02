@@ -1,5 +1,6 @@
 'use strict';
 
+const { normalizePlatform } = require('../renderer/platform');
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
@@ -159,6 +160,7 @@ function resolveViewport(viewport = {}) {
     height: preset.height,
     device: viewport.device,
     orientation: viewport.orientation,
+    platform: normalizePlatform(viewport.platform, viewport.device),
   };
 }
 
@@ -331,6 +333,7 @@ function resolvePageTargets(projectPath, pageId) {
         height: viewportResult.height,
         device: viewportResult.device,
         orientation: viewportResult.orientation,
+        platform: viewportResult.platform,
       },
       wireframeStyle: page.wireframeStyle || defaultWireframeStyle,
       rendering: resolvePageRendering(page),

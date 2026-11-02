@@ -26,6 +26,8 @@ const TOKENS = {
   'sheet.maxHeight': { web: 0, tablet: 0, mobile: 70 },
   'chart.height': { web: 160, tablet: 160, mobile: 140 },
   'stat.minHeight': { web: 96, tablet: 96, mobile: 88 },
+  'statusbar.height': { web: 0, tablet: 28, mobile: 28 },
+  'homeindicator.height': { web: 0, tablet: 0, mobile: 0 },
 };
 
 const SIZE_SCALES = {
@@ -58,6 +60,36 @@ function deviceClass(viewport) {
   return 'web';
 }
 
+// Chrome a native platform sizes differently from the web. Only the tokens that
+// genuinely differ are listed; everything else is shared across platforms.
+const PLATFORM_TOKENS = {
+  ios: {
+    'header.height': 44,
+    'tabbar.height': 49,
+    'control.height': 44,
+    'row.height': 44,
+    'card.padding': 16,
+    'page.gutter': 16,
+    'statusbar.height': 44,
+    'homeindicator.height': 24,
+  },
+  android: {
+    'header.height': 56,
+    'tabbar.height': 64,
+    'control.height': 48,
+    'row.height': 56,
+    'card.padding': 16,
+    'page.gutter': 16,
+    'statusbar.height': 28,
+    'homeindicator.height': 0,
+  },
+};
+
+function platformOf(viewport) {
+  const platform = typeof viewport === 'object' && viewport ? viewport.platform : null;
+  return platform === 'ios' || platform === 'android' ? platform : 'web';
+}
+
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -66,6 +98,10 @@ function isObject(value) {
 function token(name, viewport, manifestSizing) {
   if (isObject(manifestSizing) && Number.isFinite(Number(manifestSizing[name]))) {
     return Number(manifestSizing[name]);
+  }
+  const platform = PLATFORM_TOKENS[platformOf(viewport)];
+  if (platform && Number.isFinite(platform[name])) {
+    return platform[name] > 0 ? platform[name] : null;
   }
   const entry = TOKENS[name];
   if (!entry) return null;
@@ -135,6 +171,8 @@ function tokenNames() {
 
 module.exports = {
   TOKENS,
+  PLATFORM_TOKENS,
+  platformOf,
   SIZE_SCALES,
   ROLES,
   ROLE_SIZING,

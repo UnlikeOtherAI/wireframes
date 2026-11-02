@@ -26,7 +26,7 @@ const dataPrimitives = [
     summary: 'List rows. kind covers plain, avatar, action, file, chat and timeline shapes.',
     props: {
       items: { type: 'array', primary: true },
-      kind: { enum: ['plain', 'avatar', 'action', 'file', 'chat', 'timeline'] },
+      kind: { enum: ['plain', 'avatar', 'action', 'file', 'chat', 'timeline', 'settings'] },
       divided: { type: 'boolean' },
       selectable: { type: 'boolean' },
       refreshable: { type: 'boolean' },

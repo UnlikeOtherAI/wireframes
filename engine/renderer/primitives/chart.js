@@ -84,19 +84,23 @@ function pieShape(node, lib, donut) {
 }
 
 function gaugeShape(node, lib) {
-  const value = values(node, lib, 1)[0];
+  const value = Math.max(0, Math.min(1, values(node, lib, 1)[0]));
   const cx = W / 2;
-  const cy = H - 8;
-  const r = Math.min(cx, H) - 12;
-  const sweep = 180 * value;
-  const toXY = (angle) => [
-    (cx + r * Math.cos((180 + angle) * (Math.PI / 180))).toFixed(2),
-    (cy + r * Math.sin((180 + angle) * (Math.PI / 180))).toFixed(2),
-  ];
-  const [sx, sy] = toXY(0);
-  const [ex, ey] = toXY(180);
-  const [vx, vy] = toXY(sweep);
-  return `<path class="wf-chart-gauge-track" d="M ${sx} ${sy} A ${r} ${r} 0 0 1 ${ex} ${ey}" /><path class="wf-chart-gauge-value" d="M ${sx} ${sy} A ${r} ${r} 0 0 1 ${vx} ${vy}" />`;
+  const cy = H - 10;
+  const r = Math.min(cx, cy) - 10;
+  // A half dial: 0 at the left, 1 at the right, sweeping over the top.
+  const point = (fraction) => {
+    const rad = Math.PI * (1 - fraction);
+    return [(cx + r * Math.cos(rad)).toFixed(2), (cy - r * Math.sin(rad)).toFixed(2)];
+  };
+  const [sx, sy] = point(0);
+  const [ex, ey] = point(1);
+  const [vx, vy] = point(value);
+  const track = `<path class="wf-chart-gauge-track" d="M ${sx} ${sy} A ${r} ${r} 0 0 1 ${ex} ${ey}" />`;
+  const filled = value <= 0
+    ? ''
+    : `<path class="wf-chart-gauge-value" d="M ${sx} ${sy} A ${r} ${r} 0 0 1 ${vx} ${vy}" />`;
+  return `${track}${filled}`;
 }
 
 function heatmapShape(node, lib) {

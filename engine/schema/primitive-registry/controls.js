@@ -45,10 +45,10 @@ const controlPrimitives = [
       inputType: {
         enum: [
           'text', 'password', 'email', 'number', 'search', 'tel', 'url',
-          'date', 'time', 'datetime', 'color', 'range', 'otp',
+          'date', 'time', 'datetime', 'color', 'range', 'otp', 'stepper',
         ],
       },
-      value: { type: 'string' },
+      value: { type: ['string', 'number'] },
       prefix: { type: 'string' },
       suffix: { type: 'string' },
       help: { type: 'string' },
@@ -175,6 +175,19 @@ const controlPrimitives = [
       variant: { enum: ['dropzone', 'button'] },
     },
     example: '- upload: { label: Drop files here, hint: PNG or PDF up to 10MB }',
+  },
+  {
+    name: 'picker',
+    family: 'controls',
+    frame: 'S',
+    summary: 'Native wheel picker. On web this is a select; on iOS and Android it is the spinner.',
+    props: {
+      label: { type: 'string', primary: true },
+      options: { type: 'array' },
+      value: { type: 'string' },
+      columns: { type: 'number' },
+    },
+    example: '- picker: { label: Repeat, options: [Never, Daily, Weekly], value: Daily }',
   },
   {
     name: 'editor',

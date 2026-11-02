@@ -6,6 +6,7 @@ const { contentStyles } = require('./content');
 const { controlStyles } = require('./controls');
 const { navigationStyles } = require('./navigation');
 const { dataStyles } = require('./data');
+const { overlayStyles } = require('./overlays');
 
 function buildWireframeStyles() {
   return [
@@ -15,6 +16,7 @@ function buildWireframeStyles() {
     controlStyles,
     navigationStyles,
     dataStyles,
+    overlayStyles,
   ].filter(Boolean).join('\n');
 }
 

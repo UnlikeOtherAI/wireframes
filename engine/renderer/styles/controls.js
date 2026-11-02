@@ -8,8 +8,8 @@ const controlStyles = [
     + 'line-height:1.2;white-space:nowrap;cursor:pointer;text-decoration:none}',
   '.wf-button-sm button,.wf-button-sm .wf-button-link{min-height:32px;min-width:64px;padding:5px 12px;font-size:12px}',
   '.wf-button-lg button,.wf-button-lg .wf-button-link{min-height:44px;min-width:104px;padding:10px 20px;font-size:14px}',
-  '.wf-button-icon button,.wf-button-icon .wf-button-link{min-width:var(--wf-control-h,36px);padding:0 8px}',
-  '.wf-button-fab button,.wf-button-fab .wf-button-link{width:52px;height:52px;min-width:52px;border-radius:50%;padding:0}',
+  '.wf-button.wf-button-icon button,.wf-button.wf-button-icon .wf-button-link{min-width:var(--wf-control-h,36px);padding:0 8px}',
+  '.wf-button.wf-button-fab button,.wf-button.wf-button-fab .wf-button-link{width:52px;height:52px;min-width:52px;border-radius:50%;padding:0}',
   '.wf-button-disabled{opacity:.5}',
   '.wf-mode-line .wf-button button,.wf-mode-line .wf-button .wf-button-link{background:transparent;border:1px solid var(--wf-line-strong);color:var(--wf-ink);border-radius:0}',
   '.wf-mode-line .wf-button-primary button,.wf-mode-line .wf-button-primary .wf-button-link{border-width:2px}',
@@ -77,10 +77,10 @@ const controlStyles = [
     + 'border:1px solid var(--wf-ink-3);border-radius:3px;background:#ffffff;position:relative}',
   '.wf-radio-mark{display:inline-block;width:16px;height:16px;flex:0 0 auto;margin-top:2px;'
     + 'border:1px solid var(--wf-ink-3);border-radius:50%;background:#ffffff;position:relative}',
-  '.wf-checkbox-on .wf-check-mark,.wf-check-on{background:var(--wf-ink);border-color:var(--wf-ink)}',
-  '.wf-checkbox-on .wf-check-mark:after,.wf-check-on:after{content:"";position:absolute;left:5px;top:1px;width:4px;height:9px;'
+  '.wf-choice-on .wf-check-mark,.wf-check-on{background:var(--wf-ink);border-color:var(--wf-ink)}',
+  '.wf-choice-on .wf-check-mark:after,.wf-check-on:after{content:"";position:absolute;left:5px;top:1px;width:4px;height:9px;'
     + 'border:solid #ffffff;border-width:0 2px 2px 0;transform:rotate(45deg)}',
-  '.wf-radio-on .wf-radio-mark:after{content:"";position:absolute;left:3px;top:3px;width:8px;height:8px;border-radius:50%;background:var(--wf-ink)}',
+  '.wf-choice-on .wf-radio-mark:after{content:"";position:absolute;left:3px;top:3px;width:8px;height:8px;border-radius:50%;background:var(--wf-ink)}',
   '.wf-toggle-track{display:inline-block;width:36px;height:20px;flex:0 0 auto;margin-top:1px;position:relative;'
     + 'border:1px solid var(--wf-ink-3);border-radius:10px;background:var(--wf-line-2)}',
   '.wf-mode-line .wf-toggle-track{background:transparent;border-color:var(--wf-line-strong)}',
@@ -106,6 +106,23 @@ const controlStyles = [
   '.wf-upload-files{display:flex;flex-direction:column;gap:4px;margin-top:8px;width:100%}',
   '.wf-upload-file{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--wf-ink-2)}',
   '.wf-upload-button{display:flex;align-items:center;gap:8px}',
+
+  // --- Numeric stepper ---
+  '.wf-numstepper{display:inline-flex;align-items:center;overflow:hidden;border:1px solid var(--wf-line);'
+    + 'border-radius:var(--wf-corner-radius,6px);background:#ffffff;width:fit-content}',
+  '.wf-mode-line .wf-numstepper{border-color:var(--wf-line-strong);border-radius:0;background:transparent}',
+  '.wf-numstepper-btn{min-width:36px;min-height:var(--wf-control-h,36px);font:inherit;font-size:15px;'
+    + 'background:var(--wf-fill-2);border:none;color:var(--wf-ink-2);cursor:pointer}',
+  '.wf-numstepper-value{min-width:48px;padding:0 10px;text-align:center;font-size:13px;color:var(--wf-ink)}',
+
+  // --- Wheel picker ---
+  '.wf-picker{padding:0}',
+  '.wf-picker-wheel{position:relative;display:flex;flex-direction:column;align-items:center;'
+    + 'padding:6px 0;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent)}',
+  '.wf-picker-row{display:block;padding:5px 0;font-size:14px;color:var(--wf-ink-4);line-height:1.5}',
+  '.wf-picker-on{color:var(--wf-ink);font-weight:600;font-size:16px}',
+  '.wf-picker-window{position:absolute;left:8px;right:8px;top:50%;height:32px;margin-top:-16px;'
+    + 'border-top:1px solid var(--wf-line);border-bottom:1px solid var(--wf-line);pointer-events:none}',
 
   // --- Rich text editor ---
   '.wf-editor-toolbar{display:flex;align-items:center;gap:2px;padding:6px 8px;border-bottom:1px solid var(--wf-line-2)}',

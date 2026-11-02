@@ -1,0 +1,98 @@
+documentType: page
+specVersion: "1.1"
+id: android
+page:
+  id: android
+  template: mobile_shell
+  viewport:
+    device: mobile
+    orientation: portrait
+    platform: android
+  renderMode: card
+  slots:
+    - slotId: mobile_main
+      content:
+        - id: a_appbar
+          component: app_bar
+          props:
+            title: Inbox
+            leading: bars
+            actions: [magnifying-glass, ellipsis-vertical]
+        - id: a_chips
+          component: row
+          props:
+            gap: 8
+          children:
+            - id: a_chip_all
+              component: badge
+              props:
+                text: All
+            - id: a_chip_unread
+              component: badge
+              props:
+                text: Unread
+                variant: outline
+            - id: a_chip_flagged
+              component: badge
+              props:
+                text: Flagged
+                variant: outline
+        - id: a_list
+          component: list
+          props:
+            kind: avatar
+            refreshable: true
+            items:
+              - title: Ada Lovelace
+                text: Can you review the frame rules before Friday?
+                meta: 2h
+                badge: "2"
+              - title: Grace Hopper
+                text: Shipped build 128 to staging
+                meta: 5h
+              - title: Alan Turing
+                text: Added four metric tiles to the dashboard
+                meta: 1d
+              - title: Katherine Johnson
+                text: Signed off on the sizing tokens
+                meta: 2d
+        - id: a_compose
+          component: button
+          props:
+            icon: pen
+            fab: true
+            variant: primary
+          interaction:
+            - type: open_overlay
+              targetOverlay: a_menu
+        - id: a_tabs
+          component: bottom_tab_bar
+          props:
+            tabs:
+              - icon: inbox
+                label: Inbox
+                active: true
+              - icon: paper-plane
+                label: Sent
+              - icon: box-archive
+                label: Archive
+              - icon: user
+                label: Account
+  overlays:
+    - id: a_menu
+      type: menu
+      trigger: a_compose
+      placement: top
+      dismissOn: [outside, escape]
+      content:
+        - id: a_menu_items
+          component: menu
+          props:
+            items:
+              - label: New message
+                icon: pen
+              - label: New reminder
+                icon: clock
+              - divider: true
+              - label: Scan document
+                icon: camera

@@ -5,36 +5,80 @@ templates:
   app_shell:
     layout:
       type: row
-      gap: 24
-      padding: 24
+      gap: 0
+      padding: 0
       align: stretch
     regions:
       - id: gallery_nav
         kind: persistent
-        size:
-          width: 220
+        role: sidebar
         layout:
           type: stack
-          gap: 12
-          padding: 16
+          gap: 10
+          padding: 14
         children:
-          - id: gallery_title
+          - id: gallery_brand
             component: heading
             props:
-              level: 3
-              text: Gallery
-          - id: gallery_note
-            component: text
+              level: 4
+              text: Element gallery
+          - id: gallery_menu
+            component: nav
             props:
-              text: Renderer fixture
-              variant: meta
-          - id: gallery_divider
-            component: divider
+              items:
+                - group: Families
+                - label: Content
+                  icon: font
+                  route: content
+                - label: Controls
+                  icon: keyboard
+                  route: forms
+                - label: Navigation
+                  icon: compass
+                  route: navigation
+                - label: Data
+                  icon: table
+                  route: data
+                - label: Charts and structures
+                  icon: chart-simple
+                  route: charts
+                - label: Containers and frames
+                  icon: square
+                  route: containers
+                - label: Overlays
+                  icon: window-restore
+                  route: overlays
+                - group: Line mode
+                - label: Line structure
+                  icon: border-all
+                  route: line_structure
+                - label: Line controls
+                  icon: pen-ruler
+                  route: line_forms
+                - label: Line data
+                  icon: list
+                  route: line_data
       - id: main
         kind: slot
+        role: main
         layout:
           type: stack
-          gap: 24
+          gap: 20
+          padding: 24
+  mobile_shell:
+    layout:
+      type: stack
+      gap: 0
+      padding: 0
+      align: stretch
+    regions:
+      - id: mobile_main
+        kind: slot
+        role: main
+        layout:
+          type: stack
+          gap: 14
+          padding: 14
   auth_shell:
     layout:
       type: stack
@@ -45,3 +89,8 @@ templates:
     regions:
       - id: auth_main
         kind: slot
+        role: main
+        layout:
+          type: stack
+          gap: 16
+          align: center

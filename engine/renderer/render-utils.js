@@ -148,7 +148,7 @@ function renderSkeleton(width) {
   const cssWidth = typeof width === 'number' && Number.isFinite(width)
     ? `${width}ch`
     : String(width || '8ch');
-  return `<span class="wf-skeleton" style="width:${escapeAttr(cssWidth)}"></span>`;
+  return `<span class="wf-bar" style="width:${escapeAttr(cssWidth)}"></span>`;
 }
 
 function renderBoundText(value, options = {}) {

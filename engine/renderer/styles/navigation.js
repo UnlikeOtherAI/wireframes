@@ -101,6 +101,19 @@ const navigationStyles = [
   '.wf-appbar-actions{display:flex;align-items:center;gap:14px;flex:0 0 auto}',
   '.wf-appbar-action .wf-icon-glyph{font-size:17px;color:var(--wf-ink-2)}',
 
+  // --- Action sheet ---
+  '.wf-action_sheet{display:flex;flex-direction:column;gap:8px;min-width:0}',
+  '.wf-sheet-group{display:flex;flex-direction:column;border-radius:12px;overflow:hidden;background:#ffffff}',
+  '.wf-mode-line .wf-sheet-group{background:transparent;border:1px solid var(--wf-line-strong);border-radius:0}',
+  '.wf-sheet-title{padding:11px 16px;font-size:12px;color:var(--wf-ink-3);text-align:center;'
+    + 'border-bottom:1px solid var(--wf-line-2)}',
+  '.wf-sheet-row{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;'
+    + 'padding:0 16px;font:inherit;font-size:15px;color:var(--wf-ink);background:transparent;border:none;cursor:pointer}',
+  '.wf-sheet-row+.wf-sheet-row{border-top:1px solid var(--wf-line-2)}',
+  '.wf-sheet-danger{color:var(--wf-ink);font-weight:600}',
+  '.wf-sheet-cancel{border-radius:12px;background:#ffffff;font-weight:600;border-top:none}',
+  '.wf-mode-line .wf-sheet-cancel{background:transparent;border:1px solid var(--wf-line-strong);border-radius:0}',
+
   // --- Page header ---
   '.wf-page_header{display:flex;flex-direction:column;gap:10px;min-width:0}',
   '.wf-ph-main{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;min-width:0}',
