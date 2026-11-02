@@ -1,0 +1,48 @@
+documentType: templates
+specVersion: "1.1"
+id: templates
+templates:
+  app:
+    layout:
+      type: row
+      gap: 0
+      padding: 0
+      align: stretch
+    regions:
+      # role: sidebar sizes itself — 256px on web, 220 on tablet, and it
+      # does not shrink. Never hand-size one.
+      - id: sidebar
+        kind: persistent
+        role: sidebar
+        layout:
+          type: stack
+          gap: 12
+          padding: 16
+        children:
+          - id: brand
+            component: heading
+            props:
+              level: 4
+              text: Acme
+          # `route:` is what links pages to each other. The renderer marks the
+          # item for the page you are on, so `active:` is never hand-set.
+          - id: menu
+            component: nav
+            props:
+              items:
+                - label: Overview
+                  icon: gauge
+                  route: overview
+                - label: Billing
+                  icon: credit-card
+                  route: billing
+                - label: Team
+                  icon: users
+                  route: team
+      - id: main
+        kind: slot
+        role: main
+        layout:
+          type: stack
+          gap: 16
+          padding: 20

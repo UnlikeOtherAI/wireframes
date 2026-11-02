@@ -3,15 +3,55 @@ specVersion: "1.1"
 id: sitemap
 defaultTemplate: app_shell
 routes:
-  - id: gallery_card
-    path: /card
-    page: gallery_card
-  - id: gallery_line
-    path: /line
-    page: gallery_line
-  - id: auth_card
-    path: /auth-card
-    page: auth_card
-  - id: auth_line
-    path: /auth-line
-    page: auth_line
+  - id: content
+    path: /content
+    page: content
+    template: app_shell
+  - id: forms
+    path: /forms
+    page: forms
+    template: app_shell
+  - id: navigation_elements
+    path: /navigation
+    page: navigation_elements
+    template: app_shell
+  - id: data
+    path: /data
+    page: data
+    template: app_shell
+  - id: charts
+    path: /charts
+    page: charts
+    template: app_shell
+  - id: containers
+    path: /containers
+    page: containers
+    template: app_shell
+  - id: overlays_elements
+    path: /overlays
+    page: overlays_elements
+    template: app_shell
+  - id: line_structure
+    path: /line/structure
+    page: line_structure
+    template: app_shell
+  - id: line_forms
+    path: /line/forms
+    page: line_forms
+    template: app_shell
+  - id: line_data
+    path: /line/data
+    page: line_data
+    template: app_shell
+  - id: mobile
+    path: /mobile
+    page: mobile
+    template: mobile_shell
+  - id: android
+    path: /android
+    page: android
+    template: mobile_shell
+  - id: auth
+    path: /auth
+    page: auth
+    template: auth_shell

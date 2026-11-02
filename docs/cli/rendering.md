@@ -11,16 +11,19 @@ prevention, and component-level rendering rules per mode.
 
 # 1. Rendering Philosophy
 
-The rendering layer distinguishes **surfaces** from **content**.
-Only surfaces render frames. Content primitives stay unboxed unless they are
-explicitly boxed controls such as inputs, selects, and textareas.
+The rendering layer decides, for every node, whether it draws a box. That
+decision is made once in `engine/renderer/frame-rules.js` and emitted as
+`data-wf-frame`, which the stylesheet keys on. CSS never infers a frame from
+nesting or from class adjacency, and the linter calls the same function, so the
+two cannot disagree. The five outcomes and the ten precedence rules are in
+[schema.md §4.2](schema.md); `wf why` prints the rule that fired for any node.
 No production styling. No colors beyond black, white, and gray.
 No custom fonts. The visual output is a clickable skeleton.
 Font Awesome Free icons are supported via the `icon` component and `icon` prop on buttons.
 
 The rendering pipeline:
 
-1. Load project YAML (manifest, sitemap, templates, components, pages, optional data)
+1. Load project YAML (manifest, sitemap, templates, components, pages, data)
 2. Resolve component import graphs from `templates.yaml`, page documents, and component documents
 3. Resolve template + page (fill slots, inject injectables, expand components)
 4. Walk resolved node tree and emit HTML
@@ -60,7 +63,7 @@ If `--platform` is specified, only matching pages are built.
 ### Pre-conditions
 
 * Project must pass `wf validate` (blocking errors abort build)
-* All referenced templates, components, datasets must resolve. Projects with no dataset references do not need a `data/` directory.
+* All referenced templates, components, datasets must resolve
 * Schema version must be compatible with CLI
 
 ### Imported component documents
@@ -276,7 +279,7 @@ stretch to the full page height and what allows sticky headers/footers to work.
       <nav class="wf-region">    ← persistent sidebar — stretches to full row height automatically
         ...
       </nav>
-      <main class="wf-region">   ← slot region — transparent, flex: 1, fills remaining width
+      <main class="wf-region">   ← slot region — flex: 1, fills remaining width
         ...
       </main>
     </div>
@@ -375,27 +378,25 @@ template root). It is not valid on arbitrary page nodes.
 
 # 4. Primitive Component Rendering
 
-Each primitive maps to specific HTML elements. All share the base wireframe
-style: a bordered rectangle.
+Each primitive maps to specific HTML elements. Surface primitives get the base
+wireframe frame; content primitives stay unboxed and use gap-based spacing.
 
 ## Text primitives
 
 ```
 heading   → <div class="wf-heading wf-heading-{level}">
-              <h{level}>{text}</h{level}>
+              <h{level}>{text || label || skeleton}</h{level}>
             </div>
 
 paragraph → <div class="wf-paragraph">
-              <p>{text}</p>
+              <p>{text || label || skeleton lines}</p>
             </div>
 
-text      → <span class="wf-text wf-text-{variant}">{text}</span>
+text      → <span class="wf-text wf-text-{variant}">{text || label || skeleton}</span>
 ```
 
-`props.text` is canonical. `props.label` is accepted as an alias for
-`heading`, `paragraph`, and `text`; `text` wins when both are set. Missing
-text renders deterministic skeleton bars (`wf-skeleton`) instead of fake words
-or invisible empty strings.
+For `heading`, `paragraph`, and `text`, `props.text` is canonical and wins
+when present. `props.label` is accepted as an alias for existing documents.
 
 ## Image
 
@@ -429,15 +430,16 @@ Font Awesome Free 6.x is loaded from CDN. `style` defaults to `solid`. `size` is
 button    → <div class="wf-button">
               <button><i class="fa-solid fa-{icon}"></i> {label}</button>
               icon prop is optional — renders Font Awesome icon before label
+              variant: primary|secondary|ghost|danger controls emphasis
               or <a href="{resolvedRouteHref}">...</a> for route-backed navigation
             </div>
 
-tab_bar   → <div class="wf-tab-bar wf-surface">
+tab_bar   → <div class="wf-tab_bar" data-wf-frame="edge">
               <div class="wf-tab-bar-body">{children}</div>
             </div>
             In-page tab navigation. Buttons laid out in a row with gap, NOT stretched.
 
-bottom_tab_bar → <div class="wf-bottom-tab-bar wf-surface">
+bottom_tab_bar → <div class="wf-bottom_tab_bar" data-wf-frame="edge">
                    <div class="wf-bottom-tab-bar-body">{children}</div>
                  </div>
                  iOS-style bottom navigation. Child buttons stretch equally to fill width,
@@ -484,7 +486,7 @@ toggle    → <div class="wf-toggle">
 ## Structural primitives
 
 ```
-table     → <div class="wf-table wf-surface?">
+table     → <div class="wf-table" data-wf-frame="surface|group">
               <div class="wf-table-header wf-table-grid">{column labels}</div>
               <div class="wf-table-body">
                 <div class="wf-table-row wf-table-grid">{row cells}</div>
@@ -494,20 +496,20 @@ table     → <div class="wf-table wf-surface?">
             `props.columns` defines grid columns. Rows come from `props.rows`
             or `binding.source`. Body rows alternate white and very light grey.
 
-section   → <div class="wf-section wf-surface|wf-group">
-              <div class="wf-section-title">{title}</div>   # only emitted when title is present
+section   → <div class="wf-section">
+              <div class="wf-section-title">{title}</div>
               <div class="wf-section-body">{children}</div>
             </div>
 
-divider   → <hr class="wf-divider" />
+divider   → <div class="wf-divider" data-wf-frame="edge"><span class="wf-rule"></span></div>
             CSS: border: none; border-top: 1px solid #333; margin: 8px 0;
             Spans full width of parent container.
 
 spacer    → <div class="wf-spacer" style="height:{size}px"></div>
             In stack layout: uses height.
             In row layout: uses width instead (style="width:{size}px").
+            Percentage size in flex parents renders as flex:1 1 auto.
             In grid layout: spans one cell with the given height.
-            Percentage size in stack/row layout becomes flex: 1 1 auto.
 
 chart     → <div class="wf-chart">
               <div class="wf-chart-title">{label}</div>
@@ -551,7 +553,7 @@ overlay   → position: relative; (children stack with z-index)
 | `columns` | `grid-template-columns: repeat({value}, 1fr)` |
 | `justify` | `justify-content: {value}` |
 | `align` | `align-items: {value}` |
-| `separatorPolicy: auto \| divide` + `gap: 0` | parent divider classes (`wf-divide-x` / `wf-divide-y`) |
+| `separatorPolicy: auto \| divide` + `gap: 0` | `data-wf-divides="row\|stack"` on the children wrapper, `data-wf-edge="after"` on every child but the last |
 | `separatorPolicy: gutters` or `gap > 0` | gutters only, no parent dividers |
 | `separatorStyle` | `--wf-divider-style: {value}` |
 
@@ -610,10 +612,7 @@ else inherits from the page style.
 Additional render-only controls:
 
 * `page.renderMode` is a shorthand alias for `page.rendering.mode`
-* `node.surface: true|false` forces or suppresses surface framing. Without an
-  explicit value, top-level sections/tables are surfaces, grid children are
-  surfaces, and nested sections/tables inside surfaces render as transparent
-  `wf-group` nodes.
+* `node.surface: true|false` forces or suppresses surface framing
 * `node.elevation: 0-3` selects the card-mode surface shadow token
 
 ---

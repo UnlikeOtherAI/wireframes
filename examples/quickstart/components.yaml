@@ -1,0 +1,34 @@
+documentType: components
+specVersion: "1.1"
+id: components
+components:
+  # Defined once, used on Overview and Billing. `{{props.x}}` reads what the
+  # calling node passes in `props`; propDefaults fills the rest.
+  plan_summary:
+    propDefaults:
+      plan: Team
+      seats: 24 / 30
+      spend: $1,240
+    root:
+      id: plan_summary_root
+      component: row
+      props:
+        gap: 16
+      children:
+        - id: plan_summary_plan
+          component: stat
+          props:
+            label: Plan
+            value: "{{props.plan}}"
+        - id: plan_summary_seats
+          component: stat
+          props:
+            label: Seats
+            value: "{{props.seats}}"
+        - id: plan_summary_spend
+          component: stat
+          props:
+            label: This month
+            value: "{{props.spend}}"
+            delta: +12%
+            trend: up

@@ -1,0 +1,53 @@
+documentType: page
+specVersion: "1.1"
+id: overview
+page:
+  id: overview
+  template: app
+  viewport:
+    device: web
+  renderMode: card
+  slots:
+    - slotId: main
+      content:
+        - id: header
+          component: page_header
+          props:
+            title: Overview
+            subtitle: Acme, this month
+
+        # The shared component, with its default props.
+        - id: summary
+          use: plan_summary
+
+        - id: usage
+          component: card
+          props:
+            title: Seats used
+          children:
+            - id: usage_chart
+              component: chart
+              props:
+                chartType: area
+                legend: true
+
+        - id: next
+          component: row
+          props:
+            gap: 10
+          children:
+            - id: go_billing
+              component: button
+              props:
+                label: See invoices
+                variant: primary
+              interaction:
+                - type: navigation
+                  targetRoute: billing
+            - id: go_team
+              component: button
+              props:
+                label: Manage team
+              interaction:
+                - type: navigation
+                  targetRoute: team

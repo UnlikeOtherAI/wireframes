@@ -1,0 +1,130 @@
+documentType: page
+specVersion: "1.1"
+id: line_forms
+page:
+  id: line_forms
+  template: app_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: line
+  slots:
+    - slotId: main
+      content:
+        - id: line_forms_header
+          component: page_header
+          props:
+            title: Line mode — controls
+        - id: line_buttons
+          component: card
+          props:
+            title: Buttons
+          children:
+            - id: line_button_row
+              component: row
+              props:
+                gap: 10
+              children:
+                - id: lbtn_primary
+                  component: button
+                  props:
+                    label: Primary
+                    variant: primary
+                - id: lbtn_secondary
+                  component: button
+                  props:
+                    label: Secondary
+                - id: lbtn_ghost
+                  component: button
+                  props:
+                    label: Ghost
+                    variant: ghost
+                - id: lbtn_icon
+                  component: button
+                  props:
+                    icon: gear
+                    iconOnly: true
+                - id: lseg
+                  component: segmented
+                  props:
+                    options: [Day, Week, Month]
+                    value: Week
+        - id: line_fields
+          component: card
+          props:
+            title: Fields
+          layout:
+            type: grid
+            columns: 3
+            gap: 16
+          children:
+            - id: lfield_text
+              component: input
+              props:
+                label: Full name
+                placeholder: Ada Lovelace
+            - id: lfield_select
+              component: select
+              props:
+                label: Status
+                options: [Draft, Live]
+                placeholder: Choose
+            - id: lfield_otp
+              component: input
+              props:
+                label: Code
+                inputType: otp
+                length: 6
+            - id: lfield_range
+              component: input
+              props:
+                label: Budget
+                inputType: range
+                value: 45
+            - id: lfield_textarea
+              component: textarea
+              props:
+                label: Notes
+                rows: 3
+                placeholder: Multiline text
+            - id: lfield_tags
+              component: tags_input
+              props:
+                label: Labels
+                tags: [urgent, billing]
+        - id: line_choices
+          component: card
+          props:
+            title: Choices
+          layout:
+            type: grid
+            columns: 2
+            gap: 20
+          children:
+            - id: lchoice_radio
+              component: choice_group
+              props:
+                label: Plan
+                kind: radio
+                value: Pro
+                options: [Free, Pro, Enterprise]
+            - id: lchoice_toggles
+              component: stack
+              props:
+                gap: 12
+              children:
+                - id: ltoggle_on
+                  component: toggle
+                  props:
+                    label: Auto-save
+                    checked: true
+                - id: lcheck_on
+                  component: checkbox
+                  props:
+                    label: Remember me
+                    checked: true
+                - id: lupload
+                  component: upload
+                  props:
+                    label: Drop files here
+                    hint: Up to 10 MB

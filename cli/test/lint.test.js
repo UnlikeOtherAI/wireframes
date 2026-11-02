@@ -89,7 +89,8 @@ test('wf lint reports primitive prop contract diagnostics without failing info',
   assert.ok(result.info.some((entry) => entry.code === 'TEXT_PROP_ALIAS'));
   assert.ok(result.info.some((entry) => entry.code === 'MISSING_TEXT'));
   assert.ok(result.info.some((entry) => entry.code === 'UNLABELED_FIELD'));
-  assert.ok(result.info.some((entry) => entry.code === 'NESTED_SURFACE'));
+  // NESTED_SURFACE became SECTION_INTENT, which also names the element to use.
+  assert.ok(result.info.some((entry) => entry.code === 'SECTION_INTENT'));
 
   const strictResult = runLint({ projectPath, strict: true });
   assert.equal(strictResult.ok, false);
@@ -127,4 +128,80 @@ test('wf validate strict fails on unused dataset and component usage', () => {
   assert.equal(strictResult.ok, false);
   assert.ok(strictResult.errors.some((entry) => entry.code === 'STRICT_UNUSED_COMPONENT'));
   assert.ok(strictResult.errors.some((entry) => entry.code === 'STRICT_UNUSED_DATASET'));
+});
+
+test('wf lint reports primitive prop warnings and non-promoted info diagnostics', () => {
+  const projectPath = createTempProject('Lint Primitive Props');
+  const homePath = path.join(projectPath, 'pages', 'home.yaml');
+  const componentsPath = path.join(projectPath, 'components.yaml');
+  const homeDoc = loadYaml(homePath);
+  const componentsDoc = loadYaml(componentsPath);
+
+  componentsDoc.components.custom_card = {
+    root: {
+      id: 'custom_card',
+      component: 'section',
+      children: [],
+    },
+  };
+  writeYaml(componentsPath, componentsDoc);
+
+  homeDoc.page.slots[0].content = [
+    {
+      id: 'bad_heading',
+      component: 'heading',
+      props: {
+        label: 'Alias Heading',
+        unexpected: true,
+      },
+    },
+    {
+      id: 'empty_text',
+      component: 'text',
+      props: {},
+    },
+    {
+      id: 'unlabeled_input',
+      component: 'input',
+      props: {
+        placeholder: 'Name',
+      },
+    },
+    {
+      id: 'outer_card',
+      component: 'section',
+      children: [
+        {
+          id: 'sized_child',
+          component: 'section',
+          size: { width: 240 },
+          children: [],
+        },
+      ],
+    },
+    {
+      id: 'custom_instance',
+      component: 'custom_card',
+      props: {
+        anything: true,
+      },
+    },
+  ];
+  writeYaml(homePath, homeDoc);
+
+  const result = runLint({ projectPath });
+
+  assert.equal(result.ok, true);
+  assert.ok(result.warnings.some((entry) => entry.code === 'UNKNOWN_PROP'));
+  assert.ok(result.info.some((entry) => entry.code === 'TEXT_PROP_ALIAS'));
+  assert.ok(result.info.some((entry) => entry.code === 'MISSING_TEXT'));
+  assert.ok(result.info.some((entry) => entry.code === 'UNLABELED_FIELD'));
+  // NESTED_SURFACE became SECTION_INTENT, which also says which element to use instead.
+  assert.ok(result.info.some((entry) => entry.code === 'SECTION_INTENT'));
+  assert.equal(result.warnings.some((entry) => entry.message.includes('custom_card')), false);
+
+  const strictResult = runLint({ projectPath, strict: true });
+  assert.equal(strictResult.ok, false);
+  assert.ok(strictResult.errors.some((entry) => entry.code === 'STRICT_UNKNOWN_PROP'));
+  assert.ok(strictResult.info.some((entry) => entry.code === 'MISSING_TEXT'));
 });

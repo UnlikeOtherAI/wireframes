@@ -5,6 +5,7 @@ manifest:
   projectId: renderer_gallery
   name: Renderer Gallery
   schemaVersion: "1.1"
+  createdWithCLI: "wf 1.0.0"
   defaultGridColumns: 12
   defaultWireframeStyle:
     border:

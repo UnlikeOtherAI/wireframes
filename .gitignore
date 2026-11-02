@@ -41,3 +41,6 @@ test-results/
 
 # Local runtime
 .run/
+
+# Example build output
+examples/*/build/

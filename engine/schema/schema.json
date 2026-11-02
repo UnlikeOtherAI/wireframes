@@ -515,6 +515,37 @@
         },
         "wireframeStyle": {
           "$ref": "#/$defs/WireframeStyleOverride"
+        },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "actions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "variant": {
+                    "type": "string",
+                    "enum": [
+                      "primary",
+                      "secondary",
+                      "ghost",
+                      "danger",
+                      "link"
+                    ]
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -696,6 +727,15 @@
             "portrait",
             "landscape"
           ]
+        },
+        "platform": {
+          "type": "string",
+          "enum": [
+            "web",
+            "ios",
+            "android"
+          ],
+          "description": "Chrome skin. Defaults to ios for mobile and tablet, web otherwise. Changes chrome only, never which elements exist."
         }
       },
       "if": {
@@ -718,25 +758,60 @@
     "PrimitiveComponent": {
       "type": "string",
       "enum": [
-        "heading",
-        "paragraph",
-        "text",
-        "image",
-        "icon",
-        "button",
-        "tab_bar",
+        "accordion",
+        "action_sheet",
+        "alert",
+        "app_bar",
+        "avatar",
+        "badge",
         "bottom_tab_bar",
-        "input",
-        "textarea",
-        "select",
-        "checkbox",
-        "radio",
-        "toggle",
+        "breadcrumb",
+        "button",
+        "calendar",
+        "card",
+        "carousel",
         "chart",
-        "table",
-        "section",
+        "checkbox",
+        "choice_group",
+        "code",
         "divider",
-        "spacer"
+        "editor",
+        "empty_state",
+        "form",
+        "grid",
+        "heading",
+        "icon",
+        "image",
+        "input",
+        "kanban",
+        "list",
+        "menu",
+        "nav",
+        "page_header",
+        "pagination",
+        "paragraph",
+        "picker",
+        "progress",
+        "radio",
+        "rating",
+        "row",
+        "section",
+        "segmented",
+        "select",
+        "skeleton",
+        "spacer",
+        "split",
+        "stack",
+        "stat",
+        "stepper",
+        "tab_bar",
+        "table",
+        "tags_input",
+        "text",
+        "textarea",
+        "toggle",
+        "tree",
+        "upload"
       ]
     },
     "Layout": {
@@ -841,6 +916,10 @@
             "compact"
           ],
           "description": "Layout density. comfortable = default spacing. compact = reduced spacing."
+        },
+        "explain": {
+          "type": "boolean",
+          "description": "Emit data-wf-why on every node, explaining its frame decision."
         }
       }
     },
@@ -876,7 +955,15 @@
           "type": "object"
         },
         "role": {
-          "type": "string"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Role"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Semantic role. A known role drives built-in proportions and the frame decision."
         },
         "layout": {
           "$ref": "#/$defs/Layout"
@@ -961,6 +1048,158 @@
           "if": {
             "properties": {
               "component": {
+                "const": "section"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_section"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "card"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_card"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "stack"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_stack"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "row"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_row"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "grid"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_grid"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "split"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_split"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "form"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_form"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "carousel"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_carousel"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
                 "const": "heading"
               }
             },
@@ -1018,7 +1257,7 @@
           "if": {
             "properties": {
               "component": {
-                "const": "image"
+                "const": "code"
               }
             },
             "required": [
@@ -1028,7 +1267,45 @@
           "then": {
             "properties": {
               "props": {
-                "$ref": "#/$defs/PrimitiveProps_image"
+                "$ref": "#/$defs/PrimitiveProps_code"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "badge"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_badge"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "avatar"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_avatar"
               }
             }
           }
@@ -1056,6 +1333,158 @@
           "if": {
             "properties": {
               "component": {
+                "const": "image"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_image"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "rating"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_rating"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "stat"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_stat"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "progress"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_progress"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "skeleton"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_skeleton"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "divider"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_divider"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "spacer"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_spacer"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "empty_state"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_empty_state"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
                 "const": "button"
               }
             },
@@ -1075,7 +1504,7 @@
           "if": {
             "properties": {
               "component": {
-                "const": "tab_bar"
+                "const": "segmented"
               }
             },
             "required": [
@@ -1085,26 +1514,7 @@
           "then": {
             "properties": {
               "props": {
-                "$ref": "#/$defs/PrimitiveProps_tab_bar"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "component": {
-                "const": "bottom_tab_bar"
-              }
-            },
-            "required": [
-              "component"
-            ]
-          },
-          "then": {
-            "properties": {
-              "props": {
-                "$ref": "#/$defs/PrimitiveProps_bottom_tab_bar"
+                "$ref": "#/$defs/PrimitiveProps_segmented"
               }
             }
           }
@@ -1227,7 +1637,7 @@
           "if": {
             "properties": {
               "component": {
-                "const": "chart"
+                "const": "choice_group"
               }
             },
             "required": [
@@ -1237,13 +1647,275 @@
           "then": {
             "properties": {
               "props": {
-                "$ref": "#/$defs/PrimitiveProps_chart"
+                "$ref": "#/$defs/PrimitiveProps_choice_group"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "tags_input"
               }
             },
             "required": [
-              "component",
-              "props"
+              "component"
             ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_tags_input"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "upload"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_upload"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "picker"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_picker"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "editor"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_editor"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "tab_bar"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_tab_bar"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "bottom_tab_bar"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_bottom_tab_bar"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "breadcrumb"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_breadcrumb"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "pagination"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_pagination"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "stepper"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_stepper"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "nav"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_nav"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "menu"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_menu"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "app_bar"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_app_bar"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "action_sheet"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_action_sheet"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "page_header"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_page_header"
+              }
+            }
           }
         },
         {
@@ -1269,7 +1941,7 @@
           "if": {
             "properties": {
               "component": {
-                "const": "section"
+                "const": "list"
               }
             },
             "required": [
@@ -1279,7 +1951,7 @@
           "then": {
             "properties": {
               "props": {
-                "$ref": "#/$defs/PrimitiveProps_section"
+                "$ref": "#/$defs/PrimitiveProps_list"
               }
             }
           }
@@ -1288,7 +1960,7 @@
           "if": {
             "properties": {
               "component": {
-                "const": "divider"
+                "const": "chart"
               }
             },
             "required": [
@@ -1298,7 +1970,7 @@
           "then": {
             "properties": {
               "props": {
-                "$ref": "#/$defs/PrimitiveProps_divider"
+                "$ref": "#/$defs/PrimitiveProps_chart"
               }
             }
           }
@@ -1307,7 +1979,7 @@
           "if": {
             "properties": {
               "component": {
-                "const": "spacer"
+                "const": "calendar"
               }
             },
             "required": [
@@ -1317,7 +1989,83 @@
           "then": {
             "properties": {
               "props": {
-                "$ref": "#/$defs/PrimitiveProps_spacer"
+                "$ref": "#/$defs/PrimitiveProps_calendar"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "kanban"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_kanban"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "tree"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_tree"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "accordion"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_accordion"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "alert"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_alert"
               }
             }
           }
@@ -1369,6 +2117,9 @@
             },
             "defaultWireframeStyle": {
               "$ref": "#/$defs/WireframeStyle"
+            },
+            "sizing": {
+              "$ref": "#/$defs/SizingTokens"
             }
           }
         }
@@ -1524,6 +2275,21 @@
                       "items": {
                         "$ref": "#/$defs/Node"
                       }
+                    },
+                    "role": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/Role"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ],
+                      "description": "Semantic role. A known role drives built-in proportions and the frame decision."
+                    },
+                    "surface": {
+                      "type": "boolean",
+                      "description": "Force this region to draw a frame, or force it not to."
                     }
                   }
                 }
@@ -1611,7 +2377,6 @@
             "id",
             "template",
             "viewport",
-            "wireframeStyle",
             "slots"
           ],
           "properties": {
@@ -1765,90 +2530,412 @@
         }
       }
     },
+    "PrimitiveAlias": {
+      "type": "string",
+      "enum": [
+        "autocomplete",
+        "banner",
+        "board",
+        "callout",
+        "chip",
+        "combobox",
+        "date_picker",
+        "kpi",
+        "loader",
+        "media",
+        "metric",
+        "pill",
+        "sidenav",
+        "spinner",
+        "switch",
+        "tabs",
+        "tag",
+        "wizard"
+      ]
+    },
+    "Role": {
+      "type": "string",
+      "enum": [
+        "app_bar",
+        "aside",
+        "content",
+        "dialog",
+        "drawer",
+        "footer",
+        "form",
+        "header",
+        "main",
+        "nav",
+        "sheet",
+        "sidebar",
+        "tabbar",
+        "toolbar"
+      ]
+    },
+    "SizingTokens": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Project-wide overrides for built-in proportions, token name to pixels.",
+      "properties": {
+        "aside.width": {
+          "type": "number",
+          "minimum": 0
+        },
+        "card.gap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "card.padding": {
+          "type": "number",
+          "minimum": 0
+        },
+        "chart.height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "content.narrowWidth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "control.height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "control.minWidth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "drawer.width": {
+          "type": "number",
+          "minimum": 0
+        },
+        "footer.minHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "grid.gap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "header.height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "homeindicator.height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "modal.width": {
+          "type": "number",
+          "minimum": 0
+        },
+        "page.gutter": {
+          "type": "number",
+          "minimum": 0
+        },
+        "row.height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sheet.maxHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sidebar.collapsedWidth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sidebar.minWidth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sidebar.width": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stat.minHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "statusbar.height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tabbar.height": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "PrimitiveProps_section": {
+      "type": "object",
+      "description": "Generic container. The frame rules decide whether it gets a box.",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "PrimitiveProps_card": {
+      "type": "object",
+      "description": "Always a framed card, at any nesting depth.",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "media": {
+          "type": "string"
+        },
+        "footer": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PrimitiveProps_stack": {
+      "type": "object",
+      "description": "Vertical layout group. Never framed.",
+      "properties": {
+        "gap": {
+          "type": "number"
+        },
+        "padding": {
+          "type": "number"
+        },
+        "align": {
+          "type": "string"
+        }
+      }
+    },
+    "PrimitiveProps_row": {
+      "type": "object",
+      "description": "Horizontal layout group. Never framed.",
+      "properties": {
+        "gap": {
+          "type": "number"
+        },
+        "padding": {
+          "type": "number"
+        },
+        "align": {
+          "type": "string"
+        },
+        "justify": {
+          "type": "string"
+        },
+        "wrap": {
+          "type": "boolean"
+        },
+        "nowrap": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PrimitiveProps_grid": {
+      "type": "object",
+      "description": "Grid layout group. Never framed; its children become framed tiles.",
+      "properties": {
+        "columns": {
+          "type": "number"
+        },
+        "gap": {
+          "type": "number"
+        },
+        "minItemWidth": {
+          "type": "number"
+        }
+      }
+    },
+    "PrimitiveProps_split": {
+      "type": "object",
+      "description": "Side-by-side resizable panes. The panes are framed, the split is not.",
+      "properties": {
+        "gap": {
+          "type": "number"
+        },
+        "orientation": {
+          "type": "string",
+          "enum": [
+            "row",
+            "stack"
+          ]
+        }
+      }
+    },
+    "PrimitiveProps_form": {
+      "type": "object",
+      "description": "Groups fields and a submit action. Never framed; wrap in a card for a box.",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "submit": {
+          "type": "string"
+        },
+        "columns": {
+          "type": "number"
+        }
+      }
+    },
+    "PrimitiveProps_carousel": {
+      "type": "object",
+      "description": "Horizontal slide strip with dots/arrows.",
+      "properties": {
+        "dots": {
+          "type": "boolean"
+        },
+        "arrows": {
+          "type": "boolean"
+        },
+        "items": {
+          "type": "array"
+        }
+      }
+    },
     "PrimitiveProps_heading": {
       "type": "object",
+      "description": "Section or page heading, level 1-6.",
       "properties": {
         "text": {
-          "type": "string",
-          "description": "Canonical heading text."
+          "type": "string"
         },
         "label": {
           "type": "string",
-          "description": "Accepted alias for text."
+          "description": "Accepted alias for text; text wins when both are set."
         },
         "level": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 6
+          "type": "number"
         }
       }
     },
     "PrimitiveProps_paragraph": {
       "type": "object",
+      "description": "Body copy. Without text it renders skeleton lines.",
       "properties": {
         "text": {
-          "type": "string",
-          "description": "Canonical text content."
+          "type": "string"
         },
         "label": {
           "type": "string",
-          "description": "Accepted alias for text on text-bearing primitives."
+          "description": "Accepted alias for text; text wins when both are set."
+        },
+        "lines": {
+          "type": "number"
         }
       }
     },
     "PrimitiveProps_text": {
       "type": "object",
+      "description": "Inline text run.",
       "properties": {
         "text": {
-          "type": "string",
-          "description": "Canonical text content."
+          "type": "string"
         },
         "label": {
           "type": "string",
-          "description": "Accepted alias for text."
+          "description": "Accepted alias for text; text wins when both are set."
         },
         "variant": {
           "type": "string",
           "enum": [
             "body",
-            "meta"
+            "meta",
+            "label",
+            "caption",
+            "mono"
           ]
         }
       }
     },
-    "PrimitiveProps_image": {
+    "PrimitiveProps_code": {
       "type": "object",
+      "description": "Monospaced code block. Set inline: true for an inline run.",
       "properties": {
+        "text": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string"
+        },
+        "inline": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PrimitiveProps_badge": {
+      "type": "object",
+      "description": "Badge, pill, chip, tag or status dot. variant is the shape, tone the status.",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "neutral",
+            "outline",
+            "dot",
+            "pill"
+          ]
+        },
+        "tone": {
+          "type": "string",
+          "enum": [
+            "neutral",
+            "info",
+            "success",
+            "warning",
+            "danger"
+          ]
+        },
+        "icon": {
+          "type": "string"
+        }
+      }
+    },
+    "PrimitiveProps_avatar": {
+      "type": "object",
+      "description": "User avatar from initials or an image; group renders a stack with +n.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
         "src": {
           "type": "string"
         },
-        "alt": {
-          "type": "string"
-        },
-        "width": {
-          "oneOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
+        "size": {
+          "type": "string",
+          "enum": [
+            "xs",
+            "sm",
+            "md",
+            "lg",
+            "xl"
           ]
         },
-        "height": {
-          "oneOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
+        "shape": {
+          "type": "string",
+          "enum": [
+            "circle",
+            "square"
           ]
+        },
+        "group": {
+          "type": "array"
+        },
+        "overflow": {
+          "type": "number"
         }
       }
     },
     "PrimitiveProps_icon": {
       "type": "object",
+      "description": "Font Awesome icon; falls back to a lettered glyph box without the font.",
       "properties": {
         "name": {
           "type": "string"
@@ -1866,8 +2953,192 @@
         }
       }
     },
+    "PrimitiveProps_image": {
+      "type": "object",
+      "description": "Image or media placeholder. kind picks the placeholder glyph.",
+      "properties": {
+        "src": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "image",
+            "video",
+            "map",
+            "embed",
+            "logo"
+          ]
+        },
+        "ratio": {
+          "type": "string"
+        },
+        "width": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "height": {
+          "type": [
+            "number",
+            "string"
+          ]
+        }
+      }
+    },
+    "PrimitiveProps_rating": {
+      "type": "object",
+      "description": "Star rating with optional review count.",
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "count": {
+          "type": [
+            "number",
+            "string"
+          ]
+        }
+      }
+    },
+    "PrimitiveProps_stat": {
+      "type": "object",
+      "description": "KPI tile: label, value, optional delta/trend/sparkline.",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "delta": {
+          "type": "string"
+        },
+        "trend": {
+          "type": "string",
+          "enum": [
+            "up",
+            "down",
+            "flat"
+          ]
+        },
+        "icon": {
+          "type": "string"
+        },
+        "sparkline": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PrimitiveProps_progress": {
+      "type": "object",
+      "description": "Progress bar, ring or spinner.",
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "bar",
+            "circle",
+            "spinner"
+          ]
+        },
+        "label": {
+          "type": "string"
+        },
+        "indeterminate": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PrimitiveProps_skeleton": {
+      "type": "object",
+      "description": "Explicit loading placeholder block.",
+      "properties": {
+        "lines": {
+          "type": "number"
+        },
+        "avatar": {
+          "type": "boolean"
+        },
+        "width": {
+          "type": [
+            "number",
+            "string"
+          ]
+        }
+      }
+    },
+    "PrimitiveProps_divider": {
+      "type": "object",
+      "description": "Horizontal or vertical rule, optionally labelled.",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "orientation": {
+          "type": "string",
+          "enum": [
+            "horizontal",
+            "vertical"
+          ]
+        }
+      }
+    },
+    "PrimitiveProps_spacer": {
+      "type": "object",
+      "description": "Fixed or flexible empty space.",
+      "properties": {
+        "size": {
+          "type": [
+            "number",
+            "string"
+          ]
+        }
+      }
+    },
+    "PrimitiveProps_empty_state": {
+      "type": "object",
+      "description": "Centred empty, error, 404 or offline state with an optional action.",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "empty",
+            "error",
+            "404",
+            "offline"
+          ]
+        }
+      }
+    },
     "PrimitiveProps_button": {
       "type": "object",
+      "description": "Button in five variants, three sizes; iconOnly and fab for icon buttons.",
       "properties": {
         "label": {
           "type": "string"
@@ -1892,21 +3163,55 @@
             "primary",
             "secondary",
             "ghost",
-            "danger"
+            "danger",
+            "link"
+          ]
+        },
+        "size": {
+          "type": "string",
+          "enum": [
+            "sm",
+            "md",
+            "lg"
+          ]
+        },
+        "iconOnly": {
+          "type": "boolean"
+        },
+        "loading": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "fab": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PrimitiveProps_segmented": {
+      "type": "object",
+      "description": "Segmented control / attached button group.",
+      "properties": {
+        "options": {
+          "type": "array"
+        },
+        "value": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string",
+          "enum": [
+            "sm",
+            "md",
+            "lg"
           ]
         }
       }
     },
-    "PrimitiveProps_tab_bar": {
-      "type": "object",
-      "properties": {}
-    },
-    "PrimitiveProps_bottom_tab_bar": {
-      "type": "object",
-      "properties": {}
-    },
     "PrimitiveProps_input": {
       "type": "object",
+      "description": "Single-line field. inputType covers search, date, range, otp, colour and more.",
       "properties": {
         "label": {
           "type": "string"
@@ -1915,12 +3220,56 @@
           "type": "string"
         },
         "inputType": {
+          "type": "string",
+          "enum": [
+            "text",
+            "password",
+            "email",
+            "number",
+            "search",
+            "tel",
+            "url",
+            "date",
+            "time",
+            "datetime",
+            "color",
+            "range",
+            "otp",
+            "stepper"
+          ]
+        },
+        "value": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "prefix": {
           "type": "string"
+        },
+        "suffix": {
+          "type": "string"
+        },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "length": {
+          "type": "number"
         }
       }
     },
     "PrimitiveProps_textarea": {
       "type": "object",
+      "description": "Multi-line field.",
       "properties": {
         "label": {
           "type": "string"
@@ -1929,13 +3278,28 @@
           "type": "string"
         },
         "rows": {
-          "type": "integer",
-          "minimum": 1
+          "type": "number"
+        },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "maxLength": {
+          "type": "number"
         }
       }
     },
     "PrimitiveProps_select": {
       "type": "object",
+      "description": "Dropdown field; searchable turns it into a combobox.",
       "properties": {
         "label": {
           "type": "string"
@@ -1944,78 +3308,335 @@
           "type": "string"
         },
         "options": {
-          "type": "array",
-          "items": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "object"
-              }
-            ]
-          }
+          "type": "array"
+        },
+        "searchable": {
+          "type": "boolean"
+        },
+        "multiple": {
+          "type": "boolean"
+        },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
         }
       }
     },
     "PrimitiveProps_checkbox": {
       "type": "object",
+      "description": "Single checkbox with optional description.",
       "properties": {
         "label": {
           "type": "string"
+        },
+        "checked": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
         }
       }
     },
     "PrimitiveProps_radio": {
       "type": "object",
+      "description": "Single radio option.",
       "properties": {
         "label": {
           "type": "string"
+        },
+        "checked": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
         }
       }
     },
     "PrimitiveProps_toggle": {
       "type": "object",
+      "description": "Switch with optional description.",
       "properties": {
         "label": {
+          "type": "string"
+        },
+        "checked": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PrimitiveProps_choice_group": {
+      "type": "object",
+      "description": "A labelled set of checkboxes or radios in one node.",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "checkbox",
+            "radio"
+          ]
+        },
+        "options": {
+          "type": "array"
+        },
+        "value": {
+          "type": "string"
+        },
+        "inline": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PrimitiveProps_tags_input": {
+      "type": "object",
+      "description": "Chips inside a field.",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array"
+        },
+        "placeholder": {
           "type": "string"
         }
       }
     },
-    "PrimitiveProps_chart": {
+    "PrimitiveProps_upload": {
       "type": "object",
-      "required": [
-        "chartType"
-      ],
+      "description": "File dropzone, or a plain upload button with variant: button.",
       "properties": {
-        "chartType": {
+        "label": {
+          "type": "string"
+        },
+        "hint": {
+          "type": "string"
+        },
+        "files": {
+          "type": "array"
+        },
+        "variant": {
           "type": "string",
           "enum": [
-            "line",
-            "bar",
-            "vertical",
-            "horizontal",
-            "gauge",
-            "donut"
+            "dropzone",
+            "button"
           ]
+        }
+      }
+    },
+    "PrimitiveProps_picker": {
+      "type": "object",
+      "description": "Native wheel picker. On web this is a select; on iOS and Android it is the spinner.",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array"
+        },
+        "value": {
+          "type": "string"
+        },
+        "columns": {
+          "type": "number"
+        }
+      }
+    },
+    "PrimitiveProps_editor": {
+      "type": "object",
+      "description": "Rich-text editor placeholder with an optional toolbar strip.",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "toolbar": {
+          "type": "boolean"
+        },
+        "rows": {
+          "type": "number"
+        }
+      }
+    },
+    "PrimitiveProps_tab_bar": {
+      "type": "object",
+      "description": "In-page tabs. Pass tabs[] for one line, or children for full control.",
+      "properties": {
+        "tabs": {
+          "type": "array"
+        },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "underline",
+            "pill",
+            "enclosed"
+          ]
+        }
+      }
+    },
+    "PrimitiveProps_bottom_tab_bar": {
+      "type": "object",
+      "description": "Mobile bottom tab bar, icon above label.",
+      "properties": {
+        "tabs": {
+          "type": "array"
+        }
+      }
+    },
+    "PrimitiveProps_breadcrumb": {
+      "type": "object",
+      "description": "Breadcrumb trail.",
+      "properties": {
+        "items": {
+          "type": "array"
+        },
+        "separator": {
+          "type": "string"
+        }
+      }
+    },
+    "PrimitiveProps_pagination": {
+      "type": "object",
+      "description": "Page controls; variant dots doubles as carousel/onboarding dots.",
+      "properties": {
+        "page": {
+          "type": "number"
+        },
+        "pages": {
+          "type": "number"
+        },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "numbers",
+            "simple",
+            "dots"
+          ]
+        }
+      }
+    },
+    "PrimitiveProps_stepper": {
+      "type": "object",
+      "description": "Wizard progress through named steps.",
+      "properties": {
+        "steps": {
+          "type": "array"
+        },
+        "current": {
+          "type": "number"
+        },
+        "orientation": {
+          "type": "string",
+          "enum": [
+            "row",
+            "stack"
+          ]
+        }
+      }
+    },
+    "PrimitiveProps_nav": {
+      "type": "object",
+      "description": "Vertical side navigation; collapsed renders an icon rail.",
+      "properties": {
+        "items": {
+          "type": "array"
+        },
+        "collapsed": {
+          "type": "boolean"
+        },
+        "groups": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PrimitiveProps_menu": {
+      "type": "object",
+      "description": "Menu item list for a dropdown or context overlay; the overlay owns the frame.",
+      "properties": {
+        "items": {
+          "type": "array"
+        }
+      }
+    },
+    "PrimitiveProps_app_bar": {
+      "type": "object",
+      "description": "Mobile top chrome: leading glyph, title, trailing actions.",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "leading": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "array"
+        }
+      }
+    },
+    "PrimitiveProps_action_sheet": {
+      "type": "object",
+      "description": "Native action list for a bottom sheet: choices plus a cancel row.",
+      "properties": {
+        "items": {
+          "type": "array"
         },
         "title": {
           "type": "string"
         },
-        "label": {
+        "cancel": {
+          "type": "string"
+        }
+      }
+    },
+    "PrimitiveProps_page_header": {
+      "type": "object",
+      "description": "Page title block: breadcrumb, title, subtitle, actions and tabs.",
+      "properties": {
+        "title": {
           "type": "string"
         },
-        "data": {}
+        "subtitle": {
+          "type": "string"
+        },
+        "breadcrumb": {
+          "type": "array"
+        },
+        "actions": {
+          "type": "array"
+        },
+        "tabs": {
+          "type": "array"
+        }
       }
     },
     "PrimitiveProps_table": {
       "type": "object",
+      "description": "Data table with typed columns, selection, sorting and loading/empty states.",
       "properties": {
         "columns": {
           "type": "array"
@@ -2023,38 +3644,183 @@
         "rows": {
           "type": "array"
         },
+        "caption": {
+          "type": "string"
+        },
+        "selectable": {
+          "type": "boolean"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "default",
+            "loading",
+            "empty"
+          ]
+        },
         "emptyText": {
           "type": "string"
         },
-        "surface": {
+        "dense": {
+          "type": "boolean"
+        },
+        "pagination": {
           "type": "boolean"
         }
       }
     },
-    "PrimitiveProps_section": {
+    "PrimitiveProps_list": {
       "type": "object",
+      "description": "List rows. kind covers plain, avatar, action, file, chat and timeline shapes.",
       "properties": {
-        "title": {
-          "type": "string"
+        "items": {
+          "type": "array"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "plain",
+            "avatar",
+            "action",
+            "file",
+            "chat",
+            "timeline",
+            "settings"
+          ]
+        },
+        "divided": {
+          "type": "boolean"
+        },
+        "selectable": {
+          "type": "boolean"
+        },
+        "refreshable": {
+          "type": "boolean"
         }
       }
     },
-    "PrimitiveProps_divider": {
+    "PrimitiveProps_chart": {
       "type": "object",
-      "properties": {}
-    },
-    "PrimitiveProps_spacer": {
-      "type": "object",
+      "description": "Greeked chart placeholder in nine shapes. Deterministic, never random.",
       "properties": {
-        "size": {
-          "oneOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            }
+        "chartType": {
+          "type": "string",
+          "enum": [
+            "bar",
+            "vertical",
+            "horizontal",
+            "line",
+            "area",
+            "pie",
+            "donut",
+            "gauge",
+            "sparkline",
+            "heatmap"
           ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string",
+          "description": "Accepted alias for title; title wins when both are set."
+        },
+        "data": {
+          "type": "array"
+        },
+        "series": {
+          "type": "number"
+        },
+        "legend": {
+          "type": "boolean"
+        },
+        "axes": {
+          "type": "boolean"
+        },
+        "height": {
+          "type": "number"
+        }
+      }
+    },
+    "PrimitiveProps_calendar": {
+      "type": "object",
+      "description": "Month, week, day or compact picker grid.",
+      "properties": {
+        "view": {
+          "type": "string",
+          "enum": [
+            "month",
+            "week",
+            "day",
+            "picker"
+          ]
+        },
+        "date": {
+          "type": "string"
+        },
+        "events": {
+          "type": "array"
+        }
+      }
+    },
+    "PrimitiveProps_kanban": {
+      "type": "object",
+      "description": "Board of columns; each column is a framed surface, the board is not.",
+      "properties": {
+        "columns": {
+          "type": "array"
+        }
+      }
+    },
+    "PrimitiveProps_tree": {
+      "type": "object",
+      "description": "Nested tree or file browser.",
+      "properties": {
+        "items": {
+          "type": "array"
+        },
+        "expanded": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PrimitiveProps_accordion": {
+      "type": "object",
+      "description": "Collapsible rows; set open on the item that starts expanded.",
+      "properties": {
+        "items": {
+          "type": "array"
+        }
+      }
+    },
+    "PrimitiveProps_alert": {
+      "type": "object",
+      "description": "Banner or inline alert. Variants differ by glyph, stripe hue and edge weight.",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "info",
+            "success",
+            "warning",
+            "error",
+            "neutral"
+          ]
+        },
+        "icon": {
+          "type": "string"
+        },
+        "dismissible": {
+          "type": "boolean"
+        },
+        "inline": {
+          "type": "boolean"
         }
       }
     }

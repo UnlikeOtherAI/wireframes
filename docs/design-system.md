@@ -1,5 +1,8 @@
 # Design System — Visual Language Reference
 
+> **Scope: the admin React UI only.** This palette is not a renderer input.
+> Wireframe output is greyscale; see `docs/cli/rendering-modes.md`.
+
 > **Source:** `docs/inspiration.png` (RentFlow dashboard by Dribbble)
 > **Target platforms:** Web admin, iPad app, Mobile app
 > **CSS framework:** Tailwind CSS

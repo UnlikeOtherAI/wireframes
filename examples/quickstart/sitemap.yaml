@@ -1,0 +1,17 @@
+documentType: sitemap
+specVersion: "1.1"
+id: sitemap
+defaultTemplate: app
+routes:
+  - id: overview
+    path: /
+    page: overview
+    template: app
+  - id: billing
+    path: /billing
+    page: billing
+    template: app
+  - id: team
+    path: /team
+    page: team
+    template: app

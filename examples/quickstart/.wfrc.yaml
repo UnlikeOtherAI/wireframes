@@ -1,0 +1,9 @@
+cli:
+  strictValidation: true
+  failOnWarnings: false
+  build:
+    outputDir: ./build
+    clean: true
+    basePath: ..
+  serve:
+    port: 8080

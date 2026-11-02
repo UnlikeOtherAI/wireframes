@@ -45,6 +45,11 @@ function positionAnchoredOverlay(node) {
   node.style.bottom = 'auto';
 
   var triggerRect = trigger.getBoundingClientRect();
+  // Match the trigger's width before measuring, or the clamp below works from a
+  // stale width and the popup can still overflow the viewport.
+  if (type === 'menu' || type === 'dropdown') {
+    node.style.minWidth = Math.max(Math.round(triggerRect.width), 160) + 'px';
+  }
   var overlayRect = node.getBoundingClientRect();
   var width = overlayRect.width || 0;
   var height = overlayRect.height || 0;
@@ -78,9 +83,6 @@ function positionAnchoredOverlay(node) {
 
   node.style.left = Math.round(left) + 'px';
   node.style.top = Math.round(top) + 'px';
-  if (type === 'menu' || type === 'dropdown') {
-    node.style.minWidth = Math.max(Math.round(triggerRect.width), 160) + 'px';
-  }
   node.style.visibility = prevVisibility || '';
 }
 function setOverlayVisible(node, show) {

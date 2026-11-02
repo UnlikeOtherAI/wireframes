@@ -13,6 +13,10 @@ function formatIssues(result) {
   if (warningOutput) {
     console.log(warningOutput);
   }
+  const infoOutput = formatGroupedIssues(result.info || [], 'info');
+  if (infoOutput) {
+    console.log(infoOutput);
+  }
 }
 
 function runValidateCommand(args, context = {}) {

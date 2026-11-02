@@ -15,7 +15,10 @@
 function renderChart(node, props, childStyle, options, ctx, extra) {
   const classes = ctx.buildNodeClasses(node, 'chart', null, extra.paneSide);
   const chartType = typeof props.chartType === 'string' ? props.chartType : 'bar';
-  const title = ctx.renderBoundText(typeof props.label === 'string' ? props.label : 'Chart', extra.bindingContext);
+  const titleText = typeof props.title === 'string' && props.title.trim() !== ''
+    ? props.title
+    : (typeof props.label === 'string' ? props.label : 'Chart');
+  const title = ctx.renderBoundText(titleText, extra.bindingContext);
   const dataAttrs = ctx.buildNodeDataAttributes(node, extra.stateBindings, extra.selectionValue, extra.paneData);
 
   let svg = '';

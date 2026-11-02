@@ -118,7 +118,7 @@ function buildPlatformIndexHtml(platform, pages, options = {}) {
     .map((entry) => `<li><a href="${escapeAttr(entry.fileName)}">${escapeHtml(entry.pageId)}</a> — ${escapeHtml(entry.route || '/')} </li>`)
     .join('\n');
   const title = `Wireframe ${platform}`;
-  const masterIndex = joinBasePath(options.basePath, 'index.html');
+  const masterIndex = '../index.html';
 
   return `<!doctype html>
 <html>
@@ -208,7 +208,7 @@ function writePlatformArtifacts(platformResult, outputDir, assetUrlPrefix) {
       rendering: page.rendering || {},
       defaultGridColumns: page.defaultGridColumns,
       bodyLayoutType: page.bodyLayoutType || 'row',
-      bodyLayout: page.bodyLayout || {},
+      bodyLayout: page.bodyLayout,
       projectPath: platformResult.projectPath,
       dataSources: page.dataSources,
       wireframeCssHref: './_shared/wireframe.css',
@@ -330,7 +330,7 @@ function runBuild({
         rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
         bodyLayoutType: target.bodyLayoutType || 'row',
-        bodyLayout: target.bodyLayout || {},
+        bodyLayout: target.bodyLayout,
         projectPath: normalizedProjectPath,
       });
     }
@@ -345,7 +345,9 @@ function runBuild({
     platformResults.push({
       platform: platformName,
       count: pages.length,
-      href: joinBasePath(selectedBasePath, platformName, 'index.html'),
+      // The two index pages sit at known depths relative to each other, so
+      // they link to each other directly and ignore basePath entirely.
+      href: `./${platformName}/index.html`,
       indexPath: path.join(platformDir, 'index.html'),
       pages,
       outputDir: platformDir,
@@ -376,6 +378,7 @@ function runBuild({
 
 module.exports = {
   runBuild,
+  copyFontAwesomeAssets,
   buildPageFileName,
   buildMasterIndexHtml,
   buildPlatformIndexHtml,

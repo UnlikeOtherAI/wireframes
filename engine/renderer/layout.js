@@ -76,7 +76,9 @@ function layoutToCss(layout = {}, size = {}, options = {}) {
   const css = [];
   const type = layout.type || 'stack';
 
-  if (type === 'stack') {
+  if (type === 'none') {
+    // Leaf nodes with no authored layout: size only, let the element's CSS decide display.
+  } else if (type === 'stack') {
     css.push('display:flex', 'flex-direction:column');
   } else if (type === 'row') {
     css.push('display:flex', 'flex-direction:row');

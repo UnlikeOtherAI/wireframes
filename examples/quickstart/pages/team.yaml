@@ -1,0 +1,87 @@
+documentType: page
+specVersion: "1.1"
+id: team
+page:
+  id: team
+  template: app
+  viewport:
+    device: web
+  renderMode: card
+  slots:
+    - slotId: main
+      content:
+        - id: header
+          component: page_header
+          props:
+            title: Team
+            subtitle: 24 of 30 seats in use
+            actions:
+              - label: Invite
+                variant: primary
+          interaction:
+            - type: open_overlay
+              targetOverlay: invite
+
+        - id: members
+          component: card
+          props:
+            title: Members
+          children:
+            - id: member_table
+              component: table
+              props:
+                selectable: true
+                columns:
+                  - label: Name
+                    key: name
+                    kind: avatar
+                  - label: Role
+                    key: role
+                  - label: Status
+                    key: status
+                    kind: badge
+                  - label: ""
+                    key: actions
+                    kind: actions
+                    width: 80
+                rows:
+                  - name: Ada Lovelace
+                    role: Owner
+                    status: Active
+                  - name: Grace Hopper
+                    role: Admin
+                    status: Active
+                  - name: Alan Turing
+                    role: Member
+                    status: Invited
+
+        - id: back
+          component: button
+          props:
+            label: Back to overview
+            variant: link
+          interaction:
+            - type: navigation
+              targetRoute: overview
+  overlays:
+    - id: invite
+      type: modal
+      dismissOn: [backdrop, escape]
+      props:
+        title: Invite a teammate
+        actions:
+          - label: Cancel
+          - label: Send invite
+            variant: primary
+      content:
+        - id: invite_email
+          component: input
+          props:
+            label: Email
+            inputType: email
+            placeholder: you@example.com
+        - id: invite_role
+          component: select
+          props:
+            label: Role
+            options: [Member, Admin, Owner]

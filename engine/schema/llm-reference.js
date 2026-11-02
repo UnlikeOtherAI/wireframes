@@ -6,6 +6,8 @@ const { SUPPORTED_SPEC_VERSION } = require('./constants');
 
 const schemaPath = path.resolve(__dirname, 'schema.json');
 
+const { elementCatalogue, elementCheatSheet } = require('./element-reference');
+
 function loadSchema() {
   return JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
 }
@@ -136,7 +138,7 @@ page:
         - id: heading_1
           component: heading
           props:
-            text: "Dashboard"
+            label: "Dashboard"
         - id: user_table
           component: table
           props:
@@ -178,7 +180,7 @@ size:
 children:                        # nested Node array
   - id: child_1
     component: text
-    props: { text: "Hello" }
+    props: { label: "Hello" }
 interaction:                     # array of interactions (NOT "interactions")
   - type: navigation
     targetRoute: dashboard       # route id from sitemap.yaml
@@ -190,31 +192,7 @@ visibility:
     equals: true
 \`\`\`
 
-## Primitive Components
-
-${primitives.map((p) => `- ${p}`).join('\n')}
-
-### Component Props Quick Reference
-
-- heading: { text, label alias, level: 1-6 }
-- paragraph: { text, label alias }
-- text: { text, label alias, variant: body|meta }
-- image: { src, alt, width, height }
-- icon: { name: "house", style: solid|regular|brands, size: xs|sm|lg|xl|2xl }
-- button: { label, icon: "icon-name", iconStyle, iconSize, variant: primary|secondary|ghost|danger }
-- input: { label, placeholder, inputType: text|email|password|number|search }
-- textarea: { label, placeholder, rows }
-- select: { label, placeholder, options: [{ value, label }] }
-- checkbox: { label }
-- radio: { label }
-- toggle: { label }
-- chart: { chartType: line|bar|vertical|horizontal|gauge|donut, label }
-- section: { title }
-- table: { columns: [{ key, label, width? }], rows: [{ ...values }], emptyText? }
-- tab_bar: (in-page tabs — children with button nodes, 8px gap, NOT stretched)
-- bottom_tab_bar: (iOS-style bottom navigation — children stretch equally, icon stacked above label, 4px gap)
-- divider: (no props)
-- spacer: { size }
+${elementCatalogue()}
 
 ## Interactions
 
@@ -339,7 +317,7 @@ wf node add <pageId> --parent <parentId> --id <nodeId> --component <type> [--pro
 wf component add <id> --root '<yaml>'
 wf overlay add <pageId> --id <overlayId> --type <type> --content '<yaml>'
 wf validate [--strict] [--json]    — validate schema + semantic checks
-wf lint                            — check naming conventions
+wf lint                            — check naming conventions and primitive prop diagnostics
 wf doctor                          — check project health and references
 wf build [--out <dir>]             — render all pages to static HTML
 wf serve [--port <n>]              — start local preview server
@@ -356,4 +334,4 @@ wf screenshots [--page <id>]       — render screenshots with Playwright
 `;
 }
 
-module.exports = { generateLlmReference };
+module.exports = { generateLlmReference, elementCheatSheet };

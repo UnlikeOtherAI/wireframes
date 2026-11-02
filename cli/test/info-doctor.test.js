@@ -50,6 +50,16 @@ test('wf doctor passes on a valid initialized project', () => {
   assert.equal(result.errors.length, 0);
 });
 
+test('wf doctor allows projects without data directory', () => {
+  const projectPath = createTempProject('Doctor No Data');
+  fs.rmSync(path.join(projectPath, 'data'), { recursive: true, force: true });
+
+  const result = runDoctor({ projectPath });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.errors.some((entry) => entry.message.includes('data')), false);
+});
+
 test('wf doctor detects broken references', () => {
   const projectPath = createTempProject('Doctor Broken');
   const homePath = path.join(projectPath, 'pages', 'home.yaml');

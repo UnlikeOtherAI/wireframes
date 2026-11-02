@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
 const { runDoctor } = require(path.resolve(__dirname, '..', 'doctor'));
-const { lintPrimitiveNode } = require('./rules/primitive-props');
+const { validatePrimitiveProps } = require('./rules/primitive-props');
 
 const RESERVED_KEYWORDS = new Set([
   'page',
@@ -141,33 +141,9 @@ function validateNodeIds(result, node, context, includeUsage) {
   }
 }
 
-function childNodes(node) {
-  if (!isObject(node)) {
-    return [];
-  }
-  return [
-    ...(Array.isArray(node.children) ? node.children : []),
-    ...(Array.isArray(node.content) ? node.content : []),
-    ...(Array.isArray(node.nodes) ? node.nodes : []),
-  ];
-}
-
-function validateNodeProps(result, node, context, traversal = {}) {
-  if (!isObject(node)) {
-    return;
-  }
-
-  const currentTraversal = lintPrimitiveNode(result, node, context, traversal);
-  const layout = isObject(node.layout) ? node.layout : {};
-  const nextTraversal = {
-    surfaceDepth: currentTraversal.childSurfaceDepth,
-    parentLayoutType: layout.type || 'stack',
-  };
-  const nodeLabel = typeof node.id === 'string' && node.id.trim() !== '' ? node.id : 'node';
-
-  for (const child of childNodes(node)) {
-    validateNodeProps(result, child, `${context} > ${nodeLabel}`, nextTraversal);
-  }
+function validateNode(result, node, context, traversal = {}) {
+  validateNodeIds(result, node, context, {});
+  validatePrimitiveProps(result, node, context, traversal);
 }
 
 function loadYamlSafe(filePath, result) {
@@ -216,10 +192,9 @@ function collectLintTargets(projectPath, result) {
       if (region && typeof region.id === 'string') {
         validateIdentifier(result, `template "${templateId}" region`, region.id);
       }
-      validateNodeIds(result, region, `template "${templateId}" region`, {});
-      validateNodeProps(result, region, `template "${templateId}" region`, {
+      validateNode(result, region, `template "${templateId}" region`, {
         surfaceDepth: region?.kind === 'slot' ? 0 : 1,
-        parentLayoutType: region?.layout?.type || 'stack',
+        parentLayoutIsGrid: region?.layout?.type === 'grid',
       });
     }
     if (Array.isArray(templateDoc.overlays)) {
@@ -230,11 +205,7 @@ function collectLintTargets(projectPath, result) {
         if (typeof overlay.id === 'string') {
           validateIdentifier(result, `template "${templateId}" overlay`, overlay.id);
         }
-        validateNodeIds(result, overlay, `template "${templateId}" overlay`, {});
-        validateNodeProps(result, overlay, `template "${templateId}" overlay`, {
-          surfaceDepth: 0,
-          parentLayoutType: 'stack',
-        });
+        validateNode(result, overlay, `template "${templateId}" overlay`);
       }
     }
   }
@@ -243,11 +214,7 @@ function collectLintTargets(projectPath, result) {
   for (const [componentId, componentDoc] of Object.entries(componentMap)) {
     validateIdentifier(result, `component "${componentId}"`, componentId);
     if (isObject(componentDoc) && isObject(componentDoc.root)) {
-      validateNodeIds(result, componentDoc.root, `component "${componentId}" root`, {});
-      validateNodeProps(result, componentDoc.root, `component "${componentId}" root`, {
-        surfaceDepth: 0,
-        parentLayoutType: 'stack',
-      });
+      validateNode(result, componentDoc.root, `component "${componentId}" root`);
     }
   }
 
@@ -278,11 +245,7 @@ function collectLintTargets(projectPath, result) {
           validateIdentifier(result, `page "${pageData.id}" slot`, slot.slotId);
           if (Array.isArray(slot.content)) {
             for (const node of slot.content) {
-              validateNodeIds(result, node, `page "${pageData.id}" slot "${slot.slotId}"`, {});
-              validateNodeProps(result, node, `page "${pageData.id}" slot "${slot.slotId}"`, {
-                surfaceDepth: 0,
-                parentLayoutType: 'stack',
-              });
+              validateNode(result, node, `page "${pageData.id}" slot "${slot.slotId}" > ${node.id ?? 'node'}`);
             }
           }
         }
@@ -294,11 +257,7 @@ function collectLintTargets(projectPath, result) {
           validateIdentifier(result, `page "${pageData.id}" injectable`, injectable.injectableId);
           if (Array.isArray(injectable.content)) {
             for (const node of injectable.content) {
-              validateNodeIds(result, node, `page "${pageData.id}" injectable "${injectable.injectableId}"`, {});
-              validateNodeProps(result, node, `page "${pageData.id}" injectable "${injectable.injectableId}"`, {
-                surfaceDepth: 0,
-                parentLayoutType: 'stack',
-              });
+              validateNode(result, node, `page "${pageData.id}" injectable "${injectable.injectableId}" > ${node.id ?? 'node'}`);
             }
           }
         }
@@ -314,11 +273,7 @@ function collectLintTargets(projectPath, result) {
         }
         if (Array.isArray(overlay.content)) {
           for (const node of overlay.content) {
-            validateNodeIds(result, node, `page "${pageData.id}" overlay "${overlay.id}"`, {});
-            validateNodeProps(result, node, `page "${pageData.id}" overlay "${overlay.id}"`, {
-              surfaceDepth: 0,
-              parentLayoutType: 'stack',
-            });
+            validateNode(result, node, `page "${pageData.id}" overlay "${overlay.id}" > ${node.id ?? 'node'}`);
           }
         }
       }
@@ -343,7 +298,6 @@ function promoteWarningsToErrors(result) {
 
 function runLint({ projectPath, strict = false } = {}) {
   const result = runDoctor({ projectPath });
-  result.info = Array.isArray(result.info) ? result.info : [];
 
   if (result.errors.length === 0) {
     collectLintTargets(projectPath, result);

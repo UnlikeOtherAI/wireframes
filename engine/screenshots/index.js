@@ -1,10 +1,10 @@
 'use strict';
 
+const { normalizePlatform } = require('../renderer/platform');
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
 const { renderWireframeMarkup } = require(path.resolve(__dirname, 'renderer'));
-const { launchChromium } = require(path.resolve(__dirname, 'playwright-launcher'));
 const { fsImageResolver } = require(path.resolve(__dirname, '..', 'renderer', 'fs-image-resolver'));
 
 const { runValidate } = require(path.resolve(__dirname, '..', 'validate', 'cli-adapter'));
@@ -160,6 +160,7 @@ function resolveViewport(viewport = {}) {
     height: preset.height,
     device: viewport.device,
     orientation: viewport.orientation,
+    platform: normalizePlatform(viewport.platform, viewport.device),
   };
 }
 
@@ -277,6 +278,7 @@ function resolvePageTargets(projectPath, pageId) {
   const manifest = loadDocumentFromFile(path.join(projectPath, 'manifest.yaml'), { supportedSpecVersion: SUPPORTED_SPEC_VERSION });
   const manifestData = manifest.document?.manifest || {};
   const defaultWireframeStyle = manifestData.defaultWireframeStyle || {};
+  const manifestSizing = isObject(manifestData.sizing) ? manifestData.sizing : {};
   const parsedDefaultGridColumns = Number(manifestData.defaultGridColumns);
   const defaultGridColumns = Number.isInteger(parsedDefaultGridColumns) && parsedDefaultGridColumns > 0
     ? parsedDefaultGridColumns
@@ -302,7 +304,7 @@ function resolvePageTargets(projectPath, pageId) {
     if (tree.bodyLayoutType) {
       bodyLayoutById.set(tree.id, tree.bodyLayoutType);
     }
-    if (tree.bodyLayout) {
+    if (isObject(tree.bodyLayout)) {
       bodyLayoutObjectById.set(tree.id, tree.bodyLayout);
     }
   }
@@ -332,10 +334,12 @@ function resolvePageTargets(projectPath, pageId) {
         height: viewportResult.height,
         device: viewportResult.device,
         orientation: viewportResult.orientation,
+        platform: viewportResult.platform,
       },
       wireframeStyle: page.wireframeStyle || defaultWireframeStyle,
       rendering: resolvePageRendering(page),
       defaultGridColumns,
+      sizing: manifestSizing,
       bodyLayoutType: bodyLayoutById.get(id) || 'row',
       bodyLayout: bodyLayoutObjectById.get(id) || {},
       roots,
@@ -375,7 +379,7 @@ async function captureScreenshots(targets, outputPath, frame) {
   const playwrightResult = await getPlaywright();
   if (!playwrightResult.ok) return playwrightResult;
 
-  const browser = await launchChromium(playwrightResult.module, { headless: true });
+  const browser = await playwrightResult.module.chromium.launch({ headless: true });
   try {
     for (const target of targets) {
       const browserPage = await browser.newPage();
@@ -399,8 +403,9 @@ async function captureScreenshots(targets, outputPath, frame) {
         pageStyle: target.wireframeStyle,
         rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
+        sizing: target.sizing,
         bodyLayoutType: target.bodyLayoutType || 'row',
-        bodyLayout: target.bodyLayout || {},
+        bodyLayout: target.bodyLayout,
         projectPath: target.projectPath,
         frame,
         imageResolver: fsImageResolver,

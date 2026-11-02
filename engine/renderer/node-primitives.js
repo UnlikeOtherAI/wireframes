@@ -18,20 +18,13 @@ function sectionBodyDividerClass(layout) {
 }
 
 function textProp(props) {
-  if (typeof props?.text === 'string' && props.text.trim() !== '') {
+  if (typeof props.text === 'string' && props.text.trim() !== '') {
     return props.text;
   }
-  if (typeof props?.label === 'string' && props.label.trim() !== '') {
+  if (typeof props.label === 'string' && props.label.trim() !== '') {
     return props.label;
   }
   return null;
-}
-
-function renderFieldLabel(props, bindingContext, f) {
-  if (typeof props?.label !== 'string' || props.label.trim() === '') {
-    return '';
-  }
-  return `<label class="wf-field-label">${f.renderBoundText(props.label, bindingContext)}</label>`;
 }
 
 /**
@@ -53,37 +46,37 @@ function renderFieldLabel(props, bindingContext, f) {
 function renderHeading(c, f) {
   const classes = f.buildNodeClasses(c.node, 'heading', c.safeHeadingLevel, c.paneSide);
   const rawText = textProp(c.props);
-  const headingText = rawText ? f.renderBoundText(rawText, c.bindingContext) : f.renderSkeleton(12);
+  const headingText = rawText == null ? f.renderSkeleton(12) : f.renderBoundText(rawText, c.bindingContext);
   const headingContent = c.navigationTarget
     ? `<a${f.joinAttrs(null, 'wf-inline-link', null, f.navigationAttrs(c.navigationTarget))}>${headingText}</a>`
     : headingText;
   const body = `<h${c.safeHeadingLevel}>${headingContent}</h${c.safeHeadingLevel}>`;
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
-  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}>${body}${f.renderChildren(c.node, c.options)}</div>`;
+  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}>${body}${f.renderChildren(c.node, c.childOptions)}</div>`;
 }
 
 function renderParagraph(c, f) {
   const classes = f.buildNodeClasses(c.node, 'paragraph', null, c.paneSide);
   const rawText = textProp(c.props);
-  const paragraphText = rawText
-    ? f.renderBoundText(rawText, c.bindingContext)
-    : `<span class="wf-skeleton-lines">${f.renderSkeleton('100%')}${f.renderSkeleton('60%')}</span>`;
+  const paragraphText = rawText == null
+    ? `${f.renderSkeleton('100%')}<br />${f.renderSkeleton('60%')}`
+    : f.renderBoundText(rawText, c.bindingContext);
   const paragraphContent = c.navigationTarget
     ? `<a${f.joinAttrs(null, 'wf-inline-link', null, f.navigationAttrs(c.navigationTarget))}>${paragraphText}</a>`
     : paragraphText;
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
-  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}><p>${paragraphContent}</p>${f.renderChildren(c.node, c.options)}</div>`;
+  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}><p>${paragraphContent}</p>${f.renderChildren(c.node, c.childOptions)}</div>`;
 }
 
 function renderText(c, f) {
   const classes = f.buildNodeClasses(c.node, 'text', null, c.paneSide);
   const rawText = textProp(c.props);
-  const textContent = rawText ? f.renderBoundText(rawText, c.bindingContext) : f.renderSkeleton(8);
+  const textContent = rawText == null ? f.renderSkeleton(8) : f.renderBoundText(rawText, c.bindingContext);
   const textBody = c.navigationTarget
     ? `<a${f.joinAttrs(null, 'wf-inline-link', null, f.navigationAttrs(c.navigationTarget))}>${textContent}</a>`
     : textContent;
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
-  return `<span${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}>${textBody}</span>${f.renderChildren(c.node, c.options)}`;
+  return `<span${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}>${textBody}</span>${f.renderChildren(c.node, c.childOptions)}`;
 }
 
 function renderImage(c, f) {
@@ -108,12 +101,15 @@ function renderIcon(c, f) {
 
 function renderButton(c, f) {
   const classes = f.buildNodeClasses(c.node, 'button', null, c.paneSide);
-  const variant = typeof c.props.variant === 'string' ? c.props.variant.trim() : '';
-  const isDanger = variant === 'danger';
   const hasIcon = typeof c.props.icon === 'string' && c.props.icon.trim() !== '';
-  const rawLabel = typeof c.props.label === 'string' && c.props.label.trim() !== '' ? c.props.label : '';
-  const buttonLabel = rawLabel ? f.renderBoundText(rawLabel, c.bindingContext) : (!hasIcon && !isDanger ? f.renderSkeleton(6) : '');
-  const iconName = hasIcon ? c.props.icon.trim() : (isDanger ? 'triangle-exclamation' : '');
+  const variant = ['primary', 'secondary', 'ghost', 'danger'].includes(c.props.variant)
+    ? c.props.variant
+    : 'secondary';
+  const hasLabel = typeof c.props.label === 'string' && c.props.label.trim() !== '';
+  const buttonLabel = hasLabel
+    ? f.renderBoundText(c.props.label, c.bindingContext)
+    : (hasIcon ? '' : f.renderSkeleton(6));
+  const iconName = hasIcon ? c.props.icon.trim() : (variant === 'danger' ? 'triangle-exclamation' : '');
   const iconStyleProp = typeof c.props.iconStyle === 'string' ? c.props.iconStyle.trim() : 'solid';
   const iconPrefix = iconStyleProp === 'regular' ? 'fa-regular' : iconStyleProp === 'brands' ? 'fa-brands' : 'fa-solid';
   const iconSizeClass = typeof c.props.iconSize === 'string' ? ` fa-${f.escapeAttr(c.props.iconSize)}` : '';
@@ -125,7 +121,7 @@ function renderButton(c, f) {
     ? `<a${f.joinAttrs(null, 'wf-button-link', null, f.navigationAttrs(c.navigationTarget))}>${renderedLabel}</a>`
     : `<button>${renderedLabel}</button>`;
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
-  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}>${buttonMarkup}${f.renderChildren(c.node, c.options)}</div>`;
+  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}>${buttonMarkup}${f.renderChildren(c.node, c.childOptions)}</div>`;
 }
 
 function renderTabBar(c, f) {
@@ -137,7 +133,7 @@ function renderTabBar(c, f) {
     ...c.node,
     layout: tabLayout,
   }, {
-    ...c.options,
+    ...c.childOptions,
     parentLayoutType: tabLayout.type || 'row',
   });
   const bodyLayoutCss = layoutToCss(tabLayout, {}, { defaultGridColumns: c.defaultGridColumns, density: c.options.density });
@@ -156,7 +152,7 @@ function renderBottomTabBar(c, f) {
     ...c.node,
     layout: tabLayout,
   }, {
-    ...c.options,
+    ...c.childOptions,
     parentLayoutType: tabLayout.type || 'row',
   });
   const bodyLayoutCss = layoutToCss(tabLayout, {}, { defaultGridColumns: c.defaultGridColumns, density: c.options.density });
@@ -169,13 +165,15 @@ function renderBottomTabBar(c, f) {
 function renderInput(c, f) {
   const classes = f.buildNodeClasses(c.node, 'input', null, c.paneSide);
   const inputType = ['text', 'password', 'email', 'number', 'search'].includes(c.props.inputType) ? c.props.inputType : 'text';
+  const label = typeof c.props.label === 'string' && c.props.label.trim() !== ''
+    ? `<label class="wf-field-label">${f.renderBoundText(c.props.label, c.bindingContext)}</label>`
+    : '';
   const placeholder = f.resolveAttributeValue(
     typeof c.props.placeholder === 'string' ? c.props.placeholder : '',
     c.bindingContext,
     c.stateBindings,
     'placeholder',
   );
-  const label = renderFieldLabel(c.props, c.bindingContext, f);
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
   return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}>${label}<input type="${inputType}" placeholder="${f.escapeAttr(placeholder)}" /></div>`;
 }
@@ -183,19 +181,24 @@ function renderInput(c, f) {
 function renderTextarea(c, f) {
   const classes = f.buildNodeClasses(c.node, 'textarea', null, c.paneSide);
   const rows = Number.isInteger(c.props.rows) && c.props.rows > 0 ? c.props.rows : 3;
+  const label = typeof c.props.label === 'string' && c.props.label.trim() !== ''
+    ? `<label class="wf-field-label">${f.renderBoundText(c.props.label, c.bindingContext)}</label>`
+    : '';
   const placeholder = f.resolveAttributeValue(
     typeof c.props.placeholder === 'string' ? c.props.placeholder : '',
     c.bindingContext,
     c.stateBindings,
     'placeholder',
   );
-  const label = renderFieldLabel(c.props, c.bindingContext, f);
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
-  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}>${label}<textarea placeholder="${f.escapeAttr(placeholder)}" rows="${rows}"></textarea>${f.renderChildren(c.node, c.options)}</div>`;
+  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}>${label}<textarea placeholder="${f.escapeAttr(placeholder)}" rows="${rows}"></textarea>${f.renderChildren(c.node, c.childOptions)}</div>`;
 }
 
 function renderSelect(c, f) {
   const classes = f.buildNodeClasses(c.node, 'select', null, c.paneSide);
+  const label = typeof c.props.label === 'string' && c.props.label.trim() !== ''
+    ? `<label class="wf-field-label">${f.renderBoundText(c.props.label, c.bindingContext)}</label>`
+    : '';
   const placeholder = f.resolveAttributeValue(
     typeof c.props.placeholder === 'string' ? c.props.placeholder : 'Select',
     c.bindingContext,
@@ -203,9 +206,8 @@ function renderSelect(c, f) {
     'placeholder',
   );
   const optionsMarkup = f.renderSelectOptions(Array.isArray(c.props.options) ? c.props.options : []);
-  const label = renderFieldLabel(c.props, c.bindingContext, f);
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
-  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}>${label}<select><option value="">${f.escapeHtml(placeholder)}</option>${optionsMarkup}</select>${f.renderChildren(c.node, c.options)}</div>`;
+  return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}>${label}<select><option value="">${f.escapeHtml(placeholder)}</option>${optionsMarkup}</select>${f.renderChildren(c.node, c.childOptions)}</div>`;
 }
 
 function renderCheckbox(c, f) {
@@ -213,7 +215,7 @@ function renderCheckbox(c, f) {
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
   return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}><label><input type="checkbox" /> ${
     f.renderBoundText(typeof c.props.label === 'string' ? c.props.label : 'Checkbox', c.bindingContext)
-  }</label>${f.renderChildren(c.node, c.options)}</div>`;
+  }</label>${f.renderChildren(c.node, c.childOptions)}</div>`;
 }
 
 function renderRadio(c, f) {
@@ -221,7 +223,7 @@ function renderRadio(c, f) {
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
   return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}><label><input type="radio" /> ${
     f.renderBoundText(typeof c.props.label === 'string' ? c.props.label : 'Option', c.bindingContext)
-  }</label>${f.renderChildren(c.node, c.options)}</div>`;
+  }</label>${f.renderChildren(c.node, c.childOptions)}</div>`;
 }
 
 function renderToggle(c, f) {
@@ -229,30 +231,22 @@ function renderToggle(c, f) {
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
   return `<div${f.joinAttrs(c.node.id, classes, c.childStyle)}${dataAttrs}><label><span class="wf-toggle-track"><span class="wf-toggle-thumb"></span></span> ${
     f.renderBoundText(typeof c.props.label === 'string' ? c.props.label : 'Toggle', c.bindingContext)
-  }</label>${f.renderChildren(c.node, c.options)}</div>`;
+  }</label>${f.renderChildren(c.node, c.childOptions)}</div>`;
 }
 
 function renderSection(c, f) {
   const classes = f.buildNodeClasses(c.node, 'section', null, c.paneSide, c.isSurface);
   const sectionLayoutType = f.isObject(c.node.layout) ? c.node.layout.type || 'stack' : 'stack';
-  const bodyLayout = c.isSurface && c.layout.padding == null ? { ...c.layout, padding: 16 } : c.layout;
   const children = f.renderChildren(c.node, {
-    ...c.options,
-    surfaceDepth: c.childSurfaceDepth,
+    ...c.childOptions,
     parentLayoutType: sectionLayoutType,
   });
-  const resolvedTitle = f.resolveAttributeValue(
-    typeof c.props.title === 'string' ? c.props.title : '',
-    c.bindingContext,
-    c.stateBindings,
-    'title',
-  );
-  const sectionTitle = f.renderSectionTitle(
-    {
-      title: resolvedTitle,
-    },
-    c.bindingContext,
-  );
+  const resolvedTitle = typeof c.props.title === 'string' && c.props.title.trim() !== ''
+    ? f.resolveAttributeValue(c.props.title, c.bindingContext, c.stateBindings, 'title')
+    : '';
+  const sectionTitle = resolvedTitle
+    ? f.renderSectionTitle({ title: resolvedTitle }, c.bindingContext)
+    : '';
   const sectionOuterStyle = [
     layoutToCss({}, c.size, { defaultGridColumns: c.defaultGridColumns, density: c.options.density }),
     layoutItemCss(c.gridItem),
@@ -262,8 +256,11 @@ function renderSection(c, f) {
     (c.isBorderless || c.options.mode) ? '' : c.wfNodeBorderStyle,
     c.nodeWireframeOverrides,
   ].filter(Boolean).join(';');
+  const bodyLayout = c.isSurface === true && !Object.prototype.hasOwnProperty.call(c.layout, 'padding')
+    ? { ...c.layout, padding: 16 }
+    : c.layout;
   const bodyLayoutCss = layoutToCss(bodyLayout, {}, { defaultGridColumns: c.defaultGridColumns, density: c.options.density });
-  const bodyDividerClass = sectionBodyDividerClass(bodyLayout);
+  const bodyDividerClass = sectionBodyDividerClass(c.layout);
   const bodyClass = `wf-section-body${bodyDividerClass}`;
   const bodyStyleAttr = bodyLayoutCss ? ` style="${f.escapeAttr(bodyLayoutCss)}"` : '';
   const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
@@ -278,12 +275,8 @@ function renderDivider(c, f) {
 
 function renderSpacer(c, f) {
   const classes = f.buildNodeClasses(c.node, 'spacer', null, c.paneSide);
-  const rawSize = c.props.size;
-  if (
-    typeof rawSize === 'string'
-    && /^\d+(\.\d+)?%$/.test(rawSize.trim())
-    && (c.options.parentLayoutType === 'row' || c.options.parentLayoutType === 'stack')
-  ) {
+  const percentageSize = typeof c.props.size === 'string' && /^\d+(\.\d+)?%$/.test(c.props.size.trim());
+  if (percentageSize && ['row', 'stack'].includes(c.options.parentLayoutType)) {
     const spacerStyle = `${c.childStyle}${c.childStyle ? ';' : ''}flex:1 1 auto`;
     const dataAttrs = f.buildNodeDataAttributes(c.node, c.stateBindings, c.selectionValue, c.paneData);
     return `<div${f.joinAttrs(c.node.id, classes, spacerStyle)}${dataAttrs}></div>`;
