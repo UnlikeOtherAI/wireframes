@@ -6,9 +6,9 @@ primitive component rendering in a way that makes sense visually. Card mode is
 the primary target (it is the default and the mode in active use); line mode is
 brought along with the same component rules so it stops looking like ASCII art.
 
-Status: **designed, not implemented**. Implementation agent: follow the
-Implementation Order (Section 5) and the Schema Discipline checklist
-(Section 8).
+Status: **implemented and visually accepted on 2026-07-06**. The renderer,
+schema/lint contract, docs, tests, gallery baselines, and regenerated builds
+were completed through Phase 7.
 
 ---
 
