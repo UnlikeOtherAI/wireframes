@@ -5,7 +5,7 @@ const feedbackPrimitives = [
     name: 'alert',
     family: 'feedback',
     frame: 'S',
-    summary: 'Banner or inline alert. Variants differ by glyph and edge weight, never by hue.',
+    summary: 'Banner or inline alert. Variants differ by glyph, stripe hue and edge weight.',
     props: {
       text: { type: 'string', primary: true },
       title: { type: 'string' },

@@ -35,8 +35,10 @@ Surfaces are white cards with subtle shadows and rounded corners. Gaps between
 cards reveal the grey background, acting as natural gutters. This mode is
 closer to a lo-fi product prototype.
 
-Both modes are strictly greyscale. No brand colours. No icons beyond
-placeholder stubs. No custom fonts.
+Both modes are greyscale with one exception: an `alert` tints its left stripe
+by severity (`--wf-info`, `--wf-success`, `--wf-warning`, `--wf-danger`).
+Nothing else takes a hue — no brand colours, no coloured fills, labels or
+controls. No icons beyond placeholder stubs. No custom fonts.
 
 ---
 

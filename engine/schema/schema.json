@@ -3785,7 +3785,7 @@
     },
     "PrimitiveProps_alert": {
       "type": "object",
-      "description": "Banner or inline alert. Variants differ by glyph and edge weight, never by hue.",
+      "description": "Banner or inline alert. Variants differ by glyph, stripe hue and edge weight.",
       "properties": {
         "text": {
           "type": "string"

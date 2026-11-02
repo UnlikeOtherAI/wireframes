@@ -337,3 +337,15 @@ page:
                 title: Payment failed
                 text: Update the card on file to restore access.
                 variant: error
+            - id: alert_success
+              component: alert
+              props:
+                title: Backup complete
+                text: Every document was copied to the archive.
+                variant: success
+            - id: alert_neutral
+              component: alert
+              props:
+                title: Scheduled maintenance
+                text: The dashboard is read-only on Sunday morning.
+                variant: neutral

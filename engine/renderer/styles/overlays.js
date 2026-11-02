@@ -63,6 +63,10 @@ const overlayStyles = [
   '.wf-platform-ios .wf-page,.wf-platform-android .wf-page{padding:0;gap:0}',
   '.wf-platform-ios .wf-body-row,.wf-platform-ios .wf-body-column,'
     + '.wf-platform-android .wf-body-row,.wf-platform-android .wf-body-column{gap:0}',
+  // A phone screen is a fixed box: the slot fills it so bottom chrome reaches
+  // the foot of the device instead of stopping under the last element.
+  '.wf-platform-ios .wf-root-slot,.wf-platform-android .wf-root-slot{display:flex;flex-direction:column;position:relative}',
+  '.wf-platform-ios .wf-root-slot>.wf-root-body,.wf-platform-android .wf-root-slot>.wf-root-body{flex:1 1 auto}',
   // iOS centres the title and uses a chevron back; Android left-aligns it.
   '.wf-platform-ios .wf-appbar-title{text-align:center;align-items:center}',
   '.wf-platform-android .wf-appbar-title{text-align:left;align-items:flex-start;font-size:20px;font-weight:500}',
@@ -78,6 +82,10 @@ const overlayStyles = [
   '.wf-platform-android .wf-button button,.wf-platform-android .wf-button .wf-button-link{border-radius:20px;text-transform:none}',
   '.wf-platform-android .wf-button-fab button,.wf-platform-ios .wf-button-fab button{border-radius:50%}',
   '.wf-platform-android .wf-button-fab button{width:56px;height:56px;min-width:56px}',
+  // A FAB floats over the content, clear of the tab bar when there is one.
+  '.wf-platform-ios .wf-button-fab,.wf-platform-android .wf-button-fab{position:absolute;right:16px;'
+    + 'bottom:16px;z-index:5;margin:0}',
+  '.wf-root-has-tabbar .wf-button-fab{bottom:calc(var(--wf-tabbar-h,56px) + 16px)}',
   '.wf-platform-android .wf-control,.wf-platform-android .wf-textarea textarea{border-radius:4px 4px 0 0;'
     + 'border-width:0 0 1px 0;background:var(--wf-fill-2)}',
   '.wf-platform-android .wf-btab{gap:3px;position:relative}',
