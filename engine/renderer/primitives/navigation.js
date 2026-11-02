@@ -207,8 +207,25 @@ function renderPageHeader(node, ctx, lib) {
   };
 }
 
+function renderActionSheet(node, ctx, lib) {
+  const props = node.props || {};
+  const title = lib.str(props.title);
+  const head = title ? `<div class="wf-sheet-title">${lib.bound(title, ctx)}</div>` : '';
+  const rows = lib.items(props.items).map((item) => {
+    const label = lib.str(item.label);
+    const glyph = lib.iconSpan(item.icon);
+    const danger = item.danger === true ? ' wf-sheet-danger' : '';
+    return `<button class="wf-sheet-row${danger}">${glyph}${label ? lib.escapeHtml(label) : lib.renderSkeleton(8)}</button>`;
+  }).join('');
+  const cancel = props.cancel === false
+    ? ''
+    : `<button class="wf-sheet-row wf-sheet-cancel">${lib.escapeHtml(lib.str(props.cancel) || 'Cancel')}</button>`;
+  return { inner: `<div class="wf-sheet-group">${head}${rows}</div>${cancel}` };
+}
+
 module.exports = {
   navigationRenderers: {
+    action_sheet: renderActionSheet,
     tab_bar: renderTabBar,
     bottom_tab_bar: renderBottomTabBar,
     breadcrumb: renderBreadcrumb,

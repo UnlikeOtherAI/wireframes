@@ -46,7 +46,7 @@ function renderCode(node, ctx, lib) {
 function renderBadge(node, ctx, lib) {
   const variant = lib.str(node.props?.variant) || 'neutral';
   const text = lib.textProp(node.props);
-  const dot = variant === 'dot' ? '<span class="wf-badge-dot"></span>' : '';
+  const dot = variant === 'dot' ? '<span class="wf-dot-mark"></span>' : '';
   const glyph = lib.iconSpan(node.props?.icon);
   const body = text == null ? lib.renderSkeleton(5) : lib.bound(text, ctx);
   return {

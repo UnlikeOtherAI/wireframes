@@ -70,13 +70,15 @@ const baseStyles = [
   '.wf-interactive{cursor:pointer}',
 
   // --- Skeletons: the wireframe placeholder vocabulary ---
-  '.wf-skeleton{display:inline-block;height:.85em;min-width:1.5em;border-radius:2px;'
+  '.wf-bar{display:inline-block;height:.85em;min-width:1.5em;border-radius:2px;'
     + 'background:var(--wf-skeleton-bg,var(--wf-line-2));vertical-align:middle}',
-  '.wf-mode-line .wf-skeleton{background:transparent;border:1px dashed var(--wf-line)}',
-  '.wf-skeleton-row{display:block;margin-bottom:6px}',
+  '.wf-mode-line .wf-bar{background:transparent;border:1px dashed var(--wf-line)}',
+  '.wf-skeleton{display:flex;align-items:flex-start;gap:10px;min-width:0}',
+  '.wf-skeleton-row{display:block;margin-bottom:7px}',
+  '.wf-skeleton-row:last-child{margin-bottom:0}',
   '.wf-skeleton-lines{display:block;flex:1 1 auto;min-width:0}',
-  '.wf-skeleton{}',
-  '.wf-skeleton-avatar{display:inline-block;width:36px;height:36px;border-radius:50%;background:var(--wf-line-2);margin-right:10px;vertical-align:top}',
+  '.wf-skeleton-avatar{display:inline-block;width:36px;height:36px;flex:0 0 auto;border-radius:50%;background:var(--wf-line-2)}',
+  '.wf-mode-line .wf-skeleton-avatar{background:transparent;border:1px dashed var(--wf-line)}',
 
   // --- Icons: readable with or without the icon font ---
   '.wf-ico{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}',

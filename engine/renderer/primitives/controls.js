@@ -3,7 +3,7 @@
 const BUTTON_VARIANTS = new Set(['primary', 'secondary', 'ghost', 'danger', 'link']);
 const INPUT_TYPES = new Set([
   'text', 'password', 'email', 'number', 'search', 'tel', 'url',
-  'date', 'time', 'datetime', 'color', 'range', 'otp',
+  'date', 'time', 'datetime', 'color', 'range', 'otp', 'stepper',
 ]);
 
 const TYPE_PREFIX = { search: 'magnifying-glass', email: 'envelope', tel: 'phone', url: 'link' };
@@ -83,6 +83,9 @@ function renderInput(node, ctx, lib) {
   const invalid = lib.str(props.error) ? ' wf-field-invalid' : '';
   const disabled = props.disabled === true ? ' disabled' : '';
 
+  if (type === 'stepper') {
+    return { inner: renderStepperField(node, ctx, lib), className: 'wf-field' };
+  }
   if (type === 'otp') {
     const count = Math.max(2, Math.min(8, lib.num(props.length, 6)));
     const boxes = Array.from({ length: count }, () => '<span class="wf-otp-box"></span>').join('');
@@ -162,7 +165,7 @@ function renderChoice(kind) {
     const mark = kind === 'toggle'
       ? `<span class="wf-toggle-track${props.checked === true ? ' wf-toggle-on' : ''}"><span class="wf-toggle-thumb"></span></span>`
       : choiceControl(kind, lib);
-    const on = props.checked === true ? ` wf-${kind}-on` : '';
+    const on = props.checked === true ? ' wf-choice-on' : '';
     const body = `<span class="wf-choice-text"><span class="wf-choice-label">${lib.bound(label, ctx)}</span>${
       description ? `<span class="wf-choice-desc">${lib.bound(description, ctx)}</span>` : ''
     }</span>`;
@@ -239,8 +242,36 @@ function renderEditor(node, ctx, lib) {
   };
 }
 
+const PICKER_ROWS = 5;
+
+function renderPicker(node, ctx, lib) {
+  const props = node.props || {};
+  const options = lib.items(props.options);
+  const value = lib.str(props.value);
+  const selected = Math.max(0, options.findIndex((option) => lib.str(option.label) === value));
+  const rows = Array.from({ length: PICKER_ROWS }, (_, i) => {
+    const index = selected - 2 + i;
+    const option = options[index];
+    const label = option ? lib.str(option.label) : '';
+    const on = i === 2 ? ' wf-picker-on' : '';
+    return `<span class="wf-picker-row${on}">${label ? lib.escapeHtml(label) : ''}</span>`;
+  }).join('');
+  return {
+    inner: `${fieldLabel(props, ctx, lib)}<div class="wf-picker-wheel">${rows}<span class="wf-picker-window"></span></div>`,
+  };
+}
+
+function renderStepperField(node, ctx, lib) {
+  const props = node.props || {};
+  const value = props.value != null ? String(props.value) : '1';
+  return `${fieldLabel(props, ctx, lib)}<span class="wf-numstepper"><button class="wf-numstepper-btn">\u2212</button>`
+    + `<span class="wf-numstepper-value">${lib.escapeHtml(value)}</span>`
+    + `<button class="wf-numstepper-btn">+</button></span>`;
+}
+
 module.exports = {
   controlRenderers: {
+    picker: renderPicker,
     button: renderButton,
     segmented: renderSegmented,
     input: renderInput,

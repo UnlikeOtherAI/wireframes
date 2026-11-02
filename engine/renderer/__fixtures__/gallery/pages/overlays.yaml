@@ -1,0 +1,91 @@
+documentType: page
+specVersion: "1.1"
+id: overlays
+page:
+  id: overlays
+  template: app_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: card
+  slots:
+    - slotId: main
+      content:
+        - id: overlays_header
+          component: page_header
+          props:
+            title: Overlays
+            subtitle: Modal, drawer, sheet, popover, menu, toast and tooltip chrome.
+        - id: overlays_note
+          component: alert
+          props:
+            title: Overlay chrome owns the frame
+            text: Content inside an overlay never draws a second box. Open one with an interaction to see it in place.
+            variant: info
+        - id: overlay_triggers
+          component: row
+          props:
+            gap: 10
+          children:
+            - id: open_modal
+              component: button
+              props:
+                label: Open modal
+                variant: primary
+              interaction:
+                - type: open_overlay
+                  targetOverlay: confirm_modal
+            - id: open_drawer
+              component: button
+              props:
+                label: Open drawer
+              interaction:
+                - type: open_overlay
+                  targetOverlay: filters_drawer
+  overlays:
+    - id: confirm_modal
+      type: modal
+      dismissOn: [backdrop, escape]
+      props:
+        title: Delete this project?
+        actions:
+          - label: Cancel
+          - label: Delete
+            variant: danger
+      content:
+        - id: confirm_body
+          component: paragraph
+          props:
+            text: This removes every page, component and build output. It cannot be undone.
+        - id: confirm_check
+          component: checkbox
+          props:
+            label: I understand this is permanent
+    - id: filters_drawer
+      type: drawer_right
+      dismissOn: [backdrop, escape]
+      props:
+        title: Filters
+        actions:
+          - label: Reset
+          - label: Apply
+            variant: primary
+      content:
+        - id: filter_status
+          component: choice_group
+          props:
+            label: Status
+            kind: checkbox
+            options: [Draft, In review, Live, Archived]
+        - id: filter_owner
+          component: select
+          props:
+            label: Owner
+            searchable: true
+            options: [Ada Lovelace, Grace Hopper]
+        - id: filter_seats
+          component: input
+          props:
+            label: Minimum seats
+            inputType: range
+            value: 30

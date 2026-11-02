@@ -8,11 +8,8 @@ const contentStyles = [
   '.wf-mode-line .wf-badge-body{background:transparent;border-color:var(--wf-line-strong);border-radius:0}',
   '.wf-badge-outline .wf-badge-body{background:transparent;border-color:var(--wf-line)}',
   '.wf-badge-pill .wf-badge-body{border-radius:10px}',
-  '.wf-badge-dot .wf-badge-body{background:transparent;border-color:transparent;padding-left:0}',
-  '.wf-badge-dot{color:var(--wf-ink-2)}',
-  '.wf-badge-dot .wf-badge-body{font-size:12px}',
-  '.wf-badge-dot-indicator,.wf-badge-dot .wf-badge-dot{display:inline-block}',
-  '.wf-badge .wf-badge-dot{width:7px;height:7px;border-radius:50%;background:var(--wf-ink-3);flex:0 0 auto}',
+  '.wf-badge-dot .wf-badge-body{background:transparent;border-color:transparent;padding:2px 0;font-size:12px;color:var(--wf-ink-2)}',
+  '.wf-dot-mark{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--wf-ink-3);flex:0 0 auto}',
 
   // --- Avatars ---
   '.wf-avatar{display:inline-flex;width:fit-content}',

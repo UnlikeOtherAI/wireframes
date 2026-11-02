@@ -100,6 +100,18 @@ const navigationPrimitives = [
     example: '- app_bar: { title: Inbox, leading: arrow-left, actions: [search] }',
   },
   {
+    name: 'action_sheet',
+    family: 'navigation',
+    frame: 'N',
+    summary: 'Native action list for a bottom sheet: choices plus a cancel row.',
+    props: {
+      items: { type: 'array', primary: true },
+      title: { type: 'string' },
+      cancel: { type: 'string' },
+    },
+    example: '- action_sheet: { title: Share via, items: [Copy link, { label: Delete, danger: true }] }',
+  },
+  {
     name: 'page_header',
     family: 'navigation',
     frame: 'N',

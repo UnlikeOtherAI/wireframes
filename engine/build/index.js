@@ -1,5 +1,6 @@
 'use strict';
 
+const { normalizePlatform: resolveChromePlatform } = require('../renderer/platform');
 const { resolveTemplatePage } = require('../resolver');
 const {
   renderWireframeMarkup,
@@ -59,7 +60,7 @@ function resolveViewport(viewport = {}) {
   }
 
   if (viewport.device === 'web') {
-    return { ok: true, width: VIEWPORT_PRESETS.web.width, height: VIEWPORT_PRESETS.web.height, device: 'web' };
+    return { ok: true, width: VIEWPORT_PRESETS.web.width, height: VIEWPORT_PRESETS.web.height, device: 'web', platform: 'web' };
   }
 
   const preset = VIEWPORT_PRESETS[viewport.device]?.[viewport.orientation];
@@ -67,7 +68,14 @@ function resolveViewport(viewport = {}) {
     return { ok: false, error: viewport.device ? `Unsupported device "${viewport.device}".` : 'Page viewport missing device.' };
   }
 
-  return { ok: true, width: preset.width, height: preset.height, device: viewport.device, orientation: viewport.orientation };
+  return {
+    ok: true,
+    width: preset.width,
+    height: preset.height,
+    device: viewport.device,
+    orientation: viewport.orientation,
+    platform: resolveChromePlatform(viewport.platform, viewport.device),
+  };
 }
 
 function resolvePageRendering(page) {
@@ -281,6 +289,7 @@ function renderPage(documentMap, pageId, options = {}) {
       height: viewportResult.height,
       device: viewportResult.device,
       orientation: viewportResult.orientation,
+      platform: viewportResult.platform,
     },
     pageRouteId: routeInfo.id || pageId,
     routeTable: options.routeTable || {},
@@ -361,6 +370,7 @@ function buildProject(documentMap, options = {}) {
         height: viewportResult.height,
         device: viewportResult.device,
         orientation: viewportResult.orientation,
+        platform: viewportResult.platform,
       },
       wireframeStyle: page.wireframeStyle || defaultWireframeStyle,
       rendering: resolvePageRendering(page),

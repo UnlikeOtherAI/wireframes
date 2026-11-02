@@ -14,6 +14,7 @@ const {
 const { buildWireframeStyles } = require('../renderer/styles');
 const { decideFrame } = require('../renderer/frame-rules');
 const { regionSizingCss, token } = require('../renderer/sizing-tokens');
+const { normalizePlatform, statusBarMarkup, homeIndicatorMarkup } = require('../renderer/platform');
 
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
@@ -142,6 +143,7 @@ function renderRoot(root, options) {
 }
 
 function renderPageShell(roots, viewportWidth, viewportHeight, renderOptions, bodyLayoutType, bodyLayout = {}) {
+  const platform = renderOptions.platform || 'web';
   const stickyTop = roots.filter((r) => r.sticky === 'top');
   const stickyBottom = roots.filter((r) => r.sticky === 'bottom');
   const bodyRoots = roots.filter((r) => r.sticky !== 'top' && r.sticky !== 'bottom');
@@ -159,12 +161,31 @@ function renderPageShell(roots, viewportWidth, viewportHeight, renderOptions, bo
   const bodyStyle = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
 
   return `<div class="wf-page" style="width:${viewportWidth}px;min-height:${viewportHeight}px;">
+  ${statusBarMarkup(platform)}
   ${topHtml}
   <div class="${bodyClass}"${bodyStyle}>
     ${bodyHtml}
   </div>
   ${bottomHtml}
+  ${homeIndicatorMarkup(platform)}
 </div>`;
+}
+
+/** Token values the stylesheet reads, so CSS never hard-codes a platform size. */
+function platformVars(renderOptions) {
+  const viewport = renderOptions.viewport;
+  const sizing = renderOptions.sizing;
+  const vars = [
+    ['--wf-control-h', token('control.height', viewport, sizing)],
+    ['--wf-row-h', token('row.height', viewport, sizing)],
+    ['--wf-header-h', token('header.height', viewport, sizing)],
+    ['--wf-tabbar-h', token('tabbar.height', viewport, sizing)],
+    ['--wf-gutter', token('page.gutter', viewport, sizing)],
+    ['--wf-card-pad', token('card.padding', viewport, sizing)],
+    ['--wf-chart-h', token('chart.height', viewport, sizing)],
+    ['--wf-statusbar-h', token('statusbar.height', viewport, sizing)],
+  ];
+  return vars.filter(([, value]) => Number.isFinite(value)).map(([name, value]) => `${name}:${value}px`).join(';');
 }
 
 function renderWireframeMarkup({
@@ -214,6 +235,7 @@ function renderWireframeMarkup({
     rendering,
     imageResolver,
     viewport: pageViewport,
+    platform: normalizePlatform(pageViewport?.platform, pageViewport?.device),
     sizing,
     explain: explain === true || rendering?.explain === true,
   };
@@ -275,7 +297,7 @@ function renderWireframeMarkup({
     ${fontAwesomeLink}
     ${styleMarkup}
   </head>
-  <body class="wf wf-mode-${escapeAttr(mode)}">
+  <body class="wf wf-mode-${escapeAttr(mode)} wf-platform-${escapeAttr(renderOptions.platform)} wf-density-${escapeAttr(density)}" style="${escapeAttr(platformVars(renderOptions))}">
     ${shellMarkup}
     ${runtimeScript}
   </body>

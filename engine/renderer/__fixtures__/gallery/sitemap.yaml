@@ -3,35 +3,55 @@ specVersion: "1.1"
 id: sitemap
 defaultTemplate: app_shell
 routes:
-  - id: card_text_forms
-    path: /card/text-forms
-    page: card_text_forms
+  - id: content
+    path: /content
+    page: content
     template: app_shell
-  - id: line_text_forms
-    path: /line/text-forms
-    page: line_text_forms
+  - id: forms
+    path: /forms
+    page: forms
     template: app_shell
-  - id: card_structure
-    path: /card/structure
-    page: card_structure
+  - id: navigation
+    path: /navigation
+    page: navigation
+    template: app_shell
+  - id: data
+    path: /data
+    page: data
+    template: app_shell
+  - id: charts
+    path: /charts
+    page: charts
+    template: app_shell
+  - id: containers
+    path: /containers
+    page: containers
+    template: app_shell
+  - id: overlays
+    path: /overlays
+    page: overlays
     template: app_shell
   - id: line_structure
     path: /line/structure
     page: line_structure
     template: app_shell
-  - id: card_media_charts
-    path: /card/media-charts
-    page: card_media_charts
+  - id: line_forms
+    path: /line/forms
+    page: line_forms
     template: app_shell
-  - id: line_media_charts
-    path: /line/media-charts
-    page: line_media_charts
+  - id: line_data
+    path: /line/data
+    page: line_data
     template: app_shell
-  - id: card_auth
-    path: /card/auth
-    page: card_auth
-    template: auth_shell
-  - id: line_auth
-    path: /line/auth
-    page: line_auth
+  - id: mobile
+    path: /mobile
+    page: mobile
+    template: mobile_shell
+  - id: android
+    path: /android
+    page: android
+    template: mobile_shell
+  - id: auth
+    path: /auth
+    page: auth
     template: auth_shell

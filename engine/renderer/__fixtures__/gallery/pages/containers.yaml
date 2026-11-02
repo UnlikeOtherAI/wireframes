@@ -1,0 +1,244 @@
+documentType: page
+specVersion: "1.1"
+id: containers
+page:
+  id: containers
+  template: app_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: card
+  rendering:
+    explain: true
+  slots:
+    - slotId: main
+      content:
+        - id: containers_header
+          component: page_header
+          props:
+            title: Containers and frames
+            subtitle: Which elements get a box, which only organise layout, and why.
+
+        # --- Rule 3: the element type decides ---
+        - id: rule_element
+          component: card
+          props:
+            title: "Rule 3 — the element type decides"
+            description: card is always framed, row/stack/grid never are.
+          layout:
+            type: stack
+            gap: 14
+          children:
+            - id: row_never_framed
+              component: row
+              props:
+                gap: 12
+              children:
+                - id: row_item_a
+                  component: text
+                  props:
+                    text: A row only aligns things.
+                - id: row_spacer
+                  component: spacer
+                  props:
+                    size: 100%
+                - id: row_item_b
+                  component: button
+                  props:
+                    label: Action
+            - id: nested_card
+              component: card
+              props:
+                title: A card nested in a card
+                description: Still framed, because card is unconditional.
+              children:
+                - id: nested_card_body
+                  component: text
+                  props:
+                    text: Use card when you mean a box.
+
+        # --- Rule 8: grid children are tiles ---
+        - id: rule_grid
+          component: card
+          props:
+            title: "Rule 8 — grid children are tiles"
+          children:
+            - id: tile_grid
+              component: grid
+              props:
+                columns: 3
+              children:
+                - id: tile_one
+                  component: section
+                  props:
+                    title: Tile one
+                  children:
+                    - id: tile_one_value
+                      component: heading
+                      props:
+                        level: 3
+                        text: "128"
+                - id: tile_two
+                  component: section
+                  props:
+                    title: Tile two
+                  children:
+                    - id: tile_two_value
+                      component: heading
+                      props:
+                        level: 3
+                        text: "64"
+                - id: tile_three
+                  component: section
+                  props:
+                    title: Tile three
+                  children:
+                    - id: tile_three_value
+                      component: heading
+                      props:
+                        level: 3
+                        text: "9"
+
+        # --- Rules 9 and 10: position decides only for `section` ---
+        - id: rule_position
+          component: card
+          props:
+            title: "Rules 9 and 10 — section asks the engine"
+            description: Nested sections are groups. An untitled row at the top of a page is a toolbar, not a panel.
+          layout:
+            type: stack
+            gap: 14
+          children:
+            - id: nested_section
+              component: section
+              props:
+                title: Nested section
+              children:
+                - id: nested_section_text
+                  component: paragraph
+                  props:
+                    text: Inside a frame nothing frames itself again, so this is a group with a title and no border.
+            - id: forced_surface
+              component: section
+              surface: true
+              props:
+                title: The same section with surface true
+              children:
+                - id: forced_surface_text
+                  component: paragraph
+                  props:
+                    text: Rule 1 — an explicit surface always wins.
+
+        - id: toolbar_row
+          component: section
+          layout:
+            type: row
+            gap: 10
+          children:
+            - id: toolbar_search
+              component: input
+              props:
+                inputType: search
+                placeholder: Search everything
+              size:
+                width: 280
+            - id: toolbar_filter
+              component: select
+              props:
+                placeholder: All statuses
+                options: [All statuses, Draft, Live]
+              size:
+                width: 180
+            - id: toolbar_gap
+              component: spacer
+              props:
+                size: 100%
+            - id: toolbar_export
+              component: button
+              props:
+                label: Export
+                icon: download
+            - id: toolbar_new
+              component: button
+              props:
+                label: New project
+                variant: primary
+                icon: plus
+
+        # --- Rule 7: a divided parent draws the strokes ---
+        - id: rule_divided
+          component: card
+          props:
+            title: "Rule 7 — a divided parent draws the strokes"
+          children:
+            - id: divided_row
+              component: section
+              layout:
+                type: row
+                gap: 0
+                separatorPolicy: divide
+              children:
+                - id: divided_a
+                  component: section
+                  props:
+                    title: First
+                  children:
+                    - id: divided_a_text
+                      component: text
+                      props:
+                        text: No frame of its own.
+                - id: divided_b
+                  component: section
+                  props:
+                    title: Second
+                  children:
+                    - id: divided_b_text
+                      component: text
+                      props:
+                        text: The parent rule separates us.
+                - id: divided_c
+                  component: section
+                  props:
+                    title: Third
+                  children:
+                    - id: divided_c_text
+                      component: text
+                      props:
+                        text: One stroke, not three boxes. A card here would keep its own frame.
+
+        # --- Split, carousel ---
+        - id: split_demo
+          component: split
+          children:
+            - id: split_left
+              component: card
+              props:
+                title: Left pane
+              pane:
+                side: left
+                defaultSize: 320
+                resizable: true
+                collapsible: false
+              children:
+                - id: split_left_body
+                  component: paragraph
+                  props:
+                    lines: 2
+            - id: split_right
+              component: card
+              props:
+                title: Right pane
+              children:
+                - id: split_right_body
+                  component: paragraph
+                  props:
+                    lines: 2
+
+        - id: carousel_demo
+          component: carousel
+          props:
+            dots: true
+            items:
+              - title: Slide one
+              - title: Slide two
+              - title: Slide three

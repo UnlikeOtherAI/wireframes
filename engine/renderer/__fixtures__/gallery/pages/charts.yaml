@@ -1,0 +1,157 @@
+documentType: page
+specVersion: "1.1"
+id: charts
+page:
+  id: charts
+  template: app_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: card
+  slots:
+    - slotId: main
+      content:
+        - id: charts_header
+          component: page_header
+          props:
+            title: Charts and structures
+            subtitle: Greeked, deterministic placeholders. Same YAML, same SVG.
+
+        - id: charts_grid
+          component: grid
+          props:
+            columns: 3
+          children:
+            - id: chart_bar
+              component: chart
+              props:
+                chartType: bar
+                title: Revenue by month
+            - id: chart_line
+              component: chart
+              props:
+                chartType: line
+                title: Signups
+                series: 2
+                legend: true
+            - id: chart_area
+              component: chart
+              props:
+                chartType: area
+                title: Sessions
+            - id: chart_horizontal
+              component: chart
+              props:
+                chartType: horizontal
+                title: Top referrers
+            - id: chart_pie
+              component: chart
+              props:
+                chartType: pie
+                title: Traffic sources
+                legend: true
+            - id: chart_donut
+              component: chart
+              props:
+                chartType: donut
+                title: Plan mix
+            - id: chart_gauge
+              component: chart
+              props:
+                chartType: gauge
+                title: Quota used
+            - id: chart_heatmap
+              component: chart
+              props:
+                chartType: heatmap
+                title: Activity
+            - id: chart_sparkline_card
+              component: card
+              props:
+                title: Sparkline
+              children:
+                - id: chart_sparkline
+                  component: chart
+                  props:
+                    chartType: sparkline
+
+        - id: structures_grid
+          component: grid
+          props:
+            columns: 2
+          children:
+            - id: calendar_month
+              component: calendar
+              props:
+                view: month
+                date: November 2026
+                events: [Standup, Review]
+            - id: calendar_week
+              component: calendar
+              props:
+                view: week
+                date: Week 45
+            - id: tree_card
+              component: card
+              props:
+                title: File tree
+              children:
+                - id: tree_demo
+                  component: tree
+                  props:
+                    items:
+                      - label: engine
+                        children:
+                          - label: renderer
+                            children:
+                              - label: frame-rules.js
+                                icon: file-code
+                              - label: sizing-tokens.js
+                                icon: file-code
+                          - label: schema
+                            open: false
+                            children:
+                              - label: schema.json
+                      - label: README.md
+                        icon: file-lines
+            - id: accordion_card
+              component: card
+              props:
+                title: Accordion
+              children:
+                - id: accordion_demo
+                  component: accordion
+                  props:
+                    items:
+                      - title: How does billing work?
+                        text: You are billed monthly for the seats in use on the first of each month.
+                        open: true
+                      - title: Can I change plans later?
+                      - title: What happens when my trial ends?
+
+        - id: kanban_board
+          component: kanban
+          props:
+            columns:
+              - title: Backlog
+                count: 8
+                cards:
+                  - title: Rework the frame rules
+                    meta: Engine
+                  - title: Sizing tokens for mobile
+                    meta: Engine
+              - title: In progress
+                count: 3
+                cards:
+                  - title: Element gallery
+                    meta: Docs
+              - title: Review
+                count: 2
+                cards:
+                  - title: Browser renderer API
+                    meta: Renderer
+              - title: Done
+                count: 24
+                cards:
+                  - title: Primitive registry
+                    meta: Schema

@@ -6,90 +6,112 @@ page:
   template: app_shell
   viewport:
     device: web
+    orientation: landscape
   renderMode: line
-  wireframeStyle:
-    border:
-      style: dashed
-      width: thin
-    corner:
-      style: sharp
   slots:
     - slotId: main
       content:
-        - id: line_structure_panel
-          component: section
+        - id: line_header
+          component: page_header
           props:
-            title: Line structure
-          layout:
-            type: stack
-            gap: 16
+            title: Line mode — structure
+            subtitle: The same frame rules, drawn as hairlines.
+            actions:
+              - label: Export
+              - label: New
+                variant: primary
+        - id: line_stats
+          component: grid
+          props:
+            columns: 4
           children:
-            - id: line_grid_tiles
-              component: section
-              layout:
-                type: grid
-                columns: 12
-                gap: 12
-              children:
-                - id: line_grid_tile_a
-                  component: section
-                  gridItem:
-                    span: 6
-                  props:
-                    title: Line tile A
-                  children:
-                    - id: line_tile_a_text
-                      component: text
-                      props:
-                        text: Grid child remains a surface
-                - id: line_grid_tile_b
-                  component: section
-                  gridItem:
-                    span: 6
-                  props:
-                    title: Line tile B
-                  children:
-                    - id: line_tile_b_text
-                      component: text
-                      props:
-                        text: Second tile
-            - id: line_row_groups
-              component: section
-              layout:
-                type: row
-                gap: 12
-              children:
-                - id: line_promoted_tile
-                  component: section
-                  surface: true
-                  size:
-                    width: 240
-                  props:
-                    title: Promoted
-                  children:
-                    - id: line_promoted_text
-                      component: text
-                      props:
-                        text: Card in row
-                - id: line_plain_group
-                  component: section
-                  size:
-                    width: 240
-                  children:
-                    - id: line_plain_text
-                      component: text
-                      props:
-                        text: Plain group
-            - id: line_table
-              component: table
+            - id: line_stat_a
+              component: stat
               props:
-                columns:
-                  - key: item
-                    label: Item
-                  - key: state
-                    label: State
-                rows:
-                  - item: Alpha
-                    state: Open
-                  - item: Beta
-                    state: Closed
+                label: Revenue
+                value: $128.4k
+                delta: 8.2%
+                trend: up
+                sparkline: true
+            - id: line_stat_b
+              component: stat
+              props:
+                label: Users
+                value: "4,218"
+            - id: line_stat_c
+              component: stat
+              props:
+                label: Orders
+                value: "312"
+            - id: line_stat_d
+              component: stat
+              props:
+                label: Churn
+        - id: line_cards
+          component: grid
+          props:
+            columns: 2
+          children:
+            - id: line_card_a
+              component: card
+              props:
+                title: A framed card
+                description: Outlined, transparent, unmistakably a wireframe.
+              children:
+                - id: line_card_a_body
+                  component: paragraph
+                  props:
+                    lines: 3
+            - id: line_card_b
+              component: card
+              props:
+                title: Media and badges
+              children:
+                - id: line_media
+                  component: image
+                  props:
+                    alt: Hero image
+                    ratio: "16:9"
+                - id: line_badges
+                  component: row
+                  props:
+                    gap: 8
+                  children:
+                    - id: line_badge_a
+                      component: badge
+                      props:
+                        text: Live
+                        variant: dot
+                    - id: line_badge_b
+                      component: badge
+                      props:
+                        text: Beta
+                        variant: outline
+        - id: line_toolbar
+          component: section
+          layout:
+            type: row
+            gap: 10
+          children:
+            - id: line_toolbar_search
+              component: input
+              props:
+                inputType: search
+                placeholder: Search
+              size:
+                width: 260
+            - id: line_toolbar_gap
+              component: spacer
+              props:
+                size: 100%
+            - id: line_toolbar_btn
+              component: button
+              props:
+                label: New project
+                variant: primary
+        - id: line_empty
+          component: empty_state
+          props:
+            title: Nothing selected
+            text: Pick a project from the list to see its detail here.
+            action: Browse projects
