@@ -269,6 +269,7 @@ function renderPage(documentMap, pageId, options = {}) {
       ? documentMap.manifest
       : {};
   const defaultWireframeStyle = manifest.defaultWireframeStyle || {};
+  const manifestSizing = isObject(manifest.sizing) ? manifest.sizing : {};
   const parsedDefaultGridColumns = Number(manifest.defaultGridColumns);
   const defaultGridColumns = Number.isInteger(parsedDefaultGridColumns) && parsedDefaultGridColumns > 0
     ? parsedDefaultGridColumns
@@ -298,6 +299,7 @@ function renderPage(documentMap, pageId, options = {}) {
     pageStyle: page.wireframeStyle || defaultWireframeStyle,
     rendering: resolvePageRendering(page),
     defaultGridColumns,
+    sizing: manifestSizing,
     bodyLayoutType: treeResult.bodyLayoutType,
     bodyLayout: treeResult.bodyLayout,
     dataSources,
@@ -325,6 +327,7 @@ function buildProject(documentMap, options = {}) {
       ? documentMap.manifest
       : {};
   const defaultWireframeStyle = manifest.defaultWireframeStyle || {};
+  const manifestSizing = isObject(manifest.sizing) ? manifest.sizing : {};
   const parsedDefaultGridColumns = Number(manifest.defaultGridColumns);
   const defaultGridColumns = Number.isInteger(parsedDefaultGridColumns) && parsedDefaultGridColumns > 0
     ? parsedDefaultGridColumns
@@ -375,6 +378,7 @@ function buildProject(documentMap, options = {}) {
       wireframeStyle: page.wireframeStyle || defaultWireframeStyle,
       rendering: resolvePageRendering(page),
       defaultGridColumns,
+      sizing: manifestSizing,
       bodyLayoutType: treeResult.bodyLayoutType,
       bodyLayout: treeResult.bodyLayout,
       roots: treeResult.roots,

@@ -14,7 +14,7 @@ function renderButton(node, ctx, lib) {
   const variant = BUTTON_VARIANTS.has(props.variant) ? props.variant : 'secondary';
   const size = lib.str(props.size) || 'md';
   const label = lib.str(props.label);
-  const iconName = lib.str(props.icon) || (variant === 'danger' && !label ? 'triangle-exclamation' : '');
+  const iconName = lib.str(props.icon) || (variant === 'danger' ? 'triangle-exclamation' : '');
   const iconOnly = props.iconOnly === true || props.fab === true || (!label && iconName !== '');
   const glyph = iconName
     ? lib.icon(iconName, { style: props.iconStyle, size: props.iconSize || (props.fab ? 'lg' : null) })

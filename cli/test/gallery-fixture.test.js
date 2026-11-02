@@ -1,143 +1,118 @@
 'use strict';
 
+const test = require('node:test');
+const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const test = require('node:test');
-const assert = require('node:assert/strict');
 
-const { runBuild } = require('../../engine/build/fs-writer');
-const { resolvePageTargets } = require('../../engine/screenshots');
-const { renderWireframeMarkup } = require('../../engine/screenshots/renderer');
+const { runBuild } = require('@wireframes/engine/build/fs-writer');
+const { resolvePageTargets, renderWireframeMarkup } = require('@wireframes/engine/screenshots');
+const { primitiveNames } = require('@wireframes/engine/schema/primitive-registry');
 
-const galleryPath = path.resolve(__dirname, '../../engine/renderer/__fixtures__/gallery');
-const baselinesPath = path.join(galleryPath, 'baselines');
+const galleryPath = path.resolve(__dirname, '..', '..', 'engine', 'renderer', '__fixtures__', 'gallery');
 
-function readGeneratedHtml(outputDir, pageId) {
-  return fs.readFileSync(path.join(outputDir, 'web', `${pageId}.html`), 'utf8');
-}
-
-function renderTarget(target) {
-  return renderWireframeMarkup({
-    roots: target.roots,
-    pageViewport: target.viewport,
-    pageRouteId: target.pageRouteId,
-    routeTable: target.routeTable,
-    appStateDefaults: target.appStateDefaults,
-    pageStateDefaults: target.pageStateDefaults,
-    pageStyle: target.wireframeStyle,
-    rendering: target.rendering || {},
-    defaultGridColumns: target.defaultGridColumns,
-    bodyLayoutType: target.bodyLayoutType || 'row',
-    bodyLayout: target.bodyLayout,
-    projectPath: target.projectPath,
-    dataSources: target.dataSources,
-  });
-}
-
-function baselineFiles() {
-  if (!fs.existsSync(baselinesPath)) return [];
-  return fs.readdirSync(baselinesPath).filter((file) => file.endsWith('.png')).sort();
-}
-
-function pngComparator() {
-  const playwrightPackagePath = require.resolve('playwright/package.json', {
-    paths: [path.resolve(__dirname, '..')],
-  });
-  const comparatorsPath = path.join(
-    path.dirname(playwrightPackagePath),
-    '..',
-    'playwright-core',
-    'lib',
-    'server',
-    'utils',
-    'comparators.js',
-  );
-  return require(comparatorsPath).getComparator('image/png');
-}
-
-async function canLaunchChromium() {
-  try {
-    const { chromium } = require('playwright');
-    const browser = await chromium.launch({ headless: true });
-    await browser.close();
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-test('renderer gallery fixture builds and contains the rendering contract markers', () => {
-  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wireframe-gallery-build-'));
-  const result = runBuild({
-    projectPath: galleryPath,
-    output: outputDir,
-    platform: 'web',
-    clean: true,
-  });
-
-  assert.equal(result.ok, true);
-  assert.equal(fs.existsSync(path.join(outputDir, 'web', 'card_text_forms.html')), true);
-  assert.equal(fs.existsSync(path.join(outputDir, 'web', 'line_auth.html')), true);
-
-  const textHtml = readGeneratedHtml(outputDir, 'card_text_forms');
-  assert.equal(textHtml.includes('Gallery heading'), true);
-  assert.equal(textHtml.includes('Label alias heading'), true);
-  assert.equal(textHtml.includes('wf-skeleton'), true);
-  assert.equal(textHtml.includes('wf-field-label">Project name</label>'), true);
-  assert.equal(textHtml.includes('[ Primary ]'), false);
-
-  const structureHtml = readGeneratedHtml(outputDir, 'card_structure');
-  assert.match(structureHtml, /id="nested_group" class="[^"]*wf-group/);
-  assert.match(structureHtml, /id="grid_tile_a" class="[^"]*wf-surface/);
-  assert.match(structureHtml, /id="promoted_tile" class="[^"]*wf-surface/);
-  assert.equal(structureHtml.includes('flex:1 1 auto'), true);
-
-  const mediaHtml = readGeneratedHtml(outputDir, 'card_media_charts');
-  assert.equal(mediaHtml.includes('Line chart title'), true);
-  assert.equal(mediaHtml.includes('Donut chart title'), true);
-
-  const authHtml = readGeneratedHtml(outputDir, 'card_auth');
-  assert.equal(authHtml.includes('align-items:center;justify-content:center'), true);
-
-  fs.rmSync(outputDir, { recursive: true, force: true });
-});
-
-test('renderer gallery direct render covers all fixture pages', () => {
+function renderAll() {
   const result = resolvePageTargets(galleryPath);
-  assert.equal(result.ok, true);
-  assert.equal(result.targets.length, 8);
+  assert.equal(result.ok, true, result.error);
+  return result.targets.map((target) => ({
+    pageId: target.pageId,
+    html: renderWireframeMarkup({
+      roots: target.roots,
+      pageViewport: target.viewport,
+      pageRouteId: target.pageRouteId,
+      routeTable: target.routeTable,
+      appStateDefaults: target.appStateDefaults,
+      pageStateDefaults: target.pageStateDefaults,
+      pageStyle: target.wireframeStyle,
+      rendering: target.rendering || {},
+      defaultGridColumns: target.defaultGridColumns,
+      bodyLayoutType: target.bodyLayoutType || 'row',
+      bodyLayout: target.bodyLayout,
+      projectPath: galleryPath,
+      dataSources: target.dataSources,
+      sizing: target.sizing,
+    }),
+  }));
+}
 
-  for (const target of result.targets) {
-    const html = renderTarget(target);
-    assert.equal(html.includes('wf-mode-card') || html.includes('wf-mode-line'), true);
-    assert.equal(html.includes('Heading</h'), false);
-  }
+test('the gallery renders every page and exercises every element', () => {
+  const pages = renderAll();
+  assert.ok(pages.length >= 10, `expected the full gallery, got ${pages.length} pages`);
+
+  const all = pages.map((page) => page.html).join('\n');
+  const missing = primitiveNames().filter((name) => !all.includes(`wf-${name}`));
+  assert.deepEqual(missing, [], `elements with no gallery coverage: ${missing.join(', ')}`);
 });
 
-test('renderer gallery screenshots match committed baselines', { skip: baselineFiles().length === 0 ? 'No gallery baselines committed yet; run pnpm gallery:update after Playwright works.' : false }, async () => {
-  assert.equal(await canLaunchChromium(), true, 'Chromium could not launch for gallery screenshot comparison.');
+test('the gallery demonstrates each frame decision', () => {
+  const containers = renderAll().find((page) => page.pageId === 'containers');
+  assert.ok(containers, 'containers page is missing');
+  const { html } = containers;
 
-  const { chromium } = require('playwright');
-  const targets = resolvePageTargets(galleryPath).targets;
-  const browser = await chromium.launch({ headless: true });
+  // card is unconditional, row never frames, a grid child is a tile.
+  assert.match(html, /id="nested_card"[^>]*data-wf-frame="surface"/);
+  assert.match(html, /id="row_never_framed"[^>]*data-wf-frame="group"/);
+  assert.match(html, /id="tile_one"[^>]*data-wf-frame="surface"/);
+  // Inside a frame a section is a group; surface: true overrides that.
+  assert.match(html, /id="nested_section"[^>]*data-wf-frame="group"/);
+  assert.match(html, /id="forced_surface"[^>]*data-wf-frame="surface"/);
+  // An untitled row at the top of a page is a toolbar, not a panel.
+  assert.match(html, /id="toolbar_row"[^>]*data-wf-frame="group"/);
+  // A divided parent draws the strokes instead of its children.
+  assert.match(html, /id="divided_a"[^>]*data-wf-frame="group"/);
+  assert.match(html, /id="divided_a"[^>]*data-wf-edge="after"/);
+
+  // `rendering.explain: true` records the rule behind each decision.
+  assert.match(html, /data-wf-why="\d+:[a-z-]/);
+});
+
+test('a roled region gets its proportions from the sizing tokens', () => {
+  const page = renderAll().find((entry) => entry.pageId === 'content');
+  assert.ok(page, 'content page is missing');
+  // role: sidebar, with no explicit size anywhere in the template.
+  const nav = page.html.match(/<section[^>]*id="gallery_nav"[^>]*>/);
+  assert.ok(nav, 'sidebar region is missing');
+  assert.match(nav[0], /width:256px/);
+  assert.match(nav[0], /min-width:200px/);
+  assert.match(nav[0], /flex:0 0 auto/);
+  // The slot takes the rest; it must not be pinned to a width.
+  assert.match(page.html, /<section[^>]*id="main"[^>]*wf-root-slot/);
+});
+
+test('a native platform changes chrome, not elements', () => {
+  const pages = renderAll();
+  const ios = pages.find((page) => page.pageId === 'mobile');
+  const android = pages.find((page) => page.pageId === 'android');
+  assert.ok(ios && android);
+
+  assert.match(ios.html, /class="wf wf-mode-card wf-platform-ios/);
+  assert.match(android.html, /class="wf wf-mode-card wf-platform-android/);
+  // Both get a status bar; only iOS gets the home indicator. Match the markup,
+  // not the stylesheet, which carries both class names on every page.
+  const body = (html) => html.slice(html.indexOf('<body'));
+  assert.ok(body(ios.html).includes('class="wf-status-bar"'));
+  assert.ok(body(android.html).includes('class="wf-status-bar"'));
+  assert.ok(body(ios.html).includes('class="wf-home-indicator"'));
+  assert.ok(!body(android.html).includes('class="wf-home-indicator"'));
+  // Control height comes from the platform, not the element.
+  assert.match(ios.html, /--wf-control-h:44px/);
+  assert.match(android.html, /--wf-control-h:48px/);
+});
+
+test('the gallery builds to disk', () => {
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wf-gallery-'));
   try {
-    for (const target of targets) {
-      const page = await browser.newPage({
-        viewport: {
-          width: target.viewport.width,
-          height: target.viewport.height,
-        },
-      });
-      await page.setContent(renderTarget(target), { waitUntil: 'networkidle' });
-      await page.waitForTimeout(50);
-      const actual = await page.screenshot({ fullPage: false });
-      const expected = fs.readFileSync(path.join(baselinesPath, `${target.pageId}.png`));
-      const comparison = pngComparator()(actual, expected, { maxDiffPixelRatio: 0.01 });
-      assert.equal(comparison, null, `${target.pageId} screenshot differs from baseline: ${comparison?.errorMessage || 'unknown difference'}`);
-      await page.close();
-    }
+    const build = runBuild({ projectPath: galleryPath, output: outputDir, platform: 'web', clean: true });
+    assert.equal(build.ok, true, build.error);
+
+    const page = fs.readFileSync(path.join(outputDir, 'web', 'containers.html'), 'utf8');
+    assert.ok(page.includes('data-wf-frame='), 'built pages carry the frame contract');
+
+    const css = fs.readFileSync(path.join(outputDir, 'web', '_shared', 'wireframe.css'), 'utf8');
+    assert.ok(css.includes('[data-wf-frame="surface"]'), 'the stylesheet keys on the frame contract');
+    assert.ok(css.includes('.wf-visible'), 'overlay visibility survives the build');
   } finally {
-    await browser.close();
+    fs.rmSync(outputDir, { recursive: true, force: true });
   }
 });

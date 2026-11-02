@@ -11,9 +11,9 @@ routes:
     path: /forms
     page: forms
     template: app_shell
-  - id: navigation
+  - id: navigation_elements
     path: /navigation
-    page: navigation
+    page: navigation_elements
     template: app_shell
   - id: data
     path: /data
@@ -27,9 +27,9 @@ routes:
     path: /containers
     page: containers
     template: app_shell
-  - id: overlays
+  - id: overlays_elements
     path: /overlays
-    page: overlays
+    page: overlays_elements
     template: app_shell
   - id: line_structure
     path: /line/structure
