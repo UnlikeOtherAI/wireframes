@@ -97,9 +97,18 @@ const contentStyles = [
 
   // --- Alert ---
   '.wf-alert{display:flex;align-items:flex-start;gap:12px;padding:12px 14px}',
-  '.wf-mode-card .wf-alert[data-wf-frame="surface"]{background:var(--wf-fill-2);box-shadow:none;border-left-width:3px;border-left-color:var(--wf-ink-3)}',
+  '.wf-mode-card .wf-alert[data-wf-frame="surface"]{background:var(--wf-fill-2);box-shadow:none;border-left-width:3px}',
   '.wf-mode-line .wf-alert[data-wf-frame="surface"]{outline-style:solid;outline-width:1px}',
-  '.wf-alert-error[data-wf-frame="surface"],.wf-alert-warning[data-wf-frame="surface"]{border-left-width:4px;border-left-color:var(--wf-ink)}',
+  // Severity reads from the left stripe, in both modes. It is the one place a
+  // hue is allowed; error and warning also take a heavier stripe so the
+  // distinction survives greyscale printing.
+  '.wf-alert[data-wf-frame="surface"]{border-left-color:var(--wf-alert-accent,var(--wf-ink-3))}',
+  '.wf-alert-info{--wf-alert-accent:var(--wf-info)}',
+  '.wf-alert-success{--wf-alert-accent:var(--wf-success)}',
+  '.wf-alert-warning{--wf-alert-accent:var(--wf-warning)}',
+  '.wf-alert-error{--wf-alert-accent:var(--wf-danger)}',
+  '.wf-alert-error[data-wf-frame="surface"],.wf-alert-warning[data-wf-frame="surface"]{border-left-width:4px}',
+  '.wf-mode-line .wf-alert[data-wf-frame="surface"]{border-left:3px solid var(--wf-alert-accent,var(--wf-line-strong))}',
   '.wf-alert-glyph .wf-icon-glyph{font-size:17px;color:var(--wf-ink-2)}',
   '.wf-alert-body{flex:1 1 auto;min-width:0}',
   '.wf-alert-title{font-size:13px;font-weight:600;color:var(--wf-ink);line-height:1.4}',

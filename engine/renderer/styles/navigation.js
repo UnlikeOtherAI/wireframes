@@ -18,7 +18,9 @@ const navigationStyles = [
   '.wf-tab_bar .wf-node-children{display:flex;flex:1 1 auto;min-width:0}',
 
   // --- Bottom tab bar ---
-  '.wf-bottom_tab_bar{display:flex;align-items:stretch;min-width:0}',
+  // Bottom chrome: it sinks to the foot of whatever column it sits in, so a
+  // short screen leaves the gap above the bar rather than below it.
+  ".wf-bottom_tab_bar{display:flex;align-items:stretch;min-width:0;margin-top:auto}",
   '.wf-bottom_tab_bar[data-wf-frame="edge"]{border-top:1px solid var(--wf-line-2)}',
   '.wf-mode-line .wf-bottom_tab_bar[data-wf-frame="edge"]{border-top-color:var(--wf-line-strong)}',
   '.wf-btab{display:flex;flex:1 1 0;flex-direction:column;align-items:center;justify-content:center;gap:3px;'

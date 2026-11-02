@@ -70,3 +70,44 @@ test('renderer gallery matches committed Playwright baselines', async () => {
     fs.rmSync(outputDir, { recursive: true, force: true });
   }
 });
+
+test('mobile bottom chrome sits at the foot of the device', async () => {
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wireframe-mobile-test-'));
+  const build = runBuild({
+    projectPath: FIXTURE,
+    output: outputDir,
+    platform: 'mobile',
+    clean: true,
+  });
+  assert.equal(build.ok, true, build.error);
+
+  const playwright = require('playwright');
+  const browser = await launchChromium(playwright, { headless: true });
+  try {
+    const page = await browser.newPage({ viewport: { width: 430, height: 932 } });
+    const htmlPath = path.join(outputDir, 'mobile', 'android_mobile.html');
+    await page.goto(pathToFileURL(htmlPath).href, { waitUntil: 'networkidle' });
+
+    const boxes = await page.evaluate(() => {
+      const rect = (selector) => {
+        const node = document.querySelector(selector);
+        return node ? node.getBoundingClientRect().toJSON() : null;
+      };
+      return { shell: rect('.wf-page'), tabs: rect('.wf-bottom_tab_bar'), fab: rect('.wf-button-fab') };
+    });
+
+    assert.ok(boxes.shell && boxes.tabs && boxes.fab, 'page, tab bar and FAB must all render');
+    // The screen is taller than its content, so the gap belongs above the bar.
+    assert.ok(
+      Math.abs(boxes.shell.bottom - boxes.tabs.bottom) <= 1,
+      `tab bar ended at ${boxes.tabs.bottom}, device at ${boxes.shell.bottom}`,
+    );
+    // A FAB floats clear of the bar, at the trailing edge.
+    assert.ok(boxes.fab.bottom <= boxes.tabs.top, 'FAB overlaps the tab bar');
+    assert.ok(boxes.shell.right - boxes.fab.right < boxes.fab.left - boxes.shell.left, 'FAB is not trailing-aligned');
+    await page.close();
+  } finally {
+    await browser.close();
+    fs.rmSync(outputDir, { recursive: true, force: true });
+  }
+});

@@ -15,6 +15,7 @@ const { buildWireframeStyles } = require('../renderer/styles');
 const { decideFrame } = require('../renderer/frame-rules');
 const { regionSizingCss, token } = require('../renderer/sizing-tokens');
 const { normalizePlatform, statusBarMarkup, homeIndicatorMarkup } = require('../renderer/platform');
+const { resolvePrimitiveName } = require('../schema/primitive-registry');
 
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
@@ -120,12 +121,19 @@ function renderRoot(root, options) {
   ].filter(Boolean).join(';');
   const styleAttr = rootStyle ? ` style="${escapeAttr(rootStyle)}"` : '';
 
+  // Bottom chrome runs to the foot of the region: it keeps the gutter above it
+  // but not below, and it shifts a floating action button clear of itself.
+  const hasTabBar = children.some((child) => (
+    isObject(child) && resolvePrimitiveName(child.component) === 'bottom_tab_bar'
+  ));
+  const tabBarClass = hasTabBar ? ' wf-root-has-tabbar' : '';
   const bodyLayoutCss = layoutToCss(rootLayout, {}, { density: options.density });
   const bodyDividerClass = separatorClass(rootLayout);
   const bodyDivides = shouldRenderParentSeparators(rootLayout)
     ? ` data-wf-divides="${rootLayoutType === 'row' ? 'row' : 'stack'}"`
     : '';
-  const bodyStyle = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
+  const bodyInline = [bodyLayoutCss, hasTabBar ? 'padding-bottom:0' : ''].filter(Boolean).join(';');
+  const bodyStyle = bodyInline ? ` style="${escapeAttr(bodyInline)}"` : '';
 
   const kindClass = isOverlay ? 'wf-root-overlay' : 'wf-root-container';
   const slotClass = isSlot ? ' wf-root-slot' : '';
@@ -141,7 +149,7 @@ function renderRoot(root, options) {
 
   const rootId = typeof root.id === 'string' && root.id.trim() !== '' ? ` id="${escapeAttr(root.id.trim())}"` : '';
 
-  return `<section${rootId} class="wf-root ${kindClass}${slotClass}${surfaceClass}${roleClass}"${styleAttr}${stickyAttr}${frameAttr}>
+  return `<section${rootId} class="wf-root ${kindClass}${slotClass}${surfaceClass}${roleClass}${tabBarClass}"${styleAttr}${stickyAttr}${frameAttr}>
       <div class="wf-root-title">${escapeHtml(rootLabel)}</div>
       <div class="wf-root-body${bodyDividerClass}"${bodyStyle}${bodyDivides}>${content}</div>
     </section>`;
