@@ -43,8 +43,12 @@ function renderCode(node, ctx, lib) {
   return { inner: `${tag}<pre><code>${body}</code></pre>` };
 }
 
+const BADGE_TONES = new Set(['info', 'success', 'warning', 'danger']);
+
 function renderBadge(node, ctx, lib) {
   const variant = lib.str(node.props?.variant) || 'neutral';
+  // variant is the shape; tone is the status it reports.
+  const tone = lib.str(node.props?.tone);
   const text = lib.textProp(node.props);
   const dot = variant === 'dot' ? '<span class="wf-dot-mark"></span>' : '';
   const glyph = lib.iconSpan(node.props?.icon);
@@ -52,7 +56,7 @@ function renderBadge(node, ctx, lib) {
   return {
     tag: 'span',
     inner: `<span class="wf-badge-body">${dot}${glyph}${body}</span>`,
-    className: `wf-badge-${lib.toSafeClass(variant)}`,
+    className: `wf-badge-${lib.toSafeClass(variant)}${BADGE_TONES.has(tone) ? ` wf-tone-${tone}` : ''}`,
   };
 }
 

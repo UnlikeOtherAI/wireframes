@@ -89,7 +89,7 @@ const navigationStyles = [
     + 'text-decoration:none;border-radius:4px;min-width:0}',
   '.wf-menu-label{flex:1 1 auto;min-width:0;white-space:nowrap}',
   '.wf-menu-shortcut{font-size:11px;color:var(--wf-ink-4);flex:0 0 auto}',
-  '.wf-menu-danger{color:var(--wf-ink);font-weight:500}',
+  '.wf-menu-danger{color:var(--wf-danger);font-weight:500}',
   '.wf-menu-sep{height:1px;background:var(--wf-line-2);margin:4px 0}',
   '.wf-menu-item .wf-icon-glyph{color:var(--wf-ink-4);width:16px;min-width:16px;font-size:13px}',
 
@@ -112,7 +112,7 @@ const navigationStyles = [
   '.wf-sheet-row{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;'
     + 'padding:0 16px;font:inherit;font-size:15px;color:var(--wf-ink);background:transparent;border:none;cursor:pointer}',
   '.wf-sheet-row+.wf-sheet-row{border-top:1px solid var(--wf-line-2)}',
-  '.wf-sheet-danger{color:var(--wf-ink);font-weight:600}',
+  '.wf-sheet-danger{color:var(--wf-danger);font-weight:600}',
   '.wf-sheet-cancel{border-radius:12px;background:#ffffff;font-weight:600;border-top:none}',
   '.wf-mode-line .wf-sheet-cancel{background:transparent;border:1px solid var(--wf-line-strong);border-radius:0}',
 

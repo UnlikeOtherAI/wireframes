@@ -36,6 +36,24 @@ explicit — prefer them when you know what you want.
 Run `wf why <nodeId> --page <pageId>` to see the rule that fired and the one
 edit that flips it.
 
+## Colour
+
+The wireframe is greyscale. Four hues exist, and they answer one question —
+how bad is this:
+
+| Where | How to ask for it |
+|---|---|
+| `alert` | `variant: info \| success \| warning \| error` tints the left stripe |
+| `badge` | `tone: info \| success \| warning \| danger` makes it a status pill |
+| `button` | `variant: danger` for an action that destroys something |
+| `input` and friends | `error: <message>` turns the field and its message red |
+| `menu` / `action_sheet` rows | `danger: true` |
+
+Nothing else takes a hue. Charts, stat trends, headings, primary buttons and
+every fill stay grey on purpose: a wireframe that colours by brand or by
+category stops reading as a wireframe. `badge.variant` is the shape
+(neutral, outline, dot, pill); `badge.tone` is the status.
+
 ## Proportions
 
 Give a region a `role` and it gets the right size automatically:
@@ -96,38 +114,3 @@ Leave text out and the element renders a skeleton bar rather than a gap, which
 is what a wireframe should show. `paragraph: { lines: 3 }`, `skeleton`,
 `table: { state: loading }` and `image` with no `src` all do this.
 
-
-## Commands an agent reaches for
-
-| Command | What it answers |
-|---|---|
-| `wf llm --short` | this page, generated from the code |
-| `wf llm --element <name>` | one element's props, with an example |
-| `wf llm --family <name>` | every element in a family |
-| `wf why <nodeId> --page <pageId>` | why that node did or did not get a box, and how to change it |
-| `wf validate` | schema and semantic errors, with the address of each |
-| `wf lint` | the mistakes an agent actually makes, each with a suggestion |
-| `wf inspect <address>` | the resolved node at an address |
-| `wf tree <page>` | the resolved page tree |
-| `wf build` | static HTML you can open |
-| `wf pack` / `wf unpack` | one .wf file in, a project folder out |
-| `wf screenshots` | rendered PNGs, to check your own work |
-
-## Reading the output back
-
-Build the project and read the markup: every node carries `data-wf-frame`, so
-you can see what the engine decided without guessing. Turn on
-`rendering.explain: true` on a page and each node also carries
-`data-wf-why="<rule>:<reason>"`.
-
-## What the linter will tell you
-
-| Code | Meaning |
-|---|---|
-| `SECTION_INTENT` | a `section` that would read better as `row`, `stack` or `card` |
-| `REDUNDANT_SURFACE` | a `surface:` that matches what the rules already decide |
-| `UNKNOWN_PROP` / `UNKNOWN_PROP_VALUE` | with the nearest valid name |
-| `UNKNOWN_ROLE` | a role that drives no proportions |
-| `MISSING_TEXT` | an element rendering a skeleton you may not have intended |
-| `UNLABELED_FIELD` | a field with no label |
-| `ORPHAN_LAYOUT`, `EMPTY_CONTAINER`, `DEEP_NESTING` | structure that will not render as intended |

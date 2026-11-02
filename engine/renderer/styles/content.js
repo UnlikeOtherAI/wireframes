@@ -3,13 +3,20 @@
 const contentStyles = [
   // --- Badges ---
   '.wf-badge{display:inline-flex;width:fit-content;max-width:100%}',
-  '.wf-badge-body{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;font-size:11px;font-weight:500;'
+  '.wf-badge-body{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;font-size:11px;font-weight:500;'
     + 'line-height:1.6;color:var(--wf-ink-2);background:var(--wf-fill);border:1px solid transparent;border-radius:10px;white-space:nowrap}',
   '.wf-mode-line .wf-badge-body{background:transparent;border-color:var(--wf-line-strong);border-radius:0}',
   '.wf-badge-outline .wf-badge-body{background:transparent;border-color:var(--wf-line)}',
   '.wf-badge-pill .wf-badge-body{border-radius:10px}',
   '.wf-badge-dot .wf-badge-body{background:transparent;border-color:transparent;padding:2px 0;font-size:12px;color:var(--wf-ink-2)}',
-  '.wf-dot-mark{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--wf-ink-3);flex:0 0 auto}',
+  '.wf-dot-mark{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--wf-tone,var(--wf-ink-3));flex:0 0 auto}',
+  // A toned badge is a status pill: the hue reaches its edge and label, not its fill.
+  // A toned badge is a status pill whatever shape variant it was given: the hue
+  // reaches its edge and label, never its fill, and the label keeps clear of
+  // the border it now has.
+  '[class*="wf-tone-"].wf-badge .wf-badge-body{padding:4px 12px;border-radius:11px;'
+    + 'border-color:var(--wf-tone);color:var(--wf-tone);background:transparent}',
+  '.wf-mode-line [class*="wf-tone-"].wf-badge .wf-badge-body{border-radius:0}',
 
   // --- Avatars ---
   '.wf-avatar{display:inline-flex;width:fit-content}',
@@ -102,13 +109,13 @@ const contentStyles = [
   // Severity reads from the left stripe, in both modes. It is the one place a
   // hue is allowed; error and warning also take a heavier stripe so the
   // distinction survives greyscale printing.
-  '.wf-alert[data-wf-frame="surface"]{border-left-color:var(--wf-alert-accent,var(--wf-ink-3))}',
-  '.wf-alert-info{--wf-alert-accent:var(--wf-info)}',
-  '.wf-alert-success{--wf-alert-accent:var(--wf-success)}',
-  '.wf-alert-warning{--wf-alert-accent:var(--wf-warning)}',
-  '.wf-alert-error{--wf-alert-accent:var(--wf-danger)}',
+  '.wf-alert[data-wf-frame="surface"]{border-left-color:var(--wf-tone,var(--wf-ink-3))}',
+  '.wf-alert-info{--wf-tone:var(--wf-info)}',
+  '.wf-alert-success{--wf-tone:var(--wf-success)}',
+  '.wf-alert-warning{--wf-tone:var(--wf-warning)}',
+  '.wf-alert-error{--wf-tone:var(--wf-danger)}',
   '.wf-alert-error[data-wf-frame="surface"],.wf-alert-warning[data-wf-frame="surface"]{border-left-width:4px}',
-  '.wf-mode-line .wf-alert[data-wf-frame="surface"]{border-left:3px solid var(--wf-alert-accent,var(--wf-line-strong))}',
+  '.wf-mode-line .wf-alert[data-wf-frame="surface"]{border-left:3px solid var(--wf-tone,var(--wf-line-strong))}',
   '.wf-alert-glyph .wf-icon-glyph{font-size:17px;color:var(--wf-ink-2)}',
   '.wf-alert-body{flex:1 1 auto;min-width:0}',
   '.wf-alert-title{font-size:13px;font-weight:600;color:var(--wf-ink);line-height:1.4}',
