@@ -25,6 +25,8 @@ See [docs/cli/](docs/cli/) for CLI-specific documentation.
 | [engine/schema/schema.json](engine/schema/schema.json) | Formal JSON Schema for validation |
 | [docs/cli/rendering.md](docs/cli/rendering.md) | Build, serve, and renderer specification |
 | [docs/cli/rendering-modes.md](docs/cli/rendering-modes.md) | Line vs card rendering modes |
+| [docs/cli/agent-guide.md](docs/cli/agent-guide.md) | Element cheat sheet, box rules, proportions — written for agents |
+| [docs/cli/wf-format.md](docs/cli/wf-format.md) | The `.wf` single-file container and the browser renderer |
 
 ---
 

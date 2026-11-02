@@ -282,33 +282,186 @@ stateBindings:
 # ============================================================
 
 primitives:
+  containers:
+    - section         # title, description
+    - card            # title, description, media, footer
+    - stack           # gap, padding, align
+    - row             # gap, padding, align, justify, wrap, nowrap
+    - grid            # columns, gap, minItemWidth
+    - split           # gap, orientation (row|stack)
+    - form            # title, submit, columns
+    - carousel        # dots, arrows, items
   text:
-    - heading       # props: level (1-6), text; label accepted as alias
-    - paragraph     # props: text; label accepted as alias
-    - text          # props: text, variant (body|meta); label accepted as alias
-  media:
-    - image         # props: src, alt, width, height
-    - icon          # props: name (Font Awesome), style (solid|regular|brands), size (xs|sm|lg|xl|2xl)
-  interactive:
-    - button        # props: label, icon (optional Font Awesome name), iconStyle, iconSize, variant (primary|secondary|ghost|danger)
-    - tab_bar       # in-page tabs — button children, gap 8px, not stretched
-    - bottom_tab_bar # iOS-style bottom nav — button children stretch equally, icon stacked above label
-    - input         # props: label, placeholder, inputType (text|password|email|number|search)
-    - textarea      # props: label, placeholder, rows
-    - select        # props: label, placeholder, options
-    - checkbox      # props: label
-    - radio         # props: label
-    - toggle        # props: label
-    - chart         # props: chartType (line|bar|vertical|horizontal|gauge|donut), label
-  structural:
-    - table         # props: columns[{key,label,width?}], rows?; also supports binding.source for dataset-backed rows
-    - section       # props: title; may have children
-    - divider       # no props
-    - spacer        # props: size; percentage sizes become flexible spacers in flex parents
+    - heading         # text, label, level
+    - paragraph       # text, label, lines
+    - text            # text, label, variant (body|meta|label|caption|mono)
+    - code            # text, language, inline
+    - badge           # text, variant (neutral|outline|dot|pill), icon
+    - avatar          # name, src, size (xs|sm|md|lg|xl), shape (circle|square), group, overflow
+    - icon            # name, style (solid|regular|brands), size
+    - image           # src, alt, kind (image|video|map|embed|logo), ratio, width, height
+    - rating          # value, max, count
+    - stat            # label, value, delta, trend (up|down|flat), icon, sparkline
+    - progress        # value, kind (bar|circle|spinner), label, indeterminate
+    - skeleton        # lines, avatar, width
+    - divider         # label, orientation (horizontal|vertical)
+    - spacer          # size
+    - empty_state     # title, text, icon, action, variant (empty|error|404|offline)
+  controls:
+    - button          # label, icon, iconStyle (solid|regular|brands), iconSize, variant (primary|secondary|ghost|danger|link), size (sm|md|lg), iconOnly, loading, disabled, fab
+    - segmented       # options, value, size (sm|md|lg)
+    - input           # label, placeholder, inputType (text|password|email|number|search|tel|url|date|time|datetime|color|range|otp|stepper), value, prefix, suffix, help, error, required, disabled, length
+    - textarea        # label, placeholder, rows, help, error, required, disabled, maxLength
+    - select          # label, placeholder, options, searchable, multiple, help, error, required, disabled
+    - checkbox        # label, checked, description, disabled
+    - radio           # label, checked, description, disabled
+    - toggle          # label, checked, description, disabled
+    - choice_group    # label, kind (checkbox|radio), options, value, inline
+    - tags_input      # label, tags, placeholder
+    - upload          # label, hint, files, variant (dropzone|button)
+    - picker          # label, options, value, columns
+    - editor          # label, toolbar, rows
+  navigation:
+    - tab_bar         # tabs, variant (underline|pill|enclosed)
+    - bottom_tab_bar  # tabs
+    - breadcrumb      # items, separator
+    - pagination      # page, pages, variant (numbers|simple|dots)
+    - stepper         # steps, current, orientation (row|stack)
+    - nav             # items, collapsed, groups
+    - menu            # items
+    - app_bar         # title, subtitle, leading, actions
+    - action_sheet    # items, title, cancel
+    - page_header     # title, subtitle, breadcrumb, actions, tabs
+  data:
+    - table           # columns, rows, caption, selectable, state (default|loading|empty), emptyText, dense, pagination
+    - list            # items, kind (plain|avatar|action|file|chat|timeline|settings), divided, selectable, refreshable
+    - chart           # chartType (bar|vertical|horizontal|line|area|pie|donut|gauge|sparkline|heatmap), title, label, data, series, legend, axes, height
+    - calendar        # view (month|week|day|picker), date, events
+    - kanban          # columns
+    - tree            # items, expanded
+    - accordion       # items
+  feedback:
+    - alert           # text, title, variant (info|success|warning|error|neutral), icon, dismissible, inline
 
-# ============================================================
-# 9. LAYOUT SYSTEM
-# ============================================================
+# Frame class per element: S always, C decided by the frame rules,
+# N never, E one divider edge. See docs/cli/schema.md section 4.2.
+frameClass:
+  section: C
+  card: S
+  stack: N
+  row: N
+  grid: N
+  split: N
+  form: N
+  carousel: C
+  heading: N
+  paragraph: N
+  text: N
+  code: S
+  badge: N
+  avatar: N
+  icon: N
+  image: N
+  rating: N
+  stat: C
+  progress: N
+  skeleton: N
+  divider: E
+  spacer: N
+  empty_state: C
+  button: N
+  segmented: N
+  input: N
+  textarea: N
+  select: N
+  checkbox: N
+  radio: N
+  toggle: N
+  choice_group: N
+  tags_input: N
+  upload: S
+  picker: S
+  editor: S
+  tab_bar: E
+  bottom_tab_bar: E
+  breadcrumb: N
+  pagination: N
+  stepper: N
+  nav: N
+  menu: N
+  app_bar: E
+  action_sheet: N
+  page_header: N
+  table: C
+  list: C
+  chart: C
+  calendar: S
+  kanban: N
+  tree: C
+  accordion: C
+  alert: S
+
+aliases:
+  chip: badge
+  tag: badge
+  pill: badge
+  media: image
+  kpi: stat
+  metric: stat
+  spinner: progress
+  loader: progress
+  combobox: select
+  autocomplete: select
+  switch: toggle
+  tabs: tab_bar
+  wizard: stepper
+  sidenav: nav
+  date_picker: calendar
+  board: kanban
+  banner: alert
+  callout: alert
+
+# Semantic roles that drive built-in proportions.
+roles:
+  - header
+  - app_bar
+  - sidebar
+  - nav
+  - main
+  - aside
+  - footer
+  - toolbar
+  - tabbar
+  - form
+  - dialog
+  - sheet
+  - drawer
+  - content
+
+# manifest.sizing accepts any of these, as a flat token-to-pixels map.
+sizingTokens:
+  - sidebar.width
+  - sidebar.collapsedWidth
+  - sidebar.minWidth
+  - aside.width
+  - header.height
+  - tabbar.height
+  - footer.minHeight
+  - page.gutter
+  - content.narrowWidth
+  - card.padding
+  - card.gap
+  - grid.gap
+  - control.height
+  - control.minWidth
+  - row.height
+  - modal.width
+  - drawer.width
+  - sheet.maxHeight
+  - chart.height
+  - stat.minHeight
+  - statusbar.height
+  - homeindicator.height
 
 layout:
   types:

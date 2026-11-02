@@ -11,9 +11,12 @@ prevention, and component-level rendering rules per mode.
 
 # 1. Rendering Philosophy
 
-The rendering layer distinguishes **surfaces** from **content**.
-Only surfaces render frames. Content primitives stay unboxed unless they are
-explicitly boxed controls such as inputs, selects, and textareas.
+The rendering layer decides, for every node, whether it draws a box. That
+decision is made once in `engine/renderer/frame-rules.js` and emitted as
+`data-wf-frame`, which the stylesheet keys on. CSS never infers a frame from
+nesting or from class adjacency, and the linter calls the same function, so the
+two cannot disagree. The five outcomes and the ten precedence rules are in
+[schema.md §4.2](schema.md); `wf why` prints the rule that fired for any node.
 No production styling. No colors beyond black, white, and gray.
 No custom fonts. The visual output is a clickable skeleton.
 Font Awesome Free icons are supported via the `icon` component and `icon` prop on buttons.
@@ -431,12 +434,12 @@ button    → <div class="wf-button">
               or <a href="{resolvedRouteHref}">...</a> for route-backed navigation
             </div>
 
-tab_bar   → <div class="wf-tab-bar wf-surface">
+tab_bar   → <div class="wf-tab_bar" data-wf-frame="edge">
               <div class="wf-tab-bar-body">{children}</div>
             </div>
             In-page tab navigation. Buttons laid out in a row with gap, NOT stretched.
 
-bottom_tab_bar → <div class="wf-bottom-tab-bar wf-surface">
+bottom_tab_bar → <div class="wf-bottom_tab_bar" data-wf-frame="edge">
                    <div class="wf-bottom-tab-bar-body">{children}</div>
                  </div>
                  iOS-style bottom navigation. Child buttons stretch equally to fill width,
@@ -483,7 +486,7 @@ toggle    → <div class="wf-toggle">
 ## Structural primitives
 
 ```
-table     → <div class="wf-table wf-surface?">
+table     → <div class="wf-table" data-wf-frame="surface|group">
               <div class="wf-table-header wf-table-grid">{column labels}</div>
               <div class="wf-table-body">
                 <div class="wf-table-row wf-table-grid">{row cells}</div>
@@ -498,7 +501,7 @@ section   → <div class="wf-section">
               <div class="wf-section-body">{children}</div>
             </div>
 
-divider   → <hr class="wf-divider" />
+divider   → <div class="wf-divider" data-wf-frame="edge"><span class="wf-rule"></span></div>
             CSS: border: none; border-top: 1px solid #333; margin: 8px 0;
             Spans full width of parent container.
 
@@ -550,7 +553,7 @@ overlay   → position: relative; (children stack with z-index)
 | `columns` | `grid-template-columns: repeat({value}, 1fr)` |
 | `justify` | `justify-content: {value}` |
 | `align` | `align-items: {value}` |
-| `separatorPolicy: auto \| divide` + `gap: 0` | parent divider classes (`wf-divide-x` / `wf-divide-y`) |
+| `separatorPolicy: auto \| divide` + `gap: 0` | `data-wf-divides="row\|stack"` on the children wrapper, `data-wf-edge="after"` on every child but the last |
 | `separatorPolicy: gutters` or `gap > 0` | gutters only, no parent dividers |
 | `separatorStyle` | `--wf-divider-style: {value}` |
 
