@@ -5,6 +5,7 @@
   "scripts": {
     "gallery:update": "node scripts/update-gallery-baselines.js",
     "test": "pnpm --filter @wireframes/cli test",
+    "gallery:update": "pnpm --filter @wireframes/cli exec node ../scripts/update-gallery-baselines.js",
     "test:all": "pnpm -r test"
   }
 }

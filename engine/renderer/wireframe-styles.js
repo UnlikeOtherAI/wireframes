@@ -1,5 +1,7 @@
 'use strict';
 
+// Per-node wireframeStyle overrides live here; rendering-mode CSS lives in ./styles/.
+
 const { toPx } = require('./layout');
 
 // Per-node wireframeStyle override helpers live here; mode CSS strings live in ./styles/.

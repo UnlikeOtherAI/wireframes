@@ -141,9 +141,9 @@ function validateNodeIds(result, node, context, includeUsage) {
   }
 }
 
-function validateNode(result, node, context) {
+function validateNode(result, node, context, traversal = {}) {
   validateNodeIds(result, node, context, {});
-  validatePrimitiveProps(result, node, context);
+  validatePrimitiveProps(result, node, context, traversal);
 }
 
 function loadYamlSafe(filePath, result) {
@@ -192,7 +192,10 @@ function collectLintTargets(projectPath, result) {
       if (region && typeof region.id === 'string') {
         validateIdentifier(result, `template "${templateId}" region`, region.id);
       }
-      validateNode(result, region, `template "${templateId}" region`);
+      validateNode(result, region, `template "${templateId}" region`, {
+        surfaceDepth: region?.kind === 'slot' ? 0 : 1,
+        parentLayoutIsGrid: region?.layout?.type === 'grid',
+      });
     }
     if (Array.isArray(templateDoc.overlays)) {
       for (const overlay of templateDoc.overlays) {

@@ -8,6 +8,7 @@ const assert = require('node:assert/strict');
 
 const { runValidate } = require('../../engine/validate/cli-adapter');
 const { resolvePageTargets } = require('../../engine/screenshots');
+const { launchChromium } = require('../../engine/screenshots/playwright-launcher');
 const { renderWireframeMarkup } = require('../../engine/screenshots/renderer');
 
 const FIXTURE_PROJECT = path.join(__dirname, 'fixtures', 'showcase-project');
@@ -29,7 +30,7 @@ function getRenderTarget(projectPath, pageId) {
 
 async function renderTargetInBrowser(target) {
   const playwright = require('playwright');
-  const browser = await playwright.chromium.launch({ headless: true });
+  const browser = await launchChromium(playwright, { headless: true });
   const page = await browser.newPage({
     viewport: {
       width: target.viewport.width,
