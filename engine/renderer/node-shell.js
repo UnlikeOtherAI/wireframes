@@ -60,11 +60,62 @@ function elementLayout(element, node, viewport, sizing) {
   return layout;
 }
 
+// In a row, content should keep its natural width and fields should share what
+// is left. Without this a heading next to a search box wraps to two lines while
+// the select beside it sprawls.
+const ROW_INTRINSIC = new Set([
+  'heading', 'text', 'badge', 'avatar', 'icon', 'button', 'rating', 'progress',
+  'breadcrumb', 'pagination', 'segmented', 'checkbox', 'radio', 'toggle', 'divider',
+]);
+const ROW_FLEXIBLE = new Set(['input', 'select', 'textarea', 'tags_input', 'search']);
+
+function rowFlexStyle(element, node, ctx) {
+  if (ctx.parentLayoutType !== 'row') return '';
+  const size = isObject(node.size) ? node.size : {};
+  if (size.width != null || isObject(node.gridItem)) return '';
+  if (ROW_INTRINSIC.has(element)) return 'flex:0 0 auto';
+  // A field in a row grows into the space, but only so far: a zoom select
+  // should not eat a toolbar. Override with size.width.
+  if (ROW_FLEXIBLE.has(element)) return 'flex:1 1 auto;min-width:0;max-width:320px';
+  return '';
+}
+
+// A row of controls is a toolbar and should wrap. A row that lays out panels,
+// tables or sized children is structure, and must keep its columns.
+const ROW_STRUCTURAL = new Set([
+  'section', 'card', 'stack', 'row', 'grid', 'split', 'form', 'carousel',
+  'table', 'list', 'chart', 'calendar', 'kanban', 'tree', 'accordion',
+  'editor', 'upload', 'picker', 'image', 'empty_state', 'code', 'skeleton',
+]);
+
+function isToolbarRow(node) {
+  const children = Array.isArray(node.children) ? node.children : [];
+  if (children.length < 2) return false;
+  return children.every((child) => {
+    if (!isObject(child)) return false;
+    if (child.use || child.injectable) return false;
+    const name = resolvePrimitiveName(String(child.component || '')) || String(child.component || '');
+    // A flexible spacer is the hallmark of a toolbar, not a sized panel.
+    if (name === 'spacer') return true;
+    if (isObject(child.pane) || isObject(child.size) || isObject(child.gridItem)) return false;
+    return name !== '' && !ROW_STRUCTURAL.has(name);
+  });
+}
+
 function wrapStyle(element, node, decision, ctx) {
   const parts = [];
   const props = isObject(node.props) ? node.props : {};
 
-  if (element === 'row' && props.wrap === true) parts.push('flex-wrap:wrap');
+  const rowFlex = rowFlexStyle(element, node, ctx);
+  if (rowFlex) parts.push(rowFlex);
+
+  // A toolbar wraps rather than running off the side of the page. A row of
+  // panels must not, or a two-pane layout would stack, so this only applies
+  // when every child is an intrinsic-width control.
+  const layoutType = isObject(node.layout) ? node.layout.type : (element === 'row' ? 'row' : null);
+  if (layoutType === 'row' && props.nowrap !== true) {
+    if (props.wrap === true || isToolbarRow(node)) parts.push('flex-wrap:wrap');
+  }
   if (element === 'grid' && props.minItemWidth != null) {
     const min = Number(props.minItemWidth);
     if (Number.isFinite(min)) {

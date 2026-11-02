@@ -2730,6 +2730,9 @@
         },
         "wrap": {
           "type": "boolean"
+        },
+        "nowrap": {
+          "type": "boolean"
         }
       }
     },
