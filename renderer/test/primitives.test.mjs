@@ -192,7 +192,9 @@ describe('Form primitives', () => {
           id: cb1
           props:
             label: Agree`);
-    assert.ok(html.includes('type="checkbox"'), 'should render checkbox');
+    // The checkbox mark is drawn, not a native input, so it reads the same in
+    // both modes and on both platforms.
+    assert.ok(html.includes('wf-check-mark'), 'should render checkbox');
     assert.ok(html.includes('Agree'), 'should have label');
     assert.ok(html.includes('wf-checkbox'), 'should have checkbox class');
   });
@@ -203,7 +205,7 @@ describe('Form primitives', () => {
           id: rd1
           props:
             label: Choice A`);
-    assert.ok(html.includes('type="radio"'), 'should render radio');
+    assert.ok(html.includes('wf-radio-mark'), 'should render radio');
     assert.ok(html.includes('Choice A'), 'should have label');
     assert.ok(html.includes('wf-radio'), 'should have radio class');
   });
@@ -243,8 +245,11 @@ describe('Structural primitives', () => {
     const html = renderContent(`
         - component: divider
           id: div1`);
-    assert.ok(html.includes('<hr'), 'should render hr');
+    // A divider is an edge element: a rule plus an optional label, not an <hr>,
+    // so it can carry a label and run vertically.
     assert.ok(html.includes('wf-divider'), 'should have divider class');
+    assert.ok(html.includes('wf-rule'), 'should draw a rule');
+    assert.ok(html.includes('data-wf-frame="edge"'), 'should be an edge');
   });
 
   it('renders spacer', () => {
@@ -304,7 +309,7 @@ describe('Tab bars', () => {
               id: tab2
               props:
                 label: Tab 2`);
-    assert.ok(html.includes('wf-tab-bar'), 'should have tab-bar class');
+    assert.ok(html.includes('wf-tab_bar'), 'should have tab_bar class');
     assert.ok(html.includes('Tab 1'), 'should contain tab buttons');
   });
 
@@ -323,7 +328,7 @@ describe('Tab bars', () => {
               props:
                 label: Profile
                 icon: user`);
-    assert.ok(html.includes('wf-bottom-tab-bar'), 'should have bottom-tab-bar class');
+    assert.ok(html.includes('wf-bottom_tab_bar'), 'should have bottom_tab_bar class');
     assert.ok(html.includes('Home'), 'should contain tab buttons');
     assert.ok(html.includes('fa-house'), 'should contain icon');
   });
