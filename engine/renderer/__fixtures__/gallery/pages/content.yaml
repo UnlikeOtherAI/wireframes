@@ -161,6 +161,35 @@ page:
                     icon: check
                 - id: badge_blank
                   component: badge
+            - id: badge_status_row
+              component: row
+              props:
+                gap: 10
+              children:
+                - id: badge_tone_success
+                  component: badge
+                  props:
+                    text: Healthy
+                    variant: dot
+                    tone: success
+                - id: badge_tone_warning
+                  component: badge
+                  props:
+                    text: Degraded
+                    variant: dot
+                    tone: warning
+                - id: badge_tone_danger
+                  component: badge
+                  props:
+                    text: Failed
+                    variant: dot
+                    tone: danger
+                - id: badge_tone_info
+                  component: badge
+                  props:
+                    text: Queued
+                    variant: pill
+                    tone: info
             - id: avatar_row
               component: row
               props:

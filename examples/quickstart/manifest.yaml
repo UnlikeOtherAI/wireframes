@@ -1,0 +1,9 @@
+documentType: manifest
+specVersion: "1.1"
+id: manifest
+manifest:
+  projectId: quickstart
+  name: Quickstart
+  schemaVersion: "1.1"
+  createdWithCLI: "wf 1.0.0"
+  defaultGridColumns: 12

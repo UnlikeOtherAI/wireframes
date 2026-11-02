@@ -296,7 +296,7 @@ primitives:
     - paragraph       # text, label, lines
     - text            # text, label, variant (body|meta|label|caption|mono)
     - code            # text, language, inline
-    - badge           # text, variant (neutral|outline|dot|pill), icon
+    - badge           # text, variant (neutral|outline|dot|pill), tone (neutral|info|success|warning|danger), icon
     - avatar          # name, src, size (xs|sm|md|lg|xl), shape (circle|square), group, overflow
     - icon            # name, style (solid|regular|brands), size
     - image           # src, alt, kind (image|video|map|embed|logo), ratio, width, height

@@ -53,14 +53,15 @@ const textPrimitives = [
     name: 'badge',
     family: 'text',
     frame: 'N',
-    summary: 'Badge, pill, chip, tag or status dot.',
+    summary: 'Badge, pill, chip, tag or status dot. variant is the shape, tone the status.',
     props: {
       text: { type: 'string', primary: true },
       variant: { enum: ['neutral', 'outline', 'dot', 'pill'] },
+      tone: { enum: ['neutral', 'info', 'success', 'warning', 'danger'] },
       icon: { type: 'string' },
     },
     aliases: { chip: 'badge', tag: 'badge', pill: 'badge' },
-    example: '- badge: { text: Active, variant: dot }',
+    example: '- badge: { text: Active, variant: dot, tone: success }',
   },
   {
     name: 'avatar',

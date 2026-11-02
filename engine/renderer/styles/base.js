@@ -12,8 +12,13 @@ const baseStyles = [
   ':root{--wf-ink:#111827;--wf-ink-2:#374151;--wf-ink-3:#6b7280;--wf-ink-4:#9ca3af;'
     + '--wf-line:#d1d5db;--wf-line-2:#e5e7eb;--wf-line-strong:#4b5563;--wf-fill:#f3f4f6;--wf-fill-2:#f9fafb;'
     + '--wf-info:#2f6fd0;--wf-success:#2f8f55;--wf-warning:#c07817;--wf-danger:#c0443c}',
-  // The page stays greyscale. These four hues mark severity on a status edge
-  // only — never a fill, a label or a control.
+  // The page stays greyscale. These four hues mark one thing: severity, validity
+  // and destruction. An element that needs one sets --wf-tone and paints it on a
+  // single edge, dot or label — never a fill, a heading or a whole control.
+  '.wf-tone-info{--wf-tone:var(--wf-info)}',
+  '.wf-tone-success{--wf-tone:var(--wf-success)}',
+  '.wf-tone-warning{--wf-tone:var(--wf-warning)}',
+  '.wf-tone-danger{--wf-tone:var(--wf-danger)}',
 
   // --- Mode: page background ---
   '.wf-mode-line{background:#ffffff}',

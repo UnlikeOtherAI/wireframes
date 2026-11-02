@@ -58,3 +58,31 @@ test('every primitive has a renderer and renders without throwing', () => {
     assert.ok(html.includes('data-wf-frame='), `${name} did not emit a frame decision`);
   }
 });
+
+// A wireframe is greyscale. The four severity hues are the single exception,
+// and they exist to answer one question: how bad is this? Letting them reach
+// anything else — a heading, a chart series, a primary button, a fill — turns
+// the wireframe into a visual design. This test is the fence around that rule.
+test('hue marks severity, validity and destruction, and nothing else', () => {
+  const css = buildWireframeStyles();
+  const allowed = new Set([
+    ':root',                 // the token definitions themselves
+    '.wf-tone-info', '.wf-tone-success', '.wf-tone-warning', '.wf-tone-danger',
+    '.wf-alert-info', '.wf-alert-success', '.wf-alert-warning', '.wf-alert-error',
+    '.wf-button-danger',     // destructive action
+    '.wf-field-invalid',     // a field that failed validation
+    '.wf-field-error',       // the message under it
+    '.wf-menu-danger', '.wf-sheet-danger', // destructive rows
+  ]);
+
+  for (const rule of css.split('\n')) {
+    if (!/--wf-(info|success|warning|danger)\b/.test(rule)) continue;
+    const selector = rule.slice(0, rule.indexOf('{'));
+    const owner = selector.split(/[\s,>]+/).find((part) => allowed.has(part));
+    assert.ok(owner, `"${selector}" paints a severity hue but is not in the severity allowlist`);
+  }
+
+  // The greyscale commitments that make the exception meaningful.
+  assert.ok(!/\.wf-chart[^{]*\{[^}]*--wf-(info|success|warning|danger)/.test(css), 'charts must stay greyscale');
+  assert.ok(!/\.wf-metric[^{]*\{[^}]*--wf-(info|success|warning|danger)/.test(css), 'metric trends must stay greyscale');
+});

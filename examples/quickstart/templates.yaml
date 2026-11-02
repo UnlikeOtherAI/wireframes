@@ -1,0 +1,42 @@
+documentType: templates
+specVersion: "1.1"
+id: templates
+templates:
+  app:
+    layout:
+      type: row
+      gap: 0
+      padding: 0
+      align: stretch
+    regions:
+      # role: sidebar sizes itself — 256px on web, 220 on tablet, and it
+      # does not shrink. Never hand-size one.
+      - id: sidebar
+        kind: persistent
+        role: sidebar
+        layout:
+          type: stack
+          gap: 12
+          padding: 16
+        children:
+          - id: brand
+            component: heading
+            props:
+              level: 4
+              text: Acme
+          - id: menu
+            component: nav
+            props:
+              items:
+                - label: Overview
+                - label: Billing
+                  active: true
+                - label: Team
+                - label: Settings
+      - id: main
+        kind: slot
+        role: main
+        layout:
+          type: stack
+          gap: 16
+          padding: 20

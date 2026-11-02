@@ -17,6 +17,7 @@ See [docs/cli/](docs/cli/) for CLI-specific documentation.
 
 | File | Purpose |
 |------|---------|
+| [README.md](README.md) | What this is, with screenshots and runnable examples |
 | [docs/architecture.md](docs/architecture.md) | System architecture (engine, CLI, API, admin, web) |
 | [docs/cli/brief.md](docs/cli/brief.md) | CLI commands, behavior, philosophy |
 | [docs/cli/schema.md](docs/cli/schema.md) | Schema contract: document types + core node model |

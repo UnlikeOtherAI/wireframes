@@ -1,0 +1,9 @@
+documentType: sitemap
+specVersion: "1.1"
+id: sitemap
+defaultTemplate: app
+routes:
+  - id: billing
+    path: /billing
+    page: billing
+    template: app

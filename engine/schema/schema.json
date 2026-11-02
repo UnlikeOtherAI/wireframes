@@ -2869,7 +2869,7 @@
     },
     "PrimitiveProps_badge": {
       "type": "object",
-      "description": "Badge, pill, chip, tag or status dot.",
+      "description": "Badge, pill, chip, tag or status dot. variant is the shape, tone the status.",
       "properties": {
         "text": {
           "type": "string"
@@ -2881,6 +2881,16 @@
             "outline",
             "dot",
             "pill"
+          ]
+        },
+        "tone": {
+          "type": "string",
+          "enum": [
+            "neutral",
+            "info",
+            "success",
+            "warning",
+            "danger"
           ]
         },
         "icon": {

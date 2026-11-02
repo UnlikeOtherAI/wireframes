@@ -16,7 +16,11 @@ const controlStyles = [
   '.wf-mode-line .wf-button-link button,.wf-mode-line .wf-button-link .wf-button-link{border:none;text-decoration:underline;min-width:0;padding:0}',
   '.wf-mode-card .wf-button button,.wf-mode-card .wf-button .wf-button-link{background:var(--wf-line-2);border:1px solid transparent;color:var(--wf-ink-2);border-radius:var(--wf-corner-radius,6px)}',
   '.wf-mode-card .wf-button-primary button,.wf-mode-card .wf-button-primary .wf-button-link{background:#1f2937;color:#ffffff}',
-  '.wf-mode-card .wf-button-danger button,.wf-mode-card .wf-button-danger .wf-button-link{background:#ffffff;color:var(--wf-ink);border-color:var(--wf-ink-3);border-width:1px}',
+  // Destructive: the hue is the whole signal, so a wireframe reader never
+  // mistakes Delete for Cancel. Outline, never a filled red button.
+  '.wf-button-danger{--wf-tone:var(--wf-danger)}',
+  '.wf-mode-card .wf-button-danger button,.wf-mode-card .wf-button-danger .wf-button-link{background:#ffffff;color:var(--wf-tone);border-color:var(--wf-tone);border-width:1px}',
+  '.wf-mode-line .wf-button-danger button,.wf-mode-line .wf-button-danger .wf-button-link{color:var(--wf-tone);border-color:var(--wf-tone)}',
   '.wf-mode-card .wf-button-ghost button,.wf-mode-card .wf-button-ghost .wf-button-link{background:transparent;color:var(--wf-ink-2)}',
   '.wf-mode-card .wf-button-link button,.wf-mode-card .wf-button-link .wf-button-link{background:transparent;color:var(--wf-ink);text-decoration:underline;min-width:0;padding:0}',
 
@@ -37,7 +41,7 @@ const controlStyles = [
   '.wf-field-label{display:block;margin:0 0 5px;color:var(--wf-ink-2);font-size:12px;font-weight:500;line-height:1.3}',
   '.wf-req{color:var(--wf-ink-3);margin-left:2px}',
   '.wf-field-help{display:block;margin-top:4px;font-size:11px;color:var(--wf-ink-3);line-height:1.4}',
-  '.wf-field-error{display:block;margin-top:4px;font-size:11px;color:var(--wf-ink);font-weight:500;line-height:1.4}',
+  '.wf-field-error{display:block;margin-top:4px;font-size:11px;color:var(--wf-danger);font-weight:500;line-height:1.4}',
   '.wf-field-error:before{content:"! ";font-weight:700}',
   '.wf-field-count{display:block;margin-top:4px;font-size:11px;color:var(--wf-ink-4);text-align:right}',
   '.wf-control{display:flex;align-items:center;gap:0;width:100%;min-width:0;overflow:hidden}',
@@ -49,7 +53,9 @@ const controlStyles = [
   '.wf-affix-start+input,.wf-affix-start+select{padding-left:0}',
   '.wf-mode-line .wf-control,.wf-mode-line .wf-textarea textarea{border:1px solid var(--wf-line-strong);background:transparent;border-radius:0}',
   '.wf-mode-card .wf-control,.wf-mode-card .wf-textarea textarea{border:1px solid var(--wf-line);background:#ffffff;border-radius:var(--wf-corner-radius,6px)}',
-  '.wf-field-invalid .wf-control,.wf-field-invalid textarea{border-color:var(--wf-ink);border-width:2px}',
+  // Invalid: a red edge plus the heavier border, so the state survives greyscale.
+  '.wf-field-invalid{--wf-tone:var(--wf-danger)}',
+  '.wf-field-invalid .wf-control,.wf-field-invalid textarea{border-color:var(--wf-tone);border-width:2px}',
   '.wf-select-searchable .wf-control select{padding-left:0}',
 
   // --- Special inputs ---

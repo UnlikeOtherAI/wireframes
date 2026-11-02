@@ -499,7 +499,7 @@ or a control with its own chrome; **edge only** draws one divider edge;
 | `paragraph` | never | text, label, lines |
 | `text` | never | text, label, variant: body\|meta\|label\|caption\|mono |
 | `code` | always | text, language, inline |
-| `badge` | never | text, variant: neutral\|outline\|dot\|pill, icon |
+| `badge` | never | text, variant: neutral\|outline\|dot\|pill, tone: neutral\|info\|success\|warning\|danger, icon |
 | `avatar` | never | name, src, size: xs\|sm\|md\|lg\|xl, shape: circle\|square, group, overflow |
 | `icon` | never | name, style: solid\|regular\|brands, size |
 | `image` | never | src, alt, kind: image\|video\|map\|embed\|logo, ratio, width, height |

@@ -93,6 +93,24 @@ explicit — prefer them when you know what you want.
 Run \`wf why <nodeId> --page <pageId>\` to see the rule that fired and the one
 edit that flips it.
 
+## Colour
+
+The wireframe is greyscale. Four hues exist, and they answer one question —
+how bad is this:
+
+| Where | How to ask for it |
+|---|---|
+| \`alert\` | \`variant: info \\| success \\| warning \\| error\` tints the left stripe |
+| \`badge\` | \`tone: info \\| success \\| warning \\| danger\` makes it a status pill |
+| \`button\` | \`variant: danger\` for an action that destroys something |
+| \`input\` and friends | \`error: <message>\` turns the field and its message red |
+| \`menu\` / \`action_sheet\` rows | \`danger: true\` |
+
+Nothing else takes a hue. Charts, stat trends, headings, primary buttons and
+every fill stay grey on purpose: a wireframe that colours by brand or by
+category stops reading as a wireframe. \`badge.variant\` is the shape
+(neutral, outline, dot, pill); \`badge.tone\` is the status.
+
 ## Proportions
 
 Give a region a \`role\` and it gets the right size automatically:

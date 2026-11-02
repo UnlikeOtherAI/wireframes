@@ -35,10 +35,24 @@ Surfaces are white cards with subtle shadows and rounded corners. Gaps between
 cards reveal the grey background, acting as natural gutters. This mode is
 closer to a lo-fi product prototype.
 
-Both modes are greyscale with one exception: an `alert` tints its left stripe
-by severity (`--wf-info`, `--wf-success`, `--wf-warning`, `--wf-danger`).
-Nothing else takes a hue — no brand colours, no coloured fills, labels or
-controls. No icons beyond placeholder stubs. No custom fonts.
+Both modes are greyscale with one exception: **hue marks severity, validity and
+destruction, and nothing else.** Four tokens carry it — `--wf-info`,
+`--wf-success`, `--wf-warning`, `--wf-danger` — and an element that needs one
+sets `--wf-tone` and paints it on a single edge, dot or label, never a fill:
+
+| Element | Trigger | What takes the hue |
+|---|---|---|
+| `alert` | `variant` | the left stripe |
+| `badge` | `tone` | the pill's border, label and dot |
+| `button` | `variant: danger` | the outline and label |
+| any field | `error` | the control's border and the message |
+| `menu` / `action_sheet` row | `danger: true` | the label |
+
+Everything else stays grey on purpose: charts, `stat` trends, headings, primary
+buttons, every fill. `up` is not green — a rising churn rate is not good news,
+and a wireframe that colours by brand or by category has stopped being a
+wireframe. `cli/test/style-collisions.test.js` fails if a hue reaches a selector
+outside that list. No icons beyond placeholder stubs. No custom fonts.
 
 ---
 
