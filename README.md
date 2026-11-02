@@ -109,16 +109,8 @@ page:
               - label: Upgrade
                 variant: primary
 
-        - id: stats
-          component: row            # organises; no border
-          props: { gap: 16 }
-          children:
-            - id: stat_plan
-              component: stat       # frames itself
-              props: { label: Plan, value: Team }
-            - id: stat_seats
-              component: stat
-              props: { label: Seats, value: 24 / 30 }
+        - id: summary
+          use: plan_summary         # a reusable component, defined once
 
         - id: quota
           component: alert          # hue, because this is a severity
@@ -144,6 +136,78 @@ page:
 ```
 
 The full file is [`examples/quickstart/pages/billing.yaml`](examples/quickstart/pages/billing.yaml).
+
+---
+
+## Components and links
+
+**A component is declared once in `components.yaml` and used by id.** `{{props.x}}`
+reads what the calling node passes; `propDefaults` fills the rest.
+
+```yaml
+components:
+  plan_summary:
+    propDefaults: { plan: Team, seats: 24 / 30, spend: $1,240 }
+    root:
+      id: plan_summary_root
+      component: row
+      props: { gap: 16 }
+      children:
+        - id: plan_summary_plan
+          component: stat
+          props: { label: Plan, value: "{{props.plan}}" }
+```
+
+```yaml
+- id: summary
+  use: plan_summary
+  props: { spend: $1,240 }    # override one, keep the rest
+```
+
+**Pages link by route id, never by file path.** A `sitemap.yaml` names the
+routes; `route:` on a nav item and `targetRoute` on an interaction point at
+them. Rename a page and nothing else moves.
+
+```yaml
+- id: menu
+  component: nav
+  props:
+    items:
+      - { label: Overview, icon: gauge, route: overview }
+      - { label: Billing, icon: credit-card, route: billing }
+      - { label: Team, icon: users, route: team }
+```
+
+```yaml
+- id: go_billing
+  component: button
+  props: { label: See invoices, variant: primary }
+  interaction:
+    - type: navigation
+      targetRoute: billing
+```
+
+A sidebar lives in the template and is rendered once per page, so it cannot know
+which page it is on. The renderer marks the item pointing at the current route —
+you never hand-set `active:`, and it can never go stale.
+
+```bash
+node cli/bin/wf.js routes
+```
+
+```
+overview / -> page overview / template app
+billing /billing -> page billing / template app
+team /team -> page team / template app
+```
+
+Set `basePath` to `..` in `.wfrc.yaml` and a build is clickable straight from
+the filesystem; leave it at `/` for a site served from its root.
+
+[![The team page, with the invite dialog open](docs/images/quickstart-team.png)](examples/quickstart)
+
+Three pages, one shared sidebar, one component used twice, one modal — the
+example builds to something you can actually click through.
 
 ---
 
@@ -215,9 +279,25 @@ and loading and empty states.
 Leave the text out of anything and it renders a placeholder bar rather than a
 gap — which is what a wireframe should show.
 
+### The catalogue
+
+Every element, rendered, with its props, its example and the box rule it obeys:
+**[docs/catalogue/index.html](docs/catalogue/index.html)** — open it from a
+checkout, no build step.
+
+[![The element catalogue](docs/images/catalogue.png)](docs/catalogue/index.html)
+
+The page is generated, and a test fails if the committed copy drifts from what
+the generator produces:
+
+```bash
+node cli/bin/wf.js catalogue --out docs/catalogue
+```
+
 The element set is declared once, in `engine/schema/primitive-registry/`, and
 that single source generates the JSON Schema, the lint contracts, the renderer
-dispatch and the agent reference. Ask the CLI rather than reading the code:
+dispatch, the agent reference and that catalogue. Adding an element to the
+registry adds it everywhere. Ask the CLI rather than reading the code:
 
 ```bash
 node cli/bin/wf.js llm --element table
@@ -392,6 +472,7 @@ if the bundle outgrows its size budget.
 | `wf lint` | the mistakes people actually make, each with a suggestion |
 | `wf why <node> --page <page>` | why that node did or did not get a box |
 | `wf llm --short` | the whole element reference, generated from the code |
+| `wf catalogue` | the element catalogue page, rendered |
 | `wf tree <page>` | the resolved page tree |
 | `wf inspect <address>` | the resolved node at an address |
 | `wf build` | static HTML you can open |
@@ -409,7 +490,7 @@ editing a project without opening a file.
 
 | Project | What it is |
 |---|---|
-| [`examples/quickstart`](examples/quickstart) | one billing screen; the hero above |
+| [`examples/quickstart`](examples/quickstart) | three linked pages, a shared component, a modal |
 | [`admin_wireframes`](admin_wireframes) | the admin panel, 15 pages |
 | [`wireframe_studio`](wireframe_studio) | the online editor |
 | [`web_wireframes`](web_wireframes) | the marketing site |

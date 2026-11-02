@@ -111,6 +111,8 @@ function buildOverlayRoots(overlays, components, source) {
       placement: overlay.placement,
       dismissOn: overlay.dismissOn,
       size: isObject(overlay.size) ? overlay.size : undefined,
+      // The overlay's own chrome: its title bar and its footer actions.
+      props: isObject(overlay.props) ? overlay.props : undefined,
       source,
       nodes: resolvedOverlay.nodes,
       wireframeStyle: isObject(overlay.wireframeStyle) ? overlay.wireframeStyle : undefined,

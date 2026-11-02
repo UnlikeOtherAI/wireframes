@@ -94,9 +94,10 @@ node scripts/sync-schema-primitives.js
 ```
 
 `cli/test/schema-registry-drift.test.js` fails if the two drift apart, and the
-same registry feeds lint contracts, `wf llm` and the renderer dispatch. Add an
-element by adding a registry entry, a renderer, its CSS and a gallery example —
-not by hand-editing schema.json.
+same registry feeds lint contracts, `wf llm`, the renderer dispatch and the
+element catalogue. Add an element by adding a registry entry, a renderer, its
+CSS and a gallery example — not by hand-editing schema.json. Its `example` must
+be renderable YAML: the catalogue renders it, and a test proves it does.
 
 Any other schema change must be updated in ALL of:
 1. `engine/schema/schema.json`
@@ -181,6 +182,11 @@ Design docs live in `docs/plans/`. Move to `docs/done/` when complete.
 Only commit permanent, hand-authored files.
 
 **Never commit:** build output (except `admin_wireframes/wireframes/build/`), one-off scripts, backup files, temporary notes.
+
+**Generated and committed on purpose:** `docs/catalogue/` (`wf catalogue`),
+`docs/images/` (`pnpm readme:update`), `docs/cli/agent-guide.md` (`wf llm --short`)
+and `cli/test/__screenshots__/` (`pnpm gallery:update`). Regenerate them with
+their command rather than editing them; a test fails when the catalogue drifts.
 
 ---
 

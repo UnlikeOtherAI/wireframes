@@ -24,15 +24,21 @@ templates:
             props:
               level: 4
               text: Acme
+          # `route:` is what links pages to each other. The renderer marks the
+          # item for the page you are on, so `active:` is never hand-set.
           - id: menu
             component: nav
             props:
               items:
                 - label: Overview
+                  icon: gauge
+                  route: overview
                 - label: Billing
-                  active: true
+                  icon: credit-card
+                  route: billing
                 - label: Team
-                - label: Settings
+                  icon: users
+                  route: team
       - id: main
         kind: slot
         role: main

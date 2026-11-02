@@ -162,6 +162,7 @@ function renderNode(node, options = {}) {
     },
     stateBindings,
     routeTable: isObject(options.routeTable) ? options.routeTable : {},
+    currentRoute: options.routeId || '',
     projectPath: options.projectPath || '',
     imageOptions: {
       assetUrlPrefix: typeof options.assetUrlPrefix === 'string' ? options.assetUrlPrefix : '',
@@ -178,9 +179,11 @@ function renderNode(node, options = {}) {
       if (Array.isArray(collection.items) && collection.items.length > 0) return collection.items;
       return Array.isArray(tableProps?.rows) ? tableProps.rows : [];
     },
-    cellValue: (row, key) => {
-      if (Array.isArray(row)) return row[Number(key)] ?? null;
-      return getPathValue(isObject(row) ? row : {}, key);
+    // A row is either keyed by column (`{ status: Draft }`) or positional
+    // (`[Dashboard, Draft, Lee]`), which is the short form the docs show.
+    cellValue: (row, column) => {
+      if (Array.isArray(row)) return row[column.index] ?? null;
+      return getPathValue(isObject(row) ? row : {}, column.key);
     },
   };
 

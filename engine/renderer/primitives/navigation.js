@@ -122,7 +122,10 @@ function navItem(item, ctx, lib, depth = 0) {
   const glyph = lib.iconSpan(item.icon);
   const badge = item.badge != null ? `<span class="wf-nav-badge">${lib.escapeHtml(String(item.badge))}</span>` : '';
   const body = `${glyph}<span class="wf-nav-label">${label ? lib.escapeHtml(label) : lib.renderSkeleton(8)}</span>${badge}`;
-  const active = item.active === true ? ' wf-nav-on' : '';
+  // A shared sidebar cannot know which page it is on, so the renderer marks
+  // the item pointing at the current route. `active: true` still wins.
+  const onCurrentRoute = item.route != null && String(item.route) === ctx.currentRoute;
+  const active = item.active === true || onCurrentRoute ? ' wf-nav-on' : '';
   const row = linkOrSpan(item.route, `wf-nav-item${active}${depth > 0 ? ' wf-nav-child' : ''}`, body, ctx, lib);
   const children = Array.isArray(item.children) && item.children.length > 0
     ? `<span class="wf-nav-children">${lib.items(item.children).map((child) => navItem(child, ctx, lib, depth + 1)).join('')}</span>`
