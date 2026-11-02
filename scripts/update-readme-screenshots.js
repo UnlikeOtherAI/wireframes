@@ -20,6 +20,7 @@ const ROOT = path.resolve(__dirname, '..');
 const IMAGES = path.join(ROOT, 'docs', 'images');
 const QUICKSTART = path.join(ROOT, 'examples', 'quickstart');
 const GALLERY = path.join(ROOT, 'engine', 'renderer', '__fixtures__', 'gallery');
+const CATALOGUE = path.join(ROOT, 'docs', 'catalogue', 'index.html');
 
 const DESKTOP = { width: 1280, height: 860 };
 const PHONE = { width: 430, height: 844 };
@@ -27,6 +28,7 @@ const PHONE = { width: 430, height: 844 };
 // [output, project, platform, page, viewport, extra]
 const SHOTS = [
   ['quickstart', QUICKSTART, 'web', 'billing', DESKTOP, {}],
+  ['quickstart-team', QUICKSTART, 'web', 'team', DESKTOP, { click: '#header' }],
   ['quickstart-modal', QUICKSTART, 'web', 'billing', DESKTOP, { click: '#danger_action button' }],
   ['frames', GALLERY, 'web', 'containers', DESKTOP, {}],
   ['elements-content', GALLERY, 'web', 'content', DESKTOP, {}],
@@ -38,6 +40,8 @@ const SHOTS = [
   ['mobile-ios', GALLERY, 'mobile', 'mobile_mobile', PHONE, {}],
   ['mobile-android', GALLERY, 'mobile', 'android_mobile', PHONE, {}],
   ['mobile-menu', GALLERY, 'mobile', 'android_mobile', PHONE, { click: '.wf-button-fab button' }],
+  // The committed catalogue page, as a reader opens it.
+  ['catalogue', null, 'web', null, DESKTOP, { file: CATALOGUE }],
 ];
 
 function requireFromCli(packageName) {
@@ -90,9 +94,10 @@ async function main() {
 
   try {
     for (const [name, projectPath, platform, pageId, viewport, extra] of SHOTS) {
-      const outputDir = buildOnce(projectPath, platform, builds);
+      const htmlPath = extra.file
+        ? extra.file
+        : path.join(buildOnce(projectPath, platform, builds), platform === 'web' ? 'web' : platform, `${pageId}.html`);
       const page = await browser.newPage({ viewport, deviceScaleFactor: 2 });
-      const htmlPath = path.join(outputDir, platform === 'web' ? 'web' : platform, `${pageId}.html`);
       await page.goto(pathToFileURL(htmlPath).href, { waitUntil: 'networkidle' });
       if (extra.click) {
         await page.click(extra.click);

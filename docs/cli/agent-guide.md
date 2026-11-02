@@ -114,3 +114,40 @@ Leave text out and the element renders a skeleton bar rather than a gap, which
 is what a wireframe should show. `paragraph: { lines: 3 }`, `skeleton`,
 `table: { state: loading }` and `image` with no `src` all do this.
 
+## Commands an agent reaches for
+
+| Command | What it answers |
+|---|---|
+| `wf llm --short` | this page, generated from the code |
+| `wf llm --element <name>` | one element's props, with an example |
+| `wf llm --family <name>` | every element in a family |
+| `wf catalogue` | every element rendered, as a page you can open |
+| `wf why <nodeId> --page <pageId>` | why that node did or did not get a box, and how to change it |
+| `wf validate` | schema and semantic errors, with the address of each |
+| `wf lint` | the mistakes an agent actually makes, each with a suggestion |
+| `wf inspect <address>` | the resolved node at an address |
+| `wf tree <page>` | the resolved page tree |
+| `wf routes` | every route id, path, page and template |
+| `wf build` | static HTML you can open |
+| `wf pack` / `wf unpack` | one .wf file in, a project folder out |
+| `wf screenshots` | rendered PNGs, to check your own work |
+
+## Reading the output back
+
+Build the project and read the markup: every node carries `data-wf-frame`, so
+you can see what the engine decided without guessing. Turn on
+`rendering.explain: true` on a page and each node also carries
+`data-wf-why="<rule>:<reason>"`.
+
+## What the linter will tell you
+
+| Code | Meaning |
+|---|---|
+| `SECTION_INTENT` | a `section` that would read better as `row`, `stack` or `card` |
+| `REDUNDANT_SURFACE` | a `surface:` that matches what the rules already decide |
+| `UNKNOWN_PROP` / `UNKNOWN_PROP_VALUE` | with the nearest valid name |
+| `UNKNOWN_ROLE` | a role that drives no proportions |
+| `MISSING_TEXT` | an element rendering a skeleton you may not have intended |
+| `UNLABELED_FIELD` | a field with no label |
+| `ORPHAN_LAYOUT`, `EMPTY_CONTAINER`, `DEEP_NESTING` | structure that will not render as intended |
+

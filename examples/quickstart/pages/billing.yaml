@@ -20,29 +20,11 @@ page:
               - label: Upgrade
                 variant: primary
 
-        # No box: a row groups, it does not frame. The three cards inside do.
-        - id: stats
-          component: row
+        # The same reusable component Overview uses, with one prop overridden.
+        - id: summary
+          use: plan_summary
           props:
-            gap: 16
-          children:
-            - id: stat_plan
-              component: stat
-              props:
-                label: Plan
-                value: Team
-            - id: stat_seats
-              component: stat
-              props:
-                label: Seats
-                value: 24 / 30
-            - id: stat_spend
-              component: stat
-              props:
-                label: This month
-                value: $1,240
-                delta: +12%
-                trend: up
+            spend: $1,240
 
         # Hue appears only for severity. This one is a warning.
         - id: quota

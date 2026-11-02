@@ -82,7 +82,7 @@ function renderTable(node, ctx, lib) {
         const align = column.align ? ` wf-align-${lib.toSafeClass(column.align)}` : '';
         const value = column.kind === 'actions'
           ? actionsCell(column, lib)
-          : cellMarkup(column, ctx.cellValue(row, column.key), ctx, lib);
+          : cellMarkup(column, ctx.cellValue(row, column), ctx, lib);
         return `<div class="wf-table-cell${align}" data-wf-table-column="${column.index}">${value}</div>`;
       }).join('');
       const check = selectable

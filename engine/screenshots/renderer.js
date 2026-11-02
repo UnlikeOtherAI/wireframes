@@ -62,6 +62,8 @@ function renderRoot(root, options) {
       placement: root.placement,
       dismissOn: root.dismissOn,
       size: root.size,
+      // The overlay's own chrome — its title and footer actions.
+      props: isObject(root.props) ? root.props : {},
       children: Array.isArray(root.nodes) ? root.nodes : [],
       wireframeStyle: root.wireframeStyle,
     }, {

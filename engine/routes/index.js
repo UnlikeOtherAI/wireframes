@@ -10,7 +10,9 @@ function normalizeBasePath(raw) {
     return '/';
   }
 
-  const withLeading = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  // A base that starts with `.` stays relative, so a build can be opened from
+  // the filesystem or dropped into a subfolder without being rewritten.
+  const withLeading = trimmed.startsWith('/') || trimmed.startsWith('.') ? trimmed : `/${trimmed}`;
   const withoutTrailing = withLeading.endsWith('/') && withLeading !== '/'
     ? withLeading.replace(/\/+$/, '')
     : withLeading;

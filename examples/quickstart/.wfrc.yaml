@@ -4,6 +4,6 @@ cli:
   build:
     outputDir: ./build
     clean: true
-    basePath: /
+    basePath: ..
   serve:
     port: 8080
