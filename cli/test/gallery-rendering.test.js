@@ -111,3 +111,66 @@ test('mobile bottom chrome sits at the foot of the device', async () => {
     fs.rmSync(outputDir, { recursive: true, force: true });
   }
 });
+
+// "An icon inside a filled button needs the opposite contrast." A glyph that
+// keeps a fixed ink lands dark-on-dark the moment its control fills itself —
+// which is exactly what happened to the pencil in the floating action button.
+test('every control reads against the fill behind it', async () => {
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wireframe-contrast-'));
+  const build = runBuild({ projectPath: FIXTURE, output: outputDir, platform: 'all', clean: true });
+  assert.equal(build.ok, true, build.error);
+
+  const playwright = require('playwright');
+  const browser = await launchChromium(playwright, { headless: true });
+  const MIN_RATIO = 3;
+
+  try {
+    for (const [dir, pageId] of [['web', 'forms'], ['web', 'navigation_elements'], ['mobile', 'android_mobile']]) {
+      const page = await browser.newPage({ viewport: { width: 900, height: 900 } });
+      await page.goto(pathToFileURL(path.join(outputDir, dir, `${pageId}.html`)).href, { waitUntil: 'networkidle' });
+
+      const failures = await page.evaluate((min) => {
+        const rgb = (value) => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+        const luminance = ([r, g, b]) => {
+          const channel = (c) => {
+            const v = c / 255;
+            return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+          };
+          return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+        };
+        const painted = (node) => {
+          for (let el = node; el && el !== document.documentElement; el = el.parentElement) {
+            const background = getComputedStyle(el).backgroundColor;
+            const parts = rgb(background);
+            if (parts.length === 3 && !/rgba\(.*,\s*0\)/.test(background)) return parts;
+          }
+          return [255, 255, 255];
+        };
+
+        const bad = [];
+        const controls = '.wf-button button, .wf-button .wf-button-link, .wf-act, .wf-badge-body, .wf-btab, .wf-segment';
+        for (const control of document.querySelectorAll(controls)) {
+          if (!control.getClientRects().length) continue;
+          const background = painted(control);
+          for (const node of [control, ...control.querySelectorAll('.wf-icon-glyph')]) {
+            const foreground = rgb(getComputedStyle(node).color);
+            if (foreground.length !== 3) continue;
+            const light = Math.max(luminance(foreground), luminance(background));
+            const dark = Math.min(luminance(foreground), luminance(background));
+            const ratio = (light + 0.05) / (dark + 0.05);
+            if (ratio < min) {
+              bad.push(`${node.className || node.tagName} ${ratio.toFixed(2)}:1`);
+            }
+          }
+        }
+        return bad;
+      }, MIN_RATIO);
+
+      assert.deepEqual(failures, [], `${pageId}: control contrast below ${MIN_RATIO}:1`);
+      await page.close();
+    }
+  } finally {
+    await browser.close();
+    fs.rmSync(outputDir, { recursive: true, force: true });
+  }
+});

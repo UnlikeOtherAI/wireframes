@@ -92,6 +92,14 @@ const baseStyles = [
   // --- Icons: readable with or without the icon font ---
   '.wf-ico{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}',
   '.wf-icon-glyph{display:inline-flex;align-items:center;justify-content:center;color:var(--wf-ink-2);font-size:16px;width:1em;min-width:1em;line-height:1}',
+  // Contrast: an icon never fights the thing it sits in. Controls set their
+  // own foreground — white on a filled primary button, a hue on a toned
+  // badge, grey when disabled — and the glyph follows it rather than keeping
+  // a fixed ink that can land dark-on-dark.
+  '.wf-button button .wf-icon-glyph,.wf-button .wf-button-link .wf-icon-glyph,'
+    + '.wf-act .wf-icon-glyph,.wf-badge-body .wf-icon-glyph,.wf-segment .wf-icon-glyph,'
+    + '.wf-menu-item .wf-icon-glyph,.wf-sheet-row .wf-icon-glyph,.wf-btab .wf-icon-glyph,'
+    + '.wf-list-row .wf-icon-glyph{color:inherit}',
   '.wf-icon-glyph:not([class*="fa-"]):before,.wf-icon-glyph.fa-solid:not(.fa-classic):before{}',
   // Fallback box drawn only when the icon font left the glyph empty.
   '.wf-icon-glyph:empty:not(.fa-solid):not(.fa-regular):not(.fa-brands):after{content:attr(data-wf-glyph);'

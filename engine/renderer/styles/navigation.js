@@ -24,7 +24,7 @@ const navigationStyles = [
   '.wf-bottom_tab_bar[data-wf-frame="edge"]{border-top:1px solid var(--wf-line-2)}',
   '.wf-mode-line .wf-bottom_tab_bar[data-wf-frame="edge"]{border-top-color:var(--wf-line-strong)}',
   '.wf-btab{display:flex;flex:1 1 0;flex-direction:column;align-items:center;justify-content:center;gap:3px;'
-    + 'min-height:var(--wf-tabbar-h,56px);padding:6px 4px;font-size:10px;color:var(--wf-ink-4);text-decoration:none}',
+    + 'min-height:var(--wf-tabbar-h,56px);padding:6px 4px;font-size:10px;color:var(--wf-ink-3);text-decoration:none}',
   '.wf-btab .wf-icon-glyph{font-size:18px}',
   '.wf-btab-on{color:var(--wf-ink)}',
   '.wf-bottom_tab_bar .wf-node-children{display:flex;flex:1 1 auto;min-width:0}',
