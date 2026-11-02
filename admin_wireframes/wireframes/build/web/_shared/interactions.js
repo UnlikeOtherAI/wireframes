@@ -352,6 +352,11 @@ function positionAnchoredOverlay(node) {
   node.style.bottom = 'auto';
 
   var triggerRect = trigger.getBoundingClientRect();
+  // Match the trigger's width before measuring, or the clamp below works from a
+  // stale width and the popup can still overflow the viewport.
+  if (type === 'menu' || type === 'dropdown') {
+    node.style.minWidth = Math.max(Math.round(triggerRect.width), 160) + 'px';
+  }
   var overlayRect = node.getBoundingClientRect();
   var width = overlayRect.width || 0;
   var height = overlayRect.height || 0;
@@ -385,9 +390,6 @@ function positionAnchoredOverlay(node) {
 
   node.style.left = Math.round(left) + 'px';
   node.style.top = Math.round(top) + 'px';
-  if (type === 'menu' || type === 'dropdown') {
-    node.style.minWidth = Math.max(Math.round(triggerRect.width), 160) + 'px';
-  }
   node.style.visibility = prevVisibility || '';
 }
 function setOverlayVisible(node, show) {
@@ -651,12 +653,32 @@ function bindSelection() {
     });
   });
 }
+// Plain route links (nav items, tabs, breadcrumbs, button links) carry an href
+// so a static build works without JavaScript. Route them through wfNavigate as
+// well, so an embedded host can swap the page in memory instead of following
+// the href to a file that is not there.
+function bindRouteLinks() {
+  if (!document || typeof document.addEventListener !== 'function') return;
+  document.addEventListener('click', function (event) {
+    var node = event.target;
+    while (node && node !== document) {
+      if (node.getAttribute && node.getAttribute('data-wf-route-target')) {
+        if (node.hasAttribute('data-wf-interactions')) return;
+        event.preventDefault();
+        wfNavigate(node.getAttribute('data-wf-route-target'));
+        return;
+      }
+      node = node.parentNode;
+    }
+  });
+}
 function init() {
   initState();
   initPanes();
   refresh();
   bindSelection();
   bindInteractions();
+  bindRouteLinks();
 }
 var _wfInitDone = false;
 function safeInit() { if (_wfInitDone) return; _wfInitDone = true; init(); }

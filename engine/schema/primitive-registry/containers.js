@@ -51,6 +51,7 @@ const containerPrimitives = [
       align: { type: 'string' },
       justify: { type: 'string' },
       wrap: { type: 'boolean' },
+      nowrap: { type: 'boolean' },
     },
     example: '- row: { gap: 8, justify: space-between, children: [...] }',
   },

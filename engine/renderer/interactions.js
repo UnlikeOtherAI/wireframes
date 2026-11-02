@@ -457,6 +457,7 @@ function bindSelection() {
 // well, so an embedded host can swap the page in memory instead of following
 // the href to a file that is not there.
 function bindRouteLinks() {
+  if (!document || typeof document.addEventListener !== 'function') return;
   document.addEventListener('click', function (event) {
     var node = event.target;
     while (node && node !== document) {
