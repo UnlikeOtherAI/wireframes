@@ -17,6 +17,7 @@ const { runState } = require('./commands/state');
 const { runTree } = require('./commands/tree');
 const { runInspect } = require('./commands/inspect');
 const { runWhy } = require('./commands/why');
+const { runPack, runUnpack } = require('./commands/pack');
 const { runWhereUsed } = require('./commands/where-used');
 const { runRoutes } = require('./commands/routes');
 const { runStats } = require('./commands/stats');
@@ -26,7 +27,7 @@ const { runServeCommand } = require('./commands/serve');
 const { runLlm } = require('./commands/llm');
 
 const USAGE = `wf <command> [arguments]\n\nCommands:\n  init <project-name>   Scaffold a new wireframe project\n  info                  Show project metadata from manifest.yaml\n  doctor                Check project health and references\n  schema                Print supported schema reference (--doc <type> for full structure)
-  llm                   Print full LLM-optimized schema reference\n  validate              Validate document schema compliance\n  lint                  Check naming conventions\n  template              Manage templates\n  page                  Manage pages\n  component             Manage reusable components\n  node                  Add, update, and remove nodes\n  overlay               Manage overlays on pages and templates\n  state                 Inspect state keys in appState and pageState\n  data                  Manage datasets and dataset items\n  export                Package the project into a zip archive\n  tree                  Print resolved trees for pages, templates, and components\n  inspect               Inspect resolved node definitions\n  why                   Explain why a node did or did not get a box\n  where-used            Find references for components and datasets\n  routes                List route IDs, paths, pages, and templates\n  stats                 Show project metadata stats
+  llm                   Print full LLM-optimized schema reference\n  validate              Validate document schema compliance\n  lint                  Check naming conventions\n  template              Manage templates\n  page                  Manage pages\n  component             Manage reusable components\n  node                  Add, update, and remove nodes\n  overlay               Manage overlays on pages and templates\n  state                 Inspect state keys in appState and pageState\n  data                  Manage datasets and dataset items\n  export                Package the project into a zip archive\n  tree                  Print resolved trees for pages, templates, and components\n  inspect               Inspect resolved node definitions\n  why                   Explain why a node did or did not get a box\n  pack                  Pack the project into a single .wf file\n  unpack                Expand a .wf file back into a project folder\n  where-used            Find references for components and datasets\n  routes                List route IDs, paths, pages, and templates\n  stats                 Show project metadata stats
   build                 Build a static wireframe website
   serve                 Start a local wireframe preview server
   screenshots           Render and capture wireframe screenshots with Playwright`;
@@ -122,6 +123,16 @@ function run(args, context = {}) {
 
   if (command === 'inspect') {
     runInspect(commandArgs, { cwd });
+    return;
+  }
+
+  if (command === 'pack') {
+    runPack(commandArgs, { cwd });
+    return;
+  }
+
+  if (command === 'unpack') {
+    runUnpack(commandArgs, { cwd });
     return;
   }
 

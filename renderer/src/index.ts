@@ -34,6 +34,10 @@ export type { DataSourceEntry } from './data.js';
 export { buildRuntimeJs, buildRuntimeJsFromWindowContext } from './interactions.js';
 export { extractAppStateDefaults, extractPageStateDefaults } from './state.js';
 export { resolveDataSources } from './data.js';
+export { parseWf, serializeWf } from './wf.js';
+export type { WfProject } from './wf.js';
+export { createWireframe } from './mount.js';
+export type { MountOptions, WireframeInstance, Mode, Platform } from './mount.js';
 
 export interface RenderedProject {
   pages: Map<string, string>;

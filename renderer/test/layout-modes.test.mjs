@@ -199,14 +199,15 @@ describe('Rendering modes', () => {
     assert.ok(html.includes('wf-mode-line'), 'should have line mode class');
   });
 
-  it('line mode buttons use bracket notation', () => {
+  it('line mode buttons render a plain label in an outlined control', () => {
     const html = getPageHtml(buildPageYaml('web', 'line', `
         - component: button
           id: btn1
           props:
             label: Save`));
-    assert.ok(html.includes('[ '), 'line mode buttons should have bracket prefix');
-    assert.ok(html.includes(' ]'), 'line mode buttons should have bracket suffix');
+    assert.ok(html.includes('wf-button-'), 'line mode buttons keep their variant class');
+    assert.ok(!html.includes('[ '), 'bracket notation was replaced by an outlined control');
+    assert.ok(html.includes('>Save<'), 'the label renders plainly');
   });
 
   it('card mode buttons do not use brackets', () => {
@@ -216,6 +217,7 @@ describe('Rendering modes', () => {
           props:
             label: Save`));
     assert.ok(!html.includes('[ Save ]'), 'card mode buttons should not have brackets');
+    assert.ok(html.includes('wf-button'), 'card mode buttons keep their element class');
     assert.ok(html.includes('Save'), 'should contain the label');
   });
 });
@@ -320,7 +322,7 @@ page:
 });
 
 describe('Separator and double-border prevention', () => {
-  it('applies wf-divide-y for stack with gap:0 and separators:between', () => {
+  it('marks a divided stack so the parent draws the strokes', () => {
     const html = getPageHtml(buildPageYaml('web', null, `
         - component: section
           id: sec1
@@ -337,10 +339,11 @@ describe('Separator and double-border prevention', () => {
               id: t2
               props:
                 text: Bottom`));
-    assert.ok(html.includes('wf-divide-y'), 'should have wf-divide-y class');
+    assert.ok(html.includes('data-wf-divides="stack"'), 'parent declares that it divides');
+    assert.ok(html.includes('data-wf-edge="after"'), 'children carry the trailing edge');
   });
 
-  it('applies wf-divide-x for row with gap:0 and separators:between', () => {
+  it('marks a divided row so the parent draws the strokes', () => {
     const html = getPageHtml(buildPageYaml('web', null, `
         - component: section
           id: sec1
@@ -357,7 +360,8 @@ describe('Separator and double-border prevention', () => {
               id: t2
               props:
                 text: Right`));
-    assert.ok(html.includes('wf-divide-x'), 'should have wf-divide-x class');
+    assert.ok(html.includes('data-wf-divides="row"'), 'parent declares that it divides');
+    assert.ok(html.includes('data-wf-edge="after"'), 'children carry the trailing edge');
   });
 });
 
