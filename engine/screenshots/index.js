@@ -278,6 +278,7 @@ function resolvePageTargets(projectPath, pageId) {
   const manifest = loadDocumentFromFile(path.join(projectPath, 'manifest.yaml'), { supportedSpecVersion: SUPPORTED_SPEC_VERSION });
   const manifestData = manifest.document?.manifest || {};
   const defaultWireframeStyle = manifestData.defaultWireframeStyle || {};
+  const manifestSizing = isObject(manifestData.sizing) ? manifestData.sizing : {};
   const parsedDefaultGridColumns = Number(manifestData.defaultGridColumns);
   const defaultGridColumns = Number.isInteger(parsedDefaultGridColumns) && parsedDefaultGridColumns > 0
     ? parsedDefaultGridColumns
@@ -338,6 +339,7 @@ function resolvePageTargets(projectPath, pageId) {
       wireframeStyle: page.wireframeStyle || defaultWireframeStyle,
       rendering: resolvePageRendering(page),
       defaultGridColumns,
+      sizing: manifestSizing,
       bodyLayoutType: bodyLayoutById.get(id) || 'row',
       bodyLayout: bodyLayoutObjectById.get(id) || {},
       roots,
@@ -401,6 +403,7 @@ async function captureScreenshots(targets, outputPath, frame) {
         pageStyle: target.wireframeStyle,
         rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
+        sizing: target.sizing,
         bodyLayoutType: target.bodyLayoutType || 'row',
         bodyLayout: target.bodyLayout,
         projectPath: target.projectPath,

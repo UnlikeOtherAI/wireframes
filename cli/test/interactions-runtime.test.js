@@ -118,8 +118,8 @@ test('renderWireframeMarkup keeps slot roots frameless and counts persistent roo
     projectPath: process.cwd(),
   });
 
-  const slotRoot = html.match(/<section class="wf-root wf-root-container wf-root-slot"/);
-  const headerRoot = html.match(/<section class="wf-root wf-root-container wf-surface"/);
+  const slotRoot = html.match(/<section[^>]*class="wf-root wf-root-container wf-root-slot[^"]*"/);
+  const headerRoot = html.match(/<section[^>]*class="wf-root wf-root-container wf-surface[^"]*"/);
   const slotCard = html.match(/id="slot_card" class="([^"]+)"/);
   const headerGroup = html.match(/id="header_group" class="([^"]+)"/);
 
@@ -162,7 +162,7 @@ test('renderWireframeMarkup applies full template body layout styles', () => {
   assert.equal(html.includes('padding:32px'), true);
 });
 
-test('renderWireframeMarkup resets surface depth inside overlays', () => {
+test('overlay chrome owns the frame, so overlay content does not double-box', () => {
   const html = renderWireframeMarkup({
     roots: [
       {
@@ -182,8 +182,11 @@ test('renderWireframeMarkup resets surface depth inside overlays', () => {
     projectPath: process.cwd(),
   });
 
+  // The modal already draws a box; a section inside it must not draw a second.
+  assert.match(html, /class="wf-overlay-content" data-wf-frame="surface"/);
   const modalCard = html.match(/id="modal_card" class="([^"]+)"/);
-  assert.equal(modalCard?.[1].includes('wf-surface'), true);
+  assert.equal(modalCard?.[1].includes('wf-surface'), false);
+  assert.equal(modalCard?.[1].includes('wf-group'), true);
 });
 
 test('renderNode renders anchor fallbacks for navigation buttons and text links', () => {
@@ -233,10 +236,10 @@ test('renderNode renders tab bars as dedicated surface containers', () => {
     rendering: { mode: 'card' },
   });
 
-  assert.equal(html.includes('wf-tab-bar'), true);
-  assert.equal(html.includes('wf-surface'), true);
-  assert.equal(html.includes('wf-tab-bar-body'), true);
-  assert.equal(html.includes('wf-divide-x'), false);
+  // A tab bar is an edge, not a panel: it draws one rule and never a box.
+  assert.equal(html.includes('wf-tab_bar'), true);
+  assert.match(html, /class="[^"]*wf-tab_bar[^"]*"[^>]*data-wf-frame="edge"/);
+  assert.equal(html.includes('wf-surface'), false);
 });
 
 test('renderNode renders tables from bound datasets with header and body rows', () => {
@@ -334,13 +337,13 @@ test('renderNode emits skeletons for missing text content and unresolved props/i
     props: { text: 'Owner {{props.owner}} / {{item.status}}' },
   });
 
-  assert.equal(missingHeading.includes('wf-skeleton'), true);
+  assert.equal(missingHeading.includes('wf-bar'), true);
   assert.equal(missingHeading.includes('Heading'), false);
   assert.equal(missingParagraph.includes('width:100%'), true);
   assert.equal(missingParagraph.includes('width:60%'), true);
   assert.equal(missingText.includes('width:8ch'), true);
   assert.equal(missingButton.includes('width:6ch'), true);
-  assert.equal(unresolvedBinding.match(/wf-skeleton/g)?.length, 2);
+  assert.equal(unresolvedBinding.match(/wf-bar/g)?.length, 2);
 });
 
 test('renderBoundText skeleton fallback does not replace runtime state bindings', () => {
@@ -352,7 +355,7 @@ test('renderBoundText skeleton fallback does not replace runtime state bindings'
 
   assert.equal(html.includes('data-bind=\"state.mode\"'), true);
   assert.equal(html.includes('data-bind=\"appState.user\"'), true);
-  assert.equal(html.includes('wf-skeleton'), true);
+  assert.equal(html.includes('wf-bar'), true);
 });
 
 test('renderNode renders collection bindings with custom itemVar and nested item paths', () => {
@@ -698,8 +701,8 @@ test('renderNode renders bottom_tab_bar with stretched button layout', () => {
     ],
   }, { mode: 'card', rendering: { mode: 'card' } });
 
-  assert.equal(html.includes('wf-bottom-tab-bar'), true);
-  assert.equal(html.includes('wf-surface'), true);
+  assert.equal(html.includes('wf-bottom_tab_bar'), true);
+  assert.match(html, /class="[^"]*wf-bottom_tab_bar[^"]*"[^>]*data-wf-frame="edge"/);
   assert.equal(html.includes('fa-solid fa-house'), true);
   assert.equal(html.includes('fa-solid fa-magnifying-glass'), true);
 });
@@ -714,8 +717,8 @@ test('renderNode renders tab_bar without stretched buttons', () => {
     ],
   }, { mode: 'card', rendering: { mode: 'card' } });
 
-  assert.equal(html.includes('wf-tab-bar'), true);
-  assert.equal(html.includes('wf-bottom-tab-bar'), false);
+  assert.equal(html.includes('wf-tab_bar'), true);
+  assert.equal(html.includes('wf-bottom_tab_bar'), false);
 });
 
 test('renderWireframeMarkup includes local Font Awesome CSS link', () => {

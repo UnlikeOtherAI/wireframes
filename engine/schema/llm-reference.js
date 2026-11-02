@@ -6,6 +6,8 @@ const { SUPPORTED_SPEC_VERSION } = require('./constants');
 
 const schemaPath = path.resolve(__dirname, 'schema.json');
 
+const { elementCatalogue, elementCheatSheet } = require('./element-reference');
+
 function loadSchema() {
   return JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
 }
@@ -190,31 +192,7 @@ visibility:
     equals: true
 \`\`\`
 
-## Primitive Components
-
-${primitives.map((p) => `- ${p}`).join('\n')}
-
-### Component Props Quick Reference
-
-- heading: { text, label alias, level: 1-6 }
-- paragraph: { text, label alias }
-- text: { text, label alias, variant: body|meta }
-- image: { src, alt, width, height }
-- icon: { name: "house", style: solid|regular|brands, size: xs|sm|lg|xl|2xl }
-- button: { label, icon: "icon-name", iconStyle, iconSize, variant: primary|secondary|ghost|danger }
-- input: { label, placeholder, inputType: text|email|password|number|search }
-- textarea: { label, placeholder, rows }
-- select: { label, placeholder, options: [{ value, label }] }
-- checkbox: { label }
-- radio: { label }
-- toggle: { label }
-- section: { title }
-- table: { columns: [{ key, label, width? }], rows: [{ ...values }], emptyText? }
-- chart: { chartType: line|bar|vertical|horizontal|gauge|donut, title, label, data }
-- tab_bar: (in-page tabs — children with button nodes, 8px gap, NOT stretched)
-- bottom_tab_bar: (iOS-style bottom navigation — children stretch equally, icon stacked above label, 4px gap)
-- divider: (no props)
-- spacer: { size } — percentage size in flex parents acts as a flexible spacer
+${elementCatalogue()}
 
 ## Interactions
 
@@ -356,4 +334,4 @@ wf screenshots [--page <id>]       — render screenshots with Playwright
 `;
 }
 
-module.exports = { generateLlmReference };
+module.exports = { generateLlmReference, elementCheatSheet };

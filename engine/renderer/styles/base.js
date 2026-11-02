@@ -48,10 +48,11 @@ const baseStyles = [
   // Edge elements draw one rule, never a box.
   '[data-wf-frame="edge"]{background:transparent;border:none;box-shadow:none;outline:none}',
   // Separators between the children of a divided container.
-  '.wf-mode-line [data-wf-edge="after"]{border-bottom:1px dashed var(--wf-line-strong)}',
-  '.wf-mode-card [data-wf-edge="after"]{border-bottom:1px solid var(--wf-line-2)}',
-  '.wf-mode-line [style*="flex-direction:row"]>.wf-node-children>[data-wf-edge="after"]{border-bottom:none;border-right:1px dashed var(--wf-line-strong)}',
-  '.wf-mode-card [style*="flex-direction:row"]>.wf-node-children>[data-wf-edge="after"]{border-bottom:none;border-right:1px solid var(--wf-line-2)}',
+  '.wf-mode-line [data-wf-divides]>[data-wf-edge="after"]{border-bottom:var(--wf-divider-width,1px) var(--wf-divider-style,dashed) var(--wf-divider-color,#4b5563)}',
+  '.wf-mode-card [data-wf-divides]>[data-wf-edge="after"]{border-bottom:var(--wf-divider-width,1px) var(--wf-divider-style,solid) var(--wf-divider-color,#e5e7eb)}',
+  '[data-wf-divides="row"]>[data-wf-edge="after"]{border-bottom:none}',
+  '.wf-mode-line [data-wf-divides="row"]>[data-wf-edge="after"]{border-right:var(--wf-divider-width,1px) var(--wf-divider-style,dashed) var(--wf-divider-color,#4b5563)}',
+  '.wf-mode-card [data-wf-divides="row"]>[data-wf-edge="after"]{border-right:var(--wf-divider-width,1px) var(--wf-divider-style,solid) var(--wf-divider-color,#e5e7eb)}',
 
   // --- Typography ---
   '.wf-heading h1,.wf-heading h2,.wf-heading h3,.wf-heading h4,.wf-heading h5,.wf-heading h6{margin:0;color:var(--wf-ink)}',

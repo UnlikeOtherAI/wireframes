@@ -35,7 +35,7 @@ templates:
                   route: forms
                 - label: Navigation
                   icon: compass
-                  route: navigation
+                  route: navigation_elements
                 - label: Data
                   icon: table
                   route: data
@@ -47,7 +47,7 @@ templates:
                   route: containers
                 - label: Overlays
                   icon: window-restore
-                  route: overlays
+                  route: overlays_elements
                 - group: Line mode
                 - label: Line structure
                   icon: border-all

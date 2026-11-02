@@ -145,7 +145,8 @@ test('wf lint reports primitive prop warnings and non-promoted info diagnostics'
   assert.ok(result.info.some((entry) => entry.code === 'TEXT_PROP_ALIAS'));
   assert.ok(result.info.some((entry) => entry.code === 'MISSING_TEXT'));
   assert.ok(result.info.some((entry) => entry.code === 'UNLABELED_FIELD'));
-  assert.ok(result.info.some((entry) => entry.code === 'NESTED_SURFACE'));
+  // NESTED_SURFACE became SECTION_INTENT, which also says which element to use instead.
+  assert.ok(result.info.some((entry) => entry.code === 'SECTION_INTENT'));
   assert.equal(result.warnings.some((entry) => entry.message.includes('custom_card')), false);
 
   const strictResult = runLint({ projectPath, strict: true });

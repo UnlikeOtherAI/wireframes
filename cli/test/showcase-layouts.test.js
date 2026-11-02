@@ -144,7 +144,11 @@ test('Playwright verifies dashboard sidebar, KPI row, and mid-column layout are 
           return bodyRect && Math.abs(rect.left - bodyRect.left) < 1 && Math.abs(rect.width - bodyRect.width) < 1;
         }),
         tableColumnsNoOverlap: headerCells.every((rect, index) => index === 0 || headerCells[index - 1].right <= rect.left),
-        stripedRowsAlternate: rowColors.length === 3 && rowColors[0] !== rowColors[1] && rowColors[0] === rowColors[2],
+        // Rows are separated by a rule rather than zebra fills: a wireframe
+        // should show structure, not a finished table's banding.
+        rowsSeparated: Array.from(document.querySelectorAll('.wf-table-body > .wf-table-row'))
+          .slice(1)
+          .every((row) => window.getComputedStyle(row).borderTopWidth !== '0px'),
       };
     });
 
@@ -157,7 +161,7 @@ test('Playwright verifies dashboard sidebar, KPI row, and mid-column layout are 
     assert.equal(metrics.midRowGap >= 12, true);
     assert.equal(metrics.tableColumnsAligned, true);
     assert.equal(metrics.tableColumnsNoOverlap, true);
-    assert.equal(metrics.stripedRowsAlternate, true);
+    assert.equal(metrics.rowsSeparated, true);
   } finally {
     await page.close();
     await browser.close();
@@ -223,7 +227,7 @@ test('Playwright verifies line-mode workspace uses clean parent dividers without
       const nav = document.getElementById('workspace_nav').getBoundingClientRect();
       const center = document.getElementById('workspace_center').getBoundingClientRect();
       const inspector = document.getElementById('workspace_inspector').getBoundingClientRect();
-      const boardRow = document.getElementById('board_columns').querySelector('.wf-section-body');
+      const boardRow = document.getElementById('board_columns');
       const backlog = document.getElementById('board_backlog');
       const active = document.getElementById('board_active');
       const review = document.getElementById('board_review');
@@ -234,8 +238,8 @@ test('Playwright verifies line-mode workspace uses clean parent dividers without
         navBeforeCenter: nav.right < center.left,
         centerBeforeInspector: center.right < inspector.left,
         outerNoOverlap: nav.right <= center.left && center.right <= inspector.left,
-        dividerStyle: activeStyle.borderLeftStyle,
-        dividerWidth: activeStyle.borderLeftWidth,
+        dividerStyle: activeStyle.borderRightStyle,
+        dividerWidth: activeStyle.borderRightWidth,
         childOutlineSuppressed: window.getComputedStyle(backlog).outlineStyle === 'none'
           && window.getComputedStyle(active).outlineStyle === 'none'
           && window.getComputedStyle(review).outlineStyle === 'none',

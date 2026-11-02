@@ -1,8 +1,8 @@
 documentType: page
 specVersion: "1.1"
-id: overlays
+id: overlays_elements
 page:
-  id: overlays
+  id: overlays_elements
   template: app_shell
   viewport:
     device: web

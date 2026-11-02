@@ -122,6 +122,9 @@ function renderRoot(root, options) {
 
   const bodyLayoutCss = layoutToCss(rootLayout, {}, { density: options.density });
   const bodyDividerClass = separatorClass(rootLayout);
+  const bodyDivides = shouldRenderParentSeparators(rootLayout)
+    ? ` data-wf-divides="${rootLayoutType === 'row' ? 'row' : 'stack'}"`
+    : '';
   const bodyStyle = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
 
   const kindClass = isOverlay ? 'wf-root-overlay' : 'wf-root-container';
@@ -136,9 +139,11 @@ function renderRoot(root, options) {
     options.explain === true ? ` data-wf-why="${escapeAttr(`${decision.rule}:${decision.reason}`)}"` : ''
   }`;
 
-  return `<section class="wf-root ${kindClass}${slotClass}${surfaceClass}${roleClass}"${styleAttr}${stickyAttr}${frameAttr}>
+  const rootId = typeof root.id === 'string' && root.id.trim() !== '' ? ` id="${escapeAttr(root.id.trim())}"` : '';
+
+  return `<section${rootId} class="wf-root ${kindClass}${slotClass}${surfaceClass}${roleClass}"${styleAttr}${stickyAttr}${frameAttr}>
       <div class="wf-root-title">${escapeHtml(rootLabel)}</div>
-      <div class="wf-root-body${bodyDividerClass}"${bodyStyle}>${content}</div>
+      <div class="wf-root-body${bodyDividerClass}"${bodyStyle}${bodyDivides}>${content}</div>
     </section>`;
 }
 

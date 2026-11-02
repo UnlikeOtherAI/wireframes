@@ -1,8 +1,8 @@
 documentType: page
 specVersion: "1.1"
-id: navigation
+id: navigation_elements
 page:
-  id: navigation
+  id: navigation_elements
   template: app_shell
   viewport:
     device: web

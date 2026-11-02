@@ -59,9 +59,10 @@ function icon(name, options = {}) {
   const prefix = ICON_PREFIX[str(options.style)] || 'fa-solid';
   const size = str(options.size);
   const px = size ? scale('icon', size) : null;
+  const sizeClass = size ? ` fa-${escapeAttr(size)}` : '';
   const sizeStyle = px ? ` style="font-size:${px}px;width:${px}px"` : '';
   const letter = escapeHtml(glyph.charAt(0).toUpperCase());
-  return `<i class="wf-icon-glyph ${prefix} fa-${escapeAttr(glyph)}" data-wf-glyph="${letter}"${sizeStyle}></i>`;
+  return `<i class="wf-icon-glyph ${prefix} fa-${escapeAttr(glyph)}${sizeClass}" data-wf-glyph="${letter}"${sizeStyle}></i>`;
 }
 
 function iconSpan(name, options) {

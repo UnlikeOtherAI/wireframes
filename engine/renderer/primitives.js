@@ -57,7 +57,10 @@ function renderChildren(node, options, layout, bodyStyle) {
   const resolved = isObject(layout) ? layout : (isObject(node.layout) ? node.layout : {});
   const layoutType = resolved.type || 'stack';
   const style = bodyStyle ? ` style="${escapeAttr(bodyStyle)}"` : '';
-  return `<div class="wf-node-children"${style}>${renderNodes(children, {
+  const divides = shouldRenderParentSeparators(resolved)
+    ? ` data-wf-divides="${layoutType === 'row' ? 'row' : 'stack'}"`
+    : '';
+  return `<div class="wf-node-children"${style}${divides}>${renderNodes(children, {
     ...options,
     parentLayoutType: layoutType,
     parentLayoutIsGrid: layoutType === 'grid',
@@ -142,7 +145,6 @@ function renderNode(node, options = {}) {
 
   const shell = buildShell(node, element, shellCtx);
   const stateBindings = isObject(node.stateBindings) ? { ...node.stateBindings } : {};
-  const dataAttrs = buildNodeDataAttributes(node, stateBindings, options.selectionValue, paneData);
   const navigationTarget = primaryNavigationTarget(node, options);
 
   const childOptions = {
@@ -196,6 +198,9 @@ function renderNode(node, options = {}) {
     : '';
 
   const outerStyle = splitBody ? shell.stackStyle : null;
+  // Renderers register runtime bindings as they resolve attributes, so the data
+  // attributes are built once the element has rendered, not before.
+  const dataAttrs = buildNodeDataAttributes(node, stateBindings, options.selectionValue, paneData);
   const open = openTag(tag, node, shell, normalized.className, normalized.style, dataAttrs, outerStyle);
   return `${open}${normalized.inner || ''}${children}${normalized.after || ''}</${tag}>`;
 }
