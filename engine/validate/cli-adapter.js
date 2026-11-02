@@ -26,6 +26,7 @@ function runValidate({ projectPath, strict = false } = {}) {
     ok: result.ok,
     errors: result.errors,
     warnings: result.warnings,
+    info: result.info || [],
     projectPath: result.projectPath,
   };
 }

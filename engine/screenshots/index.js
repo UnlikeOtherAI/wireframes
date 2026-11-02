@@ -295,10 +295,14 @@ function resolvePageTargets(projectPath, pageId) {
 
   const rootsById = new Map();
   const bodyLayoutById = new Map();
+  const bodyLayoutObjectById = new Map();
   for (const tree of trees.trees) {
     rootsById.set(tree.id, tree.roots || []);
     if (tree.bodyLayoutType) {
       bodyLayoutById.set(tree.id, tree.bodyLayoutType);
+    }
+    if (isObject(tree.bodyLayout)) {
+      bodyLayoutObjectById.set(tree.id, tree.bodyLayout);
     }
   }
 
@@ -332,6 +336,7 @@ function resolvePageTargets(projectPath, pageId) {
       rendering: resolvePageRendering(page),
       defaultGridColumns,
       bodyLayoutType: bodyLayoutById.get(id) || 'row',
+      bodyLayout: bodyLayoutObjectById.get(id) || {},
       roots,
       projectPath,
     });
@@ -394,6 +399,7 @@ async function captureScreenshots(targets, outputPath, frame) {
         rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
         bodyLayoutType: target.bodyLayoutType || 'row',
+        bodyLayout: target.bodyLayout,
         projectPath: target.projectPath,
         frame,
         imageResolver: fsImageResolver,

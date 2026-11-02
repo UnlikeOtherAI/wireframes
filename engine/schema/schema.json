@@ -348,6 +348,132 @@
         "chart", "table", "section", "divider", "spacer"
       ]
     },
+    "PrimitiveProps_heading": {
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "description": "Canonical text content." },
+        "label": { "type": "string", "description": "Accepted alias for text; text wins when both are set." },
+        "level": { "type": "integer", "minimum": 1, "maximum": 6 }
+      }
+    },
+    "PrimitiveProps_paragraph": {
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "description": "Canonical text content." },
+        "label": { "type": "string", "description": "Accepted alias for text; text wins when both are set." }
+      }
+    },
+    "PrimitiveProps_text": {
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "description": "Canonical text content." },
+        "label": { "type": "string", "description": "Accepted alias for text; text wins when both are set." },
+        "variant": { "type": "string", "enum": ["body", "meta"] }
+      }
+    },
+    "PrimitiveProps_button": {
+      "type": "object",
+      "properties": {
+        "label": { "type": "string" },
+        "icon": { "type": "string" },
+        "iconStyle": { "type": "string", "enum": ["solid", "regular", "brands"] },
+        "iconSize": { "type": "string" },
+        "variant": { "type": "string", "enum": ["primary", "secondary", "ghost", "danger"] }
+      }
+    },
+    "PrimitiveProps_field": {
+      "type": "object",
+      "properties": {
+        "label": { "type": "string" },
+        "placeholder": { "type": "string" }
+      }
+    },
+    "PrimitiveProps_input": {
+      "allOf": [
+        { "$ref": "#/$defs/PrimitiveProps_field" },
+        {
+          "type": "object",
+          "properties": {
+            "inputType": { "type": "string", "enum": ["text", "password", "email", "number", "search"] }
+          }
+        }
+      ]
+    },
+    "PrimitiveProps_textarea": {
+      "allOf": [
+        { "$ref": "#/$defs/PrimitiveProps_field" },
+        {
+          "type": "object",
+          "properties": {
+            "rows": { "type": "integer", "minimum": 1 }
+          }
+        }
+      ]
+    },
+    "PrimitiveProps_select": {
+      "allOf": [
+        { "$ref": "#/$defs/PrimitiveProps_field" },
+        {
+          "type": "object",
+          "properties": {
+            "options": { "type": "array" }
+          }
+        }
+      ]
+    },
+    "PrimitiveProps_labelOnly": {
+      "type": "object",
+      "properties": {
+        "label": { "type": "string" }
+      }
+    },
+    "PrimitiveProps_image": {
+      "type": "object",
+      "properties": {
+        "src": { "type": "string" },
+        "alt": { "type": "string" },
+        "width": { "oneOf": [{ "type": "number" }, { "type": "string" }] },
+        "height": { "oneOf": [{ "type": "number" }, { "type": "string" }] }
+      }
+    },
+    "PrimitiveProps_icon": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "style": { "type": "string", "enum": ["solid", "regular", "brands"] },
+        "size": { "type": "string" }
+      }
+    },
+    "PrimitiveProps_section": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" }
+      }
+    },
+    "PrimitiveProps_spacer": {
+      "type": "object",
+      "properties": {
+        "size": { "oneOf": [{ "type": "number" }, { "type": "string" }] }
+      }
+    },
+    "PrimitiveProps_table": {
+      "type": "object",
+      "properties": {
+        "columns": { "type": "array" },
+        "rows": { "type": "array" },
+        "emptyText": { "type": "string" }
+      }
+    },
+    "PrimitiveProps_chart": {
+      "type": "object",
+      "required": ["chartType"],
+      "properties": {
+        "chartType": { "type": "string", "enum": ["line", "bar", "vertical", "horizontal", "gauge", "donut"] },
+        "title": { "type": "string" },
+        "label": { "type": "string" },
+        "data": {}
+      }
+    },
     "Layout": {
       "type": "object",
       "additionalProperties": false,
@@ -416,27 +542,22 @@
             { "required": ["injectable"] }
           ]
         },
-        {
-          "if": {
-            "properties": { "component": { "const": "chart" } },
-            "required": ["component"]
-          },
-          "then": {
-            "properties": {
-              "props": {
-                "type": "object",
-                "required": ["chartType"],
-                "properties": {
-                  "chartType": {
-                    "type": "string",
-                    "enum": ["line", "bar", "vertical", "horizontal", "gauge", "donut"]
-                  }
-                }
-              }
-            },
-            "required": ["component", "props"]
-          }
-        }
+        { "if": { "properties": { "component": { "const": "heading" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_heading" } } } },
+        { "if": { "properties": { "component": { "const": "paragraph" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_paragraph" } } } },
+        { "if": { "properties": { "component": { "const": "text" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_text" } } } },
+        { "if": { "properties": { "component": { "const": "button" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_button" } } } },
+        { "if": { "properties": { "component": { "const": "input" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_input" } } } },
+        { "if": { "properties": { "component": { "const": "textarea" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_textarea" } } } },
+        { "if": { "properties": { "component": { "const": "select" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_select" } } } },
+        { "if": { "properties": { "component": { "const": "checkbox" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_labelOnly" } } } },
+        { "if": { "properties": { "component": { "const": "radio" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_labelOnly" } } } },
+        { "if": { "properties": { "component": { "const": "toggle" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_labelOnly" } } } },
+        { "if": { "properties": { "component": { "const": "image" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_image" } } } },
+        { "if": { "properties": { "component": { "const": "icon" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_icon" } } } },
+        { "if": { "properties": { "component": { "const": "section" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_section" } } } },
+        { "if": { "properties": { "component": { "const": "spacer" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_spacer" } } } },
+        { "if": { "properties": { "component": { "const": "table" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_table" } } } },
+        { "if": { "properties": { "component": { "const": "chart" } }, "required": ["component"] }, "then": { "properties": { "props": { "$ref": "#/$defs/PrimitiveProps_chart" } }, "required": ["component", "props"] } }
       ]
     },
     "ManifestDocument": {

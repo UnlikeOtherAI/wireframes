@@ -1,0 +1,11 @@
+cli:
+  strictValidation: true
+  failOnWarnings: false
+  build:
+    outputDir: ./wireframes/build
+    clean: true
+    basePath: /
+  serve:
+    port: 8080
+    open: false
+    hotReload: true

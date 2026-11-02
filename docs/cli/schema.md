@@ -8,7 +8,7 @@ It must:
 
 * Describe full applications (not just pages)
 * Support templates, pages, reusable components
-* Support datasets
+* Support optional datasets
 * Support overlays
 * Support state + interactions
 * Be export-safe
@@ -33,7 +33,7 @@ sitemap.yaml
 templates.yaml
 components.yaml
 /pages/*.yaml
-/data/*.yaml
+/data/*.yaml        # optional; only needed when pages reference datasets
 ```
 
 Additional reusable component documents may live anywhere under the project
@@ -225,8 +225,9 @@ dataSources:
     dataset: products
 ```
 
-Links a page to a dataset defined in `/data`. Nodes can bind to the
-dataset via `binding.source: {{item.field}}`.
+Links a page to a dataset defined in optional `/data`. Nodes can bind to the
+dataset via `binding.source: {{item.field}}`. A missing `/data` folder is valid
+when no page references datasets; a referenced dataset ID must still exist.
 
 ### actions
 
@@ -333,6 +334,7 @@ Not part of the schema contract. Not included in export.
 ## 3.7 data/<datasetId>.yaml
 
 Defines a dataset of mock data items used to populate wireframe UI.
+The `data/` directory is optional for projects without dataset bindings.
 
 Must contain:
 
@@ -466,6 +468,28 @@ The built-in primitive component set is documented in
 containers such as `tab_bar` for reusable route-backed navigation patterns,
 `table` for striped tabular data, and `chart` for grayscale chart placeholders
 (requires `chartType`: line, bar, vertical, horizontal, gauge, donut).
+
+Primitive `props` are typed by component. Unknown primitive props are lint
+warnings rather than schema errors, so custom component parameters can keep
+flowing through `props`.
+
+| Primitive | Props |
+|-----------|-------|
+| `heading` | `text` (canonical), `label` alias, `level: 1-6` |
+| `paragraph` | `text` (canonical), `label` alias |
+| `text` | `text` (canonical), `label` alias, `variant: body|meta` |
+| `button` | `label`, `icon`, `iconStyle`, `iconSize`, `variant: primary|secondary|ghost|danger` |
+| `input` | `label`, `placeholder`, `inputType` |
+| `textarea` | `label`, `placeholder`, `rows` |
+| `select` | `label`, `placeholder`, `options[]` |
+| `checkbox`, `radio`, `toggle` | `label` |
+| `image` | `src`, `alt`, `width`, `height` |
+| `icon` | `name`, `style`, `size` |
+| `section` | `title` |
+| `table` | `columns[]`, `rows[]`, `emptyText` |
+| `chart` | `chartType`, `title`, `label`, `data` |
+| `divider`, `tab_bar`, `bottom_tab_bar` | no authored props required |
+| `spacer` | `size` |
 
 ---
 

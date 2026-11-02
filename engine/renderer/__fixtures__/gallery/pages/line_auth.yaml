@@ -1,0 +1,48 @@
+documentType: page
+specVersion: "1.1"
+id: line_auth
+page:
+  id: line_auth
+  template: auth_shell
+  viewport:
+    device: web
+  renderMode: line
+  wireframeStyle:
+    border:
+      style: dashed
+      width: thin
+    corner:
+      style: sharp
+  slots:
+    - slotId: auth_main
+      content:
+        - id: line_auth_card
+          component: section
+          size:
+            width: 420
+          props:
+            title: Centered line auth
+          layout:
+            type: stack
+            gap: 14
+          children:
+            - id: line_auth_heading
+              component: heading
+              props:
+                level: 1
+                text: Line sign in
+            - id: line_auth_prompt
+              component: paragraph
+              props:
+                text: The auth shell centers this card in line mode too.
+            - id: line_auth_email
+              component: input
+              props:
+                label: Email
+                placeholder: person@example.com
+                inputType: email
+            - id: line_auth_submit
+              component: button
+              props:
+                label: Continue
+                variant: primary

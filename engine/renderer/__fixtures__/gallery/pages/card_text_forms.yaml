@@ -1,0 +1,180 @@
+documentType: page
+specVersion: "1.1"
+id: card_text_forms
+page:
+  id: card_text_forms
+  template: app_shell
+  viewport:
+    device: web
+  renderMode: card
+  pageState:
+    selected_tab: text_tab
+  wireframeStyle:
+    border:
+      style: solid
+      width: thin
+    corner:
+      style: rounded
+      radius: 8
+  slots:
+    - slotId: main
+      content:
+        - id: text_forms_panel
+          component: section
+          props:
+            title: Text and form primitives
+          layout:
+            type: stack
+            gap: 16
+          children:
+            - id: text_h1
+              component: heading
+              props:
+                level: 1
+                text: Gallery heading
+            - id: text_h2_alias
+              component: heading
+              props:
+                level: 2
+                label: Label alias heading
+            - id: text_h6
+              component: heading
+              props:
+                level: 6
+                text: Metadata heading
+            - id: intro_paragraph
+              component: paragraph
+              props:
+                text: This card page covers text aliases, skeletons, buttons, and form controls.
+            - id: meta_text
+              component: text
+              props:
+                text: Meta text variant
+                variant: meta
+            - id: missing_text_group
+              component: section
+              layout:
+                type: row
+                gap: 12
+                align: center
+              children:
+                - id: missing_heading
+                  component: heading
+                  props:
+                    level: 3
+                - id: missing_paragraph
+                  component: paragraph
+                - id: missing_text
+                  component: text
+            - id: tabs_group
+              component: section
+              props:
+                title: Tabs
+              children:
+                - id: top_tabs
+                  component: tab_bar
+                  children:
+                    - id: text_tab
+                      component: button
+                      selection:
+                        scope: page
+                        stateKey: selected_tab
+                      props:
+                        label: Text
+                    - id: forms_tab
+                      component: button
+                      selection:
+                        scope: page
+                        stateKey: selected_tab
+                      props:
+                        label: Forms
+            - id: button_variants
+              component: section
+              layout:
+                type: row
+                gap: 8
+                align: center
+              children:
+                - id: primary_btn
+                  component: button
+                  props:
+                    label: Primary
+                    icon: check
+                    variant: primary
+                - id: secondary_btn
+                  component: button
+                  props:
+                    label: Secondary
+                    variant: secondary
+                - id: ghost_btn
+                  component: button
+                  props:
+                    label: Ghost
+                    variant: ghost
+                - id: danger_btn
+                  component: button
+                  props:
+                    label: Danger
+                    variant: danger
+                - id: missing_button
+                  component: button
+            - id: fields_grid
+              component: section
+              layout:
+                type: grid
+                columns: 12
+                gap: 16
+              children:
+                - id: name_input
+                  component: input
+                  gridItem:
+                    span: 6
+                  props:
+                    label: Project name
+                    placeholder: Enter project name
+                    inputType: text
+                - id: search_input
+                  component: input
+                  gridItem:
+                    span: 6
+                  props:
+                    placeholder: Unlabeled search
+                    inputType: search
+                - id: role_select
+                  component: select
+                  gridItem:
+                    span: 6
+                  props:
+                    label: Role
+                    placeholder: Choose role
+                    options:
+                      - value: admin
+                        label: Admin
+                      - value: editor
+                        label: Editor
+                - id: notes_textarea
+                  component: textarea
+                  gridItem:
+                    span: 6
+                  props:
+                    label: Notes
+                    placeholder: Add notes
+                    rows: 4
+                - id: enabled_checkbox
+                  component: checkbox
+                  gridItem:
+                    span: 4
+                  props:
+                    label: Enabled
+                - id: default_radio
+                  component: radio
+                  gridItem:
+                    span: 4
+                  props:
+                    label: Default option
+                - id: alerts_toggle
+                  component: toggle
+                  gridItem:
+                    span: 4
+                  props:
+                    label: Alerts

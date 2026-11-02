@@ -18,6 +18,13 @@ function formatIssues(result) {
       console.log(`  - [${code}] ${issue.message}`);
     }
   }
+  if (Array.isArray(result.info) && result.info.length > 0) {
+    console.log('wf lint found info:');
+    for (const issue of result.info) {
+      const code = issue.code ?? 'LINT_INFO';
+      console.log(`  - [${code}] ${issue.message}`);
+    }
+  }
 }
 
 function runLintCommand(args, context = {}) {

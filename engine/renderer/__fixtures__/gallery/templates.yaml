@@ -1,0 +1,47 @@
+documentType: templates
+specVersion: "1.1"
+id: templates
+templates:
+  app_shell:
+    layout:
+      type: row
+      gap: 24
+      padding: 24
+      align: stretch
+    regions:
+      - id: gallery_nav
+        kind: persistent
+        size:
+          width: 220
+        layout:
+          type: stack
+          gap: 12
+          padding: 16
+        children:
+          - id: gallery_title
+            component: heading
+            props:
+              level: 3
+              text: Gallery
+          - id: gallery_note
+            component: text
+            props:
+              text: Renderer fixture
+              variant: meta
+          - id: gallery_divider
+            component: divider
+      - id: main
+        kind: slot
+        layout:
+          type: stack
+          gap: 24
+  auth_shell:
+    layout:
+      type: stack
+      align: center
+      justify: center
+      gap: 16
+      padding: 32
+    regions:
+      - id: auth_main
+        kind: slot

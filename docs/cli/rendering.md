@@ -375,22 +375,25 @@ template root). It is not valid on arbitrary page nodes.
 
 # 4. Primitive Component Rendering
 
-Each primitive maps to specific HTML elements. All share the base wireframe
-style: a bordered rectangle.
+Each primitive maps to specific HTML elements. Surface primitives get the base
+wireframe frame; content primitives stay unboxed and use gap-based spacing.
 
 ## Text primitives
 
 ```
 heading   → <div class="wf-heading wf-heading-{level}">
-              <h{level}>{text}</h{level}>
+              <h{level}>{text || label || skeleton}</h{level}>
             </div>
 
 paragraph → <div class="wf-paragraph">
-              <p>{text}</p>
+              <p>{text || label || skeleton lines}</p>
             </div>
 
-text      → <span class="wf-text">{text}</span>
+text      → <span class="wf-text wf-text-{variant}">{text || label || skeleton}</span>
 ```
+
+For `heading`, `paragraph`, and `text`, `props.text` is canonical and wins
+when present. `props.label` is accepted as an alias for existing documents.
 
 ## Image
 
@@ -424,6 +427,7 @@ Font Awesome Free 6.x is loaded from CDN. `style` defaults to `solid`. `size` is
 button    → <div class="wf-button">
               <button><i class="fa-solid fa-{icon}"></i> {label}</button>
               icon prop is optional — renders Font Awesome icon before label
+              variant: primary|secondary|ghost|danger controls emphasis
               or <a href="{resolvedRouteHref}">...</a> for route-backed navigation
             </div>
 
@@ -439,15 +443,18 @@ bottom_tab_bar → <div class="wf-bottom-tab-bar wf-surface">
                  icon stacks above label. Use with `icon` prop on buttons.
 
 input     → <div class="wf-input">
+              <label class="wf-field-label">{label}</label>
               <input type="{inputType}" placeholder="{placeholder}" />
             </div>
             inputType values: text (default), password, email, number, search.
 
 textarea  → <div class="wf-textarea">
+              <label class="wf-field-label">{label}</label>
               <textarea placeholder="{placeholder}" rows="{rows}"></textarea>
             </div>
 
 select    → <div class="wf-select">
+              <label class="wf-field-label">{label}</label>
               <select>
                 <option value="">{placeholder}</option>
                 <option value="{value}">{label}</option>
@@ -498,6 +505,7 @@ divider   → <hr class="wf-divider" />
 spacer    → <div class="wf-spacer" style="height:{size}px"></div>
             In stack layout: uses height.
             In row layout: uses width instead (style="width:{size}px").
+            Percentage size in flex parents renders as flex:1 1 auto.
             In grid layout: spans one cell with the given height.
 
 chart     → <div class="wf-chart">

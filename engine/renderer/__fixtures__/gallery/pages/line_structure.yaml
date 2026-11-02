@@ -1,0 +1,95 @@
+documentType: page
+specVersion: "1.1"
+id: line_structure
+page:
+  id: line_structure
+  template: app_shell
+  viewport:
+    device: web
+  renderMode: line
+  wireframeStyle:
+    border:
+      style: dashed
+      width: thin
+    corner:
+      style: sharp
+  slots:
+    - slotId: main
+      content:
+        - id: line_structure_panel
+          component: section
+          props:
+            title: Line structure
+          layout:
+            type: stack
+            gap: 16
+          children:
+            - id: line_grid_tiles
+              component: section
+              layout:
+                type: grid
+                columns: 12
+                gap: 12
+              children:
+                - id: line_grid_tile_a
+                  component: section
+                  gridItem:
+                    span: 6
+                  props:
+                    title: Line tile A
+                  children:
+                    - id: line_tile_a_text
+                      component: text
+                      props:
+                        text: Grid child remains a surface
+                - id: line_grid_tile_b
+                  component: section
+                  gridItem:
+                    span: 6
+                  props:
+                    title: Line tile B
+                  children:
+                    - id: line_tile_b_text
+                      component: text
+                      props:
+                        text: Second tile
+            - id: line_row_groups
+              component: section
+              layout:
+                type: row
+                gap: 12
+              children:
+                - id: line_promoted_tile
+                  component: section
+                  surface: true
+                  size:
+                    width: 240
+                  props:
+                    title: Promoted
+                  children:
+                    - id: line_promoted_text
+                      component: text
+                      props:
+                        text: Card in row
+                - id: line_plain_group
+                  component: section
+                  size:
+                    width: 240
+                  children:
+                    - id: line_plain_text
+                      component: text
+                      props:
+                        text: Plain group
+            - id: line_table
+              component: table
+              props:
+                columns:
+                  - key: item
+                    label: Item
+                  - key: state
+                    label: State
+                rows:
+                  - item: Alpha
+                    state: Open
+                  - item: Beta
+                    state: Closed

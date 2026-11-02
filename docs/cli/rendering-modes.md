@@ -23,8 +23,8 @@ Mode can be overridden per-page via `page.rendering.mode` or the shorthand
 
 | Mode   | Character                       | Page background | Surface treatment          | Button style       |
 |--------|---------------------------------|-----------------|----------------------------|--------------------|
-| `line` | Blueprint / schematic           | `#ffffff`        | Transparent + outline      | Bracketed label    |
-| `card` | Greyscale product mock          | `#f3f4f6`        | White + border + shadow    | Filled grey block  |
+| `line` | Blueprint / schematic           | `#ffffff`        | Transparent + outline      | Hairline button    |
+| `card` | Greyscale product mock          | `#f3f4f6`        | White + border + shadow    | Variant control    |
 
 **Line mode** is a pure structural skeleton. Every surface is a single hairline
 outline. No fills. Sharp or minimally-rounded corners. The output reads as a
@@ -157,11 +157,13 @@ which means adjacent outlines never double up.
 **Button rendering in line mode:**
 
 ```html
-<div class="wf-button">[ Save ]</div>
+<div class="wf-button">
+  <button>Save</button>
+</div>
 ```
 
-Buttons render as label text with bracket delimiters or a hairline border.
-No fill. This keeps the schematic aesthetic.
+Buttons render as transparent controls with a hairline border and no bracket
+characters in the markup. Primary buttons use a heavier line.
 
 ### 3.2 Card Mode
 
@@ -432,8 +434,8 @@ No inner `overflow: scroll` container. No clipping.
 - `table` component
 - `tab_bar` component
 - `bottom_tab_bar` component
-- `section` component
-- Template region containers (persistent and slot)
+- `section` component when it is top-level in its context, a grid tile, or explicitly `surface: true`
+- Template persistent region containers
 - Pane panels (`node.pane` is defined)
 - Overlay containers (modal, drawer, popover, etc.)
 
@@ -442,6 +444,7 @@ No inner `overflow: scroll` container. No clipping.
 - `text`, `heading`, `paragraph` — inline content
 - `button` — handled separately (see 6.2)
 - `spacer`, `divider` — structural only
+- Slot region roots and demoted nested sections
 
 Line mode:
 ```html
@@ -459,7 +462,7 @@ Card mode: identical HTML — CSS variables drive the visual difference.
 
 ```html
 <div class="wf-button wf-button-line">
-  <button>[ Save ]</button>
+  <button>Save</button>
 </div>
 ```
 
@@ -474,9 +477,14 @@ CSS:
   border-radius: 2px;
   cursor:      default;
 }
+.wf-mode-line .wf-button-primary button {
+  border-width: 2px;
+}
 ```
 
-**Card mode:** Render as filled grey block.
+**Card mode:** Render as a greyscale control. `variant` controls emphasis:
+primary and danger use grey-800 with white text, secondary uses grey-200 with
+grey-700 text, and ghost is transparent.
 
 ```html
 <div class="wf-button wf-button-card">
@@ -504,8 +512,8 @@ to a prototype — reasonable target sizes matter.
 
 ### 6.3 Inputs, selects, textareas
 
-Form fields always get a visible boundary in both modes. A field without a
-boundary is visually ambiguous.
+Form fields always get a visible boundary in both modes. When `props.label` is
+present, it renders above the control as `.wf-field-label`.
 
 **Line mode:**
 ```css
@@ -548,14 +556,15 @@ the intrinsic form control appearance is sufficient at wireframe fidelity.
 No surface box. Text-only. Font size and weight driven by component type.
 
 ```css
-.wf-heading h1 { font-size: 20px; font-weight: 600; }
-.wf-heading h2 { font-size: 18px; font-weight: 600; }
+.wf-heading h1 { font-size: 24px; font-weight: 650; }
+.wf-heading h2 { font-size: 20px; font-weight: 600; }
 .wf-heading h3 { font-size: 16px; font-weight: 600; }
-.wf-heading h4,
-.wf-heading h5,
-.wf-heading h6 { font-size: 14px; font-weight: 600; }
-.wf-paragraph p { font-size: 14px; color: #374151; }
-.wf-text       { font-size: 14px; }
+.wf-heading h4 { font-size: 14px; font-weight: 600; }
+.wf-heading h5 { font-size: 13px; font-weight: 600; }
+.wf-heading h6 { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #6b7280; }
+.wf-paragraph p { font-size: 14px; color: #4b5563; line-height: 1.6; max-width: 65ch; }
+.wf-text-body { font-size: 14px; color: #374151; }
+.wf-text-meta { font-size: 12px; color: #6b7280; }
 ```
 
 ### 6.6 Images
@@ -583,6 +592,7 @@ Spans full parent width. No mode difference.
 
 `spacer` → `<div class="wf-spacer" style="height: Npx">` — invisible gap.
 In row layout: `width: Npx` instead of `height`.
+Percentage sizes in flex parents render as `flex:1 1 auto`.
 
 These are explicit structural primitives. They are distinct from the parent
 dividers used in double-border prevention (those are CSS-only and not authored).
@@ -640,24 +650,20 @@ and card mode.
 
 ### 6.11 Section with title
 
-`section` renders title text above the body in both modes. The title uses the
-`meta` type scale (12px, grey-500) as a label over the content area.
+`section` renders title text only when `props.title` is a non-empty string.
+The title uses 13px/600 grey-800 and an 8px bottom gap.
 
 ```html
 <div class="wf-section wf-surface">
-  <div class="wf-section-title">Settings</div>  <!-- 12px, grey-500 -->
+  <div class="wf-section-title">Settings</div>
   <div class="wf-section-body">
     <!-- children -->
   </div>
 </div>
 ```
 
-In line mode, the section title is outside the outline box (above it), so the
-outline frames just the content body. In card mode, the title is inside the
-card surface.
-
-Actually, to keep rendering simple and consistent: the section title is always
-inside the surface container, at the top, styled as `wf-text-meta`.
+The section title is always inside the section container, at the top. There is
+no fallback `"Section"` title when `props.title` is absent.
 
 ---
 
@@ -873,8 +879,8 @@ When implementing these schema additions, update ALL of the following:
 
 A node gets the `wf-surface` class if ANY of the following is true:
 
-- `component: section`
-- The node is a template region root (persistent or slot)
+- `component: section` and it passes the surface-depth rule
+- The node is a template persistent region root
 - `pane` is defined on the node
 - The node is the root of an overlay content tree
 - `surface: true`
@@ -885,9 +891,14 @@ A node does NOT get `wf-surface` if:
 - `component: button`, `input`, `textarea`, `select`, `checkbox`, `radio`, `toggle`, `icon`
 - `component: chart` (borderless placeholder — see Section 6.10)
 - `component: divider` or `component: spacer`
-- The node is a pure layout wrapper with `use` referencing a component
-  (the component's root handles its own surface class)
+- The node is a slot region root
+- The node is a demoted nested section or table
 - `surface: false`
+
+For sections and tables, the depth rule is: render as a surface when
+`surface: true`, or when `surface` is not false and the node is at
+`surfaceDepth == 0` or is a direct child of a grid layout. Children of rendered
+surfaces receive incremented depth; overlay content resets depth to 0.
 
 ### 9.3 Density effect
 

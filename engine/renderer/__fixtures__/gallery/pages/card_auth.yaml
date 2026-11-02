@@ -1,0 +1,49 @@
+documentType: page
+specVersion: "1.1"
+id: card_auth
+page:
+  id: card_auth
+  template: auth_shell
+  viewport:
+    device: web
+  renderMode: card
+  wireframeStyle:
+    border:
+      style: solid
+      width: thin
+    corner:
+      style: rounded
+      radius: 8
+  slots:
+    - slotId: auth_main
+      content:
+        - id: auth_card
+          component: section
+          size:
+            width: 420
+          props:
+            title: Centered auth template
+          layout:
+            type: stack
+            gap: 14
+          children:
+            - id: auth_heading
+              component: heading
+              props:
+                level: 1
+                text: Sign in
+            - id: auth_prompt
+              component: paragraph
+              props:
+                text: This page verifies template align and justify on the body container.
+            - id: auth_email
+              component: input
+              props:
+                label: Email
+                placeholder: person@example.com
+                inputType: email
+            - id: auth_submit
+              component: button
+              props:
+                label: Continue
+                variant: primary

@@ -1,0 +1,116 @@
+documentType: page
+specVersion: "1.1"
+id: card_media_charts
+page:
+  id: card_media_charts
+  template: app_shell
+  viewport:
+    device: web
+  renderMode: card
+  pageState:
+    selected_bottom_tab: media_home_tab
+  wireframeStyle:
+    border:
+      style: solid
+      width: thin
+    corner:
+      style: rounded
+      radius: 8
+  slots:
+    - slotId: main
+      content:
+        - id: media_panel
+          component: section
+          props:
+            title: Media and charts
+          layout:
+            type: stack
+            gap: 18
+          children:
+            - id: media_row
+              component: section
+              layout:
+                type: row
+                gap: 16
+                align: center
+              children:
+                - id: placeholder_image
+                  component: image
+                  size:
+                    width: 320
+                  props:
+                    alt: Placeholder media
+                - id: standalone_icon
+                  component: icon
+                  props:
+                    name: chart-line
+                    size: 2xl
+            - id: chart_grid
+              component: section
+              layout:
+                type: grid
+                columns: 12
+                gap: 16
+              children:
+                - id: line_chart
+                  component: chart
+                  gridItem:
+                    span: 4
+                  props:
+                    chartType: line
+                    title: Line chart title
+                - id: bar_chart
+                  component: chart
+                  gridItem:
+                    span: 4
+                  props:
+                    chartType: bar
+                    title: Bar chart title
+                - id: horizontal_chart
+                  component: chart
+                  gridItem:
+                    span: 4
+                  props:
+                    chartType: horizontal
+                    title: Horizontal chart title
+                - id: gauge_chart
+                  component: chart
+                  gridItem:
+                    span: 6
+                  props:
+                    chartType: gauge
+                    title: Gauge chart title
+                - id: donut_chart
+                  component: chart
+                  gridItem:
+                    span: 6
+                  props:
+                    chartType: donut
+                    title: Donut chart title
+            - id: bottom_nav_sample
+              component: bottom_tab_bar
+              children:
+                - id: media_home_tab
+                  component: button
+                  selection:
+                    scope: page
+                    stateKey: selected_bottom_tab
+                  props:
+                    label: Home
+                    icon: house
+                - id: media_reports_tab
+                  component: button
+                  selection:
+                    scope: page
+                    stateKey: selected_bottom_tab
+                  props:
+                    label: Reports
+                    icon: chart-column
+                - id: media_settings_tab
+                  component: button
+                  selection:
+                    scope: page
+                    stateKey: selected_bottom_tab
+                  props:
+                    label: Settings
+                    icon: gear

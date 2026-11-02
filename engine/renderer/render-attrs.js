@@ -58,7 +58,7 @@ function buildNodeDataAttributes(node, stateBindings, selectionValue, paneData) 
   return entries.length > 0 ? ` ${entries.join(' ')}` : '';
 }
 
-function buildNodeClasses(node, primitive, level = null, paneSide = null) {
+function buildNodeClasses(node, primitive, level = null, paneSide = null, isSurface = null) {
   const classList = ['wf-node'];
   const explicitSurface = typeof node?.surface === 'boolean' ? node.surface : null;
 
@@ -67,15 +67,26 @@ function buildNodeClasses(node, primitive, level = null, paneSide = null) {
     if (level && Number.isInteger(level) && level >= 1 && level <= 6) {
       classList.push(`wf-heading-${level}`);
     }
+  } else if (primitive === 'text') {
+    classList.push('wf-text');
+    const variant = node?.props?.variant === 'meta' ? 'meta' : 'body';
+    classList.push(`wf-text-${variant}`);
+  } else if (primitive === 'button') {
+    classList.push('wf-button');
+    const allowedVariants = new Set(['primary', 'secondary', 'ghost', 'danger']);
+    const variant = allowedVariants.has(node?.props?.variant) ? node.props.variant : 'secondary';
+    classList.push(`wf-button-${variant}`);
   } else if (primitive === 'table') {
     classList.push('wf-table');
-    if (explicitSurface !== false) {
+    if (isSurface === true || (isSurface == null && explicitSurface !== false)) {
       classList.push('wf-surface');
     }
   } else if (primitive === 'section') {
     classList.push('wf-section');
-    if (explicitSurface !== false) {
+    if (isSurface === true || (isSurface == null && explicitSurface !== false)) {
       classList.push('wf-surface');
+    } else {
+      classList.push('wf-group');
     }
   } else if (primitive === 'tab_bar') {
     classList.push('wf-tab-bar', 'wf-surface');
@@ -199,9 +210,12 @@ function renderImageElement(projectPath, props, options = {}) {
 }
 
 function renderSectionTitle(props, options = {}) {
-  const titleValue = isObject(props) && Object.prototype.hasOwnProperty.call(props, 'title')
+  const titleValue = isObject(props) && typeof props.title === 'string' && props.title.trim() !== ''
     ? props.title
-    : 'Section';
+    : '';
+  if (!titleValue) {
+    return '';
+  }
   return `<div class="wf-section-title">${renderBoundText(titleValue, options)}</div>`;
 }
 

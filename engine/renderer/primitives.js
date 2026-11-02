@@ -31,6 +31,7 @@ const {
   getPathValue,
   escapeHtml,
   escapeAttr,
+  renderSkeleton,
   toSafeClass,
 } = require('./render-utils');
 const {
@@ -69,6 +70,30 @@ const BORDERLESS_PRIMITIVES = new Set([
 
 const wfNodeBorderStyle = 'border:var(--wf-border-width,1px) var(--wf-border-style,solid) #333;border-radius:var(--wf-corner-radius,0px)';
 
+function surfaceDepth(options = {}) {
+  return Number.isInteger(options.surfaceDepth) && options.surfaceDepth > 0 ? options.surfaceDepth : 0;
+}
+
+function shouldRenderSurface(node, primitiveName, options = {}) {
+  if (!['section', 'table'].includes(primitiveName)) {
+    return typeof node?.surface === 'boolean' ? node.surface : null;
+  }
+  if (node?.surface === true) {
+    return true;
+  }
+  if (node?.surface === false) {
+    return false;
+  }
+  return surfaceDepth(options) === 0 || options.parentLayoutIsGrid === true;
+}
+
+function countsAsSurfaceForDepth(primitiveName, isSurface, paneData) {
+  if (primitiveName === 'tab_bar' || primitiveName === 'bottom_tab_bar') {
+    return false;
+  }
+  return isSurface === true || paneData != null;
+}
+
 function sectionBodyDividerClass(layout) {
   if (!shouldRenderParentSeparators(layout)) return '';
   const type = layout.type || 'stack';
@@ -81,9 +106,11 @@ function renderChildren(node, options) {
     return '';
   }
 
+  const layoutType = isObject(node.layout) ? node.layout.type || 'stack' : 'stack';
   return `<div class="wf-node-children">${renderNodes(children, {
     ...options,
-    parentLayoutType: isObject(node.layout) ? node.layout.type || 'stack' : 'stack',
+    parentLayoutType: layoutType,
+    parentLayoutIsGrid: layoutType === 'grid',
   })}</div>`;
 }
 
@@ -98,6 +125,7 @@ const sharedFns = {
   escapeHtml,
   renderChildren,
   renderBoundText,
+  renderSkeleton,
   getPathValue,
   resolveCollectionItems,
   resolveAttributeValue,
@@ -175,9 +203,14 @@ function renderNode(node, options = {}) {
 
   const isOverlayRoot = node.kind === 'overlay';
   const paneSide = paneData ? paneData.side : null;
+  const isSurface = shouldRenderSurface(node, primitiveName, options);
+  const childOptions = {
+    ...options,
+    surfaceDepth: surfaceDepth(options) + (countsAsSurfaceForDepth(primitiveName, isSurface, paneData) ? 1 : 0),
+  };
 
   if (isOverlayRoot) {
-    return renderOverlay(node, options, childStyle, sharedFns);
+    return renderOverlay(node, { ...options, surfaceDepth: 0 }, childStyle, sharedFns);
   }
 
   if (primitiveName && PRIMITIVE_COMPONENTS.has(primitiveName)) {
@@ -187,7 +220,7 @@ function renderNode(node, options = {}) {
       return renderChart(node, props, childStyle, options, sharedFns, extraCtx);
     }
     if (primitiveName === 'table') {
-      const extraCtx = { bindingContext, paneSide, stateBindings, selectionValue, paneData };
+      const extraCtx = { bindingContext, paneSide, stateBindings, selectionValue, paneData, isSurface };
       return renderTable(node, props, childStyle, options, sharedFns, extraCtx);
     }
 
@@ -198,17 +231,19 @@ function renderNode(node, options = {}) {
       const safeHeadingLevel = Math.max(1, Math.min(6, headingLevel));
       const ctx = {
         node, props, layout, size, gridItem, defaultGridColumns, options,
+        childOptions,
         childStyle, paneSide, stateBindings, selectionValue, paneData,
         bindingContext, navigationTarget, safeHeadingLevel, projectPath,
         parentLayoutType, isBorderless, nodeWireframeOverrides, wfNodeBorderStyle,
+        isSurface,
       };
       return primitiveRenderer(ctx, sharedFns);
     }
   }
 
-  const childNodes = renderChildren(node, options);
+  const childNodes = renderChildren(node, childOptions);
   const dataAttrs = buildNodeDataAttributes(node, stateBindings, selectionValue, paneData);
-  const classes = buildNodeClasses(node, primitiveName, null, paneSide);
+  const classes = buildNodeClasses(node, primitiveName, null, paneSide, isSurface);
   return `<div${joinAttrs(node.id, classes, childStyle)}${dataAttrs}>${childNodes}</div>`;
 }
 

@@ -198,6 +198,7 @@ function buildPageTree(projectPath, pageId) {
         id: pageId,
         templateId,
         bodyLayoutType,
+        bodyLayout: templateLayout,
         roots: [
           ...roots,
           ...templateOverlays.roots,
