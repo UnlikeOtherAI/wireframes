@@ -1,0 +1,103 @@
+documentType: page
+specVersion: "1.1"
+id: line_data
+page:
+  id: line_data
+  template: app_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: line
+  slots:
+    - slotId: main
+      content:
+        - id: line_data_header
+          component: page_header
+          props:
+            title: Line mode — data
+        - id: line_table
+          component: table
+          props:
+            caption: Projects
+            selectable: true
+            columns:
+              - label: Name
+                key: name
+                sortable: true
+              - label: Owner
+                key: owner
+                kind: avatar
+              - label: Status
+                key: status
+                kind: badge
+              - label: Seats
+                key: seats
+                align: right
+            rows:
+              - name: Acme Dashboard
+                owner: Ada Lovelace
+                status: Live
+                seats: "12"
+              - name: Client Portal
+                owner: Grace Hopper
+                status: Draft
+                seats: "4"
+              - name: Checkout Flow
+                owner: Alan Turing
+                status: In review
+                seats: "9"
+        - id: line_two_up
+          component: grid
+          props:
+            columns: 2
+          children:
+            - id: line_list_card
+              component: card
+              props:
+                title: Activity
+              children:
+                - id: line_list
+                  component: list
+                  props:
+                    kind: avatar
+                    items:
+                      - title: Ada Lovelace
+                        text: Invited you to Acme Dashboard
+                        meta: 2h
+                      - title: Grace Hopper
+                        text: Commented on Checkout Flow
+                        meta: 5h
+            - id: line_chart_card
+              component: card
+              props:
+                title: Signups
+              children:
+                - id: line_chart
+                  component: chart
+                  props:
+                    chartType: area
+        - id: line_tree_card
+          component: card
+          props:
+            title: Accordion and tree
+          layout:
+            type: grid
+            columns: 2
+            gap: 16
+          children:
+            - id: line_accordion
+              component: accordion
+              props:
+                items:
+                  - title: How does billing work?
+                    text: Billed monthly for seats in use.
+                    open: true
+                  - title: Can I change plans?
+            - id: line_tree
+              component: tree
+              props:
+                items:
+                  - label: src
+                    children:
+                      - label: index.js
+                      - label: render.js

@@ -246,27 +246,22 @@ test('validate accepts table columns with label but no key (auto-derives key)', 
   assert.equal(result.errors.length, 0);
 });
 
-test('validate warns when using component alias like card', () => {
+test('validate suggests a real element for a name that is not one', () => {
   const projectPath = createTempProject('Validate Component Alias');
   const pagePath = path.join(projectPath, 'pages', 'home.yaml');
   const pageDoc = yaml.load(fs.readFileSync(pagePath, 'utf8'));
 
+  // `card` is a real element now, so the nudge is reserved for names that are not.
   pageDoc.page.slots[0].content = [
-    {
-      id: 'my_card',
-      component: 'card',
-      props: { title: 'Card Title' },
-    },
+    { id: 'my_panel', component: 'panel', props: { title: 'Panel Title' } },
   ];
   fs.writeFileSync(pagePath, `${yaml.dump(pageDoc)}\n`, 'utf8');
 
   const result = runValidate({ projectPath });
 
   assert.ok(
-    result.warnings.some((w) =>
-      w.code === 'COMPONENT_ALIAS' && w.message.includes('card') && w.message.includes('section')
-    ),
-    'Should warn that "card" should be "section"'
+    result.warnings.some((w) => w.code === 'COMPONENT_ALIAS' && w.message.includes('panel') && w.message.includes('card')),
+    'should point "panel" at "card"',
   );
 });
 

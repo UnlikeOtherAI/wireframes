@@ -7,17 +7,26 @@ const STATE_KEY_PATTERN = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/;
 
 const OVERLAYS_REQUIRING_TRIGGER = new Set(['dropdown', 'popover', 'menu', 'tooltip']);
 const { resolveTemplatePage } = require('../resolver');
+const { resolvePrimitiveName } = require('../schema/primitive-registry');
 
+// Nudges for names that are not primitives. The registry owns the real aliases
+// (which resolve silently); these are only the near-misses worth a warning.
 const COMPONENT_ALIASES = {
-  card: 'section',
-  container: 'section',
-  box: 'section',
+  container: 'stack',
+  box: 'card',
+  panel: 'card',
   label: 'text',
   textfield: 'input',
   separator: 'divider',
   hr: 'divider',
   bottom_tabs: 'bottom_tab_bar',
   nav_bar: 'bottom_tab_bar',
+  sidebar: 'nav',
+  listview: 'list',
+  datagrid: 'table',
+  dropdown: 'select',
+  modal: 'overlay (kind: overlay, type: modal)',
+  tooltip: 'overlay (kind: overlay, type: tooltip)',
 };
 
 const INTERACTION_REQUIRED_FIELDS = {
@@ -386,7 +395,9 @@ function validateNode(node, context, depth = 1) {
     }
   }
 
-  if (typeof node.component === 'string' && COMPONENT_ALIASES[node.component]) {
+  if (typeof node.component === 'string'
+    && COMPONENT_ALIASES[node.component]
+    && resolvePrimitiveName(node.component) == null) {
     addWarning(
       context.result,
       'COMPONENT_ALIAS',

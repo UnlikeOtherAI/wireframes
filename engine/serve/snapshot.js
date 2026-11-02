@@ -120,7 +120,7 @@ function resolveTargets(projectPath, platform, strictValidation, failOnWarnings)
         rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
         bodyLayoutType: target.bodyLayoutType || 'row',
-        bodyLayout: target.bodyLayout || {},
+        bodyLayout: target.bodyLayout,
         projectPath,
         dataSources: target.dataSources,
         wireframeCssHref: './_shared/wireframe.css',

@@ -61,23 +61,29 @@ function buildNodeDataAttributes(node, stateBindings, selectionValue, paneData) 
 function buildNodeClasses(node, primitive, level = null, paneSide = null, isSurface = null) {
   const classList = ['wf-node'];
   const explicitSurface = typeof node?.surface === 'boolean' ? node.surface : null;
-  const rendersSurface = typeof isSurface === 'boolean'
-    ? isSurface
-    : explicitSurface !== false;
 
   if (primitive === 'heading') {
     classList.push('wf-heading');
     if (level && Number.isInteger(level) && level >= 1 && level <= 6) {
       classList.push(`wf-heading-${level}`);
     }
+  } else if (primitive === 'text') {
+    classList.push('wf-text');
+    const variant = node?.props?.variant === 'meta' ? 'meta' : 'body';
+    classList.push(`wf-text-${variant}`);
+  } else if (primitive === 'button') {
+    classList.push('wf-button');
+    const allowedVariants = new Set(['primary', 'secondary', 'ghost', 'danger']);
+    const variant = allowedVariants.has(node?.props?.variant) ? node.props.variant : 'secondary';
+    classList.push(`wf-button-${variant}`);
   } else if (primitive === 'table') {
     classList.push('wf-table');
-    if (rendersSurface) {
+    if (isSurface === true || (isSurface == null && explicitSurface !== false)) {
       classList.push('wf-surface');
     }
   } else if (primitive === 'section') {
     classList.push('wf-section');
-    if (rendersSurface) {
+    if (isSurface === true || (isSurface == null && explicitSurface !== false)) {
       classList.push('wf-surface');
     } else {
       classList.push('wf-group');
@@ -86,14 +92,6 @@ function buildNodeClasses(node, primitive, level = null, paneSide = null, isSurf
     classList.push('wf-tab-bar', 'wf-surface');
   } else if (primitive === 'bottom_tab_bar') {
     classList.push('wf-bottom-tab-bar', 'wf-surface');
-  } else if (primitive === 'button') {
-    const variant = typeof node?.props?.variant === 'string' ? node.props.variant.trim() : '';
-    const safeVariant = ['primary', 'secondary', 'ghost', 'danger'].includes(variant) ? variant : 'secondary';
-    classList.push('wf-button', `wf-button-${safeVariant}`);
-  } else if (primitive === 'text') {
-    const variant = typeof node?.props?.variant === 'string' ? node.props.variant.trim() : '';
-    const safeVariant = variant === 'meta' ? 'meta' : 'body';
-    classList.push('wf-text', `wf-text-${safeVariant}`);
   } else if (primitive) {
     classList.push(`wf-${toSafeClass(primitive)}`);
   } else if (node.kind === 'overlay') {
@@ -194,7 +192,7 @@ function renderImageElement(projectPath, props, options = {}) {
     imageResolver: options?.imageResolver,
   }) || (rawSource ? rawSource : null);
   if (!resolvedSource) {
-    return `<div class="wf-image wf-image-placeholder"><i class="fa-regular fa-image"></i><span>${escapeHtml(alt)}</span></div>`;
+    return `<div class="wf-image wf-image-placeholder">${escapeHtml(alt)}</div>`;
   }
 
   const attributes = [
@@ -207,9 +205,6 @@ function renderImageElement(projectPath, props, options = {}) {
   if (height) {
     attributes.push(`height="${escapeAttr(height)}"`);
   }
-  if (!width && !height) {
-    attributes.push('style="width:100%;min-height:120px;object-fit:cover"');
-  }
 
   return `<img ${attributes.join(' ')} />`;
 }
@@ -217,7 +212,7 @@ function renderImageElement(projectPath, props, options = {}) {
 function renderSectionTitle(props, options = {}) {
   const titleValue = isObject(props) && typeof props.title === 'string' && props.title.trim() !== ''
     ? props.title
-    : null;
+    : '';
   if (!titleValue) {
     return '';
   }

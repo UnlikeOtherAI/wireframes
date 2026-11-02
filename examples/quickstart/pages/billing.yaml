@@ -1,0 +1,101 @@
+documentType: page
+specVersion: "1.1"
+id: billing
+page:
+  id: billing
+  template: app
+  viewport:
+    device: web
+  renderMode: card
+  slots:
+    - slotId: main
+      content:
+        - id: header
+          component: page_header
+          props:
+            title: Billing
+            subtitle: Plan, usage and invoices
+            actions:
+              - label: Export
+              - label: Upgrade
+                variant: primary
+
+        # The same reusable component Overview uses, with one prop overridden.
+        - id: summary
+          use: plan_summary
+          props:
+            spend: $1,240
+
+        # Hue appears only for severity. This one is a warning.
+        - id: quota
+          component: alert
+          props:
+            title: Storage almost full
+            text: You are using 92% of your quota.
+            variant: warning
+
+        - id: invoices
+          component: card
+          props:
+            title: Invoices
+          children:
+            - id: invoice_table
+              component: table
+              props:
+                columns:
+                  - label: Reference
+                    key: reference
+                  - label: Issued
+                    key: issued
+                  - label: Amount
+                    key: amount
+                    align: right
+                  - label: Status
+                    key: status
+                    kind: badge
+                rows:
+                  - reference: INV-0007
+                    issued: 1 Nov 2026
+                    amount: $1,240
+                    status: Paid
+                  - reference: INV-0006
+                    issued: 1 Oct 2026
+                    amount: $1,240
+                    status: Paid
+                  - reference: INV-0005
+                    issued: 1 Sep 2026
+                    amount: $1,100
+                    status: Failed
+
+        - id: danger
+          component: card
+          props:
+            title: Cancel subscription
+          children:
+            - id: danger_text
+              component: paragraph
+              props:
+                text: Your wireframes stay readable; editing stops at the end of the period.
+            - id: danger_action
+              component: button
+              props:
+                label: Cancel plan
+                variant: danger
+              interaction:
+                - type: open_overlay
+                  targetOverlay: confirm_cancel
+  overlays:
+    - id: confirm_cancel
+      type: modal
+      dismissOn: [backdrop, escape]
+      props:
+        title: Cancel subscription?
+        actions:
+          - label: Keep plan
+          - label: Cancel plan
+            variant: danger
+      content:
+        - id: confirm_text
+          component: paragraph
+          props:
+            text: This ends editing for all 24 seats on 30 November.

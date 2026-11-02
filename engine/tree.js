@@ -111,6 +111,8 @@ function buildOverlayRoots(overlays, components, source) {
       placement: overlay.placement,
       dismissOn: overlay.dismissOn,
       size: isObject(overlay.size) ? overlay.size : undefined,
+      // The overlay's own chrome: its title bar and its footer actions.
+      props: isObject(overlay.props) ? overlay.props : undefined,
       source,
       nodes: resolvedOverlay.nodes,
       wireframeStyle: isObject(overlay.wireframeStyle) ? overlay.wireframeStyle : undefined,
@@ -182,7 +184,6 @@ function buildPageTree(projectPath, pageId) {
   const roots = Array.isArray(resolved.roots) ? [...resolved.roots] : [];
   const templateLayout = isObject(template.layout) ? template.layout : {};
   const bodyLayoutType = templateLayout.type === 'row' ? 'row' : 'stack';
-  const bodyLayout = { ...templateLayout };
   const templateOverlays = buildOverlayRoots(template.overlays, componentRegistry.components, 'template');
   if (!templateOverlays.ok) {
     return templateOverlays;
@@ -199,7 +200,7 @@ function buildPageTree(projectPath, pageId) {
         id: pageId,
         templateId,
         bodyLayoutType,
-        bodyLayout,
+        bodyLayout: templateLayout,
         roots: [
           ...roots,
           ...templateOverlays.roots,

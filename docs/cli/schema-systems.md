@@ -308,9 +308,10 @@ Collection renderers must define:
 
 ### Datasets (Mock Data)
 
-Datasets are defined in `data/<datasetId>.yaml`. The `data/` directory is
-optional for projects with no dataset bindings. Each dataset contains
-an array of plain key-value objects (items) identified by a `primaryKey`.
+Datasets are defined in optional `data/<datasetId>.yaml` files. A project can
+omit the `data/` directory entirely when no page references datasets. Each
+dataset contains an array of plain key-value objects (items) identified by a
+`primaryKey`.
 
 Items are always passed and stored as **whole objects** — no field-by-field
 construction or mutation. To update an item, replace the entire object.
@@ -325,161 +326,45 @@ is declared.
 
 ---
 
-# 15. Primitive Components
+# 15. Elements
 
-The schema defines a set of built-in primitive components.
-These are the basic building blocks — every wireframe element is one of these
-or a reusable component composed from them.
+The element set, its props and its aliases live in
+`engine/schema/primitive-registry/`, and the generated catalogue is in
+[schema.md §4.1](schema.md). `wf llm --element <name>` prints one element;
+`wf llm --short` prints the whole cheat sheet.
 
-## Text Primitives
+## 15.1 Which elements draw a box
 
-```yaml
-- id: page_title
-  component: heading
-  props:
-    level: 1            # 1-6
-    text: "Dashboard"
+Every node carries the renderer's decision as `data-wf-frame`:
 
-- id: intro
-  component: paragraph
-  props:
-    text: "Welcome to the admin panel."
+| Frame | Meaning |
+|---|---|
+| `surface` | a framed container: card, panel, modal, region |
+| `group` | a layout wrapper: spacing and alignment only |
+| `control` | element-owned chrome: inputs, buttons |
+| `content` | bare content: text, icons, images |
+| `edge` | one divider edge: tab bars, app bars, rules |
 
-- id: save_label
-  component: text
-  props:
-    text: "Save Changes"
-```
+One function, `decideFrame(node, ctx)` in `engine/renderer/frame-rules.js`,
+settles it, and both the renderer and the linter call it. The ten rules in
+precedence order are in [schema.md §4.2](schema.md).
 
-* `heading` — title text. Props: `level` (1-6), `text`; `label` is accepted as a text alias.
-* `paragraph` — body text block. Props: `text`; `label` is accepted as a text alias.
-* `text` — inline text span. Props: `text`, `variant: body|meta`; `label` is accepted as a text alias.
-* Missing text renders a deterministic skeleton placeholder rather than fake fallback copy.
+Set `rendering.explain: true` on a page and every node also carries
+`data-wf-why="<rule>:<reason>"`. `wf why <nodeId> --page <pageId>` prints the
+rule that fired and the one edit that would flip it.
 
-## Image
+## 15.2 Separators
 
-```yaml
-- id: client_logo
-  component: image
-  props:
-    src: "assets/logo.png"    # relative path or external URL
-    alt: "Acme Corp Logo"
-    width: 120
-    height: 40
-```
+A container with `separatorPolicy: divide` (or `separators: between`) and no gap
+draws the strokes itself: it is marked `data-wf-divides="row|stack"` and each
+child except the last carries `data-wf-edge="after"`. Children that would
+otherwise frame are demoted to `group`, so a divided row is one block with
+rules, not a line of boxes.
 
-* `image` — displays an image. Required: `src`. Optional: `alt`, `width`, `height`.
-* In wireframe rendering, images display as a frame with the alt text label,
-  or the actual image if `src` is resolvable.
-* Use `assets/` folder for project-local images (client logos, etc.).
+## 15.3 Proportions and platforms
 
-## Icon Primitive
-
-```yaml
-- id: settings_icon
-  component: icon
-  props:
-    name: gear               # Font Awesome icon name (without fa- prefix)
-    style: solid             # solid (default) | regular | brands
-    size: lg                 # xs | sm | lg | xl | 2xl (optional)
-```
-
-* `icon` — renders a Font Awesome icon. Required: `name`. Optional: `style` (solid/regular/brands, default solid), `size` (xs/sm/lg/xl/2xl).
-* Font Awesome Free 6.x is loaded from CDN automatically.
-* Buttons also support an `icon` prop: `props: { label: "Save", icon: "floppy-disk" }`.
-* Browse available icons: https://fontawesome.com/search?o=r&m=free
-
-## Interactive Primitives
-
-```yaml
-- id: save_btn
-  component: button
-  props:
-    label: "Save"
-    icon: floppy-disk        # optional: Font Awesome icon before label
-
-- id: email_field
-  component: input
-  props:
-    placeholder: "Enter email"
-    inputType: text         # text|password|email|number|search
-
-- id: bio_field
-  component: textarea
-  props:
-    placeholder: "Enter bio"
-    rows: 4
-
-- id: role_select
-  component: select
-  props:
-    placeholder: "Choose role"
-    options:
-      - { value: admin, label: "Admin" }
-      - { value: editor, label: "Editor" }
-
-- id: terms_check
-  component: checkbox
-  props:
-    label: "I agree to terms"
-
-- id: access_mode
-  component: radio
-  props:
-    label: "Public access"
-
-- id: plan_toggle
-  component: toggle
-  props:
-    label: "Enable notifications"
-```
-
-* `button` — clickable wireframe box. Required: `label`. Optional: `icon` (Font Awesome name, renders before label).
-  Optional `variant`: `primary`, `secondary`, `ghost`, `danger`.
-* `tab_bar` — in-page tab navigation. Child buttons are laid out in a row with gap, NOT stretched.
-* `bottom_tab_bar` — iOS-style bottom navigation bar. Child buttons stretch equally to fill width, icon stacks above label. Use with `icon` prop on buttons.
-* `input` — text input field. Optional: `label`, `placeholder`, `inputType` (text, password, email, number, search; defaults to text).
-* `textarea` — multi-line input. Optional: `label`, `placeholder`, `rows`.
-* `select` — dropdown selector. Optional: `label`, `placeholder`, `options`.
-* `checkbox` — checkbox with label. Required: `label`.
-* `radio` — radio button with label. Required: `label`.
-* `toggle` — on/off switch. Required: `label`.
-* `chart` — grayscale chart placeholder. Required: `chartType` (line, bar, vertical, horizontal, gauge, donut). Optional: `label`.
-
-## Structural Primitives
-
-```yaml
-- id: recent_orders
-  component: table
-  props:
-    columns:
-      - { key: market, label: "Market" }
-      - { key: owner, label: "Owner" }
-      - { key: status, label: "Status" }
-      - { key: spend, label: "Spend", width: 120 }
-
-- id: main_section
-  component: section
-  props:
-    title: "Settings"
-  children: [...]
-
-- id: divider_1
-  component: divider
-
-- id: spacer_1
-  component: spacer
-  props:
-    size: 24
-```
-
-* `table` — tabular data with a header row and alternating body-row fills. Required: `columns`. Optional: `rows`, `emptyText`. May also use `binding.source` to render dataset-backed rows.
-* `section` — named container frame. Optional: `title`. May have children.
-* `divider` — horizontal rule. No props required.
-* `spacer` — empty space. Optional: `size` (pixels).
-
-All primitives render as wireframes: bordered rectangles with text labels.
-No production styling.
+A `role` drives size: see [schema.md §4.3](schema.md) for the token table and
+the three override levels, and §4.4 for `viewport.platform`.
 
 ---
 
@@ -517,16 +402,15 @@ Warnings:
 * Orphan routes
 * Empty slots (slot declared in template but page provides no content)
 * ID naming convention violations (uppercase, non-snake_case, reserved keywords)
-* `UNKNOWN_PROP` for props not defined on a primitive component
+* Unknown primitive props (`UNKNOWN_PROP`)
 
 Info diagnostics:
 
-* `MISSING_TEXT` for `heading`/`paragraph`/`text` without `text` or `label`
-* `TEXT_PROP_ALIAS` when text primitives use `label` instead of canonical `text`
-* `UNLABELED_FIELD` for `input`/`select`/`textarea` without `label`
-* `NESTED_SURFACE` when a demoted nested section has explicit width or height
+* Text primitive with no `text` or `label` (`MISSING_TEXT`)
+* Input/select/textarea without `label` (`UNLABELED_FIELD`)
+* Text primitive using `label` alias instead of canonical `text` (`TEXT_PROP_ALIAS`)
+* Demoted nested section with explicit width or height (`NESTED_SURFACE`)
 
-`--strict` promotes warnings only. Info diagnostics never fail validation.
 Safety limits:
 
 ```
@@ -547,7 +431,7 @@ ZIP containing:
 * templates.yaml
 * components.yaml
 * pages/
-* data/
+* data/ (when present)
 * assets/
 * any additional imported `documentType: components` files under the project root
 

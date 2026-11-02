@@ -1,0 +1,124 @@
+documentType: page
+specVersion: "1.1"
+id: mobile
+page:
+  id: mobile
+  template: mobile_shell
+  viewport:
+    device: mobile
+    orientation: portrait
+    platform: ios
+  renderMode: card
+  slots:
+    - slotId: mobile_main
+      content:
+        - id: ios_appbar
+          component: app_bar
+          props:
+            title: Settings
+            leading: chevron-left
+            actions: [ellipsis]
+        - id: ios_search
+          component: input
+          props:
+            inputType: search
+            placeholder: Search
+        - id: ios_profile
+          component: list
+          props:
+            kind: avatar
+            items:
+              - title: Ada Lovelace
+                text: Apple ID, iCloud, Media & Purchases
+        - id: ios_group_one
+          component: list
+          props:
+            kind: settings
+            items:
+              - title: Airplane Mode
+                icon: plane
+              - title: Wi-Fi
+                icon: wifi
+                meta: Acme-5G
+              - title: Bluetooth
+                icon: bluetooth
+                meta: "On"
+              - title: Cellular
+                icon: signal
+        - id: ios_group_two
+          component: list
+          props:
+            kind: settings
+            items:
+              - title: Notifications
+                icon: bell
+                badge: "3"
+              - title: Sounds & Haptics
+                icon: volume-high
+              - title: Focus
+                icon: moon
+        - id: ios_toggles
+          component: card
+          props:
+            title: Quick toggles
+          children:
+            - id: ios_toggle_a
+              component: toggle
+              props:
+                label: Low Power Mode
+                checked: true
+            - id: ios_toggle_b
+              component: toggle
+              props:
+                label: Background App Refresh
+            - id: ios_stepper
+              component: input
+              props:
+                label: Refresh interval (minutes)
+                inputType: stepper
+                value: 15
+            - id: ios_picker
+              component: picker
+              props:
+                label: Repeat
+                options: [Never, Hourly, Daily, Weekly, Monthly]
+                value: Daily
+        - id: ios_share
+          component: button
+          props:
+            label: Share this device
+            icon: share-nodes
+          interaction:
+            - type: open_overlay
+              targetOverlay: ios_sheet
+        - id: ios_tabs
+          component: bottom_tab_bar
+          props:
+            tabs:
+              - icon: house
+                label: Home
+                active: true
+              - icon: magnifying-glass
+                label: Search
+              - icon: bell
+                label: Alerts
+              - icon: gear
+                label: Settings
+  overlays:
+    - id: ios_sheet
+      type: bottom_sheet
+      dismissOn: [backdrop, escape]
+      content:
+        - id: ios_sheet_actions
+          component: action_sheet
+          props:
+            title: Share this device
+            cancel: Cancel
+            items:
+              - label: Copy link
+                icon: link
+              - label: Message
+                icon: comment
+              - label: Remove device
+                icon: trash
+                danger: true

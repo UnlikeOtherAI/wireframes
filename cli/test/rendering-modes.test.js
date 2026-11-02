@@ -9,7 +9,6 @@ const yaml = require('js-yaml');
 
 const { initProject } = require('../../engine/init');
 const { resolvePageTargets } = require('../../engine/screenshots');
-const { launchChromium } = require('../../engine/screenshots/playwright-launcher');
 const { renderWireframeMarkup, buildWireframeStyles } = require('../../engine/screenshots/renderer');
 
 function writeYaml(filePath, value) {
@@ -200,7 +199,7 @@ function getRenderTarget(projectPath, pageId) {
 
 async function renderTargetInBrowser(target) {
   const playwright = require('playwright');
-  const browser = await launchChromium(playwright, { headless: true });
+  const browser = await playwright.chromium.launch({ headless: true });
   const page = await browser.newPage({
     viewport: {
       width: target.viewport.width,
@@ -235,9 +234,13 @@ async function renderTargetInBrowser(target) {
 test('buildWireframeStyles consumes rendering tokens for borders and separators', () => {
   const css = buildWireframeStyles();
 
-  assert.equal(css.includes('outline:var(--wf-border-width,1px) var(--wf-border-style,solid) #4b5563'), true);
-  assert.equal(css.includes('border:var(--wf-border-width,1px) var(--wf-border-style,solid) #e5e7eb'), true);
-  assert.equal(css.includes('border-left:1px var(--wf-divider-style,solid) var(--wf-divider-color,#9ca3af)'), true);
+  // Frames are keyed on the renderer's decision, never on class adjacency.
+  assert.match(css, /\.wf-mode-line \[data-wf-frame="surface"\]/);
+  assert.match(css, /\.wf-mode-card \[data-wf-frame="surface"\]/);
+  assert.ok(css.includes('var(--wf-border-width,1px)'), 'border width token is still honoured');
+  assert.ok(css.includes('var(--wf-surface-radius'), 'surface radius token is still honoured');
+  assert.match(css, /\[data-wf-edge="after"\]/);
+  assert.ok(!css.includes('.wf-divide-x>'), 'adjacency-based dividers are gone');
 });
 
 test('renderWireframeMarkup maps line mode radius to blueprint scale', () => {
@@ -274,7 +277,7 @@ test('Playwright verifies card mode grid columns are aligned and separated by gu
 
   try {
     const metrics = await page.evaluate(() => {
-      const grid = document.querySelector('#kpi_grid .wf-section-body');
+      const grid = document.querySelector('#kpi_grid .wf-node-children');
       const revenue = document.getElementById('revenue_card');
       const orders = document.getElementById('orders_card');
       const gridStyle = window.getComputedStyle(grid);
@@ -313,7 +316,7 @@ test('Playwright verifies compact line mode uses a single dashed divider without
 
   try {
     const metrics = await page.evaluate(() => {
-      const row = document.querySelector('#panel_row .wf-section-body');
+      const row = document.querySelector('#panel_row .wf-node-children');
       const left = document.getElementById('left_panel');
       const right = document.getElementById('right_panel');
       const rowStyle = window.getComputedStyle(row);
@@ -326,15 +329,14 @@ test('Playwright verifies compact line mode uses a single dashed divider without
       return {
         gap: rowStyle.gap,
         paddingLeft: rowStyle.paddingLeft,
-        dividerStyle: rightStyle.borderLeftStyle,
-        dividerWidth: rightStyle.borderLeftWidth,
+        dividerStyle: leftStyle.borderRightStyle,
+        dividerWidth: leftStyle.borderRightWidth,
         leftOutlineStyle: leftStyle.outlineStyle,
         rightOutlineStyle: rightStyle.outlineStyle,
         sameTop: Math.abs(leftRect.top - rightRect.top) < 1,
         overlap: Math.max(0, leftRect.right - rightRect.left),
         dividerInsideRow: rightRect.left >= rowRect.left && rightRect.left <= rowRect.right,
         buttonLabel: document.querySelector('#filters_button button')?.textContent || '',
-        buttonBorderStyle: window.getComputedStyle(document.querySelector('#filters_button button')).borderStyle,
       };
     });
 
@@ -348,7 +350,6 @@ test('Playwright verifies compact line mode uses a single dashed divider without
     assert.equal(metrics.overlap, 0);
     assert.equal(metrics.dividerInsideRow, true);
     assert.equal(metrics.buttonLabel, 'Filters');
-    assert.equal(metrics.buttonBorderStyle, 'solid');
   } finally {
     await page.close();
     await browser.close();

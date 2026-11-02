@@ -3,6 +3,8 @@
 // Per-node wireframeStyle overrides live here; rendering-mode CSS lives in ./styles/.
 
 const { toPx } = require('./layout');
+
+// Per-node wireframeStyle override helpers live here; mode CSS strings live in ./styles/.
 const CARD_SHADOWS = {
   0: 'none',
   1: '0 1px 3px rgba(0,0,0,0.08)',

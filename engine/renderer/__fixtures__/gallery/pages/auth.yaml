@@ -1,0 +1,64 @@
+documentType: page
+specVersion: "1.1"
+id: auth
+page:
+  id: auth
+  template: auth_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: card
+  slots:
+    - slotId: auth_main
+      content:
+        - id: auth_card
+          component: card
+          size:
+            width: 420
+          props:
+            title: Sign in
+            description: Use your work account to continue.
+          children:
+            - id: auth_form
+              component: form
+              props:
+                submit: Sign in
+              children:
+                - id: auth_email
+                  component: input
+                  props:
+                    label: Email
+                    inputType: email
+                    placeholder: you@example.com
+                - id: auth_password
+                  component: input
+                  props:
+                    label: Password
+                    inputType: password
+                - id: auth_row
+                  component: row
+                  props:
+                    gap: 8
+                  children:
+                    - id: auth_remember
+                      component: checkbox
+                      props:
+                        label: Remember me
+                    - id: auth_gap
+                      component: spacer
+                      props:
+                        size: 100%
+                    - id: auth_forgot
+                      component: button
+                      props:
+                        label: Forgot password?
+                        variant: link
+            - id: auth_divider
+              component: divider
+              props:
+                label: or
+            - id: auth_sso
+              component: button
+              props:
+                label: Continue with single sign-on
+                icon: key

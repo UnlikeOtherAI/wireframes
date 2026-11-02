@@ -1,5 +1,6 @@
 'use strict';
 
+const { normalizePlatform: resolveChromePlatform } = require('../renderer/platform');
 const { resolveTemplatePage } = require('../resolver');
 const {
   renderWireframeMarkup,
@@ -59,7 +60,7 @@ function resolveViewport(viewport = {}) {
   }
 
   if (viewport.device === 'web') {
-    return { ok: true, width: VIEWPORT_PRESETS.web.width, height: VIEWPORT_PRESETS.web.height, device: 'web' };
+    return { ok: true, width: VIEWPORT_PRESETS.web.width, height: VIEWPORT_PRESETS.web.height, device: 'web', platform: 'web' };
   }
 
   const preset = VIEWPORT_PRESETS[viewport.device]?.[viewport.orientation];
@@ -67,7 +68,14 @@ function resolveViewport(viewport = {}) {
     return { ok: false, error: viewport.device ? `Unsupported device "${viewport.device}".` : 'Page viewport missing device.' };
   }
 
-  return { ok: true, width: preset.width, height: preset.height, device: viewport.device, orientation: viewport.orientation };
+  return {
+    ok: true,
+    width: preset.width,
+    height: preset.height,
+    device: viewport.device,
+    orientation: viewport.orientation,
+    platform: resolveChromePlatform(viewport.platform, viewport.device),
+  };
 }
 
 function resolvePageRendering(page) {
@@ -120,13 +128,12 @@ function resolvePageTree(documentMap, pageId) {
 
   const templateLayout = isObject(template.layout) ? template.layout : {};
   const bodyLayoutType = templateLayout.type === 'row' ? 'row' : 'stack';
-  const bodyLayout = { ...templateLayout };
 
   return {
     ok: true,
     roots: Array.isArray(resolved.roots) ? resolved.roots : [],
     bodyLayoutType,
-    bodyLayout,
+    bodyLayout: templateLayout,
     page,
     templateId,
   };
@@ -262,6 +269,7 @@ function renderPage(documentMap, pageId, options = {}) {
       ? documentMap.manifest
       : {};
   const defaultWireframeStyle = manifest.defaultWireframeStyle || {};
+  const manifestSizing = isObject(manifest.sizing) ? manifest.sizing : {};
   const parsedDefaultGridColumns = Number(manifest.defaultGridColumns);
   const defaultGridColumns = Number.isInteger(parsedDefaultGridColumns) && parsedDefaultGridColumns > 0
     ? parsedDefaultGridColumns
@@ -282,6 +290,7 @@ function renderPage(documentMap, pageId, options = {}) {
       height: viewportResult.height,
       device: viewportResult.device,
       orientation: viewportResult.orientation,
+      platform: viewportResult.platform,
     },
     pageRouteId: routeInfo.id || pageId,
     routeTable: options.routeTable || {},
@@ -290,6 +299,7 @@ function renderPage(documentMap, pageId, options = {}) {
     pageStyle: page.wireframeStyle || defaultWireframeStyle,
     rendering: resolvePageRendering(page),
     defaultGridColumns,
+    sizing: manifestSizing,
     bodyLayoutType: treeResult.bodyLayoutType,
     bodyLayout: treeResult.bodyLayout,
     dataSources,
@@ -317,6 +327,7 @@ function buildProject(documentMap, options = {}) {
       ? documentMap.manifest
       : {};
   const defaultWireframeStyle = manifest.defaultWireframeStyle || {};
+  const manifestSizing = isObject(manifest.sizing) ? manifest.sizing : {};
   const parsedDefaultGridColumns = Number(manifest.defaultGridColumns);
   const defaultGridColumns = Number.isInteger(parsedDefaultGridColumns) && parsedDefaultGridColumns > 0
     ? parsedDefaultGridColumns
@@ -362,10 +373,12 @@ function buildProject(documentMap, options = {}) {
         height: viewportResult.height,
         device: viewportResult.device,
         orientation: viewportResult.orientation,
+        platform: viewportResult.platform,
       },
       wireframeStyle: page.wireframeStyle || defaultWireframeStyle,
       rendering: resolvePageRendering(page),
       defaultGridColumns,
+      sizing: manifestSizing,
       bodyLayoutType: treeResult.bodyLayoutType,
       bodyLayout: treeResult.bodyLayout,
       roots: treeResult.roots,
@@ -400,7 +413,7 @@ function buildProject(documentMap, options = {}) {
         rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
         bodyLayoutType: target.bodyLayoutType || 'row',
-        bodyLayout: target.bodyLayout || {},
+        bodyLayout: target.bodyLayout,
         dataSources: target.dataSources,
         wireframeCssHref: './_shared/wireframe.css',
         fontAwesomeCssHref: './_shared/fa/css/all.min.css',

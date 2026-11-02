@@ -1,0 +1,333 @@
+documentType: page
+specVersion: "1.1"
+id: forms
+page:
+  id: forms
+  template: app_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: card
+  slots:
+    - slotId: main
+      content:
+        - id: forms_header
+          component: page_header
+          props:
+            title: Controls
+            subtitle: Every input type, choice control and button shape.
+
+        - id: buttons_card
+          component: card
+          props:
+            title: Buttons
+          layout:
+            type: stack
+            gap: 16
+          children:
+            - id: button_variants
+              component: row
+              props:
+                gap: 10
+              children:
+                - id: btn_primary
+                  component: button
+                  props:
+                    label: Primary
+                    variant: primary
+                - id: btn_secondary
+                  component: button
+                  props:
+                    label: Secondary
+                - id: btn_ghost
+                  component: button
+                  props:
+                    label: Ghost
+                    variant: ghost
+                - id: btn_danger
+                  component: button
+                  props:
+                    label: Delete
+                    variant: danger
+                    icon: trash
+                - id: btn_link
+                  component: button
+                  props:
+                    label: Learn more
+                    variant: link
+            - id: button_sizes
+              component: row
+              props:
+                gap: 10
+              children:
+                - id: btn_sm
+                  component: button
+                  props:
+                    label: Small
+                    size: sm
+                - id: btn_md
+                  component: button
+                  props:
+                    label: Medium
+                - id: btn_lg
+                  component: button
+                  props:
+                    label: Large
+                    size: lg
+                - id: btn_loading
+                  component: button
+                  props:
+                    label: Saving
+                    loading: true
+                - id: btn_disabled
+                  component: button
+                  props:
+                    label: Disabled
+                    disabled: true
+            - id: button_icons
+              component: row
+              props:
+                gap: 10
+              children:
+                - id: btn_icon_only
+                  component: button
+                  props:
+                    icon: gear
+                    iconOnly: true
+                - id: btn_icon_label
+                  component: button
+                  props:
+                    label: Download
+                    icon: download
+                - id: btn_fab
+                  component: button
+                  props:
+                    icon: plus
+                    fab: true
+                    variant: primary
+                - id: segmented_range
+                  component: segmented
+                  props:
+                    options: [Day, Week, Month]
+                    value: Week
+
+        - id: text_fields_card
+          component: card
+          props:
+            title: Text fields
+          layout:
+            type: grid
+            columns: 3
+            gap: 16
+          children:
+            - id: field_text
+              component: input
+              props:
+                label: Full name
+                placeholder: Ada Lovelace
+                required: true
+            - id: field_email
+              component: input
+              props:
+                label: Email
+                inputType: email
+                placeholder: you@example.com
+                help: We only use this for billing receipts.
+            - id: field_password
+              component: input
+              props:
+                label: Password
+                inputType: password
+                placeholder: At least 12 characters
+            - id: field_search
+              component: input
+              props:
+                label: Search
+                inputType: search
+                placeholder: Search projects
+            - id: field_number
+              component: input
+              props:
+                label: Seats
+                inputType: number
+                value: "12"
+            - id: field_url
+              component: input
+              props:
+                label: Website
+                inputType: url
+                placeholder: https://
+            - id: field_date
+              component: input
+              props:
+                label: Start date
+                inputType: date
+                placeholder: "2026-11-02"
+            - id: field_time
+              component: input
+              props:
+                label: Start time
+                inputType: time
+                placeholder: "09:30"
+            - id: field_error
+              component: input
+              props:
+                label: Invoice reference
+                placeholder: INV-0001
+                error: This reference is already in use.
+
+        - id: special_fields_card
+          component: card
+          props:
+            title: Specialised fields
+          layout:
+            type: grid
+            columns: 3
+            gap: 16
+          children:
+            - id: field_range
+              component: input
+              props:
+                label: Budget
+                inputType: range
+                value: 65
+            - id: field_color
+              component: input
+              props:
+                label: Accent colour
+                inputType: color
+            - id: field_otp
+              component: input
+              props:
+                label: Verification code
+                inputType: otp
+                length: 6
+            - id: field_select
+              component: select
+              props:
+                label: Status
+                options: [Draft, In review, Published]
+                placeholder: Choose a status
+            - id: field_combobox
+              component: select
+              props:
+                label: Owner
+                searchable: true
+                options: [Ada Lovelace, Grace Hopper, Alan Turing]
+                placeholder: Search people
+            - id: field_tags
+              component: tags_input
+              props:
+                label: Labels
+                tags: [urgent, billing, q4]
+                placeholder: Add a label
+            - id: field_textarea
+              component: textarea
+              props:
+                label: Release notes
+                rows: 4
+                placeholder: What changed in this release?
+                maxLength: 280
+            - id: field_upload
+              component: upload
+              props:
+                label: Drop files to upload
+                hint: PNG, PDF or CSV up to 10 MB
+                files:
+                  - name: contract-2026.pdf
+            - id: field_editor
+              component: editor
+              props:
+                label: Description
+                toolbar: true
+                rows: 5
+
+        - id: choices_card
+          component: card
+          props:
+            title: Choices
+          layout:
+            type: grid
+            columns: 3
+            gap: 20
+          children:
+            - id: choice_radio_group
+              component: choice_group
+              props:
+                label: Plan
+                kind: radio
+                value: Pro
+                options:
+                  - label: Free
+                    description: One project, community support
+                  - label: Pro
+                    description: Unlimited projects
+                  - label: Enterprise
+            - id: choice_checkbox_group
+              component: choice_group
+              props:
+                label: Notifications
+                kind: checkbox
+                options: [Product updates, Security alerts, Weekly digest]
+            - id: choice_singles
+              component: stack
+              props:
+                gap: 12
+              children:
+                - id: single_checkbox
+                  component: checkbox
+                  props:
+                    label: Remember this device
+                    checked: true
+                - id: single_radio
+                  component: radio
+                  props:
+                    label: Bill annually
+                    description: Two months free
+                    checked: true
+                - id: single_toggle_on
+                  component: toggle
+                  props:
+                    label: Auto-save
+                    checked: true
+                - id: single_toggle_off
+                  component: toggle
+                  props:
+                    label: Public preview
+                - id: single_disabled
+                  component: checkbox
+                  props:
+                    label: Managed by your admin
+                    disabled: true
+
+        - id: form_demo
+          component: card
+          props:
+            title: A form inside a card
+          children:
+            - id: profile_form
+              component: form
+              props:
+                submit: Save changes
+                columns: 2
+              children:
+                - id: form_first
+                  component: input
+                  props:
+                    label: First name
+                    placeholder: Ada
+                - id: form_last
+                  component: input
+                  props:
+                    label: Last name
+                    placeholder: Lovelace
+                - id: form_role
+                  component: select
+                  props:
+                    label: Role
+                    options: [Owner, Editor, Viewer]
+                - id: form_tz
+                  component: select
+                  props:
+                    label: Time zone
+                    options: [UTC, CET, PST]

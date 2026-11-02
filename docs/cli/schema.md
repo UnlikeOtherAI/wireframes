@@ -8,7 +8,7 @@ It must:
 
 * Describe full applications (not just pages)
 * Support templates, pages, reusable components
-* Support datasets
+* Support optional datasets
 * Support overlays
 * Support state + interactions
 * Be export-safe
@@ -33,7 +33,7 @@ sitemap.yaml
 templates.yaml
 components.yaml
 /pages/*.yaml
-/data/*.yaml        # optional unless a page references datasets
+/data/*.yaml        # optional; only needed when pages reference datasets
 ```
 
 Additional reusable component documents may live anywhere under the project
@@ -225,8 +225,9 @@ dataSources:
     dataset: products
 ```
 
-Links a page to a dataset defined in `/data`. Nodes can bind to the
-dataset via `binding.source: {{item.field}}`.
+Links a page to a dataset defined in optional `/data`. Nodes can bind to the
+dataset via `binding.source: {{item.field}}`. A missing `/data` folder is valid
+when no page references datasets; a referenced dataset ID must still exist.
 
 ### actions
 
@@ -333,7 +334,7 @@ Not part of the schema contract. Not included in export.
 ## 3.7 data/<datasetId>.yaml
 
 Defines a dataset of mock data items used to populate wireframe UI.
-Projects without dataset bindings do not need a `data/` directory.
+The `data/` directory is optional for projects without dataset bindings.
 
 Must contain:
 
@@ -462,25 +463,171 @@ Optional:
 
 IDs must be unique within resolved tree.
 
-The built-in primitive component set is documented in
-[schema-systems.md](schema-systems.md) and includes common structural
-containers such as `tab_bar` for reusable route-backed navigation patterns,
-`table` for striped tabular data, and `chart` for grayscale chart placeholders
-(requires `chartType`: line, bar, vertical, horizontal, gauge, donut).
+## 4.1 Elements
 
-Primitive `props` are typed by component. Unknown primitive props are lint
-warnings rather than schema errors, so reusable components can still accept
-free-form params. Text-bearing primitives use `props.text` as canonical content
-and accept `props.label` as a compatibility alias; `text` wins when both are set.
+The element set lives in `engine/schema/primitive-registry/`, which is the
+single source for the names, their props, their aliases and whether they draw a
+box. `engine/schema/schema.json` is generated from it by
+`node scripts/sync-schema-primitives.js`, and `cli/test/schema-registry-drift.test.js`
+fails if the two disagree. The table below is generated the same way.
 
-| Component | Props |
-|-----------|-------|
-| `heading` | `text`, `label` alias, `level` 1-6 |
-| `paragraph` | `text`, `label` alias |
-| `text` | `text`, `label` alias, `variant: body|meta` |
-| `button` | `label`, `icon`, `iconStyle`, `iconSize`, `variant: primary|secondary|ghost|danger` |
-| `input`, `textarea`, `select` | `label`, placeholders/options/rows as appropriate |
-| `image`, `icon`, `checkbox`, `radio`, `toggle`, `chart`, `table`, `section`, `divider`, `spacer` | See [schema-systems.md](schema-systems.md#15-primitive-components) |
+Unknown primitive props are lint warnings rather than schema errors, so custom
+component parameters can keep flowing through `props`.
+
+Box column: **always** draws a frame at any depth; **never** is a layout group
+or a control with its own chrome; **edge only** draws one divider edge;
+**rules decide** means the frame rules in section 4.2 settle it.
+
+**containers**
+
+| Element | Box | Props |
+|---|---|---|
+| `section` | rules decide | title, description |
+| `card` | always | title, description, media, footer |
+| `stack` | never | gap, padding, align |
+| `row` | never | gap, padding, align, justify, wrap, nowrap |
+| `grid` | never | columns, gap, minItemWidth |
+| `split` | never | gap, orientation: row\|stack |
+| `form` | never | title, submit, columns |
+| `carousel` | rules decide | dots, arrows, items |
+
+**text**
+
+| Element | Box | Props |
+|---|---|---|
+| `heading` | never | text, label, level |
+| `paragraph` | never | text, label, lines |
+| `text` | never | text, label, variant: body\|meta\|label\|caption\|mono |
+| `code` | always | text, language, inline |
+| `badge` | never | text, variant: neutral\|outline\|dot\|pill, tone: neutral\|info\|success\|warning\|danger, icon |
+| `avatar` | never | name, src, size: xs\|sm\|md\|lg\|xl, shape: circle\|square, group, overflow |
+| `icon` | never | name, style: solid\|regular\|brands, size |
+| `image` | never | src, alt, kind: image\|video\|map\|embed\|logo, ratio, width, height |
+| `rating` | never | value, max, count |
+| `stat` | rules decide | label, value, delta, trend: up\|down\|flat, icon, sparkline |
+| `progress` | never | value, kind: bar\|circle\|spinner, label, indeterminate |
+| `skeleton` | never | lines, avatar, width |
+| `divider` | edge only | label, orientation: horizontal\|vertical |
+| `spacer` | never | size |
+| `empty_state` | rules decide | title, text, icon, action, variant: empty\|error\|404\|offline |
+
+**controls**
+
+| Element | Box | Props |
+|---|---|---|
+| `button` | never | label, icon, iconStyle: solid\|regular\|brands, iconSize, variant: primary\|secondary\|ghost\|danger\|link, size: sm\|md\|lg, iconOnly, loading, disabled, fab |
+| `segmented` | never | options, value, size: sm\|md\|lg |
+| `input` | never | label, placeholder, inputType: text\|password\|email\|number\|search\|tel\|url\|date\|time\|datetime\|color\|range\|otp\|stepper, value, prefix, suffix, help, error, required, disabled, length |
+| `textarea` | never | label, placeholder, rows, help, error, required, disabled, maxLength |
+| `select` | never | label, placeholder, options, searchable, multiple, help, error, required, disabled |
+| `checkbox` | never | label, checked, description, disabled |
+| `radio` | never | label, checked, description, disabled |
+| `toggle` | never | label, checked, description, disabled |
+| `choice_group` | never | label, kind: checkbox\|radio, options, value, inline |
+| `tags_input` | never | label, tags, placeholder |
+| `upload` | always | label, hint, files, variant: dropzone\|button |
+| `picker` | always | label, options, value, columns |
+| `editor` | always | label, toolbar, rows |
+
+**navigation**
+
+| Element | Box | Props |
+|---|---|---|
+| `tab_bar` | edge only | tabs, variant: underline\|pill\|enclosed |
+| `bottom_tab_bar` | edge only | tabs |
+| `breadcrumb` | never | items, separator |
+| `pagination` | never | page, pages, variant: numbers\|simple\|dots |
+| `stepper` | never | steps, current, orientation: row\|stack |
+| `nav` | never | items, collapsed, groups |
+| `menu` | never | items |
+| `app_bar` | edge only | title, subtitle, leading, actions |
+| `action_sheet` | never | items, title, cancel |
+| `page_header` | never | title, subtitle, breadcrumb, actions, tabs |
+
+**data**
+
+| Element | Box | Props |
+|---|---|---|
+| `table` | rules decide | columns, rows, caption, selectable, state: default\|loading\|empty, emptyText, dense, pagination |
+| `list` | rules decide | items, kind: plain\|avatar\|action\|file\|chat\|timeline\|settings, divided, selectable, refreshable |
+| `chart` | rules decide | chartType: bar\|vertical\|horizontal\|line\|area\|pie\|donut\|gauge\|sparkline\|heatmap, title, label, data, series, legend, axes, height |
+| `calendar` | always | view: month\|week\|day\|picker, date, events |
+| `kanban` | never | columns |
+| `tree` | rules decide | items, expanded |
+| `accordion` | rules decide | items |
+
+**feedback**
+
+| Element | Box | Props |
+|---|---|---|
+| `alert` | always | text, title, variant: info\|success\|warning\|error\|neutral, icon, dismissible, inline |
+
+### Aliases
+
+A handful of names resolve silently to the element on the right, so an agent
+that guesses a common synonym is not punished for it: `chip`, `tag`, `pill` →
+`badge`; `media` → `image`; `kpi`, `metric` → `stat`; `spinner`, `loader` →
+`progress`; `combobox`, `autocomplete` → `select`; `switch` → `toggle`;
+`tabs` → `tab_bar`; `wizard` → `stepper`; `sidenav` → `nav`;
+`date_picker` → `calendar`; `board` → `kanban`; `banner`, `callout` → `alert`.
+
+## 4.2 Frame rules — which elements get a box
+
+`engine/renderer/frame-rules.js` exports one pure function, `decideFrame(node, ctx)`,
+returning `{ frame, rule, reason }`. The renderer and lint both call it, so they
+cannot disagree. Only `surface` draws a container frame, and only `surface`
+increases nesting depth.
+
+| Frame | Meaning |
+|---|---|
+| `surface` | a framed container: card, panel, modal, region |
+| `group` | a layout wrapper: spacing and alignment only, never a border |
+| `control` | element-owned chrome (inputs, buttons) that nesting never changes |
+| `content` | bare content: text, icons, images |
+| `edge` | a single divider edge: tab bars, app bars, rules |
+
+Precedence, first match wins:
+
+1. `surface: true` / `surface: false` on the node.
+2. A border in the node's `wireframeStyle`.
+3. The element's own class from the registry (`always`, `never`, `edge only`).
+4. Overlay chrome owns the frame, so overlay content does not double-box.
+5. Template regions: a slot never frames, a `role: main` region never frames,
+   any other persistent region does.
+6. A node with a `pane` is a panel, so it frames.
+7. A parent that separates its children draws the strokes, so the children do not.
+8. A child of a grid is a tile, so it frames.
+9. Inside a frame nothing frames itself again — use `card` to be explicit.
+10. At the top of a page a `section` frames, unless it is an untitled row
+    (which reads as a toolbar) or carries `role: toolbar`.
+
+Every node carries its decision as `data-wf-frame`. With `rendering.explain: true`
+it also carries `data-wf-why="<rule>:<reason>"`, and `wf why <nodeId> --page <pageId>`
+prints the rule, the resolved sizing tokens and the one edit that would flip it.
+
+## 4.3 Proportions
+
+A node or template region with a known `role` gets its structural size from
+`engine/renderer/sizing-tokens.js` rather than from hand-written pixels. Roles:
+`header`, `app_bar`, `sidebar`, `nav`, `main`, `aside`, `footer`, `toolbar`,
+`tabbar`, `form`, `dialog`, `sheet`, `drawer`, `content`.
+
+There are exactly three ways to override a proportion:
+
+1. `manifest.sizing` — a flat map of token name to pixels, project wide.
+2. `size` on the node or region — local, and it wins over the token.
+3. `rendering.density: compact` — scales spacing only, never structural widths.
+
+A `role: sidebar` region is 256px on web, 220 on tablet and 280 on mobile, with
+a 200px minimum and `flex: 0 0 auto` so it cannot collapse to its content.
+
+## 4.4 Platforms
+
+`viewport.platform` is `web`, `ios` or `android`, defaulting to `ios` for
+`device: mobile` and `tablet`. It changes chrome only — control heights, corner
+radii, title alignment, status bar, home indicator — never which elements exist
+or what they mean. iOS centres an app bar title and uses a chevron back; Android
+left-aligns it and gets a 56px circular FAB.
 
 ---
 

@@ -1,0 +1,199 @@
+documentType: page
+specVersion: "1.1"
+id: navigation_elements
+page:
+  id: navigation_elements
+  template: app_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: card
+  slots:
+    - slotId: main
+      content:
+        - id: nav_header
+          component: page_header
+          props:
+            title: Navigation
+            subtitle: Wayfinding elements, each one node.
+            breadcrumb:
+              - label: Gallery
+                route: content
+              - label: Navigation
+            actions:
+              - label: Share
+                icon: share-nodes
+            tabs:
+              - label: Overview
+                active: true
+              - label: Usage
+              - label: History
+
+        - id: breadcrumb_card
+          component: card
+          props:
+            title: Breadcrumb
+          children:
+            - id: breadcrumb_demo
+              component: breadcrumb
+              props:
+                items:
+                  - label: Projects
+                    route: content
+                  - label: Acme Dashboard
+                  - label: Settings
+
+        - id: tabs_card
+          component: card
+          props:
+            title: Tab variants
+          layout:
+            type: stack
+            gap: 18
+          children:
+            - id: tabs_underline
+              component: tab_bar
+              props:
+                tabs:
+                  - label: Overview
+                    icon: gauge
+                    active: true
+                  - label: Members
+                    icon: users
+                    badge: 12
+                  - label: Billing
+                    icon: credit-card
+            - id: tabs_pill
+              component: tab_bar
+              props:
+                variant: pill
+                tabs:
+                  - label: All
+                    active: true
+                  - label: Active
+                  - label: Archived
+            - id: tabs_enclosed
+              component: tab_bar
+              props:
+                variant: enclosed
+                tabs:
+                  - label: Design
+                    active: true
+                  - label: Code
+                  - label: Preview
+
+        - id: stepper_card
+          component: card
+          props:
+            title: Steppers
+          layout:
+            type: grid
+            columns: 2
+            gap: 28
+          children:
+            - id: stepper_row
+              component: stepper
+              props:
+                current: 2
+                steps: [Account, Workspace, Invite, Done]
+            - id: stepper_stack
+              component: stepper
+              props:
+                orientation: stack
+                current: 3
+                steps: [Upload, Map columns, Review, Import]
+
+        - id: pagination_card
+          component: card
+          props:
+            title: Pagination
+          layout:
+            type: stack
+            gap: 16
+          children:
+            - id: pagination_numbers
+              component: pagination
+              props:
+                page: 4
+                pages: 12
+            - id: pagination_simple
+              component: pagination
+              props:
+                variant: simple
+                page: 2
+                pages: 9
+            - id: pagination_dots
+              component: pagination
+              props:
+                variant: dots
+                page: 2
+                pages: 5
+
+        - id: nav_menu_row
+          component: grid
+          props:
+            columns: 3
+          children:
+            - id: nav_expanded_card
+              component: card
+              props:
+                title: Side navigation
+              children:
+                - id: nav_expanded
+                  component: nav
+                  props:
+                    items:
+                      - group: Workspace
+                      - label: Dashboard
+                        icon: gauge
+                        active: true
+                      - label: Projects
+                        icon: folder
+                        badge: 8
+                      - label: Reports
+                        icon: chart-simple
+                        children:
+                          - label: Weekly
+                          - label: Monthly
+                      - group: Account
+                      - label: Settings
+                        icon: gear
+            - id: nav_collapsed_card
+              component: card
+              props:
+                title: Collapsed rail
+              children:
+                - id: nav_collapsed
+                  component: nav
+                  props:
+                    collapsed: true
+                    items:
+                      - label: Dashboard
+                        icon: gauge
+                        active: true
+                      - label: Projects
+                        icon: folder
+                      - label: Reports
+                        icon: chart-simple
+                      - label: Settings
+                        icon: gear
+            - id: menu_card
+              component: card
+              props:
+                title: Menu contents
+              children:
+                - id: menu_demo
+                  component: menu
+                  props:
+                    items:
+                      - label: Rename
+                        icon: pen
+                        shortcut: "⌘R"
+                      - label: Duplicate
+                        icon: copy
+                      - divider: true
+                      - label: Move to archive
+                        icon: box-archive
+                      - label: Delete
+                        icon: trash
+                        danger: true

@@ -1,0 +1,380 @@
+documentType: page
+specVersion: "1.1"
+id: content
+page:
+  id: content
+  template: app_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: card
+  slots:
+    - slotId: main
+      content:
+        - id: content_header
+          component: page_header
+          props:
+            title: Content elements
+            subtitle: Text, media, status and placeholder affordances.
+            breadcrumb:
+              - label: Gallery
+              - label: Content
+            actions:
+              - label: Export
+                icon: download
+              - label: New
+                variant: primary
+                icon: plus
+
+        - id: stats_row
+          component: grid
+          props:
+            columns: 4
+          children:
+            - id: stat_revenue
+              component: stat
+              props:
+                label: Revenue
+                value: $128.4k
+                delta: 8.2%
+                trend: up
+                icon: wallet
+                sparkline: true
+            - id: stat_users
+              component: stat
+              props:
+                label: Active users
+                value: "4,218"
+                delta: 1.1%
+                trend: down
+                icon: users
+            - id: stat_orders
+              component: stat
+              props:
+                label: Orders
+                value: "312"
+                delta: 0.0%
+                trend: flat
+                icon: box
+            - id: stat_blank
+              component: stat
+              props:
+                label: Churn
+
+        - id: typography_card
+          component: card
+          props:
+            title: Typography
+          layout:
+            type: stack
+            gap: 10
+          children:
+            - id: h1
+              component: heading
+              props:
+                level: 1
+                text: Heading level one
+            - id: h2
+              component: heading
+              props:
+                level: 2
+                text: Heading level two
+            - id: h3
+              component: heading
+              props:
+                level: 3
+                text: Heading level three
+            - id: h6
+              component: heading
+              props:
+                level: 6
+                text: Overline heading
+            - id: body_copy
+              component: paragraph
+              props:
+                text: Body copy sits at fourteen pixels with a comfortable line height and a reading measure, so a paragraph in a wireframe reads like a paragraph.
+            - id: greeked_copy
+              component: paragraph
+              props:
+                lines: 3
+            - id: text_row
+              component: row
+              props:
+                gap: 16
+              children:
+                - id: text_body
+                  component: text
+                  props:
+                    text: Body text
+                - id: text_meta
+                  component: text
+                  props:
+                    text: Meta text
+                    variant: meta
+                - id: text_label
+                  component: text
+                  props:
+                    text: Label text
+                    variant: label
+                - id: text_mono
+                  component: text
+                  props:
+                    text: mono-text
+                    variant: mono
+            - id: code_block
+              component: code
+              props:
+                language: bash
+                text: wf build --platform web --clean
+
+        - id: status_card
+          component: card
+          props:
+            title: Status and identity
+          layout:
+            type: stack
+            gap: 14
+          children:
+            - id: badge_row
+              component: row
+              props:
+                gap: 10
+              children:
+                - id: badge_neutral
+                  component: badge
+                  props:
+                    text: Neutral
+                - id: badge_outline
+                  component: badge
+                  props:
+                    text: Outline
+                    variant: outline
+                - id: badge_dot
+                  component: badge
+                  props:
+                    text: Live
+                    variant: dot
+                - id: badge_icon
+                  component: badge
+                  props:
+                    text: Verified
+                    icon: check
+                - id: badge_blank
+                  component: badge
+            - id: badge_status_row
+              component: row
+              props:
+                gap: 10
+              children:
+                - id: badge_tone_success
+                  component: badge
+                  props:
+                    text: Healthy
+                    variant: dot
+                    tone: success
+                - id: badge_tone_warning
+                  component: badge
+                  props:
+                    text: Degraded
+                    variant: dot
+                    tone: warning
+                - id: badge_tone_danger
+                  component: badge
+                  props:
+                    text: Failed
+                    variant: dot
+                    tone: danger
+                - id: badge_tone_info
+                  component: badge
+                  props:
+                    text: Queued
+                    variant: pill
+                    tone: info
+            - id: avatar_row
+              component: row
+              props:
+                gap: 14
+              children:
+                - id: avatar_xs
+                  component: avatar
+                  props:
+                    name: Ada Lovelace
+                    size: xs
+                - id: avatar_sm
+                  component: avatar
+                  props:
+                    name: Grace Hopper
+                    size: sm
+                - id: avatar_md
+                  component: avatar
+                  props:
+                    name: Alan Turing
+                - id: avatar_lg
+                  component: avatar
+                  props:
+                    name: Katherine Johnson
+                    size: lg
+                - id: avatar_square
+                  component: avatar
+                  props:
+                    name: Acme Corp
+                    shape: square
+                    size: lg
+                - id: avatar_stack
+                  component: avatar
+                  props:
+                    size: md
+                    group: [Ada Lovelace, Grace Hopper, Alan Turing, Katherine Johnson]
+                    overflow: 7
+            - id: rating_row
+              component: row
+              props:
+                gap: 20
+              children:
+                - id: rating_four
+                  component: rating
+                  props:
+                    value: 4
+                    count: 128
+                - id: rating_two
+                  component: rating
+                  props:
+                    value: 2
+
+        - id: progress_card
+          component: card
+          props:
+            title: Progress and loading
+          layout:
+            type: grid
+            columns: 3
+            gap: 20
+          children:
+            - id: progress_bar
+              component: progress
+              props:
+                value: 64
+                label: Uploading assets
+            - id: progress_indeterminate
+              component: progress
+              props:
+                label: Working
+                indeterminate: true
+            - id: progress_row
+              component: row
+              props:
+                gap: 16
+              children:
+                - id: progress_ring
+                  component: progress
+                  props:
+                    kind: circle
+                    value: 72
+                - id: progress_spinner
+                  component: progress
+                  props:
+                    kind: spinner
+                    label: Loading
+            - id: skeleton_block
+              component: skeleton
+              props:
+                lines: 3
+                avatar: true
+
+        - id: media_card
+          component: card
+          props:
+            title: Media placeholders
+          layout:
+            type: grid
+            columns: 4
+            gap: 16
+          children:
+            - id: media_image
+              component: image
+              props:
+                alt: Product shot
+                ratio: "4:3"
+            - id: media_video
+              component: image
+              props:
+                alt: Walkthrough
+                kind: video
+                ratio: "16:9"
+            - id: media_map
+              component: image
+              props:
+                alt: Office location
+                kind: map
+                ratio: "4:3"
+            - id: media_logo
+              component: image
+              props:
+                alt: Partner logo
+                kind: logo
+                ratio: "1:1"
+
+        - id: divider_labelled
+          component: divider
+          props:
+            label: Empty and error states
+
+        - id: states_row
+          component: grid
+          props:
+            columns: 3
+          children:
+            - id: empty_default
+              component: empty_state
+              props:
+                title: No projects yet
+                text: Create your first project to see it here.
+                action: New project
+            - id: empty_error
+              component: empty_state
+              props:
+                variant: error
+                text: We could not load this list. Try again in a moment.
+                action: Retry
+            - id: empty_404
+              component: empty_state
+              props:
+                variant: "404"
+                text: That page has moved or never existed.
+
+        - id: alerts_stack
+          component: stack
+          props:
+            gap: 10
+          children:
+            - id: alert_info
+              component: alert
+              props:
+                title: Heads up
+                text: Your trial converts to a paid plan in three days.
+                variant: info
+                dismissible: true
+            - id: alert_warning
+              component: alert
+              props:
+                title: Storage almost full
+                text: You are using 92% of your quota.
+                variant: warning
+            - id: alert_error
+              component: alert
+              props:
+                title: Payment failed
+                text: Update the card on file to restore access.
+                variant: error
+            - id: alert_success
+              component: alert
+              props:
+                title: Backup complete
+                text: Every document was copied to the archive.
+                variant: success
+            - id: alert_neutral
+              component: alert
+              props:
+                title: Scheduled maintenance
+                text: The dashboard is read-only on Sunday morning.
+                variant: neutral

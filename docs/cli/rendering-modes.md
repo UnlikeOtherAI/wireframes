@@ -23,8 +23,8 @@ Mode can be overridden per-page via `page.rendering.mode` or the shorthand
 
 | Mode   | Character                       | Page background | Surface treatment          | Button style       |
 |--------|---------------------------------|-----------------|----------------------------|--------------------|
-| `line` | Blueprint / schematic           | `#ffffff`        | Transparent + outline      | Bordered label     |
-| `card` | Greyscale product mock          | `#f3f4f6`        | White + border + shadow    | Variant grey block |
+| `line` | Blueprint / schematic           | `#ffffff`        | Transparent + outline      | Hairline button    |
+| `card` | Greyscale product mock          | `#f3f4f6`        | White + border + shadow    | Variant control    |
 
 **Line mode** is a pure structural skeleton. Every surface is a single hairline
 outline. No fills. Sharp or minimally-rounded corners. The output reads as a
@@ -35,8 +35,24 @@ Surfaces are white cards with subtle shadows and rounded corners. Gaps between
 cards reveal the grey background, acting as natural gutters. This mode is
 closer to a lo-fi product prototype.
 
-Both modes are strictly greyscale. No brand colours. No icons beyond
-placeholder stubs. No custom fonts.
+Both modes are greyscale with one exception: **hue marks severity, validity and
+destruction, and nothing else.** Four tokens carry it — `--wf-info`,
+`--wf-success`, `--wf-warning`, `--wf-danger` — and an element that needs one
+sets `--wf-tone` and paints it on a single edge, dot or label, never a fill:
+
+| Element | Trigger | What takes the hue |
+|---|---|---|
+| `alert` | `variant` | the left stripe |
+| `badge` | `tone` | the pill's border, label and dot |
+| `button` | `variant: danger` | the outline and label |
+| any field | `error` | the control's border and the message |
+| `menu` / `action_sheet` row | `danger: true` | the label |
+
+Everything else stays grey on purpose: charts, `stat` trends, headings, primary
+buttons, every fill. `up` is not green — a rising churn rate is not good news,
+and a wireframe that colours by brand or by category has stopped being a
+wireframe. `cli/test/style-collisions.test.js` fails if a hue reaches a selector
+outside that list. No icons beyond placeholder stubs. No custom fonts.
 
 ---
 
@@ -59,8 +75,14 @@ is a renderer concern, not a schema concern.
 | s6    | 24  | `--wf-s6: 24px`    | Major section spacing                  |
 | s8    | 32  | `--wf-s8: 32px`    | Page-level spacing blocks              |
 
-The renderer snaps `layout.gap` and `layout.padding` values to the nearest
-token. Authors use raw pixel numbers in YAML; the renderer handles the mapping.
+Authors write raw pixel numbers and the renderer passes them through unchanged:
+snapping was specified here once but never implemented, and adding it now would
+silently move every existing layout. The tokens above are the values the
+built-in defaults use, not a grid that author values are rounded onto.
+
+Structural sizes — sidebar widths, header heights, control and row heights — do
+come from tokens, resolved per device class and per platform in
+`engine/renderer/sizing-tokens.js`. See [schema.md §4.3](schema.md).
 
 ### 2.2 Stroke tokens
 
@@ -144,7 +166,7 @@ background. Typography is grey, not black — it should recede behind the struct
 Surfaces (`section`, template regions, form containers, pane panels) render with:
 
 ```css
-.wf-mode-line .wf-surface {
+.wf-mode-line [data-wf-frame="surface"] {
   outline: var(--wf-surface-stroke);
   background: var(--wf-surface-bg);
   border-radius: var(--wf-surface-radius);
@@ -157,12 +179,13 @@ which means adjacent outlines never double up.
 **Button rendering in line mode:**
 
 ```html
-<div class="wf-button wf-button-primary"><button>Save</button></div>
+<div class="wf-button">
+  <button>Save</button>
+</div>
 ```
 
-Buttons render as plain label text inside a hairline border. There are no
-literal bracket characters in the markup. Primary line buttons use a 2px border;
-other variants use 1px.
+Buttons render as transparent controls with a hairline border and no bracket
+characters in the markup. Primary buttons use a heavier line.
 
 ### 3.2 Card Mode
 
@@ -197,7 +220,7 @@ needed between sibling cards when they have gap > 0.
 **Surface rendering in card mode:**
 
 ```css
-.wf-mode-card .wf-surface {
+.wf-mode-card [data-wf-frame="surface"] {
   background:    var(--wf-surface-bg);
   border:        var(--wf-surface-stroke);
   border-radius: var(--wf-surface-radius);
@@ -244,10 +267,10 @@ CSS implementation:
 
 ```css
 /* Horizontal siblings (row layout) */
-.wf-divide-x > * + * { border-left: 1px solid var(--wf-divider-color); }
+[data-wf-divides="row"] > [data-wf-edge="after"] { border-right: 1px solid var(--wf-divider-color); }
 
 /* Vertical siblings (stack layout) */
-.wf-divide-y > * + * { border-top: 1px solid var(--wf-divider-color); }
+[data-wf-divides="stack"] > [data-wf-edge="after"] { border-bottom: 1px solid var(--wf-divider-color); }
 ```
 
 This is the CSS equivalent of Tailwind's `divide-x` / `divide-y`. Only one
@@ -276,7 +299,8 @@ for each layout container:
 
   else if gap == 0 and separators == "between":
     → Strategy 2: parent dividers.
-       Apply wf-divide-x (row) or wf-divide-y (stack) to parent.
+       The renderer marks the children wrapper data-wf-divides and tags
+       every child but the last data-wf-edge="after".
        Remove any border/outline from child surfaces that would double-up.
 
   else:
@@ -292,7 +316,9 @@ pass:
 1. Find all container elements with `data-wf-layout-type` and `data-wf-gap`.
 2. For containers with `gap > 0`: confirm layout uses CSS `gap` property — done.
 3. For containers with `gap == 0` and `data-wf-separators="between"`:
-   - Add `wf-divide-x` or `wf-divide-y` class to the container.
+   - The renderer marks the container `data-wf-divides` and tags each child
+     but the last `data-wf-edge="after"`. Children that would otherwise frame
+     are demoted, so a divided row is one block with rules, not a row of boxes.
    - Remove surface outline/border from direct children (the parent divider replaces them).
 4. Selected nodes get `outline: var(--wf-selected-outline)` via the selection runtime (never `border`, which would cause reflow).
 
@@ -389,17 +415,17 @@ No inner `overflow: scroll` container. No clipping.
   background:    var(--wf-surface-bg);
   border-radius: var(--wf-surface-radius);
 }
-.wf-mode-card .wf-surface {
+.wf-mode-card [data-wf-frame="surface"] {
   border:     var(--wf-surface-stroke);
   box-shadow: var(--wf-surface-shadow);
 }
-.wf-mode-line .wf-surface {
+.wf-mode-line [data-wf-frame="surface"] {
   outline: var(--wf-surface-stroke);
 }
 
 /* Dividers */
-.wf-divide-x > * + * { border-left:  var(--wf-divider-width) solid var(--wf-divider-color); }
-.wf-divide-y > * + * { border-top:   var(--wf-divider-width) solid var(--wf-divider-color); }
+[data-wf-divides="row"] > [data-wf-edge="after"] { border-right: var(--wf-divider-width) solid var(--wf-divider-color); }
+[data-wf-divides="stack"] > [data-wf-edge="after"] { border-bottom: var(--wf-divider-width) solid var(--wf-divider-color); }
 
 /* Selection indicator */
 .wf-selected { outline: var(--wf-selected-outline) !important; }
@@ -419,8 +445,8 @@ No inner `overflow: scroll` container. No clipping.
 | `layout.columns: N`      | `grid-template-columns: repeat(N, 1fr)` |
 | `layout.justify: X`      | `justify-content: X`                    |
 | `layout.align: X`        | `align-items: X`                        |
-| `layout.separators: between` (row) | `wf-divide-x` class on container |
-| `layout.separators: between` (stack) | `wf-divide-y` class on container |
+| `layout.separators: between` (row) | `data-wf-divides="row"` on the children wrapper |
+| `layout.separators: between` (stack) | `data-wf-divides="stack"` on the children wrapper |
 
 ---
 
@@ -430,23 +456,20 @@ No inner `overflow: scroll` container. No clipping.
 
 **What gets `wf-surface`:**
 
-- Top-level `table` component
+- `table` component
 - `tab_bar` component
 - `bottom_tab_bar` component
-- Top-level `section` component
-- Direct children of grid layouts when they are `section`/`table`
+- `section` component when it is top-level in its context, a grid tile, or explicitly `surface: true`
 - Template persistent region containers
-- Pane panels when they are rendered as section/table surfaces
+- Pane panels (`node.pane` is defined)
 - Overlay containers (modal, drawer, popover, etc.)
-- `surface: true`
 
 **What does NOT get `wf-surface`:**
 
-- Template slot region containers
-- Nested `section`/`table` nodes inside an existing surface unless `surface: true`
 - `text`, `heading`, `paragraph` — inline content
 - `button` — handled separately (see 6.2)
 - `spacer`, `divider` — structural only
+- Slot region roots and demoted nested sections
 
 Line mode:
 ```html
@@ -479,9 +502,14 @@ CSS:
   border-radius: 2px;
   cursor:      default;
 }
+.wf-mode-line .wf-button-primary button {
+  border-width: 2px;
+}
 ```
 
-**Card mode:** Render as filled grey block.
+**Card mode:** Render as a greyscale control. `variant` controls emphasis:
+primary and danger use grey-800 with white text, secondary uses grey-200 with
+grey-700 text, and ghost is transparent.
 
 ```html
 <div class="wf-button wf-button-card">
@@ -509,8 +537,8 @@ to a prototype — reasonable target sizes matter.
 
 ### 6.3 Inputs, selects, textareas
 
-Form fields always get a visible boundary in both modes. A field without a
-boundary is visually ambiguous.
+Form fields always get a visible boundary in both modes. When `props.label` is
+present, it renders above the control as `.wf-field-label`.
 
 **Line mode:**
 ```css
@@ -558,16 +586,11 @@ No surface box. Text-only. Font size and weight driven by component type.
 .wf-heading h3 { font-size: 16px; font-weight: 600; }
 .wf-heading h4 { font-size: 14px; font-weight: 600; }
 .wf-heading h5 { font-size: 13px; font-weight: 600; }
-.wf-heading h6 { font-size: 12px; font-weight: 600; text-transform: uppercase; }
-.wf-paragraph p { font-size: 14px; color: #4b5563; line-height: 1.6; }
-.wf-text       { font-size: 14px; }
-.wf-text-meta  { font-size: 12px; color: #6b7280; }
+.wf-heading h6 { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #6b7280; }
+.wf-paragraph p { font-size: 14px; color: #4b5563; line-height: 1.6; max-width: 65ch; }
+.wf-text-body { font-size: 14px; color: #374151; }
+.wf-text-meta { font-size: 12px; color: #6b7280; }
 ```
-
-`props.text` is canonical. `props.label` is accepted as an alias for text
-primitives. Missing text and unresolved `props.*`/`item.*` bindings render
-deterministic skeleton bars; `state.*` and `appState.*` bindings remain runtime
-bound spans.
 
 ### 6.6 Images
 
@@ -594,6 +617,7 @@ Spans full parent width. No mode difference.
 
 `spacer` → `<div class="wf-spacer" style="height: Npx">` — invisible gap.
 In row layout: `width: Npx` instead of `height`.
+Percentage sizes in flex parents render as `flex:1 1 auto`.
 
 These are explicit structural primitives. They are distinct from the parent
 dividers used in double-border prevention (those are CSS-only and not authored).
@@ -619,8 +643,7 @@ alternates row fills between white and a very light grey. Columns come from
 </div>
 ```
 
-Tables nested inside an existing surface demote to frameless groups by default.
-Use `surface: true` when a nested table should keep its frame.
+Use `surface: false` when embedding a table inside an already framed card.
 
 ### 6.10 Charts
 
@@ -652,21 +675,20 @@ and card mode.
 
 ### 6.11 Section with title
 
-`section` renders title text above the body in both modes when `props.title` is
-present. No default "Section" title is emitted.
+`section` renders title text only when `props.title` is a non-empty string.
+The title uses 13px/600 grey-800 and an 8px bottom gap.
 
 ```html
 <div class="wf-section wf-surface">
-  <div class="wf-section-title">Settings</div>  <!-- 13px, grey-800 -->
+  <div class="wf-section-title">Settings</div>
   <div class="wf-section-body">
     <!-- children -->
   </div>
 </div>
 ```
 
-The section title is always inside the section container, at the top. Surface
-sections default to 16px body padding when no layout padding is authored;
-demoted `wf-group` sections are transparent and have no default padding.
+The section title is always inside the section container, at the top. There is
+no fallback `"Section"` title when `props.title` is absent.
 
 ---
 
@@ -768,9 +790,11 @@ layout:
 - If `separatorPolicy: divide` and `gap == 0`: render parent dividers.
 - If `separatorPolicy: none`: no gutters, no parent dividers.
 - If `gap > 0`: gutters are the separator. `separators` is ignored.
-- If `gap == 0` and `separators: between`: parent dividers are rendered
-  (`wf-divide-x` for rows, `wf-divide-y` for stacks). Child surface strokes
-  on the shared edge are suppressed.
+- If `gap == 0` and `separators: between`: the parent draws the dividers. Its
+  children wrapper is marked `data-wf-divides="row"` or `"stack"`, and every
+  child but the last carries `data-wf-edge="after"`. Children that would
+  otherwise frame are demoted to groups, so the result is one block with rules
+  rather than a line of boxes.
 - If `gap == 0` and `separators: none`: truly flush adjacency. No separator.
 
 `separatorPolicy` is the higher-level control; `separators` remains the explicit
@@ -869,9 +893,7 @@ When implementing these schema additions, update ALL of the following:
    a. Map layout → CSS classes
    b. Map component → HTML element + class
    c. Map wireframeStyle overrides → inline CSS
-   d. Mark surfaces using the hierarchy rule: slots are transparent, persistent
-      regions count as surfaces, top-level sections/tables and grid children
-      are surfaces, nested sections/tables demote unless `surface: true`
+   d. Mark surfaces: add "wf-surface" to section / region / pane / overlay containers
    e. Encode interactions → data-wf-interactions
    f. Encode state bindings → data-wf-state-bindings
    g. Encode visibility conditions → data-wf-visibility
@@ -884,23 +906,26 @@ When implementing these schema additions, update ALL of the following:
 
 A node gets the `wf-surface` class if ANY of the following is true:
 
-- `component: section` or `component: table` and it is top-level in its context
-- `component: section` or `component: table` and its parent layout is `grid`
+- `component: section` and it passes the surface-depth rule
 - The node is a template persistent region root
+- `pane` is defined on the node
 - The node is the root of an overlay content tree
 - `surface: true`
 
 A node does NOT get `wf-surface` if:
 
-- The node is a template slot region root
-- It is a nested `section`/`table` inside an existing surface and is not a grid child
 - `component` is any text primitive (`heading`, `paragraph`, `text`)
 - `component: button`, `input`, `textarea`, `select`, `checkbox`, `radio`, `toggle`, `icon`
 - `component: chart` (borderless placeholder — see Section 6.10)
 - `component: divider` or `component: spacer`
-- The node is a pure layout wrapper with `use` referencing a component
-  (the component's root handles its own surface class)
+- The node is a slot region root
+- The node is a demoted nested section or table
 - `surface: false`
+
+For sections and tables, the depth rule is: render as a surface when
+`surface: true`, or when `surface` is not false and the node is at
+`surfaceDepth == 0` or is a direct child of a grid layout. Children of rendered
+surfaces receive incremented depth; overlay content resets depth to 0.
 
 ### 9.3 Density effect
 
@@ -979,11 +1004,12 @@ slots:
 
 Rendered HTML structure:
 ```html
-<div class="wf-section wf-surface wf-divide-x" data-wf-id="panel_row"
-     data-wf-layout-type="row" data-wf-gap="0" data-wf-separators="between"
-     style="display:flex; flex-direction:row">
-  <!-- children do NOT get wf-surface (suppressed by stroke resolution) -->
-  <div class="wf-section" data-wf-id="left_panel" style="flex:1; padding:16px">
+<div id="panel_row" class="wf-node wf-section wf-group" data-wf-frame="group"
+     style="display:flex; flex-direction:row; gap:0">
+  <div class="wf-node-children" data-wf-divides="row">
+    <!-- children render as groups: the parent owns the strokes -->
+    <div id="left_panel" class="wf-node wf-section wf-group"
+         data-wf-frame="group" data-wf-edge="after" style="flex:1; padding:16px">
     <div class="wf-section-title">Left</div>
   </div>
   <div class="wf-section" data-wf-id="right_panel" style="flex:1; padding:16px">

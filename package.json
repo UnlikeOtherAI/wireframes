@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "pnpm --filter @wireframes/cli test",
     "gallery:update": "pnpm --filter @wireframes/cli exec node ../scripts/update-gallery-baselines.js",
-    "test:all": "pnpm -r test"
+    "test": "pnpm --filter @wireframes/cli test",
+    "test:all": "pnpm -r test",
+    "readme:update": "pnpm --filter @wireframes/cli exec node ../scripts/update-readme-screenshots.js"
   }
 }

@@ -12,6 +12,10 @@ const {
   wireframeRootStyle,
 } = require('../renderer/wireframe-styles');
 const { buildWireframeStyles } = require('../renderer/styles');
+const { decideFrame } = require('../renderer/frame-rules');
+const { regionSizingCss, token } = require('../renderer/sizing-tokens');
+const { normalizePlatform, statusBarMarkup, homeIndicatorMarkup } = require('../renderer/platform');
+const { resolvePrimitiveName } = require('../schema/primitive-registry');
 
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
@@ -58,6 +62,8 @@ function renderRoot(root, options) {
       placement: root.placement,
       dismissOn: root.dismissOn,
       size: root.size,
+      // The overlay's own chrome — its title and footer actions.
+      props: isObject(root.props) ? root.props : {},
       children: Array.isArray(root.nodes) ? root.nodes : [],
       wireframeStyle: root.wireframeStyle,
     }, {
@@ -66,7 +72,6 @@ function renderRoot(root, options) {
       pageStyle: isObject(options.pageStyle) ? options.pageStyle : {},
       dataSources: options.dataSources || {},
       parentLayoutType: 'stack',
-      surfaceDepth: 0,
     });
   }
 
@@ -78,39 +83,82 @@ function renderRoot(root, options) {
   const localPageStyle = mergeWireframeStyle(rootStyleBase, root.wireframeStyle);
   const rootLayout = isObject(root.layout) ? root.layout : {};
   const rootLayoutType = rootLayout.type || 'stack';
+  const isOverlay = root.kind === 'overlay';
+  const isSlot = root.kind === 'slot';
+  const role = typeof root.role === 'string' && root.role.trim() !== '' ? root.role.trim() : null;
+
+  const decision = decideFrame(root, {
+    element: '',
+    isRegionRoot: true,
+    regionKind: root.kind,
+    role,
+    surfaceDepth: 0,
+  });
+  const rootRendersSurface = decision.frame === 'surface';
+
   const content = renderNodes(children, {
     ...options,
     routeId: options.routeId || '',
     pageStyle: localPageStyle,
     dataSources: options.dataSources || {},
     parentLayoutType: rootLayoutType,
-    surfaceDepth: root.kind === 'slot' ? 0 : 1,
+    parentLayoutIsGrid: rootLayoutType === 'grid',
+    parentDivides: shouldRenderParentSeparators(rootLayout),
+    surfaceDepth: rootRendersSurface ? 1 : 0,
   });
 
-  const rootStyle = wireframeRootStyle(options.pageStyle, root.wireframeStyle, options.rendering);
+  // Region proportions: the author's `size` wins; otherwise the role's token
+  // supplies a width/height and stops the region collapsing to content width.
+  const sizeCss = layoutToCss({ type: 'none' }, isObject(root.size) ? root.size : {}, {});
+  const roleCss = regionSizingCss(role, root.size, options.viewport, options.sizing);
+  const padCss = rootRendersSurface && rootLayout.padding == null
+    ? `padding:${token('card.padding', options.viewport, options.sizing) || 16}px`
+    : '';
+
+  const rootStyle = [
+    wireframeRootStyle(options.pageStyle, root.wireframeStyle, options.rendering),
+    sizeCss,
+    roleCss,
+    padCss,
+  ].filter(Boolean).join(';');
   const styleAttr = rootStyle ? ` style="${escapeAttr(rootStyle)}"` : '';
 
+  // Bottom chrome runs to the foot of the region: it keeps the gutter above it
+  // but not below, and it shifts a floating action button clear of itself.
+  const hasTabBar = children.some((child) => (
+    isObject(child) && resolvePrimitiveName(child.component) === 'bottom_tab_bar'
+  ));
+  const tabBarClass = hasTabBar ? ' wf-root-has-tabbar' : '';
   const bodyLayoutCss = layoutToCss(rootLayout, {}, { density: options.density });
   const bodyDividerClass = separatorClass(rootLayout);
-  const bodyStyle = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
+  const bodyDivides = shouldRenderParentSeparators(rootLayout)
+    ? ` data-wf-divides="${rootLayoutType === 'row' ? 'row' : 'stack'}"`
+    : '';
+  const bodyInline = [bodyLayoutCss, hasTabBar ? 'padding-bottom:0' : ''].filter(Boolean).join(';');
+  const bodyStyle = bodyInline ? ` style="${escapeAttr(bodyInline)}"` : '';
 
-  const isOverlay = root.kind === 'overlay';
-  const isSlot = root.kind === 'slot';
   const kindClass = isOverlay ? 'wf-root-overlay' : 'wf-root-container';
   const slotClass = isSlot ? ' wf-root-slot' : '';
-  const surfaceClass = (isOverlay || isSlot) ? '' : ' wf-surface';
+  const surfaceClass = rootRendersSurface ? ' wf-surface' : ' wf-group';
+  const roleClass = role ? ` wf-role-${toSafeClass(role)}` : '';
 
   const stickyAttr = (root.sticky === 'top' || root.sticky === 'bottom')
     ? ` data-sticky="${escapeAttr(root.sticky)}"`
     : '';
+  const frameAttr = ` data-wf-frame="${decision.frame}"${
+    options.explain === true ? ` data-wf-why="${escapeAttr(`${decision.rule}:${decision.reason}`)}"` : ''
+  }`;
 
-  return `<section class="wf-root ${kindClass}${slotClass}${surfaceClass}"${styleAttr}${stickyAttr}>
+  const rootId = typeof root.id === 'string' && root.id.trim() !== '' ? ` id="${escapeAttr(root.id.trim())}"` : '';
+
+  return `<section${rootId} class="wf-root ${kindClass}${slotClass}${surfaceClass}${roleClass}${tabBarClass}"${styleAttr}${stickyAttr}${frameAttr}>
       <div class="wf-root-title">${escapeHtml(rootLabel)}</div>
-      <div class="wf-root-body${bodyDividerClass}"${bodyStyle}>${content}</div>
+      <div class="wf-root-body${bodyDividerClass}"${bodyStyle}${bodyDivides}>${content}</div>
     </section>`;
 }
 
 function renderPageShell(roots, viewportWidth, viewportHeight, renderOptions, bodyLayoutType, bodyLayout = {}) {
+  const platform = renderOptions.platform || 'web';
   const stickyTop = roots.filter((r) => r.sticky === 'top');
   const stickyBottom = roots.filter((r) => r.sticky === 'bottom');
   const bodyRoots = roots.filter((r) => r.sticky !== 'top' && r.sticky !== 'bottom');
@@ -120,16 +168,39 @@ function renderPageShell(roots, viewportWidth, viewportHeight, renderOptions, bo
   const bodyHtml = bodyRoots.map((r) => renderRoot(r, renderOptions)).join('\n');
 
   const bodyClass = bodyLayoutType === 'stack' ? 'wf-body-column' : 'wf-body-row';
-  const bodyLayoutCss = layoutToCss(bodyLayout, {}, { density: renderOptions.density });
-  const bodyStyleAttr = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
+  const bodyLayoutCss = layoutToCss(
+    isObject(bodyLayout) ? bodyLayout : {},
+    {},
+    { defaultGridColumns: renderOptions.defaultGridColumns, density: renderOptions.density },
+  );
+  const bodyStyle = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
 
   return `<div class="wf-page" style="width:${viewportWidth}px;min-height:${viewportHeight}px;">
+  ${statusBarMarkup(platform)}
   ${topHtml}
-  <div class="${bodyClass}"${bodyStyleAttr}>
+  <div class="${bodyClass}"${bodyStyle}>
     ${bodyHtml}
   </div>
   ${bottomHtml}
+  ${homeIndicatorMarkup(platform)}
 </div>`;
+}
+
+/** Token values the stylesheet reads, so CSS never hard-codes a platform size. */
+function platformVars(renderOptions) {
+  const viewport = renderOptions.viewport;
+  const sizing = renderOptions.sizing;
+  const vars = [
+    ['--wf-control-h', token('control.height', viewport, sizing)],
+    ['--wf-row-h', token('row.height', viewport, sizing)],
+    ['--wf-header-h', token('header.height', viewport, sizing)],
+    ['--wf-tabbar-h', token('tabbar.height', viewport, sizing)],
+    ['--wf-gutter', token('page.gutter', viewport, sizing)],
+    ['--wf-card-pad', token('card.padding', viewport, sizing)],
+    ['--wf-chart-h', token('chart.height', viewport, sizing)],
+    ['--wf-statusbar-h', token('statusbar.height', viewport, sizing)],
+  ];
+  return vars.filter(([, value]) => Number.isFinite(value)).map(([name, value]) => `${name}:${value}px`).join(';');
 }
 
 function renderWireframeMarkup({
@@ -153,6 +224,8 @@ function renderWireframeMarkup({
   bodyLayoutType = 'row',
   bodyLayout = {},
   imageResolver = null,
+  sizing = {},
+  explain = false,
 }) {
   const mode = rendering?.mode === 'line' ? 'line' : 'card';
   const density = rendering?.density === 'compact' ? 'compact' : 'comfortable';
@@ -171,10 +244,15 @@ function renderWireframeMarkup({
     defaultGridColumns,
     assetUrlPrefix,
     routeId: pageRouteId,
+    routeTable,
     mode,
     density,
     rendering,
     imageResolver,
+    viewport: pageViewport,
+    platform: normalizePlatform(pageViewport?.platform, pageViewport?.device),
+    sizing,
+    explain: explain === true || rendering?.explain === true,
   };
 
   let shellMarkup;
@@ -234,7 +312,7 @@ function renderWireframeMarkup({
     ${fontAwesomeLink}
     ${styleMarkup}
   </head>
-  <body class="wf wf-mode-${escapeAttr(mode)}">
+  <body class="wf wf-mode-${escapeAttr(mode)} wf-platform-${escapeAttr(renderOptions.platform)} wf-density-${escapeAttr(density)}" style="${escapeAttr(platformVars(renderOptions))}">
     ${shellMarkup}
     ${runtimeScript}
   </body>

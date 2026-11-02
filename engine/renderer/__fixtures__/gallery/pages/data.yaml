@@ -1,0 +1,209 @@
+documentType: page
+specVersion: "1.1"
+id: data
+page:
+  id: data
+  template: app_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: card
+  slots:
+    - slotId: main
+      content:
+        - id: data_header
+          component: page_header
+          props:
+            title: Tables and lists
+            subtitle: Typed columns, selection, states, and six list shapes.
+
+        - id: table_full
+          component: table
+          props:
+            caption: Projects
+            selectable: true
+            pagination: true
+            columns:
+              - label: Name
+                key: name
+                sortable: true
+              - label: Owner
+                key: owner
+                kind: avatar
+              - label: Status
+                key: status
+                kind: badge
+              - label: Seats
+                key: seats
+                align: right
+              - label: Active
+                key: active
+                kind: check
+                align: center
+              - label: ""
+                key: actions
+                kind: actions
+                width: 90
+            rows:
+              - name: Acme Dashboard
+                owner: Ada Lovelace
+                status: Live
+                seats: "12"
+                active: "true"
+              - name: Client Portal
+                owner: Grace Hopper
+                status: Draft
+                seats: "4"
+                active: "false"
+              - name: Checkout Flow
+                owner: Alan Turing
+                status: In review
+                seats: "9"
+                active: "true"
+
+        - id: table_states
+          component: grid
+          props:
+            columns: 2
+          children:
+            - id: table_loading_card
+              component: card
+              props:
+                title: Loading state
+              children:
+                - id: table_loading
+                  component: table
+                  props:
+                    state: loading
+                    dense: true
+                    columns: [Name, Status, Owner]
+            - id: table_empty_card
+              component: card
+              props:
+                title: Empty state
+              children:
+                - id: table_empty
+                  component: table
+                  props:
+                    state: empty
+                    emptyText: No invoices in this period
+                    columns: [Invoice, Date, Amount]
+
+        - id: lists_grid
+          component: grid
+          props:
+            columns: 2
+          children:
+            - id: list_avatar_card
+              component: card
+              props:
+                title: Avatar list
+              children:
+                - id: list_avatar
+                  component: list
+                  props:
+                    kind: avatar
+                    items:
+                      - title: Ada Lovelace
+                        text: Invited you to Acme Dashboard
+                        meta: 2h ago
+                      - title: Grace Hopper
+                        text: Commented on Checkout Flow
+                        meta: 5h ago
+                      - title: Alan Turing
+                        text: Shared a report
+                        meta: 1d ago
+            - id: list_action_card
+              component: card
+              props:
+                title: Action list
+              children:
+                - id: list_action
+                  component: list
+                  props:
+                    kind: action
+                    items:
+                      - title: Two-factor authentication
+                        text: Required for all owners
+                        badge: On
+                        actions: [pen]
+                      - title: API keys
+                        text: Three active keys
+                        actions: [pen, trash]
+                      - title: Session timeout
+                        text: After 30 minutes idle
+                        actions: [pen]
+            - id: list_file_card
+              component: card
+              props:
+                title: Attachment list
+              children:
+                - id: list_file
+                  component: list
+                  props:
+                    kind: file
+                    items:
+                      - title: contract-2026.pdf
+                        text: 1.2 MB
+                        meta: Uploaded
+                      - title: brand-assets.zip
+                        text: 18.4 MB
+                        meta: Uploaded
+                      - title: forecast.csv
+                        text: 86 KB
+                        meta: Processing
+            - id: list_timeline_card
+              component: card
+              props:
+                title: Timeline
+              children:
+                - id: list_timeline
+                  component: list
+                  props:
+                    kind: timeline
+                    divided: false
+                    items:
+                      - title: Project created
+                        text: by Ada Lovelace
+                        meta: Mon
+                      - title: First deploy
+                        text: Build 128 shipped to staging
+                        meta: Tue
+                      - title: Invited three people
+                        meta: Thu
+            - id: list_chat_card
+              component: card
+              props:
+                title: Chat thread
+              children:
+                - id: list_chat
+                  component: list
+                  props:
+                    kind: chat
+                    divided: false
+                    items:
+                      - title: Ada
+                        text: Can you add a stats row to the dashboard?
+                      - title: You
+                        text: Added four metric tiles at the top.
+                        side: end
+                      - title: Ada
+                        text: Perfect, ship it.
+            - id: list_plain_card
+              component: card
+              props:
+                title: Plain list with icons
+              children:
+                - id: list_plain
+                  component: list
+                  props:
+                    items:
+                      - title: Billing
+                        text: Plan, invoices and payment method
+                        icon: credit-card
+                      - title: Members
+                        text: Twelve people, three pending invites
+                        icon: users
+                      - title: Integrations
+                        text: Slack, GitHub, Linear
+                        icon: plug
