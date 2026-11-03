@@ -161,15 +161,6 @@ importers:
         specifier: ^4.1.0
         version: 4.1.1
 
-  mobile/web:
-    dependencies:
-      js-yaml:
-        specifier: ^4.1.0
-        version: 4.1.1
-    devDependencies:
-      esbuild:
-        specifier: ^0.25.0
-        version: 0.25.12
 
   renderer:
     dependencies:

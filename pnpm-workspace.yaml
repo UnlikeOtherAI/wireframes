@@ -5,7 +5,6 @@ packages:
   - web
   - admin
   - renderer
-  - mobile/web
 allowBuilds:
   esbuild: true
   sharp: true
