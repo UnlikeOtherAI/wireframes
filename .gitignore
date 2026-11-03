@@ -44,3 +44,4 @@ test-results/
 
 # Example build output
 examples/*/build/
+mobile/eval/out/
