@@ -429,7 +429,7 @@ test('renderNode renders labels for text input, textarea, and select controls', 
     props: { placeholder: 'Search' },
   });
 
-  assert.equal(inputHtml.includes('<label class="wf-field-label">Project Name</label>'), true);
+  assert.equal(inputHtml.includes('<label class="wf-field-label" for="project_name__input">Project Name</label>'), true);
   assert.equal(textareaHtml.includes('<label class="wf-field-label">Notes</label>'), true);
   assert.equal(selectHtml.includes('<label class="wf-field-label">Status</label>'), true);
   assert.equal(unlabeledHtml.includes('wf-field-label'), false);
