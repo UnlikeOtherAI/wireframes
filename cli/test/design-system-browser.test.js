@@ -169,6 +169,10 @@ test('direct rendering rejects hostile appearance CSS and unknown-component attr
 
 test('image captions stay readable in Wireframe and keep a dark company palette', async () => {
   const page = await browser.newPage({ viewport: {width:1024,height:1366} });
+  const fa = path.dirname(require.resolve('@fortawesome/fontawesome-free/package.json', {paths:[path.resolve(__dirname,'../../engine')]}));
+  await page.route('https://wireframe.test/_shared/fa/**', route => route.fulfill({
+    path: path.join(fa, new URL(route.request().url()).pathname.split('/_shared/fa/')[1]),
+  }));
   try {
     for (const named of [false, true]) {
       let map = skinProject();
@@ -180,7 +184,8 @@ test('image captions stay readable in Wireframe and keep a dark company palette'
       map.pages.get('home').page.slots[0].content = [{id:'photo',component:'image',props:{alt:'Reusable water bottle on a studio background'}}];
       const result = renderPage(map, 'home');
       assert.equal(result.ok,true,result.error);
-      await page.setContent(result.html);
+      await page.setContent(result.html.replace('<head>', '<head><base href="https://wireframe.test/">'));
+      await page.evaluate(() => document.fonts.ready);
       const paint = await page.locator('.wf-image-caption').evaluate(el => {
         const css = getComputedStyle(el);
         return {text:css.color,background:css.backgroundColor};
