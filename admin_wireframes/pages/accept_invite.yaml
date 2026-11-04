@@ -32,7 +32,7 @@ page:
             - id: invite_logo_icon
               component: icon
               props:
-                name: vector-square
+                name: bezier-curve
                 size: 2xl
             - id: invite_heading
               component: heading
