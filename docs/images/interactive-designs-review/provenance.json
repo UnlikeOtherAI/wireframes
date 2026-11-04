@@ -2,7 +2,7 @@
   "before": "47aaeeec9a75afc6ad57d1d93aef6c2f9f9882bf",
   "after": "093731b4a9eec653679aeb4fb591e582a8759bec",
   "host": "Windows Minis (Maxis disk queue prevented the final capture browser starting)",
-  "browser": "Chromium 149.0.7790.3 via Playwright 1.64.1",
+  "browser": "Chromium 156.0.8078.4 via Playwright 1.64.1",
   "theme": "Light/default; Acme in company samples",
   "galleryViewport": {
     "width": 1280,
