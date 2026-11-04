@@ -7,10 +7,10 @@ function validateIconReferences(documents, index) {
   }
   const diagnostics = [];
   const check = (name, style, path) => {
-    if (typeof name !== 'string' || !name.trim()) return;
+    if (typeof name !== 'string' || !name.trim() || name.includes('{{')) return;
     const icon = names.get(name.trim());
     if (!icon) diagnostics.push({ code: 'UNKNOWN_ICON', message: path + ': unknown Font Awesome Free icon "' + name + '". Use wf icons search.', path });
-    else if (!icon.styles.includes(style || 'solid')) diagnostics.push({
+    else if (style && !icon.styles.includes(style)) diagnostics.push({
       code: 'ICON_STYLE_UNAVAILABLE',
       message: path + ': "' + name + '" supports ' + icon.styles.join(', ') + ', not ' + (style || 'solid') + '.',
       path,

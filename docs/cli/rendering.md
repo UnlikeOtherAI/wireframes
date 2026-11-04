@@ -1002,3 +1002,5 @@ Sticky nodes remain in flow, stick within their scroll container and do not need
 Image descriptions stay visible without hovering, and are exposed as accessible image names.
 
 App-bar child nodes render in the same row after built-in title/actions, preserving their IDs and interactions. Sticky app bars have an opaque fill. Button glyphs inherit the painted button text colour. Routed buttons use actual anchors in CLI/browser output as well as the native host.
+
+Without an explicit style, the Free font stack falls back to the bundled Brands face for brand-only glyphs. Explicit unavailable styles still produce ICON_STYLE_UNAVAILABLE. Template-bound names are checked after resolution, not rejected as literal icon names.

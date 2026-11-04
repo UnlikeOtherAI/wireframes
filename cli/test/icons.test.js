@@ -36,7 +36,9 @@ test('request context returns relevant names without loading catalogue into prom
 });
 test('validates names and available Free styles without rejecting aliases', () => {
   const docs = [{ component: 'icon', props: { name: 'navicon' } },
-    { component: 'button', props: { icon: 'github', iconStyle: 'brands' } }];
+    { component: 'button', props: { icon: 'github', iconStyle: 'brands' } },
+    { component: 'icon', props: { name: 'bluetooth' } },
+    { component: 'button', props: { icon: '{{ props.icon }}' } }];
   assert.deepEqual(validateIconReferences(docs, catalogue), []);
   assert.deepEqual(validateIconReferences([
     { component: 'icon', props: { name: 'not-a-real-wf-icon' } },

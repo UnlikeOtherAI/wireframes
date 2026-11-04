@@ -5,6 +5,7 @@
 // infers a box from nesting or adjacency.
 
 const baseStyles = [
+  '.wf-icon-glyph.fa-solid{font-family:"Font Awesome 7 Free","Font Awesome 7 Brands"}',
   '*{box-sizing:border-box}',
   'body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#374151}',
 
