@@ -43,7 +43,7 @@ const contentStyles = [
     + 'linear-gradient(to top right,transparent calc(50% - .5px),var(--wf-line),transparent calc(50% + .5px)),'
     + 'linear-gradient(to top left,transparent calc(50% - .5px),var(--wf-line),transparent calc(50% + .5px))}',
   '.wf-image-placeholder .wf-icon-glyph{font-size:22px;color:var(--wf-ink-4)}',
-  '.wf-image-caption{font-size:12px}',
+  '.wf-image-caption{font-size:12px;max-width:100%;overflow-wrap:anywhere;position:relative;background:var(--wf-fill-2);padding:2px 6px}',
 
   // --- Rating ---
   '.wf-rating{display:inline-flex;align-items:center;gap:1px;color:var(--wf-ink-3);font-size:14px}',

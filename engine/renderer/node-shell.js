@@ -199,6 +199,8 @@ function buildShell(node, element, ctx) {
   }
 
   const attrs = [`data-wf-frame="${decision.frame}"`];
+  const corner = node.wireframeStyle?.corner?.style || ctx.pageStyle?.corner?.style;
+  if (corner === 'pill') attrs.push('data-wf-corner="pill"');
   if (ctx.explain === true) {
     attrs.push(`data-wf-why="${decision.rule}:${decision.reason}"`);
   }

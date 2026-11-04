@@ -16,6 +16,7 @@ const {
 
 function buildNodeDataAttributes(node, stateBindings, selectionValue, paneData) {
   const entries = [];
+  if (node.sticky === 'top' || node.sticky === 'bottom') entries.push(`data-sticky="${node.sticky}"`);
   if (Array.isArray(node.interaction) && node.interaction.length > 0) {
     entries.push(`data-wf-interactions="${escapeAttr(JSON.stringify(node.interaction))}"`);
   }

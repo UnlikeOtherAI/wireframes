@@ -62,7 +62,7 @@ function icon(name, options = {}) {
   const sizeClass = size ? ` fa-${escapeAttr(size)}` : '';
   const sizeStyle = px ? ` style="font-size:${px}px;width:${px}px"` : '';
   const letter = escapeHtml(glyph.charAt(0).toUpperCase());
-  return `<i class="wf-icon-glyph ${prefix} fa-${escapeAttr(glyph)}${sizeClass}" data-wf-glyph="${letter}"${sizeStyle}></i>`;
+  return `<i aria-hidden="true" class="wf-icon-glyph ${prefix} fa-${escapeAttr(glyph)}${sizeClass}" data-wf-glyph="${letter}"${sizeStyle}></i>`;
 }
 
 function iconSpan(name, options) {

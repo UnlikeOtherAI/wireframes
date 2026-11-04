@@ -651,7 +651,8 @@
               "type": "string",
               "enum": [
                 "sharp",
-                "rounded"
+                "rounded",
+                "pill"
               ]
             },
             "radius": {
@@ -695,7 +696,8 @@
               "type": "string",
               "enum": [
                 "sharp",
-                "rounded"
+                "rounded",
+                "pill"
               ]
             },
             "radius": {
@@ -1022,6 +1024,15 @@
           "items": {
             "$ref": "#/$defs/Node"
           }
+        },
+        "sticky": {
+          "type": "string",
+          "enum": [
+            "top",
+            "bottom",
+            "none"
+          ],
+          "description": "Stays at an edge of its containing scroll area. Put the bar before the content it must stay above."
         }
       },
       "allOf": [
@@ -3157,6 +3168,14 @@
         "iconSize": {
           "type": "string"
         },
+        "iconPosition": {
+          "type": "string",
+          "enum": [
+            "start",
+            "end",
+            "center"
+          ]
+        },
         "variant": {
           "type": "string",
           "enum": [
@@ -3216,6 +3235,13 @@
         "label": {
           "type": "string"
         },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "default",
+            "plain"
+          ]
+        },
         "placeholder": {
           "type": "string"
         },
@@ -3242,6 +3268,25 @@
           "type": [
             "string",
             "number"
+          ]
+        },
+        "icon": {
+          "type": "string"
+        },
+        "iconStyle": {
+          "type": "string",
+          "enum": [
+            "solid",
+            "regular",
+            "brands"
+          ]
+        },
+        "iconPosition": {
+          "type": "string",
+          "enum": [
+            "start",
+            "end",
+            "center"
           ]
         },
         "prefix": {

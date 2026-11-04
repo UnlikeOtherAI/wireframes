@@ -847,3 +847,13 @@ wf export
 ```
 
 And nothing more.
+
+## Icon search
+
+wf icons search <query> [--style solid|regular|brands] [--limit 1..20] [--json]
+
+Searches the full installed Font Awesome Free catalogue by canonical name, alias, label and terms.
+The default limit is 8; JSON is {query, icons: [{name, label, styles}]}.
+Examples: wf icons search "burger menu" returns bars; wf icons search search returns magnifying-glass.
+Unknown queries return an empty result; bad options/style/limit return a nonzero exit status.
+Use the returned name in icon.name or button/input icon; choose a returned style.

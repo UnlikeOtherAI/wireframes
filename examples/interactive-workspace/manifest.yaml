@@ -1,0 +1,10 @@
+documentType: manifest
+specVersion: "1.1"
+id: manifest
+manifest:
+  projectId: interactive_workspace
+  name: Studio workspace
+  schemaVersion: "1.1"
+  defaultWireframeStyle:
+    border: { style: solid, width: thin }
+    corner: { style: rounded, radius: 10 }

@@ -1,6 +1,8 @@
 'use strict';
 
 const { validateDocument, SchemaLoadError } = require('../schema');
+const { validatePresentation } = require('./presentation');
+const { validateIconReferences } = require('../icons/validate');
 const { SUPPORTED_SPEC_VERSION } = require('../schema/constants');
 
 function isObject(value) {
@@ -91,6 +93,13 @@ function validateProject(documentMap, options = {}) {
       addDiagnostic(errors, warnings, 'errors', 'MISSING_TEMPLATE',
         `Page "${pageId}" references template "${templateRef}" which does not exist.`);
     }
+  }
+
+  const presentation = validatePresentation(documentMap);
+  errors.push(...presentation.errors);
+  warnings.push(...presentation.warnings);
+  if (options.iconIndex) {
+    (options.iconErrors ? errors : warnings).push(...validateIconReferences(documentMap, options.iconIndex));
   }
 
   if (strict && warnings.length > 0) {

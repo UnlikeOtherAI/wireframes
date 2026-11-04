@@ -640,3 +640,15 @@ This document covers the core structure (sections 1-4). See companion files for 
 | [schema-systems.md](schema-systems.md) | Layout, state, interactions, overlays, panes, wireframe style, data binding, primitives, validation, export (sections 5-20) |
 | [schema-canonical.yaml](schema-canonical.yaml) | Full canonical YAML definition of the schema |
 | [schema.json](../../engine/schema/schema.json) | Formal JSON Schema for validation |
+
+## Icons, pills and sticky nodes
+
+Buttons and inputs accept Font Awesome Free names in props.icon and solid/regular/brands in props.iconStyle.
+props.iconPosition is start (default), end or center. Center on a button is an icon-only action; its label remains its accessible name.
+On an input, center shows the icon/placeholder group centred while empty and unfocused; focus or a value moves the icon to start.
+An explicit icon replaces type-inferred decorations. Do not combine it with prefix/suffix on the same side.
+wireframeStyle.corner.style accepts sharp, rounded and pill. Pill caps are half the shorter painted dimension and override radius.
+Nodes accept sticky: top|bottom|none. Put a top bar before the content in its containing scrolling region.
+Image placeholders omit src and use alt as an always-visible, wrapping description over the existing cross.
+
+Input variant: plain removes its inner frame for composition inside a single framed toolbar or composer; default retains the field frame.

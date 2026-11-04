@@ -15,13 +15,14 @@ function renderButton(node, ctx, lib) {
   const size = lib.str(props.size) || 'md';
   const label = lib.str(props.label);
   const iconName = lib.str(props.icon) || (variant === 'danger' ? 'triangle-exclamation' : '');
-  const iconOnly = props.iconOnly === true || props.fab === true || (!label && iconName !== '');
+  const iconOnly = props.iconOnly === true || props.fab === true || (props.iconPosition === 'center' && iconName !== '') || (!label && iconName !== '');
   const glyph = iconName
     ? lib.icon(iconName, { style: props.iconStyle, size: props.iconSize || (props.fab ? 'lg' : null) })
     : '';
   const body = iconOnly
     ? glyph
-    : `${glyph ? `${glyph} ` : ''}${label ? lib.bound(label, ctx) : lib.renderSkeleton(6)}`;
+    : [props.iconPosition === 'end' ? '' : glyph, label ? lib.bound(label, ctx) : lib.renderSkeleton(6),
+      props.iconPosition === 'end' ? glyph : ''].filter(Boolean).join(' ');
   const spinner = props.loading === true ? '<span class="wf-spinner wf-spinner-sm"></span> ' : '';
   const disabled = props.disabled === true ? ' disabled' : '';
   const classes = [
@@ -32,9 +33,10 @@ function renderButton(node, ctx, lib) {
     props.disabled === true ? 'wf-button-disabled' : '',
   ].filter(Boolean).join(' ');
 
+  const accessibleName = iconOnly ? ` aria-label="${lib.escapeAttr(label || iconName.replace(/-/g, ' '))}"` : '';
   const inner = ctx.navigationTarget
-    ? `<a class="wf-button-link"${ctx.navAttrs()}>${spinner}${body}</a>`
-    : `<button${disabled}>${spinner}${body}</button>`;
+    ? `<a class="wf-button-link"${accessibleName}${ctx.navAttrs()}>${spinner}${body}</a>`
+    : `<button${disabled}${accessibleName}>${spinner}${body}</button>`;
   return { inner, className: classes };
 }
 
@@ -51,11 +53,11 @@ function renderSegmented(node, ctx, lib) {
   return { inner: buttons, className: `wf-segmented-${lib.toSafeClass(size)}` };
 }
 
-function fieldLabel(props, ctx, lib) {
+function fieldLabel(props, ctx, lib, inputId) {
   const label = lib.str(props?.label);
   if (!label) return '';
   const required = props.required === true ? '<span class="wf-req">*</span>' : '';
-  return `<label class="wf-field-label">${lib.bound(label, ctx)}${required}</label>`;
+  return `<label class="wf-field-label"${inputId ? ` for="${lib.escapeAttr(inputId)}"` : ''}>${lib.bound(label, ctx)}${required}</label>`;
 }
 
 function fieldHelp(props, ctx, lib) {
@@ -78,7 +80,8 @@ function renderInput(node, ctx, lib) {
   const placeholder = lib.resolveAttributeValue(
     lib.str(props.placeholder), ctx.bindingContext || {}, ctx.stateBindings, 'placeholder',
   );
-  const label = fieldLabel(props, ctx, lib);
+  const inputId = String(node.id) + '__input';
+  const label = fieldLabel(props, ctx, lib, ['stepper', 'otp', 'range', 'color'].includes(type) ? null : inputId);
   const help = fieldHelp(props, ctx, lib);
   const invalid = lib.str(props.error) ? ' wf-field-invalid' : '';
   const disabled = props.disabled === true ? ' disabled' : '';
@@ -106,12 +109,19 @@ function renderInput(node, ctx, lib) {
   }
 
   const htmlType = ['date', 'time', 'datetime'].includes(type) ? 'text' : type;
-  const prefix = affix(props.prefix || TYPE_PREFIX[type], 'start', lib);
-  const suffix = affix(props.suffix || TYPE_SUFFIX[type], 'end', lib);
-  const control = `<span class="wf-control">${prefix}<input type="${htmlType}" placeholder="${lib.escapeAttr(placeholder)}"${
+  const iconName = lib.str(props.icon);
+  const position = ['end', 'center'].includes(props.iconPosition) ? props.iconPosition : 'start';
+  const prefix = affix(props.prefix || (!iconName ? TYPE_PREFIX[type] : ''), 'start', lib);
+  const suffix = affix(props.suffix || (!iconName ? TYPE_SUFFIX[type] : ''), 'end', lib);
+  const glyph = iconName ? lib.icon(iconName, { style: props.iconStyle }) : '';
+  const centered = glyph && position === 'center';
+  const decoration = glyph
+    ? `<span class="wf-affix wf-affix-${position}" aria-hidden="true">${glyph}${centered ? `<span class="wf-input-placeholder">${lib.escapeHtml(placeholder)}</span>` : ''}</span>`
+    : '';
+  const control = `<span class="wf-control${centered ? ' wf-control-center' : ''}">${prefix}${position === 'start' ? decoration : ''}<input id="${lib.escapeAttr(inputId)}" type="${htmlType}" placeholder="${lib.escapeAttr(centered && !placeholder ? ' ' : placeholder)}"${!props.label ? ` aria-label="${lib.escapeAttr(placeholder || 'Text field')}"` : ''}${
     props.value != null ? ` value="${lib.escapeAttr(String(props.value))}"` : ''
-  }${disabled} />${suffix}</span>`;
-  return { inner: `${label}${control}${help}`, className: `wf-field${invalid}` };
+  }${disabled} />${position !== 'start' ? decoration : ''}${suffix}</span>`;
+  return { inner: `${label}${control}${help}`, className: `wf-field${invalid}${props.variant === 'plain' ? ' wf-input-plain' : ''}` };
 }
 
 function renderTextarea(node, ctx, lib) {

@@ -943,3 +943,15 @@ principles:
   - no_runtime_logic
   - no_hidden_state
   - schema_first_design
+
+# Additive presentation contract (spec 1.1).
+presentationExtensions:
+  buttonAndInput:
+    icon: Font Awesome Free canonical name or alias
+    iconStyle: [solid, regular, brands]
+    iconPosition: [start, end, center]
+  cornerStyle: [sharp, rounded, pill]
+  nodeSticky: [top, bottom, none]
+  imagePlaceholder:
+    source: omit src
+    description: alt is visible, wraps and supplies an accessible image name

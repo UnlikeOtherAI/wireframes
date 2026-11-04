@@ -12,7 +12,7 @@ const { runBuild } = require('../../engine/build/fs-writer');
 const { launchChromium } = require('../../engine/screenshots/playwright-launcher');
 
 const FIXTURE = path.join(__dirname, '..', '..', 'engine', 'renderer', '__fixtures__', 'gallery');
-const BASELINES = path.join(__dirname, '__screenshots__', 'gallery');
+const BASELINES = path.join(__dirname, '__screenshots__', 'gallery', ...(process.platform === 'win32' ? ['win32'] : []));
 // One page per family, plus both modes and an auth screen.
 const PAGE_IDS = ['containers', 'content', 'forms', 'data', 'charts', 'navigation_elements', 'line_structure', 'line_forms', 'auth'];
 const MAX_DIFF_PIXEL_RATIO = 0.01;

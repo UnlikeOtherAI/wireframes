@@ -98,7 +98,7 @@ Button icon also supports iconStyle (solid|regular|brands) and iconSize (xs|sm|l
       props: { label: "Profile", icon: user }
 \`\`\`
 
-Browse icons at https://fontawesome.com/search?o=r&m=free
+Search locally: wf icons search "burger menu" --json. It returns a bounded set of real Free names/styles.\nButton/input iconPosition: start|end|center; button center is icon-only and keeps its label as its accessible name.\nInput center moves to start while focused or filled, so text stays readable.\nUse wireframeStyle.corner: {style: pill} for full caps, not border-radius: 50%.\nPut sticky: top on a bar before the scrolling content, not inside a short separate wrapper.\nImage placeholders omit src and describe the intended picture in alt.
 
 ## Document Types
 

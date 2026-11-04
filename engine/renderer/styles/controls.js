@@ -58,6 +58,14 @@ const controlStyles = [
   '.wf-field-invalid .wf-control,.wf-field-invalid textarea{border-color:var(--wf-tone);border-width:2px}',
   '.wf-select-searchable .wf-control select{padding-left:0}',
 
+  '.wf-control-center{position:relative}',
+  '.wf-control-center input{padding-inline-start:36px}',
+  '.wf-affix-center{position:absolute;inset:0;gap:6px;pointer-events:none;justify-content:center}',
+  '.wf-input-placeholder{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 44px)}',
+  '.wf-control-center:not(:focus-within):has(input:placeholder-shown) input::placeholder{color:transparent}',
+  '.wf-control-center:focus-within .wf-affix-center,.wf-control-center:not(:has(input:placeholder-shown)) .wf-affix-center{inset-inline-start:0;inset-inline-end:auto}',
+  '.wf-control-center:focus-within .wf-input-placeholder,.wf-control-center:not(:has(input:placeholder-shown)) .wf-input-placeholder{display:none}',
+
   // --- Special inputs ---
   '.wf-otp{display:flex;gap:8px}',
   '.wf-otp-box{width:38px;height:44px;border:1px solid var(--wf-line);border-radius:var(--wf-corner-radius,6px);background:#ffffff}',

@@ -11,6 +11,7 @@ const controlPrimitives = [
       icon: { type: 'string' },
       iconStyle: { enum: ['solid', 'regular', 'brands'] },
       iconSize: { type: 'string' },
+      iconPosition: { enum: ['start', 'end', 'center'] },
       variant: { enum: ['primary', 'secondary', 'ghost', 'danger', 'link'] },
       size: { enum: ['sm', 'md', 'lg'] },
       iconOnly: { type: 'boolean' },
@@ -41,6 +42,7 @@ const controlPrimitives = [
     summary: 'Single-line field. inputType covers search, date, range, otp, colour and more.',
     props: {
       label: { type: 'string', primary: true },
+      variant: { enum: ['default', 'plain'] },
       placeholder: { type: 'string' },
       inputType: {
         enum: [
@@ -49,6 +51,9 @@ const controlPrimitives = [
         ],
       },
       value: { type: ['string', 'number'] },
+      icon: { type: 'string' },
+      iconStyle: { enum: ['solid', 'regular', 'brands'] },
+      iconPosition: { enum: ['start', 'end', 'center'] },
       prefix: { type: 'string' },
       suffix: { type: 'string' },
       help: { type: 'string' },

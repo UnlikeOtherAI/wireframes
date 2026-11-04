@@ -479,3 +479,12 @@ With this structure:
 * Global selected state
 * Safe for external tool integration
 * Exportable package
+
+## Sticky content and icon decoration
+
+Ordinary nodes support sticky: top|bottom|none, using the same containing-scroll semantics as template regions.
+A bar must precede content in that same region. A separate short wrapper or an overflow/clipping ancestor can limit its travel.
+The engine warns for top bars with no following sibling content and bars inside known independently scrolling containers.
+Input icon positions start/end are logical sides. The center treatment preserves the full-width input hit area and moves to start on focus or value.
+An icon and authored prefix/suffix on the same side is ICON_AFFIX_CONFLICT.
+See schema.md for exact props and corner.style: pill.

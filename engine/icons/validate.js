@@ -18,6 +18,7 @@ function validateIconReferences(documents, index) {
   };
   const visit = (value, path) => {
     if (!value || typeof value !== 'object') return;
+    if (value instanceof Map) { for (const [key, item] of value) visit(item, path + '.' + key); return; }
     if (Array.isArray(value)) { value.forEach((item, i) => visit(item, path + '[' + i + ']')); return; }
     if (value.component === 'icon') check(value.props?.name, value.props?.style, path + '.props.name');
     if (typeof value.icon === 'string') check(value.icon, value.iconStyle, path + '.icon');

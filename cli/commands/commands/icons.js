@@ -1,6 +1,5 @@
 'use strict';
 
-const catalogue = require('../../../engine/icons/catalogue');
 const { searchIcons } = require('../../../engine/icons/search');
 
 function runIcons(args = []) {
@@ -20,6 +19,7 @@ function runIcons(args = []) {
     process.exitCode = 1;
     return;
   }
+  const catalogue = require('../../../engine/icons/catalogue');
   const query = words.join(' ');
   const icons = searchIcons(catalogue, query, { style, limit });
   console.log(json ? JSON.stringify({ query, icons }) : icons.length
