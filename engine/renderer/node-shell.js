@@ -8,7 +8,7 @@ const { surfaceElevationOverride, wireframeNodeStyleOverrides } = require('./wir
 const { decideFrame } = require('./frame-rules');
 const { token, scale } = require('./sizing-tokens');
 const { buildNodeDataAttributes, joinAttrs, navigationAttrs, sourceAttrs } = require('./render-attrs');
-const { isObject, toSafeClass, paneMetaToStyle } = require('./render-utils');
+const { isObject, toSafeClass, paneMetaToStyle, escapeHtml } = require('./render-utils');
 const { frameClass, resolvePrimitiveName } = require('../schema/primitive-registry');
 
 // Elements that get a structural size from a token rather than from the author.
@@ -207,7 +207,7 @@ function buildShell(node, element, ctx) {
   const attrs = [`data-wf-frame="${decision.frame}"`];
   const corner = appearance?.corner?.style || node.wireframeStyle?.corner?.style || ctx.pageStyle?.corner?.style;
   if (corner === 'pill') attrs.push('data-wf-corner="pill"');
-  if (appearance) attrs.push('data-wf-skin-role="' + appearance.role + '"');
+  if (appearance) attrs.push('data-wf-skin-role="' + escapeHtml(appearance.role) + '"');
   if (ctx.explain === true) {
     attrs.push(`data-wf-why="${decision.rule}:${decision.reason}"`);
   }

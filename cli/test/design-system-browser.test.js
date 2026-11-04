@@ -130,3 +130,39 @@ test('every registry sample renders and exposes selection while the chosen varia
     if (evidence) await page.screenshot({ path: path.join(evidence, 'skins-catalogue-controls.png') });
   } finally { await page.close(); }
 });
+
+test('direct rendering rejects hostile appearance CSS and unknown-component attributes', async () => {
+  const { renderNode } = require('../../engine/renderer/primitives');
+  const { paintMarkup } = require('../../engine/design-system/paint');
+  const attack = '\" onmouseover=\"window.skinInjected=true\"><img data-skin-injected src=x onerror=\"window.skinInjected=true\">';
+  const style = {
+    colors: { text: attack, background: 'url(https://invalid.test/track)', border: attack, accent: attack },
+    border: { style: attack, width: attack }, corner: { style: 'rounded', radius: attack },
+  };
+  const map = project();
+  const pageData = map.pages.get('home').page;
+  pageData.wireframeStyle = style;
+  pageData.slots[0].content.push(
+    { id: 'hostile', component: 'button', props: { label: 'Safe button' }, wireframeStyle: style },
+    { id: 'unknown', component: attack, wireframeStyle: style },
+  );
+  const output = renderPage(map, 'home', { deviceChrome: false });
+  assert.equal(output.ok, true, output.error);
+  const direct = renderNode({ id: 'direct', component: 'button', props: { label: 'Direct' }, wireframeStyle: style },
+    { skin: { defaults: style }, pageStyle: style });
+  // Escaping remains necessary even if an internal caller supplies unresolved CSS.
+  const painted = paintMarkup('<button>Painted</button>', { component: 'button' },
+    { colors: { text: attack } }, {});
+  const page = await browser.newPage();
+  await page.route('**/*', (route) => route.abort());
+  try {
+    await page.setContent(output.html + direct + painted, { waitUntil: 'domcontentloaded' });
+    assert.equal(await page.locator('[data-skin-injected]').count(), 0);
+    assert.equal(await page.locator('[onmouseover], [onerror]').count(), 0);
+    assert.equal(await page.locator('#unknown').getAttribute('data-wf-skin-role'), '');
+    assert.equal(await page.locator('#hostile button').innerText(), 'Safe button');
+    assert.equal(await page.locator('#direct button').innerText(), 'Direct');
+    assert.equal(await page.evaluate(() => window.skinInjected), undefined);
+    assert.equal(await page.locator('#hostile button').evaluate((el) => getComputedStyle(el).backgroundImage), 'none');
+  } finally { await page.close(); }
+});

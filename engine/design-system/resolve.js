@@ -3,12 +3,40 @@
 const { getPrimitive, resolvePrimitiveName } = require('../schema/primitive-registry');
 const { isObject, manifestData } = require('./validate');
 
+// Public renderers may be called without document validation. Only literal
+// appearance values may reach CSS, including page and node-local overrides.
+function safeAppearance(layer) {
+  if (!isObject(layer)) return {};
+  const result = {};
+  const border = layer.border;
+  if (isObject(border)) {
+    result.border = {};
+    if (['solid', 'dashed'].includes(border.style)) result.border.style = border.style;
+    if (['thin', 'medium'].includes(border.width)) result.border.width = border.width;
+  }
+  const corner = layer.corner;
+  if (isObject(corner)) {
+    result.corner = {};
+    if (['sharp', 'rounded', 'pill'].includes(corner.style)) result.corner.style = corner.style;
+    if (Number.isFinite(corner.radius) && corner.radius >= 0) result.corner.radius = corner.radius;
+  }
+  if (isObject(layer.colors)) {
+    result.colors = {};
+    for (const field of ['text', 'background', 'border', 'accent']) {
+      const value = layer.colors[field];
+      if (typeof value === 'string' && (/^#[0-9a-f]{6}$/i.test(value)
+        || (field === 'background' && value === 'transparent'))) result.colors[field] = value;
+    }
+  }
+  return result;
+}
+
 function mergeAppearance(...layers) {
   const result = {};
   for (const layer of layers) {
-    if (!isObject(layer)) continue;
+    const safe = safeAppearance(layer);
     for (const key of ['border', 'corner', 'colors']) {
-      if (isObject(layer[key])) result[key] = { ...result[key], ...layer[key] };
+      if (safe[key]) result[key] = { ...result[key], ...safe[key] };
     }
   }
   return result;
@@ -36,8 +64,9 @@ function documentAppearance(documentMap, pageStyle) {
 }
 
 function standardRole(node) {
-  const component = resolvePrimitiveName(node?.component) || node?.component || '';
-  const entry = getPrimitive(component);
+  const resolved = resolvePrimitiveName(node?.component);
+  const entry = getPrimitive(resolved || '');
+  const component = entry?.name || '';
   const variants = entry?.props?.variant?.enum || [];
   const variant = variants.includes(node?.props?.variant) ? node.props.variant : entry?.defaultVariant;
   return { component, variant: variant || null, role: variant ? `${component}.${variant}` : component };

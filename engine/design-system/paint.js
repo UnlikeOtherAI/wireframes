@@ -1,6 +1,7 @@
 'use strict';
 
 const { resolveAppearance } = require('./resolve');
+const { escapeHtml } = require('../renderer/render-utils');
 const { wireframeRootStyle } = require('../renderer/wireframe-styles');
 
 const BOXES = new Set(['wf-control', 'wf-otp-box', 'wf-color', 'wf-numstepper', 'wf-badge-body',
@@ -59,6 +60,7 @@ function skinShellStyle(node, appearance, frame, options) {
 
 function appendStyle(tag, css) {
   if (!css) return tag;
+  css = escapeHtml(css);
   if (/\sstyle="/.test(tag)) return tag.replace(/\sstyle="([^"]*)"/, (_, old) => ` style="${old};${css}"`);
   return tag.replace(/\s*\/?\>$/, (end) => ` style="${css}"${end}`);
 }
@@ -126,7 +128,7 @@ function paintMarkup(markup, node, appearance, options) {
     if (isAction && current.role === 'button.danger') {
       css.push(`background-color:${colors.background || '#ffffff'};color:${colors.text || 'var(--wf-danger)'};border:1px solid ${colors.border || 'var(--wf-danger)'}`);
     }
-    if (isAction) opening = opening.replace(/\s*\/?\>$/, (end) => ` data-wf-skin-role="${current.role}"${end}`);
+    if (isAction) opening = opening.replace(/\s*\/?\>$/, (end) => ` data-wf-skin-role="${escapeHtml(current.role)}"${end}`);
     if (!VOID.has(tag) && !opening.endsWith('/>')) {
       stack.push({ tag, action, error: isError, accented, checked: classes.has('wf-choice-on') || parent?.checked });
     }
