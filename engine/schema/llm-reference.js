@@ -2,7 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { SUPPORTED_SPEC_VERSION } = require('./constants');
+const { SUPPORTED_SPEC_VERSION, DEFAULT_SPEC_VERSION } = require('./constants');
 
 const schemaPath = path.resolve(__dirname, 'schema.json');
 
@@ -102,7 +102,7 @@ Search locally: wf icons search "burger menu" --json. It returns a bounded set o
 
 ## Document Types
 
-Every YAML file needs: documentType, specVersion: "${SUPPORTED_SPEC_VERSION}", id
+Every YAML file needs: documentType, specVersion: "${DEFAULT_SPEC_VERSION}", id
 
 Types: manifest, sitemap, templates, components, page, dataset
 
@@ -121,7 +121,7 @@ data/<dataset_id>.yaml — optional mock data for tables/lists
 
 \`\`\`yaml
 documentType: page
-specVersion: "${SUPPORTED_SPEC_VERSION}"
+specVersion: "${DEFAULT_SPEC_VERSION}"
 id: my_page
 page:
   id: my_page

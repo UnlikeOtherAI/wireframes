@@ -1,5 +1,8 @@
 'use strict';
 
+const { resolveAppearance } = require('../design-system/resolve');
+const { skinShellStyle } = require('../design-system/paint');
+
 const { layoutToCss, layoutItemCss, absoluteChildStyle } = require('./layout');
 const { surfaceElevationOverride, wireframeNodeStyleOverrides } = require('./wireframe-styles');
 const { decideFrame } = require('./frame-rules');
@@ -166,13 +169,16 @@ function buildShell(node, element, ctx) {
     ? layoutToCss(layout, size, { defaultGridColumns: ctx.defaultGridColumns, density: ctx.density })
     : layoutToCss({ type: 'none' }, size, { defaultGridColumns: ctx.defaultGridColumns, density: ctx.density });
 
+  const appearance = resolveAppearance(node, ctx);
   const outerOnly = [
     layoutItemCss(isObject(node.gridItem) ? node.gridItem : {}),
     absoluteChildStyle(node.position, ctx.parentLayoutType),
     paneMetaToStyle(paneData),
     surfaceElevationOverride(node.elevation, ctx.rendering),
     wrapStyle(element, node, decision, ctx),
-    wireframeNodeStyleOverrides(isObject(node.wireframeStyle) ? node.wireframeStyle : {}, ctx.pageStyle, ctx.rendering),
+    appearance
+      ? skinShellStyle(node, appearance, decision.frame, ctx)
+      : wireframeNodeStyleOverrides(isObject(node.wireframeStyle) ? node.wireframeStyle : {}, ctx.pageStyle, ctx.rendering),
   ].filter(Boolean).join(';');
 
   const style = [layoutCss, outerOnly].filter(Boolean).join(';');
@@ -199,8 +205,9 @@ function buildShell(node, element, ctx) {
   }
 
   const attrs = [`data-wf-frame="${decision.frame}"`];
-  const corner = node.wireframeStyle?.corner?.style || ctx.pageStyle?.corner?.style;
+  const corner = appearance?.corner?.style || node.wireframeStyle?.corner?.style || ctx.pageStyle?.corner?.style;
   if (corner === 'pill') attrs.push('data-wf-corner="pill"');
+  if (appearance) attrs.push('data-wf-skin-role="' + appearance.role + '"');
   if (ctx.explain === true) {
     attrs.push(`data-wf-why="${decision.rule}:${decision.reason}"`);
   }

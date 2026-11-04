@@ -1,5 +1,8 @@
 'use strict';
 
+const { mergeAppearance } = require('../design-system/resolve');
+const { skinPaintStyles } = require('../design-system/paint');
+
 const { renderNode, renderNodes } = require('../renderer/primitives');
 const { sourceAttrs } = require('../renderer/render-attrs');
 const { buildInteractionRuntime } = require('../renderer/interactions');
@@ -82,7 +85,9 @@ function renderRoot(root, options) {
     : root.id || 'root';
   const children = Array.isArray(root.nodes) ? root.nodes : Array.isArray(root.children) ? root.children : [];
   const rootStyleBase = isObject(options.pageStyle) ? options.pageStyle : {};
-  const localPageStyle = mergeWireframeStyle(rootStyleBase, root.wireframeStyle);
+  const localPageStyle = options.skin
+    ? mergeAppearance(rootStyleBase, root.wireframeStyle)
+    : mergeWireframeStyle(rootStyleBase, root.wireframeStyle);
   const rootLayout = isObject(root.layout) ? root.layout : {};
   const rootLayoutType = rootLayout.type || 'stack';
   const isOverlay = root.kind === 'overlay';
@@ -213,6 +218,7 @@ function renderWireframeMarkup({
   appStateDefaults = {},
   pageStateDefaults = {},
   pageStyle = {},
+  skin = null,
   defaultGridColumns = 12,
   projectPath,
   dataSources = {},
@@ -246,6 +252,7 @@ function renderWireframeMarkup({
     annotateSource,
     deviceChrome,
     pageStyle,
+    skin,
     projectPath,
     dataSources,
     defaultGridColumns,
@@ -318,7 +325,7 @@ function renderWireframeMarkup({
     <meta charset="UTF-8" />
     <title>Wireframe ${escapeHtml(pageStyle?.title || 'capture')}</title>
     ${fontAwesomeLink}
-    ${styleMarkup}
+    ${styleMarkup}${skin ? '<style>' + skinPaintStyles + '</style>' : ''}
   </head>
   <body class="wf${adaptClass} wf-mode-${escapeAttr(mode)} wf-platform-${escapeAttr(renderOptions.platform)} wf-density-${escapeAttr(density)}" style="${escapeAttr(platformVars(renderOptions))}">
     ${shellMarkup}

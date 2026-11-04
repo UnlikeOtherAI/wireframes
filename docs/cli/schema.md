@@ -654,3 +654,9 @@ Image placeholders omit src and use alt as an always-visible, wrapping descripti
 Input variant: plain removes its inner frame for composition inside a single framed toolbar or composer; default retains the field frame.
 
 Buttons accept props.route as a route-ID shorthand when there are no explicit interactions. Explicit interactions take precedence. App-bar children are normal interactive controls placed on its trailing side; decorative actions remain supported.
+
+## Named skins (manifest 1.2)
+
+An optional manifest.designSystem stores activeSkin and a skins map. Each named skin has name, optional defaults and roles; appearance values contain optional colors, border and corner. Colours are restricted to #RRGGBB (transparent is also allowed for background). They are not fields of ordinary wireframeStyle objects. Standard role keys derive from the primitive registry and existing variant enums; there is no custom role or new node field.
+
+Saving named skins requires manifest specVersion: "1.2" and manifest.schemaVersion: "1.2". Other document types and new ordinary projects remain 1.1. The .wf container stays wf/1. The reserved skin wireframe selects the legacy appearance. See [the complete contract](design-system.md).

@@ -955,3 +955,33 @@ presentationExtensions:
   imagePlaceholder:
     source: omit src
     description: alt is visible, wraps and supplies an accessible image name
+
+# Named skins use a 1.2 manifest; other documents remain 1.1.
+designSystemExtension:
+  manifestSpecVersion: "1.2"
+  manifestSchemaVersion: "1.2"
+  ordinaryDocumentVersion: "1.1"
+  containerFormat: wf/1
+  path: manifest.designSystem
+  fields:
+    activeSkin: skin ID or reserved wireframe; defaults to wireframe
+    skins: map of Id to Skin
+  Skin:
+    name: required non-empty display name
+    defaults: optional SkinAppearance
+    roles: map of canonical primitive or primitive.variant to SkinAppearance
+  SkinAppearance:
+    colors:
+      text: "#RRGGBB"
+      background: "#RRGGBB or transparent"
+      border: "#RRGGBB"
+      accent: "#RRGGBB"
+    border: existing WireframeStyleOverride.border
+    corner: existing WireframeStyleOverride.corner
+  roleSource: engine/schema/primitive-registry
+  selector: existing node.props.variant
+  restrictions:
+    - no custom roles or token references
+    - colors occur only in skin appearances, never ordinary wireframeStyle
+    - selected named skin must exist; wireframe cannot be overwritten
+    - defaults and roles cannot override state-owned error/status cues implicitly

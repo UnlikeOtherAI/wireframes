@@ -1,0 +1,113 @@
+format: wf/1
+documentType: manifest
+specVersion: '1.2'
+id: manifest
+manifest:
+  projectId: acme
+  name: Company skin example
+  schemaVersion: '1.2'
+  defaultWireframeStyle:
+    border: { style: solid, width: thin }
+    corner: { style: rounded, radius: 8 }
+  designSystem:
+    activeSkin: acme
+    skins:
+      acme:
+        name: Acme Blue
+        defaults:
+          colors: { text: '#172033', background: '#FFFFFF', border: '#CCD3DF', accent: '#1457D9' }
+        roles:
+          button.primary:
+            colors: { text: '#FFFFFF', background: '#1457D9', border: '#1457D9' }
+            corner: { style: pill }
+          button.secondary:
+            colors: { text: '#1457D9', background: '#FFFFFF', border: '#1457D9' }
+          input:
+            corner: { style: rounded, radius: 10 }
+          card:
+            colors: { background: '#F3F6FC' }
+            corner: { style: rounded, radius: 20 }
+      forest:
+        name: Forest
+        defaults:
+          colors: { text: '#173328', background: '#FFFFFF', border: '#B9CFC3', accent: '#146C43' }
+        roles:
+          button.primary:
+            colors: { text: '#FFFFFF', background: '#146C43', border: '#146C43' }
+            corner: { style: rounded, radius: 6 }
+---
+documentType: sitemap
+specVersion: '1.1'
+id: sitemap
+defaultTemplate: main_template
+routes:
+  - { id: checkout, path: /, page: checkout }
+  - { id: confirmation, path: /confirmation, page: confirmation }
+---
+documentType: templates
+specVersion: '1.1'
+id: templates
+templates:
+  main_template:
+    layout: { type: stack }
+    regions:
+      - { id: main, kind: slot }
+---
+documentType: components
+specVersion: '1.1'
+id: components
+components: {}
+---
+documentType: page
+specVersion: '1.1'
+id: checkout
+page:
+  id: checkout
+  template: main_template
+  viewport: { device: tablet, orientation: portrait, platform: ios }
+  slots:
+    - slotId: main
+      content:
+        - id: title
+          component: heading
+          props: { text: Company checkout }
+        - id: details
+          component: card
+          props:
+            title: Your details
+            actions: [{ label: Save draft, variant: secondary }]
+          children:
+            - id: email
+              component: input
+              props: { label: Email, placeholder: name@example.com }
+            - id: terms
+              component: checkbox
+              props: { label: Accept the terms, checked: true }
+            - id: continue
+              component: button
+              props: { label: Continue, variant: primary, icon: arrow-right, iconPosition: end }
+              interaction: [{ type: navigation, targetRoute: confirmation }]
+            - id: delete
+              component: button
+              props: { label: Delete draft, variant: danger }
+---
+documentType: page
+specVersion: '1.1'
+id: confirmation
+page:
+  id: confirmation
+  template: main_template
+  viewport: { device: tablet, orientation: portrait, platform: ios }
+  slots:
+    - slotId: main
+      content:
+        - id: done
+          component: heading
+          props: { text: Ready to continue }
+        - id: status
+          component: badge
+          props: { text: Saved, tone: success, variant: dot }
+        - id: back
+          component: button
+          props: { label: Back to details, variant: secondary }
+          interaction: [{ type: navigation, targetRoute: checkout }]

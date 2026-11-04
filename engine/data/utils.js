@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
-const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
+const { SUPPORTED_SPEC_VERSION, DEFAULT_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
 const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 const { ensureObject, parseJson } = require(path.resolve(__dirname, '..', 'node', 'support'));
 
@@ -307,7 +307,7 @@ function buildDatasetDocument(datasetId, primaryKey, fields = [], items = []) {
 
   return {
     documentType: 'dataset',
-    specVersion: SUPPORTED_SPEC_VERSION,
+    specVersion: DEFAULT_SPEC_VERSION,
     id: datasetId,
     dataset,
   };

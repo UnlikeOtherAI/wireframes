@@ -2097,7 +2097,11 @@
           "const": "manifest"
         },
         "specVersion": {
-          "const": "1.1"
+          "type": "string",
+          "enum": [
+            "1.1",
+            "1.2"
+          ]
         },
         "id": {
           "$ref": "#/$defs/Id"
@@ -2131,6 +2135,9 @@
             },
             "sizing": {
               "$ref": "#/$defs/SizingTokens"
+            },
+            "designSystem": {
+              "$ref": "#/$defs/DesignSystem"
             }
           }
         }
@@ -2675,6 +2682,116 @@
         "tabbar.height": {
           "type": "number",
           "minimum": 0
+        }
+      }
+    },
+    "SkinColors": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "border": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "accent": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^(#[0-9A-Fa-f]{6}|transparent)$"
+        }
+      }
+    },
+    "SkinAppearance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "border": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "style": {
+              "type": "string",
+              "enum": [
+                "solid",
+                "dashed"
+              ]
+            },
+            "width": {
+              "type": "string",
+              "enum": [
+                "thin",
+                "medium"
+              ]
+            }
+          }
+        },
+        "corner": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "style": {
+              "type": "string",
+              "enum": [
+                "sharp",
+                "rounded",
+                "pill"
+              ]
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "colors": {
+          "$ref": "#/$defs/SkinColors"
+        }
+      }
+    },
+    "Skin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "defaults": {
+          "$ref": "#/$defs/SkinAppearance"
+        },
+        "roles": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": {
+            "$ref": "#/$defs/SkinAppearance"
+          }
+        }
+      }
+    },
+    "DesignSystem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skins"
+      ],
+      "properties": {
+        "activeSkin": {
+          "type": "string"
+        },
+        "skins": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": {
+            "$ref": "#/$defs/Skin"
+          }
         }
       }
     },

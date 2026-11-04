@@ -1,9 +1,12 @@
 'use strict';
 
+const { resolveAppearance } = require('../design-system/resolve');
+const { paintMarkup } = require('../design-system/paint');
+
 const { shouldRenderParentSeparators } = require('./layout');
 const { readLocalImage } = require('./wireframe-styles');
 const { PRIMITIVE_COMPONENTS } = require('../schema/primitives');
-const { resolvePrimitiveName } = require('../schema/primitive-registry');
+const { resolvePrimitiveName, getPrimitive } = require('../schema/primitive-registry');
 const { renderOverlay } = require('./overlay-renderer');
 const { PRIMITIVE_RENDERERS } = require('./primitives/index');
 const { buildShell, openTag } = require('./node-shell');
@@ -97,6 +100,8 @@ function renderNode(node, options = {}) {
 
   const rawComponent = String(node.component || '');
   const element = resolvePrimitiveName(rawComponent) || rawComponent;
+  const defaultVariant = getPrimitive(element)?.defaultVariant;
+  if (defaultVariant && node.props?.variant == null) node = { ...node, props: { ...node.props, variant: defaultVariant } };
   const props = isObject(node.props) ? node.props : {};
   const parentLayoutType = options.parentLayoutType || 'stack';
   const paneData = normalizePane(node.pane, parentLayoutType);
@@ -139,6 +144,7 @@ function renderNode(node, options = {}) {
     density: options.density,
     rendering: options.rendering,
     pageStyle: options.pageStyle,
+    skin: options.skin,
     viewport: options.viewport,
     sizing: options.sizing,
     explain: options.explain === true,
@@ -193,6 +199,11 @@ function renderNode(node, options = {}) {
   const renderer = PRIMITIVE_COMPONENTS.has(element) ? PRIMITIVE_RENDERERS[element] : null;
   const result = renderer ? renderer(node, renderCtx, lib) : { inner: '', useChildren: true };
   const normalized = typeof result === 'string' ? { inner: result } : (result || {});
+  const appearance = resolveAppearance(node, options);
+  if (appearance) {
+    normalized.inner = paintMarkup(normalized.inner, node, appearance, options);
+    normalized.after = paintMarkup(normalized.after, node, appearance, options);
+  }
 
   const tag = normalized.tag || 'div';
   const wantsChildren = normalized.useChildren === true || !renderer;

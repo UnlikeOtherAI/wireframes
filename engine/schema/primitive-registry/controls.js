@@ -3,6 +3,7 @@
 const controlPrimitives = [
   {
     name: 'button',
+    defaultVariant: 'secondary',
     family: 'controls',
     frame: 'N',
     summary: 'Button in five variants, three sizes; iconOnly and fab for icon buttons.',
@@ -38,6 +39,7 @@ const controlPrimitives = [
   },
   {
     name: 'input',
+    defaultVariant: 'default',
     family: 'controls',
     frame: 'N',
     summary: 'Single-line field. inputType covers search, date, range, otp, colour and more.',
@@ -171,6 +173,7 @@ const controlPrimitives = [
   },
   {
     name: 'upload',
+    defaultVariant: 'dropzone',
     family: 'controls',
     frame: 'S',
     summary: 'File dropzone, or a plain upload button with variant: button.',

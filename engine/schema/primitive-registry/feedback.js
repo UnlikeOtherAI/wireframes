@@ -3,6 +3,7 @@
 const feedbackPrimitives = [
   {
     name: 'alert',
+    defaultVariant: 'info',
     family: 'feedback',
     frame: 'S',
     summary: 'Banner or inline alert. Variants differ by glyph, stripe hue and edge weight.',

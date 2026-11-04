@@ -1,5 +1,10 @@
 'use strict';
 
+const { documentAppearance, standardRole } = require('../design-system/resolve');
+const { validateDesignSystem } = require('../design-system/validate');
+const { skinPaintStyles } = require('../design-system/paint');
+const { catalogueModel } = require('./model');
+
 // The element catalogue: every element the engine knows, rendered from the
 // registry that defines it. Nothing here is hand-maintained — add a registry
 // entry and it appears, with its props, its example and the box rule it obeys.
@@ -61,10 +66,18 @@ function aliasesFor(name) {
 
 function renderItem(entry, options) {
   const { source, node } = demoFor(entry);
+  if (options.sample?.component === entry.name && options.sample.variant !== undefined) {
+    if (!(entry.props?.variant?.enum || []).includes(options.sample.variant)) throw new Error('Unknown sample variant.');
+    node.props = { ...node.props, variant: options.sample.variant };
+  }
+  const role = standardRole(node);
+  const selectAttrs = options.selectable
+    ? ' data-wf-catalogue-component="' + entry.name + '" data-wf-catalogue-variant="' + (role.variant || '') + '"'
+    : '';
   const demo = node ? renderNode(node, { ...options, surfaceDepth: 0 }) : '';
   const modeClass = options.mode === 'line' ? '' : ' cat-demo-dark';
 
-  return `<article class="cat-item" id="el-${escapeHtml(entry.name)}">
+  return `<article class="cat-item" id="el-${escapeHtml(entry.name)}"${selectAttrs}>
   <div class="cat-head">
     <span class="cat-name">${escapeHtml(entry.name)}</span>
     <span class="cat-frame">${escapeHtml(FRAME_NOTE[entry.frame] || '')}</span>
@@ -111,7 +124,14 @@ function sections(options) {
 function buildCataloguePage(options = {}) {
   const mode = options.mode === 'line' ? 'line' : 'card';
   const platform = ['ios', 'android'].includes(options.platform) ? options.platform : 'web';
-  const renderOptions = { mode, platform, pageStyle: {}, dataSources: {} };
+  const errors = options.documentMap ? validateDesignSystem(options.documentMap.manifest) : [];
+  if (errors.length) throw new Error(errors[0].message);
+  if (options.sample && !PRIMITIVES.some((entry) => entry.name === options.sample.component)) throw new Error('Unknown sample component.');
+  const appearance = options.documentMap ? documentAppearance(options.documentMap) : { pageStyle: {} };
+  const renderOptions = { mode, platform, pageStyle: {}, dataSources: {},
+    ...(options.documentMap ? { ...appearance, rendering: { mode },
+      viewport: { device: platform === 'web' ? 'web' : 'tablet', platform },
+      sample: options.sample, selectable: true } : {}) };
   const fontAwesomeHref = options.fontAwesomeHref || './_shared/fa/css/all.min.css';
 
   return `<!doctype html>
@@ -122,7 +142,7 @@ function buildCataloguePage(options = {}) {
     <title>wf — element catalogue</title>
     <link rel="stylesheet" href="${escapeHtml(fontAwesomeHref)}" />
     <style>${catalogueStyles}</style>
-    <style>${buildWireframeStyles()}</style>
+    <style>${buildWireframeStyles()}</style>${renderOptions.skin ? '<style>' + skinPaintStyles + '</style>' : ''}
   </head>
   <body>
     <div class="cat-shell">
@@ -144,4 +164,4 @@ function buildCataloguePage(options = {}) {
 </html>`;
 }
 
-module.exports = { buildCataloguePage, FAMILY_TITLE, FRAME_NOTE };
+module.exports = { buildCataloguePage, catalogueModel, FAMILY_TITLE, FRAME_NOTE };

@@ -14,7 +14,7 @@ The smallest useful solution is a component gallery generated from the existing 
 
 | Area | Source and behavior |
 | --- | --- |
-| Components | `engine/schema/primitive-registry/index.js` collects 56 canonical primitives in six families at the inspected revision. Entries own props, aliases, frame class and examples. `scripts/sync-schema-primitives.js` generates schema sections. |
+| Components | `engine/schema/primitive-registry/index.js` collects 54 canonical primitives in six families at the inspected revision. Entries own props, aliases, frame class and examples. `scripts/sync-schema-primitives.js` generates schema sections. |
 | Catalogue | `engine/catalogue/index.js` renders every entry through `renderNode`; `engine/catalogue/demos.js` parses examples and fills illustrative container children. `wf catalogue` generates the public catalogue, which is not editable. |
 | Structural roles | `engine/renderer/sizing-tokens.js`, `frame-rules.js` and `node-shell.js` use `node.role` for header/sidebar/main and other layout roles. These affect dimensions and frames. |
 | Appearance | `engine/renderer/styles/base.js` defines grey ink/fill/line variables and severity colours. `styles/controls.js` and primitive renderers implement variants and states. There is no company skin. |
@@ -55,7 +55,7 @@ Ship named project-local skins, the complete registry component catalogue, stand
 
 ### Minimal schema
 
-Add optional `manifest.designSystem: { activeSkin, skins }`. Each skin has a display `name`, optional `defaults`, and a `roles` map. Defaults and role values reuse the existing partial `WireframeStyleOverride`, extended with optional `colors: { text, background, border, accent }`. The extension is also accepted by the existing style objects, but this release exposes colour editing through the skin inspector only. Existing local overrides remain readable and take precedence.
+Add optional `manifest.designSystem: { activeSkin, skins }`. Each skin has a display `name`, optional `defaults`, and a `roles` map. Defaults and role values reuse the existing partial `WireframeStyleOverride`, extended with optional `colors: { text, background, border, accent }`. Colours exist only in skin defaults/roles, in a separate SkinAppearance schema. Existing WireframeStyle objects retain border/corner fields; their explicit local overrides take precedence.
 
 ```yaml
 manifest:
@@ -95,7 +95,7 @@ This proposed fragment is not accepted by the inspected engine. Pill is the inde
 - The standard role selector is the existing `props.variant`. There is no `skinRole` field. Choosing Primary button on a real node writes `props.variant: primary` through the existing edit operation. `node.role` retains structural frame/sizing semantics.
 - Reset removes a property. Do not persist null or empty-string style values. Saving a new name/ID copies a skin; renaming its display name preserves ID.
 
-Keep `.wf` at `wf/1`, without a new document type. Add optional fields under the existing schema contract and publish minimum supported engine/mobile versions. A schema-version change, if necessary, needs an explicit compatibility review because the current validator pins `specVersion` to `1.1`. Older editors must not silently strip these fields.
+Keep `.wf` at `wf/1`. Saving named skins promotes the manifest specVersion and manifest.schemaVersion to 1.2; other document types remain 1.1. The new engine accepts both manifest versions. Retain 1.2 when switching to Wireframe because saved skins remain. Older validating loaders reject 1.2. Already-shipped render-only browser clients that skip validation cannot be made to warn by a new marker; they are unsupported for skinned files, and brand parity is not claimed.
 
 ### Resolution and inheritance
 
@@ -130,7 +130,7 @@ Preview always uses a cloned document map. Never serialize temporary render over
 
 ### Complete catalogue and minimal iPad flow
 
-Generate metadata and examples from `PRIMITIVES`, `FAMILY_ORDER`, aliases and `demoFor`. Both the existing HTML catalogue and app consume that model. At the inspected revision there are 56 entries; the implemented count is always the registry's count. Render through the engine, not native approximations.
+Generate metadata and examples from `PRIMITIVES`, `FAMILY_ORDER`, aliases and `demoFor`. Both the existing HTML catalogue and app consume that model. At the inspected revision there are 54 entries; the implemented count is always the registry's count. Render through the engine, not native approximations.
 
 Show each canonical component once, grouped by family, with its rendered example. Search matches name, alias and summary. A container's labelled outer sample is selectable without accidentally selecting its children. Variants in the inspector come from registry props; choosing one changes that example only until the user assigns it to a real node. No custom-role creation is shown.
 
@@ -251,3 +251,26 @@ No new identity/org/team/invitation store or auth changes; no cloud marketplace/
 ## Review and Verification Record
 
 Source inspection only. No skin implementation, native build, rendered iPad flow, screenshot acceptance or performance measurement is claimed. The Mac noninteractive shell lacked `rg`, `node` and `steroids`; source inspection used available read-only tools. Required cross-provider review is pending and must be recorded before implementation. The 4 November refinement narrows the proposal to standard roles and literal colours; it also adopts the parent review finding that iPad pill corners need node-local painted-part selectors. No implementation or measured acceptance result is implied.
+
+### Cross-provider review decisions — 4 November 2026
+
+Claude Sonnet 5.5 (firstParty) completed a read-only review of the narrowed design at ae616a3. Raw result: D:\Temp\wireframe-interactive-01a1a66a\claude-skins-review.json. The implementation agent read the result and assessed each finding before code.
+
+| Finding | Decision |
+| --- | --- |
+| H1 colour/style merge | Adopt: separate SkinAppearance with colors plus existing partial border/corner fields. Do not extend existing WireframeStyle with colours. Pill evidence was from an earlier source; reuse the parent implementation. |
+| H2 validation | Adopt: explicit JSON schema plus semantic skin-ID/reserved-ID/role-key/activeSkin checks. The custom validator does not enforce propertyNames. Reject invalid future fields rather than promising editable support. |
+| H3 explicit overrides | Adopt: compute a complete effective style for each skinned node before applying its explicit local leaves. Do not compare local values only against the page. |
+| H4 entry-point parity | Adopt: one effective-page helper shared by pure build, disk build, serve, screenshots and why. Preserve legacy replace behavior for projects without an active named skin. |
+| H5 parent leakage | Reject the suggested restriction to leaf controls: the user requires every component. Adopt isolation at node painted parts; separately rendered child nodes resolve their own appearance. No broad legacy numeric-radius repair. |
+| H6 state/severity | Adopt: generic defaults never replace error/danger/status signals. Explicit severity-role overrides are deliberate. Preserve invalid-field error borders regardless of generic role colour. |
+| M1 variant mismatch | Reject broad class renaming: actual primitive dispatch supports button.link. Verify emitted variants/defaults from the active renderer; keep standard roles registry-derived. |
+| M2 composite actions | Adopt: apply the same button-role resolver to action markup in headers, forms, empty states and overlays. |
+| M3 accent | Adopt: define consumers and catalogue capabilities for focus, checked/toggled controls, selected navigation/segments, progress/rating. Unsupported parts are exposed as unavailable. |
+| M4 platform/mode | Adopt: explicit skin/local corners and colours beat platform/mode on painted parts, with the parent's node-local pill marker. Test numeric/pill in iOS card/line. |
+| M5 catalogue | Adopt: documentMap/sample options with common resolver; no-options/no-skin generated output remains identical. |
+| M6 compatibility | Adopt the problem, reject the suggested new-only marker as sufficient. Manifest spec/schema 1.2 uses the existing older-loader version gate. Existing render-only clients cannot be forced to validate; explicitly unsupported, not claimed to warn. |
+| Low: frozen input, reserved ID | Adopt focused nonmutation and reserved-ID tests. |
+| Low: transparent contrast | Native inspector must calculate contrast against the actual composited backdrop, or report unavailable rather than invent a ratio. Mobile implementation remains with the parent. |
+
+Implementation is now authorized for the engine tranche only. The iPad flow, screenshots and performance targets remain unmeasured until the parent exercises them.

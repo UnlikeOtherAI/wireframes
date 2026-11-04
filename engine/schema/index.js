@@ -2,6 +2,7 @@
 
 const { SUPPORTED_SPEC_VERSION } = require('./constants');
 const { validateDocumentAgainstSchema } = require('./validator');
+const { validateDesignSystem } = require('../design-system/validate');
 
 const SUPPORTED_DOCUMENT_TYPES = new Set([
   'manifest',
@@ -144,6 +145,7 @@ function validateDocument(document, filePath, supportedSpecVersion = SUPPORTED_S
 
   if (!skipSchemaValidation) {
     const schemaErrors = validateDocumentAgainstSchema(document, filePath);
+    if (documentType === 'manifest') schemaErrors.push(...validateDesignSystem(document, { schema: false }));
     if (schemaErrors.length > 0) {
       throw new SchemaLoadError(
         `Document in ${filePath} does not match schema.json`,

@@ -1,5 +1,8 @@
 'use strict';
 
+const { resolveAppearance } = require('../design-system/resolve');
+const { paintMarkup, skinShellStyle } = require('../design-system/paint');
+
 const { toPx } = require('./layout');
 const { sourceAttrs } = require('./render-attrs');
 
@@ -185,13 +188,16 @@ function renderOverlay(node, options, childStyle, ctx) {
     }).join('')}</footer>`
     : '';
 
+  const appearance = resolveAppearance(node, options);
+  const paint = (markup) => paintMarkup(markup, node, appearance, options);
   const contentSizeStyle = [
+    skinShellStyle(node, appearance, 'surface', options),
     overlaySizeStyle(node.size),
     overlayDefaultSize(overlayType, node.size, options),
   ].filter(Boolean).join(';');
   const contentStyleAttr = contentSizeStyle ? ` style="${ctx.escapeAttr(contentSizeStyle)}"` : '';
 
-  return `<div${ctx.joinAttrs(node.id, overlayClasses, overlayStyle)}${dataAttrs}>${backdrop}<div class="wf-overlay-content" data-wf-frame="surface"${contentStyleAttr}>${header}${children}${actions}</div></div>`;
+  return `<div${ctx.joinAttrs(node.id, overlayClasses, overlayStyle)}${dataAttrs}>${backdrop}<div class="wf-overlay-content" data-wf-frame="surface"${contentStyleAttr}>${paint(header)}${children}${paint(actions)}</div></div>`;
 }
 
 const { token } = require('./sizing-tokens');

@@ -75,6 +75,7 @@ function explainNode({ projectPath, pageId, nodeId }) {
       appStateDefaults: target.appStateDefaults,
       pageStateDefaults: target.pageStateDefaults,
       pageStyle: target.wireframeStyle,
+      skin: target.skin,
       rendering: target.rendering || {},
       defaultGridColumns: target.defaultGridColumns,
       bodyLayoutType: target.bodyLayoutType || 'row',

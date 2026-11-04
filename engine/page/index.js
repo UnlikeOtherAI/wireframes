@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
-const { SUPPORTED_SPEC_VERSION } = require('../schema/constants');
+const { SUPPORTED_SPEC_VERSION, DEFAULT_SPEC_VERSION } = require('../schema/constants');
 const { loadDocumentFromFile } = require('../schema/loader');
 
 const PAGE_ID_REGEX = /^[a-z][a-z0-9_]*$/;
@@ -288,7 +288,7 @@ function addPage({
 
   const pageDoc = {
     documentType: 'page',
-    specVersion: SUPPORTED_SPEC_VERSION,
+    specVersion: DEFAULT_SPEC_VERSION,
     id: normalizedPageId,
     page: {
       id: normalizedPageId,

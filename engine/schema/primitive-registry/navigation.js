@@ -3,6 +3,7 @@
 const navigationPrimitives = [
   {
     name: 'tab_bar',
+    defaultVariant: 'underline',
     family: 'navigation',
     frame: 'E',
     summary: 'In-page tabs. Pass tabs[] for one line, or children for full control.',
@@ -38,6 +39,7 @@ const navigationPrimitives = [
   },
   {
     name: 'pagination',
+    defaultVariant: 'numbers',
     family: 'navigation',
     frame: 'N',
     summary: 'Page controls; variant dots doubles as carousel/onboarding dots.',
