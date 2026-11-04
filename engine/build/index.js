@@ -5,6 +5,7 @@ const { validateDesignSystem } = require('../design-system/validate');
 
 const { normalizePlatform: resolveChromePlatform } = require('../renderer/platform');
 const { resolveTemplatePage } = require('../resolver');
+const { buildOverlayRoots } = require('../resolver/nodes');
 const { stampDocumentSources } = require('./source-stamps');
 const {
   renderWireframeMarkup,
@@ -130,12 +131,17 @@ function resolvePageTree(documentMap, pageId) {
     return { ok: false, error: resolved.error };
   }
 
+  const templateOverlays = buildOverlayRoots(template.overlays, components, 'template');
+  if (!templateOverlays.ok) return templateOverlays;
+  const pageOverlays = buildOverlayRoots(page.overlays, components, 'page');
+  if (!pageOverlays.ok) return pageOverlays;
+
   const templateLayout = isObject(template.layout) ? template.layout : {};
   const bodyLayoutType = templateLayout.type === 'row' ? 'row' : 'stack';
 
   return {
     ok: true,
-    roots: Array.isArray(resolved.roots) ? resolved.roots : [],
+    roots: [...(Array.isArray(resolved.roots) ? resolved.roots : []), ...templateOverlays.roots, ...pageOverlays.roots],
     bodyLayoutType,
     bodyLayout: templateLayout,
     page,

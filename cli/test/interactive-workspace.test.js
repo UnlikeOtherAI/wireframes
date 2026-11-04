@@ -115,3 +115,36 @@ test('sticky bar and user menu keep working after a long scroll across three rea
     assert.equal(await page.locator('#account_menu').isVisible(), false);
   } finally { await page.close(); }
 });
+
+test('in-memory app rendering includes and activates the same page and template overlays', async () => {
+  const yaml = require('js-yaml');
+  const load = (name) => yaml.load(fs.readFileSync(path.join(example, name), 'utf8'));
+  const templates = load('templates.yaml');
+  templates.templates.workspace.overlays = [{
+    id: 'template_help', type: 'dialog', content: [{ id: 'help_title', component: 'heading', props: { text: 'Help' } }],
+  }];
+  const map = { manifest: load('manifest.yaml'), sitemap: load('sitemap.yaml'), templates,
+    components: load('components.yaml'), pages: new Map(['home', 'profile', 'library'].map(id => [id, load('pages/' + id + '.yaml')])) };
+  const result = require('../../engine/build').renderPage(map, 'home', {
+    annotateSource: true, deviceChrome: false, routeTable: {home:'#home',profile:'#profile',library:'#library'},
+  });
+  assert.equal(result.ok, true, result.error);
+  const page = await browser.newPage({ viewport: {width:1024,height:1366} });
+  try {
+    await page.setContent('<iframe style="width:100%;height:1300px" sandbox="allow-scripts allow-same-origin"></iframe>');
+    await page.evaluate(html => {
+      window.routes = [];
+      window.addEventListener('message', event => {
+        if (event.data?.type === 'wf:navigate') window.routes.push(event.data.routeId);
+      });
+      document.querySelector('iframe').srcdoc = html;
+    }, result.html);
+    const app = page.frameLocator('iframe');
+    await app.getByRole('button', {name:'Ada',exact:true}).click();
+    await app.getByRole('link', {name:'Your profile',exact:true}).waitFor({state:'visible'});
+    assert.equal(await app.locator('#template_help').count(), 1);
+    assert.equal(await app.locator('#account_menu #account_actions').getAttribute('data-wf-source'), 'page:home#account_actions');
+    await app.getByRole('link', {name:'Your profile',exact:true}).click();
+    await page.waitForFunction(() => window.routes.includes('profile'));
+  } finally { await page.close(); }
+});
