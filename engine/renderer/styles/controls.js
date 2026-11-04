@@ -24,6 +24,8 @@ const controlStyles = [
   '.wf-mode-card .wf-button-ghost button,.wf-mode-card .wf-button-ghost .wf-button-link{background:transparent;color:var(--wf-ink-2)}',
   '.wf-mode-card .wf-button-link button,.wf-mode-card .wf-button-link .wf-button-link{background:transparent;color:var(--wf-ink);text-decoration:underline;min-width:0;padding:0}',
 
+  '.wf-button button .wf-icon-glyph,.wf-button .wf-button-link .wf-icon-glyph{color:inherit}',
+
   // --- Segmented control ---
   '.wf-segmented{display:inline-flex;align-items:stretch;width:fit-content;border-radius:var(--wf-corner-radius,6px);overflow:hidden}',
   '.wf-mode-line .wf-segmented{border:1px solid var(--wf-line-strong);border-radius:0}',

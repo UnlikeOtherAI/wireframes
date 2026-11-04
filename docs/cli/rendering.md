@@ -1000,3 +1000,5 @@ A centred empty input decoration is pointer-transparent; the native input retain
 Explicit node-local corner.style: pill applies after platform/mode rules to that node's painted parts, without making all descendants pills.
 Sticky nodes remain in flow, stick within their scroll container and do not need JavaScript.
 Image descriptions stay visible without hovering, and are exposed as accessible image names.
+
+App-bar child nodes render in the same row after built-in title/actions, preserving their IDs and interactions. Sticky app bars have an opaque fill. Button glyphs inherit the painted button text colour. Routed buttons use actual anchors in CLI/browser output as well as the native host.

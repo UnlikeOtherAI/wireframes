@@ -652,3 +652,5 @@ Nodes accept sticky: top|bottom|none. Put a top bar before the content in its co
 Image placeholders omit src and use alt as an always-visible, wrapping description over the existing cross.
 
 Input variant: plain removes its inner frame for composition inside a single framed toolbar or composer; default retains the field frame.
+
+Buttons accept props.route as a route-ID shorthand when there are no explicit interactions. Explicit interactions take precedence. App-bar children are normal interactive controls placed on its trailing side; decorative actions remain supported.

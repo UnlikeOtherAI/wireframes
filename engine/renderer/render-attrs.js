@@ -156,11 +156,10 @@ function joinAttrs(nodeId, classes, style, extraAttrs = []) {
 }
 
 function primaryNavigationTarget(node, options = {}) {
-  if (!Array.isArray(node?.interaction) || node.interaction.length !== 1) {
-    return null;
-  }
-
-  const interaction = node.interaction[0];
+  const interactions = Array.isArray(node?.interaction) ? node.interaction : [];
+  const route = node?.component === 'button' && typeof node.props?.route === 'string' ? node.props.route : '';
+  if (interactions.length !== 1 && !(interactions.length === 0 && route)) return null;
+  const interaction = interactions[0] || { type: 'navigation', targetRoute: route };
   if (!isObject(interaction) || interaction.type !== 'navigation' || interaction.condition || typeof interaction.targetRoute !== 'string') {
     return null;
   }

@@ -12,6 +12,7 @@ const controlPrimitives = [
       iconStyle: { enum: ['solid', 'regular', 'brands'] },
       iconSize: { type: 'string' },
       iconPosition: { enum: ['start', 'end', 'center'] },
+      route: { type: 'string' },
       variant: { enum: ['primary', 'secondary', 'ghost', 'danger', 'link'] },
       size: { enum: ['sm', 'md', 'lg'] },
       iconOnly: { type: 'boolean' },

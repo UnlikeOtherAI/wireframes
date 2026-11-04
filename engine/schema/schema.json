@@ -3176,6 +3176,9 @@
             "center"
           ]
         },
+        "route": {
+          "type": "string"
+        },
         "variant": {
           "type": "string",
           "enum": [

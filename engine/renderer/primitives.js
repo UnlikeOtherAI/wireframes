@@ -197,7 +197,7 @@ function renderNode(node, options = {}) {
   const tag = normalized.tag || 'div';
   const wantsChildren = normalized.useChildren === true || !renderer;
   const hasOwnMarkup = (normalized.inner || '') !== '' || (normalized.after || '') !== '';
-  const splitBody = hasOwnMarkup && wantsChildren;
+  const splitBody = hasOwnMarkup && wantsChildren && element !== 'app_bar';
 
   const children = wantsChildren || !SELF_LAID_OUT.has(element)
     ? renderChildren(node, childOptions, shell.layout, splitBody ? shell.layoutCss : null)

@@ -161,7 +161,7 @@ function buildShell(node, element, ctx) {
 
   // A leaf with no authored layout has nothing to lay out; emitting flexbox for
   // it only fights the element's own CSS.
-  const wantsLayout = hasChildren(node) || isObject(node.layout) || LAYOUT_DEFAULTS[element] != null;
+  const wantsLayout = (hasChildren(node) && element !== 'app_bar') || isObject(node.layout) || LAYOUT_DEFAULTS[element] != null;
   const layoutCss = wantsLayout
     ? layoutToCss(layout, size, { defaultGridColumns: ctx.defaultGridColumns, density: ctx.density })
     : layoutToCss({ type: 'none' }, size, { defaultGridColumns: ctx.defaultGridColumns, density: ctx.density });
