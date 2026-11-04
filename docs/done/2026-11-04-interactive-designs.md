@@ -80,3 +80,12 @@ Claude Opus 5.5 (different provider, read-only engine inspection at 47aaeee) rev
 - Verify before claiming success: installed Font Awesome metadata availability, iPad iframe document scrolling, anchored overlay positioning while scrolled, and actual Free font loading.
 
 Maxis baseline: 219 of 220 CLI tests pass after LF checkout and browser installation. The remaining committed gallery golden differs on Windows before any implementation (containers: 10.13%); preserve this baseline and fix the platform-specific screenshot harness without weakening the pixel threshold. Mobile baseline setup initially stopped because PowerShell treated an npm warning as a terminating error; rerun with native exit-code handling.
+
+
+## Verified implementation
+
+- Maxis passed 243 engine/CLI checks, including schema/catalogue drift, icon lookup, pure renderer overlay parity, styled samples and browser journeys. The runtime revision is 093731b; later changes add review evidence and repair four unavailable admin fixture icon references.
+- Actual CLI burger-menu/search requests returned bars and magnifying-glass first. Both the interactive example and admin wireframes validated and built.
+- Browser checks exercised three linked pages, typed and cleared fields, Free solid/regular/brands glyphs, pill geometry, persistent image captions and a menu after 1000 px of scrolling (sticky offset within 1 px). Captions meet 4.5:1 in the exercised default/company palettes.
+- The native consumer was used directly in a Release iPad Air 13 M3 simulator on iOS 26.5: navigation, typing, sticky menu, a real model edit, colour picking, skin save/restart, copying into a blank project, switching and invalid-colour recovery. All 54 registry samples also loaded through native UI automation. Physical-device signing remained blocked by the Mac keychain; no physical iPad pass or pairing verification is claimed.
+- Matching base/final captures are in docs/images/interactive-designs-review; only changed states are included in the pull request.
