@@ -1,8 +1,7 @@
 documentType: sitemap
 specVersion: "1.1"
 id: sitemap
-sitemap:
-  routes:
-    - { id: home, path: "/", page: home }
-    - { id: library, path: "/library", page: library }
-    - { id: profile, path: "/profile", page: profile }
+routes:
+  - { id: home, path: "/", page: home }
+  - { id: library, path: "/library", page: library }
+  - { id: profile, path: "/profile", page: profile }

@@ -4,7 +4,7 @@ id: home
 page:
   id: home
   template: workspace
-  viewport: { device: tablet, platform: ios }
+  viewport: { device: tablet, platform: ios, orientation: portrait }
   slots:
     - slotId: main
       content:
@@ -271,7 +271,6 @@ page:
               props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
   overlays:
     - id: account_menu
-      kind: overlay
       type: popover
       trigger: account_button
       placement: bottom

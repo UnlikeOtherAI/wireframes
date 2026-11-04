@@ -27,6 +27,7 @@ async function open() {
   const page = await browser.newPage({ viewport: { width: 1024, height: 1366 } });
   await page.goto(pathToFileURL(path.join(output, 'tablet/home.html')).href, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
+  await shot(page, 'workspace-debug-initial');
   return page;
 }
 async function shot(page, name) {

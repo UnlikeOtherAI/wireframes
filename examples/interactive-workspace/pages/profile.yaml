@@ -4,7 +4,7 @@ id: profile
 page:
   id: profile
   template: workspace
-  viewport: { device: tablet, platform: ios }
+  viewport: { device: tablet, platform: ios, orientation: portrait }
   slots:
     - slotId: main
       content:
@@ -55,7 +55,6 @@ page:
                   props: { label: Workspace home, icon: house, route: home }
   overlays:
     - id: account_menu
-      kind: overlay
       type: popover
       trigger: account_button
       placement: bottom
