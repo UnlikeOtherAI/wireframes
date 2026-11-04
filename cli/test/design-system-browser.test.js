@@ -92,6 +92,7 @@ test('real disk build resolves exactly the same skinned appearance as the browse
   const source = path.join(base, 'source');
   const output = path.join(base, 'output');
   fs.mkdirSync(source);
+  fs.writeFileSync(path.join(source, '.wfrc.yaml'), yaml.dump({ cli: { build: { outputDir: './build', basePath: '..' } } }));
   const map = project();
   const docs = [map.manifest, map.sitemap, map.templates, map.components, ...map.pages.values()];
   for (const document of docs) {

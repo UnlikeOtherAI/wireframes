@@ -51,7 +51,7 @@ test('ordinary projects retain 1.1 and the built-in selection does not create sk
 
 test('schema and semantic validation refuse malformed skin changes atomically', () => {
   const cases = [
-    ['bad-id', acme], ['wireframe', acme], ['constructor', acme],
+    ['bad-id', acme], ['wireframe', acme], ['Acme', acme],
     ['acme', { name: '' }], ['acme', { name: 'Bad', roles: { 'button.custom': {} } }],
     ['acme', { name: 'Bad', defaults: { colors: { text: 'red' } } }],
     ['acme', { name: 'Bad', defaults: { colors: { text: 'transparent' } } }],

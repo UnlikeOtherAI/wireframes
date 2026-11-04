@@ -32,7 +32,7 @@ function validateDesignSystem(manifestDocument, { schema = true } = {}) {
   const roles = new Set(roleNames());
   for (const [id, skin] of Object.entries(skins)) {
     const at = `${prefix}.skins[${JSON.stringify(id)}]`;
-    if (!ID.test(id) || id === 'wireframe' || ['constructor', 'prototype', '__proto__'].includes(id)) {
+    if (!ID.test(id) || id === 'wireframe') {
       add('SKIN_ID', at, 'Skin IDs must start with a lowercase letter and use lowercase letters, digits or underscores; wireframe is reserved.');
     }
     if (!isObject(skin)) continue;

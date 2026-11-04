@@ -36,6 +36,15 @@ manifest:
             colors: { text: '#FFFFFF', background: '#146C43', border: '#146C43' }
             corner: { style: rounded, radius: 6 }
 ---
+documentType: config
+id: wfrc
+config:
+  cli:
+    strictValidation: true
+    failOnWarnings: false
+    build: { outputDir: ./build, clean: true, basePath: .. }
+    serve: { port: 8080 }
+---
 documentType: sitemap
 specVersion: '1.1'
 id: sitemap

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://wireframe.spec/schema/v1.1.json",
-  "title": "Wireframe Specification v1.1",
+  "$id": "https://wireframe.spec/schema/v1.2.json",
+  "title": "Wireframe Specification v1.2",
   "type": "object",
   "oneOf": [
     {
@@ -666,7 +666,7 @@
     "WireframeStyleOverride": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Partial wireframe style for per-node and per-overlay overrides. No fields required — inherits from page.",
+      "description": "Partial wireframe style for per-node and per-overlay overrides. No fields required \u2014 inherits from page.",
       "properties": {
         "border": {
           "type": "object",
