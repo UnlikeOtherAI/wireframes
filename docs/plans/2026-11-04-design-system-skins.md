@@ -49,9 +49,13 @@ Primary and secondary buttons remain the existing button primitive and variants.
 
 ## Design
 
+### First-release boundary
+
+Ship named project-local skins, the complete registry component catalogue, standard primitive/variant roles, four literal colour fields and existing border/corner controls. There are no custom roles, new node selector, token references, state-palette editor, skin deletion workflow, account/API store or unrelated admin adapters in this release. This section supersedes the broader initial proposal.
+
 ### Minimal schema
 
-Add optional `manifest.designSystem` containing `activeSkin` and a `skins` map. Each skin contains a display `name`, a flat `colors` token map, optional `defaults`, and a `roles` map. Defaults and role values reuse `WireframeStyleOverride`, extended with an optional `colors` object; allow that colour extension on existing manifest/page/node/overlay styles. Add optional `node.skinRole` for explicit appearance selection. Keep `node.role` unchanged.
+Add optional `manifest.designSystem: { activeSkin, skins }`. Each skin has a display `name`, optional `defaults`, and a `roles` map. Defaults and role values reuse the existing partial `WireframeStyleOverride`, extended with optional `colors: { text, background, border, accent }`. The extension is also accepted by the existing style objects, but this release exposes colour editing through the skin inspector only. Existing local overrides remain readable and take precedence.
 
 ```yaml
 manifest:
@@ -63,135 +67,146 @@ manifest:
     skins:
       acme:
         name: Acme
-        colors:
-          brand: '#1457D9'
-          on_brand: '#FFFFFF'
-          ink: '#172033'
-          surface: '#FFFFFF'
-          border: '#CCD3DF'
         defaults:
           colors:
-            text: { token: ink }
-            background: { token: surface }
-            border: { token: border }
+            text: '#172033'
+            background: '#FFFFFF'
+            border: '#CCD3DF'
+            accent: '#1457D9'
         roles:
           button.primary:
             colors:
-              background: { token: brand }
-              text: { token: on_brand }
-              border: { token: brand }
+              background: '#1457D9'
+              text: '#FFFFFF'
+              border: '#1457D9'
             corner: { style: pill }
           button.secondary:
             colors:
-              background: { token: surface }
-              text: { token: brand }
-              border: { token: brand }
-          input:
-            colors:
-              background: { token: surface }
-              text: { token: ink }
-              border: { token: border }
-              accent: { token: brand }
+              background: '#FFFFFF'
+              text: '#1457D9'
+              border: '#1457D9'
 ```
 
-This is a proposed fragment, not input accepted by the inspected engine. `pill` is the coordinated corner-style extension being implemented independently.
+This proposed fragment is not accepted by the inspected engine. Pill is the independently coordinated corner-style extension.
 
-- Skin/token IDs use the existing `Id` grammar. Display names are editable Unicode text. Reserved skin ID `wireframe`, or absent `activeSkin`, selects the existing built-in appearance; it cannot be overwritten.
-- Tokens contain concrete `#RRGGBB`. Colour fields accept `#RRGGBB`, `{ token: id }`, or `transparent` for background only. No CSS expressions, URLs, selectors, arbitrary properties or recursive token aliases.
-- The four colour properties are `text`, `background`, `border`, `accent`. Reuse existing border/corner controls. Sizing, density and layout keep their own contracts.
-- Role keys are canonical primitive names, optionally with one suffix: `button`, `button.primary`, `button.checkout`. Resolve primitive aliases first. Reject a role targeting an unrelated primitive.
-- Built-in role choices derive from registry names and supported `variant` enums. Declare any actual renderer default once on its registry entry; do not maintain another default list. Entries without variants still have their primitive role. Custom roles are the union of role keys in saved skins, with no separate persisted catalogue.
-- Existing `props.variant` selects standard roles. Choosing Primary button sets `variant: primary` and clears a conflicting explicit `skinRole`. A custom selection writes `skinRole: button.checkout`, preserving behavior/state props.
-- Validate `skinRole` against the resolved primitive for reusable component uses. Inspect compound reusable components through their existing source nodes; do not invent another component system.
-- Reset removes the relevant override. Do not persist empty strings or null values.
+- Skin IDs use the existing `Id` grammar; names are editable Unicode text. Reserved `wireframe`, or absent `activeSkin`, means the current built-in appearance. Duplicate it into a named skin to edit it.
+- Colours accept `#RRGGBB`; background also accepts `transparent`. No token aliases, CSS expressions, URLs, selectors, arbitrary CSS or remote assets. A shared default colour applies until a role explicitly overrides it.
+- Role keys come only from canonical registry primitive names and their existing `variant` enum: `button`, `button.primary`, `button.secondary`, etc. Resolve aliases before matching. Declare renderer default variants on their registry entries where needed; do not create a second mapping. Entries without variants have their primitive role only.
+- The standard role selector is the existing `props.variant`. There is no `skinRole` field. Choosing Primary button on a real node writes `props.variant: primary` through the existing edit operation. `node.role` retains structural frame/sizing semantics.
+- Reset removes a property. Do not persist null or empty-string style values. Saving a new name/ID copies a skin; renaming its display name preserves ID.
 
-Keep the `.wf` container at `wf/1`: no new document type is needed. The inspected schema pins `specVersion` to `1.1`; the first release should add optional fields under that contract and document minimum supported engine/mobile versions. If implementation needs a schema-version change, review the full tool compatibility impact explicitly. Older editors must never silently strip skin data.
+Keep `.wf` at `wf/1`, without a new document type. Add optional fields under the existing schema contract and publish minimum supported engine/mobile versions. A schema-version change, if necessary, needs an explicit compatibility review because the current validator pins `specVersion` to `1.1`. Older editors must not silently strip these fields.
 
-### Resolution, inheritance and precedence
+### Resolution and inheritance
 
-Resolve properties in the engine before emitting CSS. Merge nested styles by leaf. Low-to-high precedence is:
+Resolve properties in the engine, merging style leaves in this low-to-high order:
 
-1. Existing engine defaults for mode, platform, primitive variant and state.
+1. Existing engine appearance for mode, platform, variant and state.
 2. Manifest `defaultWireframeStyle`.
 3. Active skin `defaults`.
 4. Page `wireframeStyle`.
-5. Active skin's primitive role, such as `button`.
-6. Active skin's selected specific role, such as `button.primary`.
+5. Active skin's canonical primitive role, such as `button`.
+6. Active skin's standard variant role, such as `button.primary`.
 7. Reusable definition's explicit style.
-8. Instance/node/overlay explicit style, through existing resolver inheritance.
+8. Instance/node/overlay explicit style through existing resolver behavior.
 
-Use `skinRole` when supplied; otherwise infer the specific role from registry variant/default metadata. A specific role inherits its primitive role. Skins do not inherit from other skins; roles have no arbitrary `extends` chains.
+A missing role definition inherits defaults and the built-in role treatment; every standard role is always available. An absent selected skin or non-registry role key is a validation error. Skins do not inherit from each other. No new layout, sizing, density or elevation system is introduced.
 
-Resolve token references only against the active skin. An absent selected skin or an unknown token in an active definition is a validation error with its property path. If a custom role is valid in another saved skin but missing from the selected skin, use the active skin's primitive base role and show “Using default style” with the missing role name. Preserve its selector so switching back restores it. A role unknown to every skin and the registry is an error.
+No-skin projects render identically. Preserve existing disabled/loading/checked/error/focus behavior and severity cues. Do not recolour an error solely with company accent. Custom state palettes are out of scope.
 
-No-skin projects must render identically. Preserve existing disabled/loading/checked/error/focus behavior and severity indicators. Do not turn an error into a company-accent-only cue. The palette supplies base colours; custom state palettes are outside this first version.
+Apply colours to painted parts: control labels/icons use role text; backgrounds apply only where existing frame rules allow a surface/control fill. A colour must not give a content/group primitive a box or fill an edge. Composite action buttons use the same button-role resolution as standalone buttons. Keep part mappings in renderer code, never arbitrary selectors in skin data. Recompute colours at node boundaries so a coloured card does not silently recolour its child button.
 
-Apply colours to actual painted parts: controls, labels and icons use the role text; surfaces use background only where frame rules permit. A colour must not turn a group/content primitive into a framed box or an edge into a filled surface. Composite action buttons use the same button-role resolver as standalone buttons. Keep painted-part mappings next to existing primitive renderers, never in arbitrary skin CSS.
+Use the parent's finalized pill implementation. Platform CSS can override inherited radii on iPad, so emit node-local `data-wf-corner="pill"` and target the actual painted part with sufficient selector specificity. Pill wins over numeric radius, forms caps at half the shorter rendered dimension, and is not reduced by line-mode radius scaling. Check inputs, intrinsic buttons and square icon buttons. Do not broaden this work into repairing the existing nested numeric-radius inheritance bug; preserve existing sharp/rounded behavior and document any observed limitation.
 
-Recompute role colours at node boundaries rather than allowing parent-role CSS variables to cascade into unrelated child controls. A purple card must not silently make its primary button purple. Text within a painted part may inherit that part's text colour.
+Mode/platform remain independent of skin. Brand colours may render in line or card mode; frame treatment stays mode-specific. Icons and their placement, crossed labelled image placeholders and sticky regions keep the parent's primitive interfaces. The app shell retains its own theme.
 
-`corner.style: pill` reuses the existing style object. It wins over numerical radius, rounds caps to half the shorter rendered dimension and is not divided by three in line mode. Verify intrinsic buttons, stretched inputs and square icon buttons. Preserve existing sharp/rounded behavior.
+### Saving, copying and preview
 
-Line/card mode and platform remain independent of skins. Brand colours render in either mode while frame treatment stays mode-specific. The Wireframe skin restores neutral colours. Icons, icon placement, crossed labelled placeholders and sticky regions keep their existing primitive/prop interfaces.
+Save the validated draft as one existing project revision. Active skin ID is project content. Undo/redo covers saves, switches and standard role assignments. Switching changes one manifest reference rather than rewriting nodes.
 
-### Persistence and switching
+The picker lists the current project's skins. **Copy from another project** reads a saved manifest from the existing local project store, copies the selected definition and validates it in the destination. Editing a copy never changes the source. ID collisions offer Save as new or Replace with the affected-project scope stated. There is no global library or live cross-project link. Export/import uses the existing `.wf` format. Delete/garbage-collection UI is deferred; unused named skins may remain in a project.
 
-Save a validated skin draft as one normal project revision. The active skin ID is project content, not an app preference. Undo/redo covers skin edits, switching and assignments. Switching changes one manifest reference instead of rewriting every node.
+Preview always uses a cloned document map. Never serialize temporary render overrides into saved content. For skinned projects, Page style offers **Use design settings** for corners; rounded/square remain explicit labelled preview overrides. Preserve existing unskinned-project preferences. Export serializes saved design content.
 
-The picker lists saved skins and **Copy from another project**. Read a saved manifest through the existing local project store, copy its skin into the destination, and validate it. This supports offline cross-wireframe reuse without a new global store or live link. Editing the destination never changes the source. An ID collision with different content offers Replace or Save as new; show affected current-project uses before Replace. Matching display names do not overwrite IDs.
+### Complete catalogue and minimal iPad flow
 
-Existing `.wf` export/import carries every skin. Deleting an active skin must select its replacement atomically. Block deletion of the only definition of a referenced custom role until those uses are reassigned; list affected pages. Rename changes display name, not ID. A standalone skin format and automatic propagation across projects can wait.
+Generate metadata and examples from `PRIMITIVES`, `FAMILY_ORDER`, aliases and `demoFor`. Both the existing HTML catalogue and app consume that model. At the inspected revision there are 56 entries; the implemented count is always the registry's count. Render through the engine, not native approximations.
 
-Preview on a cloned document map. Never serialize the render copy into project content. For skinned projects, Page style gains **Use design settings** for corners; existing rounded/square preferences become visible, explicit preview overrides. Preserve old project preferences and avoid automatically rewriting existing files. Export always serializes saved design content.
+Show each canonical component once, grouped by family, with its rendered example. Search matches name, alias and summary. A container's labelled outer sample is selectable without accidentally selecting its children. Variants in the inspector come from registry props; choosing one changes that example only until the user assigns it to a real node. No custom-role creation is shown.
 
-### Registry-backed component catalogue
+1. Open **Page style → Design system**, select a named skin or New skin, and browse the complete gallery.
+2. Tap one component. The inspector shows primitive, standard role, four supported colour fields, and border/corner controls. Unpainted parts explain why a control is unavailable. Reset restores inheritance.
+3. Enter exact company colours through picker/hex fields. Show contrast for relevant text/background pairs; retain supplied values rather than silently changing them.
+4. Save once and inspect the actual wireframe. A dirty draft offers Save, Discard or Continue editing. No model or connection is required.
+5. In the wireframe, existing component selection can assign a standard variant. Clearly identify the source and whether the edit affects a shared component or repeated rows. Role editing in the skin inspector affects every use of that role in this project.
+6. Switch skins, navigate the prototype, undo/redo, copy a skin and export while offline.
 
-Expose a small catalogue model generated from `PRIMITIVES`, `FAMILY_ORDER`, aliases and `demoFor`, consumed by both the existing HTML catalogue and app. Render examples through the shared engine, not SwiftUI replicas. The inspected count is 56; acceptance compares against the registry at the built revision, not a fixed count.
+Use the existing WebView, moving its surface into the design-system view just as the app already moves the single host surface. The gallery itself handles sample selection; native controls edit the selected role. Portrait/split view uses one detail sheet with Back rather than compressed columns. No separate Try-component mode is needed for the first release: inspect samples in the gallery and verify behavior in the actual prototype.
 
-Show every canonical component once, grouped by family, with name, example and current role. Search name, aliases and summary. Aliases point to canonical entries. Container outer targets remain selectable separately from their example children.
+Require 44×44-point targets, 8-point spacing, VoiceOver labels/values, keyboard focus and the existing localization pipeline. Preserve gallery search/selection/scroll during previews. Keyboard-visible hex/name entry must leave Save/Cancel reachable. Reuse bundled Font Awesome Free assets and search; no full icon catalogue enters model context.
 
-Derive variant choices from registry props. Existing state props and examples provide disabled/loading/checked/error samples; add renderable sample metadata to an entry when a state needs several props. This is not another component list or a promise to enumerate every arbitrary prop combination.
+### Smallest shared engine contract
 
-Selection must not activate links or submit actions. A separate **Try component** action exercises supported behavior and returns to editing without losing the draft. Generated composite parts without a source address cannot pretend to be individually editable; identify the owning primitive and its inherited shared role.
+These names and shapes are the proposed implementation contract, not current exports:
 
-Reuse the full Font Awesome Free solid/regular/brands picker and bundled assets. Do not duplicate icons inside skins or send the full icon catalogue into model context.
+```ts
+getDesignSystem(documentMap): {
+  activeSkin: string;
+  skins: Record<string, Skin>;
+  components: Array<{
+    component: string; family: string; summary: string;
+    aliases: string[]; variants: string[]; defaultVariant: string | null;
+  }>;
+}
 
-### iPad interaction
+// At most one upsert and one selection, applied atomically to a clone.
+updateDesignSystem(documentMap, change: {
+  skin?: { id: string; value: Skin };
+  activeSkin?: string;
+}): { ok: true; documentMap } |
+    { ok: false; error: string; details: { errors: Diagnostic[] } };
+```
 
-1. Open a project and **Page style → Design system**. Choose New skin or a saved skin. Duplicate the built-in Wireframe skin to edit it.
-2. Browse the searchable gallery. Landscape can show the list, selected example and inspector; portrait/split view uses a detail sheet with Back rather than cramped columns.
-3. Select an example. The inspector names primitive, role and scope. Choose a standard role or create a named custom role from the current appearance.
-4. Edit Text, Fill, Border and Accent via token, colour picker or hex field. Token edits preview every referencing role; show affected role/use counts. Display measured text/background contrast and retain the exact supplied colour instead of silently modifying it.
-5. Edit existing border/corner controls, including Pill. Reset a property to its inherited value. Explain unsupported painted parts instead of showing ineffective controls.
-6. Save once, close and inspect the actual page. Cancel discards the draft; leaving a dirty draft offers Save, Discard or Continue editing.
-7. In the wireframe, select a real component and assign a role/local override. Scope explicitly says This instance, Shared component or Skin role. Shared edits identify affected pages before commit; repeated rows identify their shared source.
-8. Switch skins, navigate pages, undo/redo and export with Wi-Fi disabled and no model loaded.
+`Skin` is exactly the persisted schema above. Both supplied fields must validate before any result is returned. An upsert can create, replace or rename a skin; selection can be combined with it. Copying passes a source skin value as an upsert, so it needs no special engine operation. Reading has no side effects. Caller-owned Maps/documents remain unchanged. There is no delete endpoint, state engine or custom-role operation.
 
-Require 44×44 point hit areas, 8-point spacing, accessible names/values, keyboard focus and the existing localization pipeline. Preserve selection, search, project page and scroll while editing. Test Dynamic Type and keyboard-visible hex/name entry so Save/Cancel stay reachable. Company skins style wireframes and samples only, not the app shell.
+The renderer uses an internal pure `resolveAppearance` helper with the precedence above. Extend existing `buildCataloguePage` options with `documentMap` and optional `sample: { component, variant? }` to render the current skin and selected variant; the catalogue model remains registry-derived. Normal `renderPage` reads persisted active skin. CLI save/use/list/show call these same functions; existing build/validate/pack/unpack retain parity. Defer a broad CLI command family and new browser mount methods unless needed by the implementation's supported interface; browser preview can clone, update and render using these functions.
 
-### CLI, browser, API and mobile parity
+### Exact native-host calls
 
-Add pure engine functions over document maps for catalogue enumeration, resolved appearance, skin validation/save/delete/copy/select and role assignment/reset. Follow neighboring engine result/error patterns; do not add a service framework.
+Extend the existing `wfHost` object and `WebHost.call` wrapper with only these three calls:
 
-Add `wf skin list|show|save|use|remove|copy` through the existing CLI command registry. Save accepts a YAML definition, copy accepts source project and skin ID, and `use wireframe` restores built-in appearance. Use neighboring flag conventions and document exact syntax before implementation delivery. Existing node update supports the new selector and colour fields.
+| Native method / JavaScript call | Arguments and result |
+| --- | --- |
+| `designSystem(wf:)` → `wfHost.designSystem(wf)` | Parse `.wf`, call `getDesignSystem`, return its JSON metadata. Swift decodes `DesignSystemInfo`. No preview or persistence. |
+| `previewDesignSystem(wf:change:sample:)` → `wfHost.previewDesignSystem(wf, change, sample)` | `change` is the exact upsert/selection object above; `sample` is null or `{component, variant?}`. Clone, validate, render catalogue and await iframe load. Return `{ok, diagnostics}` without a project revision or ordinary project `rendered` event. |
+| `applyDesignSystem(wf:change:page:)` → `wfHost.applyDesignSystem(wf, change, page)` | Apply the same engine change, run the existing project-validation/all-page render gate, and serialize. Return existing `EditResult` with `wf`, `page`, `changes`, `diagnostics`. This does not write SQLite. |
 
-`wf validate` reports missing skins/tokens and incompatible/unknown roles. `wf why` reports resolved role, each property's winning source and fallback. Catalogue/build/screenshots/export use the same resolver; a preview skin override never rewrites files.
+The trusted host sends `type: "designSystemSelection", component, variant` on gallery selection, handled by `WebHost.onDesignSystemSelection`. Validate both names against the returned catalogue; retain the existing main-frame-only native-message boundary. Gallery rendering does not overwrite real project page lists or complete unrelated `load` waiters. Preserve current gallery scroll/search on re-render and discard stale preview completions with the existing token pattern.
 
-Browser mount options gain `skin` and the instance gains `setSkin(id)` for preview. Shared authoring operations persist changes; mounting must not mutate the caller's design. Identical documents/viewport/platform/mode must resolve identically in CLI and browser.
+The native model owns the draft and base revision. Save awaits `applyDesignSystem`, then uses the existing render-before-store commit path with the unchanged base-revision check. If the project changed, keep the draft and show the stale-draft error; do not overwrite the newer project. Closing without save restores `host.load(wf: currentProject.wf, page: previousPage)`. Saving restores the normal page through that same commit path. Standard role assignment uses the existing `applyEdit` set operation on `props.variant`; it needs no fourth bridge call.
 
-The API already stores YAML documents; no skin table or auth route is required. If admin adapters are in the implementation scope, preserve route/controller/service/repository layering. Mobile invokes the same engine authoring operations for deterministic inspector edits, permits the new node fields in `web/src/edit.ts`, and uses the existing validation/render gate and revision commit. No model is needed.
+Keep host transport logic small. If `host.ts`, `WebHost.swift` or `AppModel` would breach repository file limits, move feature helpers to the files below rather than adding another transport. Do not modify C++ storage or add API/admin routes.
 
-Agent context includes selected role and relevant tokens, with on-demand lookup for more. Do not load all saved projects, every example or thousands of icons. Unrelated edits preserve skin fields; reject unsupported mutations rather than deleting data.
+### Proposed implementation ownership
 
-Update registry-generated schema sections and all schema contracts together: `schema.json`, `schema.md`, `schema-systems.md`, `schema-canonical.yaml`, CLI brief, rendering docs and generated references. Update affected admin/mobile wireframe specifications when those controls are implemented.
+This is an ownership proposal for a later bounded assignment, not permission to implement now. The design-system agent would own:
+
+- New `engine/design-system/index.js`: read/update/validate operations; split pure resolution into `engine/design-system/resolve.js` if necessary to stay under 500 lines.
+- New `engine/catalogue/model.js`, plus existing `engine/catalogue/index.js` and `engine/catalogue/demos.js`: registry-derived metadata, render options and sample selection attributes.
+- New focused `cli/test/design-system.test.js`, plus existing `cli/test/catalogue.test.js`: parity, invalid edits, unchanged input and complete catalogue checks.
+- This plan and the design-system portions of schema/rendering/CLI documentation.
+
+Shared files require a sequential integration handoff after the parent's primitive changes: `engine/schema/schema.json`, `engine/schema/primitive-registry/*.js`, `engine/renderer/wireframe-styles.js`, `engine/renderer/node-shell.js`, `engine/renderer/render-attrs.js`, `engine/renderer/primitives/*.js`, `engine/renderer/styles/*.js`, `engine/renderer/index.js`, `engine/build/index.js`, `engine/index.js`, `cli/bin/wf.js`, and `cli/commands/registry.js`. Only files whose actual renderer/adapter needs the skin hook should change; this list is a coordination boundary, not a blanket refactor. The parent retains pill/icon/sticky/placeholder ownership.
+
+If separately assigned the mobile tranche after engine integration, the exact proposed files are new `web/src/design-system.ts`, `ios/Wireframes/App/AppModel+DesignSystem.swift`, `ios/Wireframes/UI/DesignSystemSheet.swift`, `ios/Wireframes/UI/SkinInspector.swift`, and `ios/Wireframes/Core/DesignSystemTypes.swift`; existing `web/src/host.ts`, `web/src/edit.ts` (export/reuse its validation gate only), `ios/Wireframes/Web/WebHost.swift`, `ios/Wireframes/App/RenderingStyle.swift`, `ios/Wireframes/UI/RenderingSheet.swift`, plus native project source registration/localization files if required by its build. The parent should allocate this tranche explicitly; no mobile file is currently assigned to this design-only task.
 
 ## Implementation Order
 
 1. Obtain a different-provider adversarial review. Record adopt/defer/reject decisions and settle resolution/override semantics before engine changes.
-2. Add schema and pure resolver/validator. Coordinate with final pill/icon/sticky/placeholder interfaces instead of implementing parallel variants.
+2. Add schema and pure read/update/resolver/validator functions. Coordinate with final pill/icon/sticky/placeholder interfaces instead of implementing parallel variants.
 3. Apply resolved styles to existing primitive renderers and composite actions; expose catalogue and CLI/browser adapters. Verify all registry entries and relevant states.
 4. Build the iPad gallery/inspector/save/switch flow using the existing WebView, revision store and source metadata. Update its renderer dependency only after the engine change lands.
-5. Exercise offline export/reopen, copying, recovery, shared components and the physical-iPad flows below. Implement affected admin/API adapters only if included in the bounded brief.
+5. Exercise offline export/reopen, copying, recovery, shared components and the physical-iPad flows below. Do not add unrelated admin/API adapters.
 6. Audit schema/docs/wireframes, screenshots and review findings. Move this plan to `docs/done/` only after delivery.
 
 ### Acceptance targets and actual flows to test
@@ -201,14 +216,14 @@ These are targets, not measurements already achieved. Record exact revisions, iP
 | Flow | Required result |
 | --- | --- |
 | Every component | Render and select 100% of canonical registry entries. Every alias search reaches its canonical component. No blank samples or alias duplicates. |
-| Company colours offline | In airplane mode, create Acme with the exact five example hex colours, style primary/secondary buttons and inputs, save and reopen the app. Resolved colours match, with no network/model request. |
+| Company colours offline | In airplane mode, create Acme with the exact four default example hex colours, style primary/secondary buttons and inputs, save and reopen the app. Resolved colours match, with no network/model request. |
 | Complex prototype | Use at least 8 linked pages and 200 nodes, reusable components, lists, forms, overlays, icons and sticky regions. Switch two skins; all pages update with zero changed content, route, interaction or dataset fields. |
 | Precedence | Combine primitive role, specific role, page style, shared definition and instance override. Inspect actual colours/corners and `wf why`; every winning source matches the specified order. |
-| Behavior | Exercise navigation, validation, focus, disabled/loading buttons, toggles, overlay and repeated list. Selection edits rather than activates; Try mode activates. Appearance changes preserve behavior. |
+| Behavior | Exercise navigation, validation, focus, disabled/loading buttons, toggles, overlay and repeated list. Gallery selection edits rather than activates; the actual prototype remains interactive. Appearance changes preserve behavior. |
 | Coordinated primitives | Check Free solid/regular/brand icons in leading/trailing/centre positions, 44-point pill controls, crossed labelled image placeholders and sticky header/footer. Colours do not change geometry or stacking. |
-| Recovery | Undo/redo token edit, role assignment and switch. Reject bad hex, unknown token, incompatible role and absent skin with no partial revision. Discard a draft and verify prior appearance. |
+| Recovery | Undo/redo colour edit, standard role assignment and switch. Reject bad hex, non-registry role key and absent skin with no partial revision. Discard a draft and verify prior appearance. |
 | Reuse/export | Copy into a second project and edit the copy without changing the source. Export/import both `.wf` files; CLI/mobile resolve equivalent appearance. Unchanged packing stays deterministic. |
-| Missing custom role | Switch to a skin lacking the role, see its declared fallback and diagnostic, then switch back and recover its original appearance without rewriting the selector. |
+| Partial skin | Switch to a skin without a specific standard-role override. Verify primitive/default/built-in inheritance, then switch back and recover the original appearance without rewriting nodes. |
 | iPad ergonomics | Test portrait, landscape, split view, largest supported accessibility text, VoiceOver and keyboard-visible entry. No clipped actions, inaccessible fields or accidental activation. |
 | Responsiveness | Record 20 edits/switches on the physical iPad and 8-page/200-node fixture. Target p95 ≤250 ms from completed colour input to example update; ≤500 ms from saved-skin choice to current-page update; cold gallery opening ≤2 s. Report actual numbers. |
 | Compatibility | Open a pre-feature project without skins in CLI/browser/iPad; output and editing/export remain unchanged. Supported older clients must not silently strip a skin or claim matching brand appearance. |
@@ -225,14 +240,14 @@ Run required repository and focused schema/catalogue/rendering checks during imp
 - Shared/repeated nodes preserve source/definition/row addressing and explicit scope; no invented per-rendered-row edits.
 - Poor company contrast is shown with ratio and affected pair; retain exact colour. Editor focus/selection stays readable independently.
 - Missing assets use existing labelled placeholders. Skins fetch no replacement images or fonts.
-- Removing the last definition of a used custom role is blocked with affected locations. Registry roles remain available in empty skins.
+- Standard registry roles remain available in empty/partial skins. Unused skins remain stored; deletion UI is deferred.
 - Unsupported future fields survive read-only viewing and unrelated edits; surface unsupported semantics rather than claiming parity.
 - Export serializes the design, not temporary mode/corner/skin preview overrides.
 
 ## Non-Goals
 
-No new identity/org/team/invitation store or auth changes; no cloud marketplace/global service/live cross-project links; no arbitrary CSS, token expression language, nested skin inheritance or duplicate component library; no font uploads/full typography system, arbitrary layout tokens or animation designer; no replacement of mode/platform/sizing/behavior; no company theme for the app shell; no model requirement for inspector editing.
+No new identity/org/team/invitation store or auth changes; no cloud marketplace/global service/live cross-project links; no custom roles, token references, skin deletion workflow, arbitrary CSS, nested skin inheritance or duplicate component library; no font uploads/full typography system, arbitrary layout tokens or animation designer; no replacement of mode/platform/sizing/behavior; no company theme for the app shell; no model requirement for inspector editing.
 
 ## Review and Verification Record
 
-Source inspection only. No skin implementation, native build, rendered iPad flow, screenshot acceptance or performance measurement is claimed. The Mac noninteractive shell lacked `rg`, `node` and `steroids`; source inspection used available read-only tools. Required cross-provider review is pending and must be recorded before implementation.
+Source inspection only. No skin implementation, native build, rendered iPad flow, screenshot acceptance or performance measurement is claimed. The Mac noninteractive shell lacked `rg`, `node` and `steroids`; source inspection used available read-only tools. Required cross-provider review is pending and must be recorded before implementation. The 4 November refinement narrows the proposal to standard roles and literal colours; it also adopts the parent review finding that iPad pill corners need node-local painted-part selectors. No implementation or measured acceptance result is implied.
