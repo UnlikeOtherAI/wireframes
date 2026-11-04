@@ -8,7 +8,7 @@ const GROUPS = [
   ['Project', ['init', 'info', 'doctor', 'stats']],
   ['Authoring', ['template', 'page', 'component', 'node', 'overlay', 'state', 'data']],
   ['Checking', ['validate', 'lint', 'why']],
-  ['Reading', ['schema', 'llm', 'catalogue', 'tree', 'inspect', 'routes', 'where-used']],
+  ['Reading', ['schema', 'llm', 'icons', 'catalogue', 'tree', 'inspect', 'routes', 'where-used']],
   ['Output', ['build', 'serve', 'screenshots', 'export', 'pack', 'unpack']],
 ];
 
@@ -102,6 +102,12 @@ const COMMANDS = [
     name: 'llm',
     summary: 'Print the element reference, written for agents',
     usage: 'wf llm [--short] [--element <name>] [--family <name>]',
+  },
+  {
+    name: 'icons',
+    args: 'search <query>',
+    summary: 'Search the complete Font Awesome Free catalogue',
+    usage: 'wf icons search <query> [--style solid|regular|brands] [--limit 1..20] [--json]',
   },
   {
     name: 'catalogue',

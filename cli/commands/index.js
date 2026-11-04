@@ -24,6 +24,7 @@ const { runStats } = require('./commands/stats');
 const { runScreenshotsCommand } = require('./commands/screenshots');
 const { runBuildCommand } = require('./commands/build');
 const { runServeCommand } = require('./commands/serve');
+const { runIcons } = require('./commands/icons');
 const { runLlm } = require('./commands/llm');
 const { runCatalogue } = require('./commands/catalogue');
 
@@ -96,6 +97,11 @@ function run(args, context = {}) {
 
   if (command === 'schema') {
     runSchema(commandArgs, { cwd });
+    return;
+  }
+
+  if (command === 'icons') {
+    runIcons(commandArgs);
     return;
   }
 
