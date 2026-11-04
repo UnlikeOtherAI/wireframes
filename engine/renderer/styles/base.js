@@ -5,6 +5,7 @@
 // infers a box from nesting or adjacency.
 
 const baseStyles = [
+  '.wf-icon-glyph.fa-solid{font-family:"Font Awesome 7 Free","Font Awesome 7 Brands"}',
   '*{box-sizing:border-box}',
   'body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#374151}',
 
@@ -32,8 +33,8 @@ const baseStyles = [
   '.wf-mode-card .wf-body-row,.wf-mode-card .wf-body-column{gap:16px}',
 
   // --- Sticky regions ---
-  '.wf-root[data-sticky="top"]{position:sticky;top:0;z-index:10;flex-shrink:0}',
-  '.wf-root[data-sticky="bottom"]{position:sticky;bottom:0;z-index:10;flex-shrink:0}',
+  '.wf-root[data-sticky="top"],.wf-node[data-sticky="top"]{position:sticky;top:0;z-index:10;flex-shrink:0}',
+  '.wf-root[data-sticky="bottom"],.wf-node[data-sticky="bottom"]{position:sticky;bottom:0;z-index:10;flex-shrink:0}',
 
   // --- Roots ---
   '.wf-root{border:none;margin:0;min-width:0}',

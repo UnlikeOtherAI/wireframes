@@ -1,6 +1,7 @@
 'use strict';
 
 module.exports = {
+  designSystem: require('./design-system'),
   schema: require('./schema'),
   schemaLoader: require('./schema/loader'),
   resolver: require('./resolver'),

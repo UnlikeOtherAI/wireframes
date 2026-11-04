@@ -27,6 +27,7 @@ const textPrimitives = [
   },
   {
     name: 'text',
+    defaultVariant: 'body',
     family: 'text',
     frame: 'N',
     summary: 'Inline text run.',
@@ -51,6 +52,7 @@ const textPrimitives = [
   },
   {
     name: 'badge',
+    defaultVariant: 'neutral',
     family: 'text',
     frame: 'N',
     summary: 'Badge, pill, chip, tag or status dot. variant is the shape, tone the status.',
@@ -186,6 +188,7 @@ const textPrimitives = [
   },
   {
     name: 'empty_state',
+    defaultVariant: 'empty',
     family: 'text',
     frame: 'C',
     summary: 'Centred empty, error, 404 or offline state with an optional action.',

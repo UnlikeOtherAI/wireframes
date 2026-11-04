@@ -23,7 +23,7 @@ function wireframeBorderCss(mergedStyle = {}) {
   const width = toPx(borderWidth);
   const corner = mergedStyle.corner || {};
   const radius = Number.isFinite(corner.radius) ? `${corner.radius}px` : (corner.radius != null ? toPx(corner.radius) : '0px');
-  const borderRadius = corner.style === 'sharp' ? '0px' : radius;
+  const borderRadius = corner.style === 'sharp' ? '0px' : corner.style === 'pill' ? '9999px' : radius;
 
   return `border:${width} ${borderStyle} #333; border-radius:${borderRadius}`;
 }
@@ -76,20 +76,20 @@ function resolveWireframeStyle(style = {}, rendering = {}) {
         ? `${border.width}px`
         : toPx(border.width) || '1px';
 
-  const cornerStyle = corner.style === 'rounded' ? 'rounded' : 'sharp';
+  const cornerStyle = ['rounded', 'pill'].includes(corner.style) ? corner.style : 'sharp';
   const radius = Number.isFinite(corner.radius)
     ? `${corner.radius}px`
     : corner.radius != null
       ? (toPx(corner.radius) || '0px')
       : '0px';
-  const cornerRadius = cornerStyle === 'sharp' ? '0px' : radius;
+  const cornerRadius = cornerStyle === 'sharp' ? '0px' : cornerStyle === 'pill' ? '9999px' : radius;
 
   return {
     borderStyle,
     borderWidth,
     cornerStyle,
     cornerRadius,
-    surfaceRadius: cornerStyle === 'sharp' ? '0px' : scaleSurfaceRadius(cornerRadius, mode),
+    surfaceRadius: cornerStyle === 'sharp' ? '0px' : cornerStyle === 'pill' ? '9999px' : scaleSurfaceRadius(cornerRadius, mode),
     surfaceShadow: resolveSurfaceShadow(1, rendering),
   };
 }
@@ -134,11 +134,11 @@ function wireframeNodeStyleOverrides(nodeStyle = {}, pageStyle = {}, rendering =
     overrides['--wf-border-width'] = next.borderWidth;
   }
 
-  if (next.cornerRadius !== page.cornerRadius) {
+  if (next.cornerStyle !== 'pill' && next.cornerRadius !== page.cornerRadius) {
     overrides['--wf-corner-radius'] = next.cornerRadius;
   }
 
-  if (next.surfaceRadius !== page.surfaceRadius) {
+  if (next.cornerStyle !== 'pill' && next.surfaceRadius !== page.surfaceRadius) {
     overrides['--wf-surface-radius'] = next.surfaceRadius;
   }
 

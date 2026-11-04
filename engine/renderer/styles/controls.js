@@ -24,6 +24,8 @@ const controlStyles = [
   '.wf-mode-card .wf-button-ghost button,.wf-mode-card .wf-button-ghost .wf-button-link{background:transparent;color:var(--wf-ink-2)}',
   '.wf-mode-card .wf-button-link button,.wf-mode-card .wf-button-link .wf-button-link{background:transparent;color:var(--wf-ink);text-decoration:underline;min-width:0;padding:0}',
 
+  '.wf-button button .wf-icon-glyph,.wf-button .wf-button-link .wf-icon-glyph{color:inherit}',
+
   // --- Segmented control ---
   '.wf-segmented{display:inline-flex;align-items:stretch;width:fit-content;border-radius:var(--wf-corner-radius,6px);overflow:hidden}',
   '.wf-mode-line .wf-segmented{border:1px solid var(--wf-line-strong);border-radius:0}',
@@ -57,6 +59,14 @@ const controlStyles = [
   '.wf-field-invalid{--wf-tone:var(--wf-danger)}',
   '.wf-field-invalid .wf-control,.wf-field-invalid textarea{border-color:var(--wf-tone);border-width:2px}',
   '.wf-select-searchable .wf-control select{padding-left:0}',
+
+  '.wf-control-center{position:relative}',
+  '.wf-control-center input{padding-inline-start:36px}',
+  '.wf-affix-center{position:absolute;inset:0;gap:6px;pointer-events:none;justify-content:center}',
+  '.wf-input-placeholder{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 44px)}',
+  '.wf-control-center:not(:focus-within):has(input:placeholder-shown) input::placeholder{color:transparent}',
+  '.wf-control-center:focus-within .wf-affix-center,.wf-control-center:not(:has(input:placeholder-shown)) .wf-affix-center{inset-inline-start:0;inset-inline-end:auto}',
+  '.wf-control-center:focus-within .wf-input-placeholder,.wf-control-center:not(:has(input:placeholder-shown)) .wf-input-placeholder{display:none}',
 
   // --- Special inputs ---
   '.wf-otp{display:flex;gap:8px}',

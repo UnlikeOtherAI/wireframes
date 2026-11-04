@@ -96,6 +96,7 @@ const navigationStyles = [
   // --- App bar ---
   '.wf-app_bar{display:flex;align-items:center;gap:12px;padding:0 12px;min-height:var(--wf-header-h,56px);min-width:0}',
   '.wf-app_bar[data-wf-frame="edge"]{border-bottom:1px solid var(--wf-line-2)}',
+  '.wf-app_bar[data-sticky]{background:var(--wf-fill-2)}',
   '.wf-mode-line .wf-app_bar[data-wf-frame="edge"]{border-bottom-color:var(--wf-line-strong)}',
   '.wf-appbar-leading .wf-icon-glyph{font-size:18px;color:var(--wf-ink-2)}',
   '.wf-appbar-title{display:flex;flex-direction:column;flex:1 1 auto;min-width:0;font-size:15px;font-weight:600;color:var(--wf-ink)}',

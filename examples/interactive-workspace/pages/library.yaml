@@ -1,0 +1,74 @@
+documentType: page
+specVersion: "1.1"
+id: library
+page:
+  id: library
+  template: workspace
+  viewport: { device: tablet, platform: ios, orientation: portrait }
+  slots:
+    - slotId: main
+      content:
+        - id: workspace_bar
+          component: app_bar
+          sticky: top
+          props: { title: Studio workspace }
+          children:
+            - id: home_link
+              component: button
+              props: { label: Home, icon: house, variant: ghost, route: home }
+            - id: library_link
+              component: button
+              props: { label: Library, icon: folder-open, variant: ghost, route: library }
+            - id: account_button
+              component: button
+              props: { label: Ada, icon: circle-user, iconStyle: regular, iconPosition: end, variant: secondary }
+              interaction: [{ type: open_overlay, targetOverlay: account_menu }]
+        - id: library_title
+          component: page_header
+          props: { title: Asset library, subtitle: Approved artwork and reference images }
+        - id: library_search
+          component: input
+          props: { label: Find an asset, placeholder: "Name, project or tag", icon: magnifying-glass, iconPosition: center }
+          wireframeStyle: { corner: { style: pill } }
+        - id: asset_columns
+          component: grid
+          props: { columns: 2, minItemWidth: 280 }
+          children:
+            - id: launch_asset
+              component: card
+              props: { title: Launch hero }
+              children:
+                - id: launch_image
+                  component: image
+                  props: { alt: "A reusable bottle photographed beside a folded blue linen cloth", ratio: "16:9" }
+                - id: launch_status
+                  component: badge
+                  props: { text: Approved, tone: success }
+            - id: team_asset
+              component: card
+              props: { title: Team portrait }
+              children:
+                - id: team_image
+                  component: image
+                  props: { alt: "The product team at a workshop, with room on the left for a short headline", ratio: "16:9" }
+                - id: asset_profile_link
+                  component: button
+                  props: { label: View owner, icon: user, iconPosition: start, route: profile }
+        - id: library_home
+          component: button
+          props: { label: Back to workspace, icon: arrow-left, route: home }
+  overlays:
+    - id: account_menu
+      type: popover
+      trigger: account_button
+      placement: bottom
+      dismissOn: [outside, escape]
+      props: { title: Account }
+      content:
+        - id: account_actions
+          component: menu
+          props:
+            items:
+              - { label: Your profile, icon: user, route: profile }
+              - { label: Asset library, icon: images, route: library }
+              - { label: Workspace home, icon: house, route: home }

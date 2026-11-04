@@ -1,0 +1,286 @@
+documentType: page
+specVersion: "1.1"
+id: home
+page:
+  id: home
+  template: workspace
+  viewport: { device: tablet, platform: ios, orientation: portrait }
+  slots:
+    - slotId: main
+      content:
+        - id: workspace_bar
+          component: app_bar
+          sticky: top
+          props: { title: Studio workspace }
+          children:
+            - id: home_link
+              component: button
+              props: { label: Home, icon: house, variant: ghost, route: home }
+            - id: library_link
+              component: button
+              props: { label: Library, icon: folder-open, variant: ghost, route: library }
+            - id: account_button
+              component: button
+              props: { label: Ada, icon: circle-user, iconStyle: regular, iconPosition: end, variant: secondary }
+              interaction: [{ type: open_overlay, targetOverlay: account_menu }]
+        - id: dashboard_title
+          component: page_header
+          props: { title: Good afternoon, subtitle: Your projects and upcoming work }
+        - id: workspace_columns
+          component: grid
+          props: { columns: 2, minItemWidth: 280 }
+          children:
+            - id: project_card
+              component: card
+              props: { title: Product launch }
+              children:
+                - id: project_image
+                  component: image
+                  props: { alt: "Product launch: a new reusable water bottle on a clean studio background", ratio: "16:9" }
+                - id: project_description
+                  component: paragraph
+                  props: { text: "The launch site is ready for review. Check the asset library before sharing it with the team." }
+                - id: open_library
+                  component: button
+                  props: { label: Review assets, icon: arrow-right, iconPosition: end, variant: primary, route: library }
+                  wireframeStyle: { corner: { style: pill } }
+            - id: quick_actions
+              component: card
+              props: { title: Find your next task }
+              children:
+                - id: search_projects
+                  component: input
+                  props: { label: Search projects, placeholder: "Project or person", inputType: search, icon: magnifying-glass, iconPosition: center }
+                  wireframeStyle: { corner: { style: pill } }
+                - id: email_field
+                  component: input
+                  props: { label: Email address, placeholder: "ada@example.com", icon: envelope, iconStyle: regular, iconPosition: start }
+                - id: search_trailing
+                  component: input
+                  props: { label: Search by tag, placeholder: "Type a tag", icon: magnifying-glass, iconPosition: end }
+                - id: github_action
+                  component: button
+                  props: { label: Open source library, icon: github, iconStyle: brands, variant: secondary, route: library }
+        - id: composer_heading
+          component: heading
+          props: { text: Send a project note, level: 3 }
+        - id: note_composer
+          component: row
+          layout: { type: row, gap: 8, padding: 6, align: center }
+          wireframeStyle: { corner: { style: pill }, border: { style: solid, width: thin } }
+          children:
+            - id: discard_note
+              component: button
+              props: { label: Discard note, icon: xmark, iconPosition: center, variant: ghost, size: lg }
+              wireframeStyle: { corner: { style: pill } }
+            - id: note_text
+              component: input
+              size: { width: fill }
+              props: { placeholder: "Write a project note", variant: plain }
+              accessibility: { label: Project note }
+            - id: stop_note
+              component: button
+              props: { label: Stop, icon: stop, iconPosition: center, variant: secondary, size: lg }
+              wireframeStyle: { corner: { style: pill } }
+            - id: send_note
+              component: button
+              props: { label: Send note, icon: arrow-up, iconPosition: center, variant: primary, size: lg, route: library }
+              wireframeStyle: { corner: { style: pill } }
+        - id: upcoming_heading
+          component: heading
+          props: { text: Upcoming reviews, level: 3 }
+        - id: review_1
+          component: card
+          props: { title: "Brand direction · round 1" }
+          children:
+            - id: review_note_1
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_1
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_2
+          component: card
+          props: { title: "Landing page · round 1" }
+          children:
+            - id: review_note_2
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_2
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_3
+          component: card
+          props: { title: "Product photography · round 1" }
+          children:
+            - id: review_note_3
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_3
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_4
+          component: card
+          props: { title: "Mobile checkout · round 1" }
+          children:
+            - id: review_note_4
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_4
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_5
+          component: card
+          props: { title: "Help centre · round 1" }
+          children:
+            - id: review_note_5
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_5
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_6
+          component: card
+          props: { title: "Launch checklist · round 1" }
+          children:
+            - id: review_note_6
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_6
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_7
+          component: card
+          props: { title: "Brand direction · round 2" }
+          children:
+            - id: review_note_7
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_7
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_8
+          component: card
+          props: { title: "Landing page · round 2" }
+          children:
+            - id: review_note_8
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_8
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_9
+          component: card
+          props: { title: "Product photography · round 2" }
+          children:
+            - id: review_note_9
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_9
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_10
+          component: card
+          props: { title: "Mobile checkout · round 2" }
+          children:
+            - id: review_note_10
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_10
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_11
+          component: card
+          props: { title: "Help centre · round 2" }
+          children:
+            - id: review_note_11
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_11
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_12
+          component: card
+          props: { title: "Launch checklist · round 2" }
+          children:
+            - id: review_note_12
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_12
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_13
+          component: card
+          props: { title: "Brand direction · round 3" }
+          children:
+            - id: review_note_13
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_13
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_14
+          component: card
+          props: { title: "Landing page · round 3" }
+          children:
+            - id: review_note_14
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_14
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_15
+          component: card
+          props: { title: "Product photography · round 3" }
+          children:
+            - id: review_note_15
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_15
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_16
+          component: card
+          props: { title: "Mobile checkout · round 3" }
+          children:
+            - id: review_note_16
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_16
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_17
+          component: card
+          props: { title: "Help centre · round 3" }
+          children:
+            - id: review_note_17
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_17
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+        - id: review_18
+          component: card
+          props: { title: "Launch checklist · round 3" }
+          children:
+            - id: review_note_18
+              component: paragraph
+              props: { text: "Review the latest draft, record feedback, and open the asset library to inspect the supporting material." }
+            - id: review_link_18
+              component: button
+              props: { label: Review details, icon: arrow-right, iconPosition: end, route: library }
+  overlays:
+    - id: account_menu
+      type: popover
+      trigger: account_button
+      placement: bottom
+      dismissOn: [outside, escape]
+      props: { title: Account }
+      content:
+        - id: account_actions
+          component: menu
+          props:
+            items:
+              - { label: Your profile, icon: user, route: profile }
+              - { label: Asset library, icon: images, route: library }
+              - { label: Workspace home, icon: house, route: home }

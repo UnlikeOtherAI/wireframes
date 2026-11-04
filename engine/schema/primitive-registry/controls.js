@@ -3,6 +3,7 @@
 const controlPrimitives = [
   {
     name: 'button',
+    defaultVariant: 'secondary',
     family: 'controls',
     frame: 'N',
     summary: 'Button in five variants, three sizes; iconOnly and fab for icon buttons.',
@@ -11,6 +12,8 @@ const controlPrimitives = [
       icon: { type: 'string' },
       iconStyle: { enum: ['solid', 'regular', 'brands'] },
       iconSize: { type: 'string' },
+      iconPosition: { enum: ['start', 'end', 'center'] },
+      route: { type: 'string' },
       variant: { enum: ['primary', 'secondary', 'ghost', 'danger', 'link'] },
       size: { enum: ['sm', 'md', 'lg'] },
       iconOnly: { type: 'boolean' },
@@ -36,11 +39,13 @@ const controlPrimitives = [
   },
   {
     name: 'input',
+    defaultVariant: 'default',
     family: 'controls',
     frame: 'N',
     summary: 'Single-line field. inputType covers search, date, range, otp, colour and more.',
     props: {
       label: { type: 'string', primary: true },
+      variant: { enum: ['default', 'plain'] },
       placeholder: { type: 'string' },
       inputType: {
         enum: [
@@ -49,6 +54,9 @@ const controlPrimitives = [
         ],
       },
       value: { type: ['string', 'number'] },
+      icon: { type: 'string' },
+      iconStyle: { enum: ['solid', 'regular', 'brands'] },
+      iconPosition: { enum: ['start', 'end', 'center'] },
       prefix: { type: 'string' },
       suffix: { type: 'string' },
       help: { type: 'string' },
@@ -165,6 +173,7 @@ const controlPrimitives = [
   },
   {
     name: 'upload',
+    defaultVariant: 'dropzone',
     family: 'controls',
     frame: 'S',
     summary: 'File dropzone, or a plain upload button with variant: button.',

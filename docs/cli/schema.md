@@ -640,3 +640,23 @@ This document covers the core structure (sections 1-4). See companion files for 
 | [schema-systems.md](schema-systems.md) | Layout, state, interactions, overlays, panes, wireframe style, data binding, primitives, validation, export (sections 5-20) |
 | [schema-canonical.yaml](schema-canonical.yaml) | Full canonical YAML definition of the schema |
 | [schema.json](../../engine/schema/schema.json) | Formal JSON Schema for validation |
+
+## Icons, pills and sticky nodes
+
+Buttons and inputs accept Font Awesome Free names in props.icon and solid/regular/brands in props.iconStyle.
+props.iconPosition is start (default), end or center. Center on a button is an icon-only action; its label remains its accessible name.
+On an input, center shows the icon/placeholder group centred while empty and unfocused; focus or a value moves the icon to start.
+An explicit icon replaces type-inferred decorations. Do not combine it with prefix/suffix on the same side.
+wireframeStyle.corner.style accepts sharp, rounded and pill. Pill caps are half the shorter painted dimension and override radius.
+Nodes accept sticky: top|bottom|none. Put a top bar before the content in its containing scrolling region.
+Image placeholders omit src and use alt as an always-visible, wrapping description over the existing cross.
+
+Input variant: plain removes its inner frame for composition inside a single framed toolbar or composer; default retains the field frame.
+
+Buttons accept props.route as a route-ID shorthand when there are no explicit interactions. Explicit interactions take precedence. App-bar children are normal interactive controls placed on its trailing side; decorative actions remain supported.
+
+## Named skins (manifest 1.2)
+
+An optional manifest.designSystem stores activeSkin and a skins map. Each named skin has name, optional defaults and roles; appearance values contain optional colors, border and corner. Colours are restricted to #RRGGBB (transparent is also allowed for background). They are not fields of ordinary wireframeStyle objects. Standard role keys derive from the primitive registry and existing variant enums; there is no custom role or new node field.
+
+Saving named skins requires manifest specVersion: "1.2" and manifest.schemaVersion: "1.2". Other document types and new ordinary projects remain 1.1. The .wf container stays wf/1. The reserved skin wireframe selects the legacy appearance. See [the complete contract](design-system.md).

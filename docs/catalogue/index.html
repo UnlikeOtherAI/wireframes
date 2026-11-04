@@ -56,7 +56,8 @@ border-bottom:1px solid var(--cat-line);font-size:11px;letter-spacing:.05em;text
 color:var(--cat-ink-3);border:1px solid var(--cat-line);border-radius:8px;padding:0 6px}
 .cat-aliases{margin:12px 0 0;font-size:12.5px;color:var(--cat-ink-3)}
 .cat-aliases code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}</style>
-    <style>*{box-sizing:border-box}
+    <style>.wf-icon-glyph.fa-solid{font-family:"Font Awesome 7 Free","Font Awesome 7 Brands"}
+*{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#374151}
 :root{--wf-ink:#111827;--wf-ink-2:#374151;--wf-ink-3:#6b7280;--wf-ink-4:#9ca3af;--wf-line:#d1d5db;--wf-line-2:#e5e7eb;--wf-line-strong:#4b5563;--wf-fill:#f3f4f6;--wf-fill-2:#f9fafb;--wf-info:#2f6fd0;--wf-success:#2f8f55;--wf-warning:#c07817;--wf-danger:#c0443c}
 .wf-tone-info{--wf-tone:var(--wf-info)}
@@ -70,8 +71,8 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-body-row{flex:1;display:flex;flex-direction:row;align-items:stretch;min-height:0;min-width:0}
 .wf-body-column{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0}
 .wf-mode-card .wf-body-row,.wf-mode-card .wf-body-column{gap:16px}
-.wf-root[data-sticky="top"]{position:sticky;top:0;z-index:10;flex-shrink:0}
-.wf-root[data-sticky="bottom"]{position:sticky;bottom:0;z-index:10;flex-shrink:0}
+.wf-root[data-sticky="top"],.wf-node[data-sticky="top"]{position:sticky;top:0;z-index:10;flex-shrink:0}
+.wf-root[data-sticky="bottom"],.wf-node[data-sticky="bottom"]{position:sticky;bottom:0;z-index:10;flex-shrink:0}
 .wf-root{border:none;margin:0;min-width:0}
 .wf-root-slot{flex:1 1 auto;min-width:0}
 .wf-root-title{display:none}
@@ -172,7 +173,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-image-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;width:100%;min-height:120px;padding:16px;text-align:center;color:var(--wf-ink-4);border:1px solid var(--wf-line);border-radius:var(--wf-surface-radius,6px);background:linear-gradient(to top right,transparent calc(50% - .5px),var(--wf-line-2),transparent calc(50% + .5px)),linear-gradient(to top left,transparent calc(50% - .5px),var(--wf-line-2),transparent calc(50% + .5px)),var(--wf-fill-2)}
 .wf-mode-line .wf-image-placeholder{border-color:var(--wf-line-strong);border-radius:0;background:linear-gradient(to top right,transparent calc(50% - .5px),var(--wf-line),transparent calc(50% + .5px)),linear-gradient(to top left,transparent calc(50% - .5px),var(--wf-line),transparent calc(50% + .5px))}
 .wf-image-placeholder .wf-icon-glyph{font-size:22px;color:var(--wf-ink-4)}
-.wf-image-caption{font-size:12px}
+.wf-image-caption{color:var(--wf-ink-2);font-size:12px;max-width:100%;overflow-wrap:anywhere;position:relative;background:var(--wf-fill-2);padding:2px 6px}
 .wf-rating{display:inline-flex;align-items:center;gap:1px;color:var(--wf-ink-3);font-size:14px}
 .wf-star-on{color:var(--wf-ink)}
 .wf-rating-count{margin-left:6px;font-size:12px;color:var(--wf-ink-3)}
@@ -245,6 +246,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-mode-line .wf-button-danger button,.wf-mode-line .wf-button-danger .wf-button-link{color:var(--wf-tone);border-color:var(--wf-tone)}
 .wf-mode-card .wf-button-ghost button,.wf-mode-card .wf-button-ghost .wf-button-link{background:transparent;color:var(--wf-ink-2)}
 .wf-mode-card .wf-button-link button,.wf-mode-card .wf-button-link .wf-button-link{background:transparent;color:var(--wf-ink);text-decoration:underline;min-width:0;padding:0}
+.wf-button button .wf-icon-glyph,.wf-button .wf-button-link .wf-icon-glyph{color:inherit}
 .wf-segmented{display:inline-flex;align-items:stretch;width:fit-content;border-radius:var(--wf-corner-radius,6px);overflow:hidden}
 .wf-mode-line .wf-segmented{border:1px solid var(--wf-line-strong);border-radius:0}
 .wf-mode-card .wf-segmented{border:1px solid var(--wf-line);background:var(--wf-fill-2)}
@@ -272,6 +274,13 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-field-invalid{--wf-tone:var(--wf-danger)}
 .wf-field-invalid .wf-control,.wf-field-invalid textarea{border-color:var(--wf-tone);border-width:2px}
 .wf-select-searchable .wf-control select{padding-left:0}
+.wf-control-center{position:relative}
+.wf-control-center input{padding-inline-start:36px}
+.wf-affix-center{position:absolute;inset:0;gap:6px;pointer-events:none;justify-content:center}
+.wf-input-placeholder{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 44px)}
+.wf-control-center:not(:focus-within):has(input:placeholder-shown) input::placeholder{color:transparent}
+.wf-control-center:focus-within .wf-affix-center,.wf-control-center:not(:has(input:placeholder-shown)) .wf-affix-center{inset-inline-start:0;inset-inline-end:auto}
+.wf-control-center:focus-within .wf-input-placeholder,.wf-control-center:not(:has(input:placeholder-shown)) .wf-input-placeholder{display:none}
 .wf-otp{display:flex;gap:8px}
 .wf-otp-box{width:38px;height:44px;border:1px solid var(--wf-line);border-radius:var(--wf-corner-radius,6px);background:#ffffff}
 .wf-mode-line .wf-otp-box{border-color:var(--wf-line-strong);border-radius:0;background:transparent}
@@ -395,6 +404,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-menu-item .wf-icon-glyph{color:var(--wf-ink-4);width:16px;min-width:16px;font-size:13px}
 .wf-app_bar{display:flex;align-items:center;gap:12px;padding:0 12px;min-height:var(--wf-header-h,56px);min-width:0}
 .wf-app_bar[data-wf-frame="edge"]{border-bottom:1px solid var(--wf-line-2)}
+.wf-app_bar[data-sticky]{background:var(--wf-fill-2)}
 .wf-mode-line .wf-app_bar[data-wf-frame="edge"]{border-bottom-color:var(--wf-line-strong)}
 .wf-appbar-leading .wf-icon-glyph{font-size:18px;color:var(--wf-ink-2)}
 .wf-appbar-title{display:flex;flex-direction:column;flex:1 1 auto;min-width:0;font-size:15px;font-weight:600;color:var(--wf-ink)}
@@ -591,7 +601,9 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-list-settings .wf-list-row{padding:11px 16px}
 .wf-list-settings .wf-list-row:after{content:"\203a";margin-left:6px;color:var(--wf-ink-4);font-size:17px}
 .wf-list-settings .wf-list-row.wf-list-no-chevron:after{content:""}
-.wf-platform-android .wf-list-settings{border-radius:0}</style>
+.wf-platform-android .wf-list-settings{border-radius:0}
+.wf-field.wf-input-plain>.wf-control{border:0;background:transparent;border-radius:0}
+.wf-node[data-wf-corner="pill"],.wf-node[data-wf-corner="pill"]>button,.wf-node[data-wf-corner="pill"]>.wf-button-link,.wf-node[data-wf-corner="pill"]>.wf-control,.wf-node[data-wf-corner="pill"]>textarea,.wf-node[data-wf-corner="pill"]>.wf-image-placeholder,.wf-node[data-wf-corner="pill"]>img{border-radius:9999px}</style>
   </head>
   <body>
     <div class="cat-shell">
@@ -694,8 +706,8 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-frame">never draws a box</span>
   </div>
   <p class="cat-summary">Groups fields and a submit action. Never framed; wrap in a card for a box.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><form id="demo_form" class="wf-node wf-form wf-group" style="display:flex;flex-direction:column;gap:16px" data-wf-frame="group" data-wf-state-bindings="{}"><header class="wf-block-head"><div class="wf-block-text"><div class="wf-form-title">Profile</div></div></header><div class="wf-node-children" style="display:flex;flex-direction:column;gap:16px"><div id="demo_form_0" class="wf-node wf-input wf-field" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label">Full name</label><span class="wf-control"><input type="text" placeholder="" /></span></div>
-<div id="demo_form_1" class="wf-node wf-input wf-field" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label">Email</label><span class="wf-control"><span class="wf-affix wf-affix-start"><i class="wf-icon-glyph fa-solid fa-envelope" data-wf-glyph="E"></i></span><input type="email" placeholder="" /></span></div></div><div class="wf-form-actions"><button class="wf-act wf-button-primary">Save</button></div></form></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><form id="demo_form" class="wf-node wf-form wf-group" style="display:flex;flex-direction:column;gap:16px" data-wf-frame="group" data-wf-state-bindings="{}"><header class="wf-block-head"><div class="wf-block-text"><div class="wf-form-title">Profile</div></div></header><div class="wf-node-children" style="display:flex;flex-direction:column;gap:16px"><div id="demo_form_0" class="wf-node wf-input wf-field" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label" for="demo_form_0__input">Full name</label><span class="wf-control"><input id="demo_form_0__input" type="text" placeholder="" /></span></div>
+<div id="demo_form_1" class="wf-node wf-input wf-field" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label" for="demo_form_1__input">Email</label><span class="wf-control"><span class="wf-affix wf-affix-start"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-envelope" data-wf-glyph="E"></i></span><input id="demo_form_1__input" type="email" placeholder="" /></span></div></div><div class="wf-form-actions"><button class="wf-act wf-button-primary">Save</button></div></form></div>
   <div class="cat-split">
     <pre class="cat-code">- form: { title: Profile, submit: Save, children: [{ input: { label: Full name } }, { input: { label: Email, inputType: email } }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">title</td><td>string</td></tr><tr><td class="">submit</td><td>string</td></tr><tr><td class="">columns</td><td>number</td></tr></tbody></table></div>
@@ -792,7 +804,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-frame">never draws a box</span>
   </div>
   <p class="cat-summary">Font Awesome icon; falls back to a lettered glyph box without the font.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><span id="demo_icon" class="wf-node wf-icon" data-wf-frame="content" data-wf-state-bindings="{}"><i class="wf-icon-glyph fa-solid fa-gear fa-lg" data-wf-glyph="G" style="font-size:20px;width:20px"></i></span></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><span id="demo_icon" class="wf-node wf-icon" data-wf-frame="content" data-wf-state-bindings="{}"><span role="img" aria-label="gear"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-gear fa-lg" data-wf-glyph="G" style="font-size:20px;width:20px"></i></span></span></div>
   <div class="cat-split">
     <pre class="cat-code">- icon: { name: gear, size: lg }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">name</td><td>string</td></tr><tr><td class="">style</td><td>solid | regular | brands</td></tr><tr><td class="">size</td><td>string</td></tr></tbody></table></div>
@@ -804,7 +816,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-frame">never draws a box</span>
   </div>
   <p class="cat-summary">Image or media placeholder. kind picks the placeholder glyph.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_image" class="wf-node wf-image wf-image-video" data-wf-frame="content" data-wf-state-bindings="{}"><div class="wf-image-placeholder" style="aspect-ratio:16 / 9"><i class="wf-icon-glyph fa-solid fa-play fa-xl" data-wf-glyph="P" style="font-size:24px;width:24px"></i><span class="wf-image-caption">Product shot</span></div></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_image" class="wf-node wf-image wf-image-video" data-wf-frame="content" data-wf-state-bindings="{}"><div class="wf-image-placeholder" role="img" aria-label="Product shot" title="Product shot" style="aspect-ratio:16 / 9"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-play fa-xl" data-wf-glyph="P" style="font-size:24px;width:24px"></i><span class="wf-image-caption">Product shot</span></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- image: { alt: Product shot, kind: video, ratio: &quot;16:9&quot; }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="">src</td><td>string</td></tr><tr><td class="cat-primary">alt</td><td>string</td></tr><tr><td class="">kind</td><td>image | video | map | embed | logo</td></tr><tr><td class="">ratio</td><td>string</td></tr><tr><td class="">width</td><td>number,string</td></tr><tr><td class="">height</td><td>number,string</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>media</code>.</p></div>
@@ -888,7 +900,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-frame">the frame rules decide</span>
   </div>
   <p class="cat-summary">Centred empty, error, 404 or offline state with an optional action.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_empty_state" class="wf-node wf-empty_state wf-surface wf-empty-empty" data-wf-frame="surface" data-wf-state-bindings="{}"><span class="wf-empty-glyph"><i class="wf-icon-glyph fa-solid fa-inbox fa-xl" data-wf-glyph="I" style="font-size:24px;width:24px"></i></span><div class="wf-empty-title">No projects yet</div><button class="wf-act wf-button-primary">New project</button></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_empty_state" class="wf-node wf-empty_state wf-surface wf-empty-empty" data-wf-frame="surface" data-wf-state-bindings="{}"><span class="wf-empty-glyph"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-inbox fa-xl" data-wf-glyph="I" style="font-size:24px;width:24px"></i></span><div class="wf-empty-title">No projects yet</div><button class="wf-act wf-button-primary">New project</button></div></div>
   <div class="cat-split">
     <pre class="cat-code">- empty_state: { title: No projects yet, action: New project }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">title</td><td>string</td></tr><tr><td class="">text</td><td>string</td></tr><tr><td class="">icon</td><td>string</td></tr><tr><td class="">action</td><td>string</td></tr><tr><td class="">variant</td><td>empty | error | 404 | offline</td></tr></tbody></table></div>
@@ -904,7 +916,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
   <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_button" class="wf-node wf-button wf-button-primary wf-button-md" data-wf-frame="control" data-wf-state-bindings="{}"><button>Save</button></div></div>
   <div class="cat-split">
     <pre class="cat-code">- button: { label: Save, variant: primary }</pre>
-    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">label</td><td>string</td></tr><tr><td class="">icon</td><td>string</td></tr><tr><td class="">iconStyle</td><td>solid | regular | brands</td></tr><tr><td class="">iconSize</td><td>string</td></tr><tr><td class="">variant</td><td>primary | secondary | ghost | danger | link</td></tr><tr><td class="">size</td><td>sm | md | lg</td></tr><tr><td class="">iconOnly</td><td>boolean</td></tr><tr><td class="">loading</td><td>boolean</td></tr><tr><td class="">disabled</td><td>boolean</td></tr><tr><td class="">fab</td><td>boolean</td></tr></tbody></table></div>
+    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">label</td><td>string</td></tr><tr><td class="">icon</td><td>string</td></tr><tr><td class="">iconStyle</td><td>solid | regular | brands</td></tr><tr><td class="">iconSize</td><td>string</td></tr><tr><td class="">iconPosition</td><td>start | end | center</td></tr><tr><td class="">route</td><td>string</td></tr><tr><td class="">variant</td><td>primary | secondary | ghost | danger | link</td></tr><tr><td class="">size</td><td>sm | md | lg</td></tr><tr><td class="">iconOnly</td><td>boolean</td></tr><tr><td class="">loading</td><td>boolean</td></tr><tr><td class="">disabled</td><td>boolean</td></tr><tr><td class="">fab</td><td>boolean</td></tr></tbody></table></div>
   </div>
 </article>
 <article class="cat-item" id="el-segmented">
@@ -925,10 +937,10 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-frame">never draws a box</span>
   </div>
   <p class="cat-summary">Single-line field. inputType covers search, date, range, otp, colour and more.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_input" class="wf-node wf-input wf-field" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label">Email</label><span class="wf-control"><span class="wf-affix wf-affix-start"><i class="wf-icon-glyph fa-solid fa-envelope" data-wf-glyph="E"></i></span><input type="email" placeholder="you@example.com" /></span></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_input" class="wf-node wf-input wf-field" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label" for="demo_input__input">Email</label><span class="wf-control"><span class="wf-affix wf-affix-start"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-envelope" data-wf-glyph="E"></i></span><input id="demo_input__input" type="email" placeholder="you@example.com" /></span></div></div>
   <div class="cat-split">
     <pre class="cat-code">- input: { label: Email, inputType: email, placeholder: you@example.com }</pre>
-    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">label</td><td>string</td></tr><tr><td class="">placeholder</td><td>string</td></tr><tr><td class="">inputType</td><td>text | password | email | number | search | tel | url | date | time | datetime | color | range | otp | stepper</td></tr><tr><td class="">value</td><td>string,number</td></tr><tr><td class="">prefix</td><td>string</td></tr><tr><td class="">suffix</td><td>string</td></tr><tr><td class="">help</td><td>string</td></tr><tr><td class="">error</td><td>string</td></tr><tr><td class="">required</td><td>boolean</td></tr><tr><td class="">disabled</td><td>boolean</td></tr><tr><td class="">length</td><td>number</td></tr></tbody></table></div>
+    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">label</td><td>string</td></tr><tr><td class="">variant</td><td>default | plain</td></tr><tr><td class="">placeholder</td><td>string</td></tr><tr><td class="">inputType</td><td>text | password | email | number | search | tel | url | date | time | datetime | color | range | otp | stepper</td></tr><tr><td class="">value</td><td>string,number</td></tr><tr><td class="">icon</td><td>string</td></tr><tr><td class="">iconStyle</td><td>solid | regular | brands</td></tr><tr><td class="">iconPosition</td><td>start | end | center</td></tr><tr><td class="">prefix</td><td>string</td></tr><tr><td class="">suffix</td><td>string</td></tr><tr><td class="">help</td><td>string</td></tr><tr><td class="">error</td><td>string</td></tr><tr><td class="">required</td><td>boolean</td></tr><tr><td class="">disabled</td><td>boolean</td></tr><tr><td class="">length</td><td>number</td></tr></tbody></table></div>
   </div>
 </article>
 <article class="cat-item" id="el-textarea">
@@ -949,7 +961,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-frame">never draws a box</span>
   </div>
   <p class="cat-summary">Dropdown field; searchable turns it into a combobox.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_select" class="wf-node wf-select wf-field wf-select-searchable" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label">Status</label><span class="wf-control"><span class="wf-affix wf-affix-start"><i class="wf-icon-glyph fa-solid fa-magnifying-glass" data-wf-glyph="M"></i></span><select><option value="">Select</option><option value="Draft">Draft</option><option value="Ready">Ready</option></select></span></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_select" class="wf-node wf-select wf-field wf-select-searchable" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label">Status</label><span class="wf-control"><span class="wf-affix wf-affix-start"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-magnifying-glass" data-wf-glyph="M"></i></span><select><option value="">Select</option><option value="Draft">Draft</option><option value="Ready">Ready</option></select></span></div></div>
   <div class="cat-split">
     <pre class="cat-code">- select: { label: Status, options: [Draft, Ready], searchable: true }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">label</td><td>string</td></tr><tr><td class="">placeholder</td><td>string</td></tr><tr><td class="">options</td><td>array</td></tr><tr><td class="">searchable</td><td>boolean</td></tr><tr><td class="">multiple</td><td>boolean</td></tr><tr><td class="">help</td><td>string</td></tr><tr><td class="">error</td><td>string</td></tr><tr><td class="">required</td><td>boolean</td></tr><tr><td class="">disabled</td><td>boolean</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>combobox</code>, <code>autocomplete</code>.</p></div>
@@ -1021,7 +1033,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-frame">always draws a box</span>
   </div>
   <p class="cat-summary">File dropzone, or a plain upload button with variant: button.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_upload" class="wf-node wf-upload wf-surface" data-wf-frame="surface" data-wf-state-bindings="{}"><span class="wf-upload-glyph"><i class="wf-icon-glyph fa-solid fa-cloud-arrow-up fa-xl" data-wf-glyph="C" style="font-size:24px;width:24px"></i></span><div class="wf-upload-label">Drop files here</div><div class="wf-upload-hint">PNG or PDF up to 10MB</div></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_upload" class="wf-node wf-upload wf-surface" data-wf-frame="surface" data-wf-state-bindings="{}"><span class="wf-upload-glyph"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-cloud-arrow-up fa-xl" data-wf-glyph="C" style="font-size:24px;width:24px"></i></span><div class="wf-upload-label">Drop files here</div><div class="wf-upload-hint">PNG or PDF up to 10MB</div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- upload: { label: Drop files here, hint: PNG or PDF up to 10MB }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">label</td><td>string</td></tr><tr><td class="">hint</td><td>string</td></tr><tr><td class="">files</td><td>array</td></tr><tr><td class="">variant</td><td>dropzone | button</td></tr></tbody></table></div>
@@ -1045,7 +1057,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-frame">always draws a box</span>
   </div>
   <p class="cat-summary">Rich-text editor placeholder with an optional toolbar strip.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_editor" class="wf-node wf-editor wf-surface" data-wf-frame="surface" data-wf-state-bindings="{}"><label class="wf-field-label">Description</label><div class="wf-editor-toolbar"><span class="wf-editor-tool"><i class="wf-icon-glyph fa-solid fa-bold fa-sm" data-wf-glyph="B" style="font-size:14px;width:14px"></i></span><span class="wf-editor-tool"><i class="wf-icon-glyph fa-solid fa-italic fa-sm" data-wf-glyph="I" style="font-size:14px;width:14px"></i></span><span class="wf-editor-tool"><i class="wf-icon-glyph fa-solid fa-list-ul fa-sm" data-wf-glyph="L" style="font-size:14px;width:14px"></i></span><span class="wf-editor-tool"><i class="wf-icon-glyph fa-solid fa-link fa-sm" data-wf-glyph="L" style="font-size:14px;width:14px"></i></span><span class="wf-editor-tool"><i class="wf-icon-glyph fa-solid fa-image fa-sm" data-wf-glyph="I" style="font-size:14px;width:14px"></i></span><span class="wf-editor-tool"><i class="wf-icon-glyph fa-solid fa-code fa-sm" data-wf-glyph="C" style="font-size:14px;width:14px"></i></span></div><div class="wf-editor-body" style="min-height:132px"><span class="wf-skeleton-row"><span class="wf-bar" style="width:100%"></span></span><span class="wf-skeleton-row"><span class="wf-bar" style="width:100%"></span></span><span class="wf-skeleton-row"><span class="wf-bar" style="width:100%"></span></span><span class="wf-skeleton-row"><span class="wf-bar" style="width:100%"></span></span><span class="wf-skeleton-row"><span class="wf-bar" style="width:45%"></span></span></div></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_editor" class="wf-node wf-editor wf-surface" data-wf-frame="surface" data-wf-state-bindings="{}"><label class="wf-field-label">Description</label><div class="wf-editor-toolbar"><span class="wf-editor-tool"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-bold fa-sm" data-wf-glyph="B" style="font-size:14px;width:14px"></i></span><span class="wf-editor-tool"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-italic fa-sm" data-wf-glyph="I" style="font-size:14px;width:14px"></i></span><span class="wf-editor-tool"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-list-ul fa-sm" data-wf-glyph="L" style="font-size:14px;width:14px"></i></span><span class="wf-editor-tool"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-link fa-sm" data-wf-glyph="L" style="font-size:14px;width:14px"></i></span><span class="wf-editor-tool"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-image fa-sm" data-wf-glyph="I" style="font-size:14px;width:14px"></i></span><span class="wf-editor-tool"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-code fa-sm" data-wf-glyph="C" style="font-size:14px;width:14px"></i></span></div><div class="wf-editor-body" style="min-height:132px"><span class="wf-skeleton-row"><span class="wf-bar" style="width:100%"></span></span><span class="wf-skeleton-row"><span class="wf-bar" style="width:100%"></span></span><span class="wf-skeleton-row"><span class="wf-bar" style="width:100%"></span></span><span class="wf-skeleton-row"><span class="wf-bar" style="width:100%"></span></span><span class="wf-skeleton-row"><span class="wf-bar" style="width:45%"></span></span></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- editor: { label: Description, toolbar: true }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">label</td><td>string</td></tr><tr><td class="">toolbar</td><td>boolean</td></tr><tr><td class="">rows</td><td>number</td></tr></tbody></table></div>
@@ -1070,7 +1082,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-frame">draws one edge</span>
   </div>
   <p class="cat-summary">Mobile bottom tab bar, icon above label.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_bottom_tab_bar" class="wf-node wf-bottom_tab_bar" data-wf-frame="edge" data-wf-state-bindings="{}"><span class="wf-btab wf-tab-on"><span class="wf-btab-glyph"><i class="wf-icon-glyph fa-solid fa-house fa-lg" data-wf-glyph="H" style="font-size:20px;width:20px"></i></span><span class="wf-btab-label">Home</span></span></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_bottom_tab_bar" class="wf-node wf-bottom_tab_bar" data-wf-frame="edge" data-wf-state-bindings="{}"><span class="wf-btab wf-tab-on"><span class="wf-btab-glyph"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-house fa-lg" data-wf-glyph="H" style="font-size:20px;width:20px"></i></span><span class="wf-btab-label">Home</span></span></div></div>
   <div class="cat-split">
     <pre class="cat-code">- bottom_tab_bar: { tabs: [{ icon: house, label: Home, active: true }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">tabs</td><td>array</td></tr></tbody></table></div>
@@ -1118,7 +1130,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-frame">never draws a box</span>
   </div>
   <p class="cat-summary">Vertical side navigation; collapsed renders an icon rail.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><nav id="demo_nav" class="wf-node wf-nav" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-nav-item wf-nav-on"><span class="wf-ico"><i class="wf-icon-glyph fa-solid fa-gauge" data-wf-glyph="G"></i></span><span class="wf-nav-label">Dashboard</span></span><span class="wf-nav-item"><span class="wf-nav-label">Settings</span></span></nav></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><nav id="demo_nav" class="wf-node wf-nav" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-nav-item wf-nav-on"><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-gauge" data-wf-glyph="G"></i></span><span class="wf-nav-label">Dashboard</span></span><span class="wf-nav-item"><span class="wf-nav-label">Settings</span></span></nav></div>
   <div class="cat-split">
     <pre class="cat-code">- nav: { items: [{ icon: gauge, label: Dashboard, active: true }, { label: Settings }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">collapsed</td><td>boolean</td></tr><tr><td class="">groups</td><td>boolean</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>sidenav</code>.</p></div>
@@ -1142,7 +1154,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-frame">draws one edge</span>
   </div>
   <p class="cat-summary">Mobile top chrome: leading glyph, title, trailing actions.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><header id="demo_app_bar" class="wf-node wf-app_bar" data-wf-frame="edge" data-wf-state-bindings="{}"><span class="wf-appbar-leading"><i class="wf-icon-glyph fa-solid fa-arrow-left fa-lg" data-wf-glyph="A" style="font-size:20px;width:20px"></i></span><span class="wf-appbar-title">Inbox</span><span class="wf-appbar-actions"><span class="wf-appbar-action"><i class="wf-icon-glyph fa-solid fa-search fa-lg" data-wf-glyph="S" style="font-size:20px;width:20px"></i></span></span></header></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><header id="demo_app_bar" class="wf-node wf-app_bar" data-wf-frame="edge" data-wf-state-bindings="{}"><span class="wf-appbar-leading"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-arrow-left fa-lg" data-wf-glyph="A" style="font-size:20px;width:20px"></i></span><span class="wf-appbar-title">Inbox</span><span class="wf-appbar-actions"><span class="wf-appbar-action"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-search fa-lg" data-wf-glyph="S" style="font-size:20px;width:20px"></i></span></span></header></div>
   <div class="cat-split">
     <pre class="cat-code">- app_bar: { title: Inbox, leading: arrow-left, actions: [search] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">title</td><td>string</td></tr><tr><td class="">subtitle</td><td>string</td></tr><tr><td class="">leading</td><td>string</td></tr><tr><td class="">actions</td><td>array</td></tr></tbody></table></div>
@@ -1239,7 +1251,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-frame">the frame rules decide</span>
   </div>
   <p class="cat-summary">Nested tree or file browser.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_tree" class="wf-node wf-tree wf-surface" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-tree-row" style="padding-left:0px"><span class="wf-tree-caret">▾</span><span class="wf-ico"><i class="wf-icon-glyph fa-solid fa-folder fa-sm" data-wf-glyph="F" style="font-size:14px;width:14px"></i></span><span class="wf-tree-label">src</span></div><div class="wf-tree-row" style="padding-left:16px"><span class="wf-tree-caret wf-tree-leaf"></span><span class="wf-ico"><i class="wf-icon-glyph fa-solid fa-file fa-sm" data-wf-glyph="F" style="font-size:14px;width:14px"></i></span><span class="wf-tree-label">index.js</span></div></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_tree" class="wf-node wf-tree wf-surface" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-tree-row" style="padding-left:0px"><span class="wf-tree-caret">▾</span><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-folder fa-sm" data-wf-glyph="F" style="font-size:14px;width:14px"></i></span><span class="wf-tree-label">src</span></div><div class="wf-tree-row" style="padding-left:16px"><span class="wf-tree-caret wf-tree-leaf"></span><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-file fa-sm" data-wf-glyph="F" style="font-size:14px;width:14px"></i></span><span class="wf-tree-label">index.js</span></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- tree: { items: [{ label: src, children: [{ label: index.js }] }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">expanded</td><td>boolean</td></tr></tbody></table></div>
@@ -1264,7 +1276,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-frame">always draws a box</span>
   </div>
   <p class="cat-summary">Banner or inline alert. Variants differ by glyph, stripe hue and edge weight.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_alert" class="wf-node wf-alert wf-surface wf-alert-warning" data-wf-frame="surface" data-wf-state-bindings="{}"><span class="wf-alert-glyph"><i class="wf-icon-glyph fa-solid fa-triangle-exclamation fa-lg" data-wf-glyph="T" style="font-size:20px;width:20px"></i></span><div class="wf-alert-body"><div class="wf-alert-title">Trial ends soon</div><div class="wf-alert-text">3 days left</div></div></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_alert" class="wf-node wf-alert wf-surface wf-alert-warning" data-wf-frame="surface" data-wf-state-bindings="{}"><span class="wf-alert-glyph"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-triangle-exclamation fa-lg" data-wf-glyph="T" style="font-size:20px;width:20px"></i></span><div class="wf-alert-body"><div class="wf-alert-title">Trial ends soon</div><div class="wf-alert-text">3 days left</div></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- alert: { title: Trial ends soon, text: 3 days left, variant: warning }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">text</td><td>string</td></tr><tr><td class="">title</td><td>string</td></tr><tr><td class="">variant</td><td>info | success | warning | error | neutral</td></tr><tr><td class="">icon</td><td>string</td></tr><tr><td class="">dismissible</td><td>boolean</td></tr><tr><td class="">inline</td><td>boolean</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>banner</code>, <code>callout</code>.</p></div>

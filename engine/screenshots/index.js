@@ -1,4 +1,5 @@
 'use strict';
+const { pageAppearance } = require('../design-system/resolve');
 
 const { normalizePlatform } = require('../renderer/platform');
 const fs = require('node:fs');
@@ -277,7 +278,6 @@ function resolvePageTargets(projectPath, pageId) {
 
   const manifest = loadDocumentFromFile(path.join(projectPath, 'manifest.yaml'), { supportedSpecVersion: SUPPORTED_SPEC_VERSION });
   const manifestData = manifest.document?.manifest || {};
-  const defaultWireframeStyle = manifestData.defaultWireframeStyle || {};
   const manifestSizing = isObject(manifestData.sizing) ? manifestData.sizing : {};
   const parsedDefaultGridColumns = Number(manifestData.defaultGridColumns);
   const defaultGridColumns = Number.isInteger(parsedDefaultGridColumns) && parsedDefaultGridColumns > 0
@@ -336,7 +336,8 @@ function resolvePageTargets(projectPath, pageId) {
         orientation: viewportResult.orientation,
         platform: viewportResult.platform,
       },
-      wireframeStyle: page.wireframeStyle || defaultWireframeStyle,
+      wireframeStyle: pageAppearance(manifestData, page.wireframeStyle).pageStyle,
+      skin: pageAppearance(manifestData, page.wireframeStyle).skin,
       rendering: resolvePageRendering(page),
       defaultGridColumns,
       sizing: manifestSizing,
@@ -401,6 +402,7 @@ async function captureScreenshots(targets, outputPath, frame) {
         pageStateDefaults: target.pageStateDefaults,
         pageViewport: target.viewport,
         pageStyle: target.wireframeStyle,
+        skin: target.skin,
         rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
         sizing: target.sizing,

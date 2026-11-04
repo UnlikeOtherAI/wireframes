@@ -99,7 +99,7 @@ function renderIcon(node, ctx, lib) {
   const name = lib.str(node.props?.name) || 'circle-question';
   return {
     tag: 'span',
-    inner: lib.icon(name, { style: node.props?.style, size: node.props?.size }),
+    inner: `<span role="img" aria-label="${lib.escapeAttr(node.accessibility?.label || name.replace(/-/g, ' '))}">${lib.icon(name, { style: node.props?.style, size: node.props?.size })}</span>`,
   };
 }
 
@@ -128,7 +128,7 @@ function renderImage(node, ctx, lib) {
   const glyph = lib.icon(MEDIA_GLYPH[kind] || 'image', { size: 'xl' });
   const caption = alt ? `<span class="wf-image-caption">${lib.bound(alt, ctx)}</span>` : '';
   return {
-    inner: `<div class="wf-image-placeholder"${ratioStyle ? ` style="${ratioStyle}"` : ''}>${glyph}${caption}</div>`,
+    inner: `<div class="wf-image-placeholder" role="img" aria-label="${lib.escapeAttr(alt || kind)}" title="${lib.escapeAttr(alt || kind)}"${ratioStyle ? ` style="${ratioStyle}"` : ''}>${glyph}${caption}</div>`,
     className: `wf-image-${lib.toSafeClass(kind)}`,
   };
 }

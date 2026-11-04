@@ -1,0 +1,70 @@
+documentType: page
+specVersion: "1.1"
+id: profile
+page:
+  id: profile
+  template: workspace
+  viewport: { device: tablet, platform: ios, orientation: portrait }
+  slots:
+    - slotId: main
+      content:
+        - id: workspace_bar
+          component: app_bar
+          sticky: top
+          props: { title: Studio workspace }
+          children:
+            - id: home_link
+              component: button
+              props: { label: Home, icon: house, variant: ghost, route: home }
+            - id: library_link
+              component: button
+              props: { label: Library, icon: folder-open, variant: ghost, route: library }
+            - id: account_button
+              component: button
+              props: { label: Ada, icon: circle-user, iconStyle: regular, iconPosition: end, variant: secondary }
+              interaction: [{ type: open_overlay, targetOverlay: account_menu }]
+        - id: profile_title
+          component: page_header
+          props: { title: Your profile, subtitle: Workspace details for Ada Lovelace }
+        - id: profile_columns
+          component: grid
+          props: { columns: 2, minItemWidth: 280 }
+          children:
+            - id: profile_card
+              component: card
+              props: { title: Ada Lovelace }
+              children:
+                - id: profile_avatar
+                  component: avatar
+                  props: { name: Ada Lovelace, size: xl }
+                - id: profile_name
+                  component: input
+                  props: { label: Name, value: Ada Lovelace, icon: user, iconPosition: start }
+                - id: profile_email
+                  component: input
+                  props: { label: Email, inputType: email, value: ada@example.com, icon: envelope, iconStyle: regular, iconPosition: end }
+            - id: profile_links
+              component: card
+              props: { title: Your workspace }
+              children:
+                - id: profile_library
+                  component: button
+                  props: { label: Asset library, icon: folder-open, iconPosition: end, route: library }
+                - id: profile_home
+                  component: button
+                  props: { label: Workspace home, icon: house, route: home }
+  overlays:
+    - id: account_menu
+      type: popover
+      trigger: account_button
+      placement: bottom
+      dismissOn: [outside, escape]
+      props: { title: Account }
+      content:
+        - id: account_actions
+          component: menu
+          props:
+            items:
+              - { label: Your profile, icon: user, route: profile }
+              - { label: Asset library, icon: images, route: library }
+              - { label: Workspace home, icon: house, route: home }

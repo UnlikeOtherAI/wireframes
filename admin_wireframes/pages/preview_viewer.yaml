@@ -36,7 +36,7 @@ page:
                 - id: viewer_logo_icon
                   component: icon
                   props:
-                    name: vector-square
+                    name: bezier-curve
                     size: sm
                 - id: viewer_logo
                   component: text

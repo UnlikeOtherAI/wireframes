@@ -10,7 +10,7 @@ const { launchChromium } = require('../engine/screenshots/playwright-launcher');
 
 const ROOT = path.resolve(__dirname, '..');
 const FIXTURE = path.join(ROOT, 'engine', 'renderer', '__fixtures__', 'gallery');
-const BASELINES = path.join(ROOT, 'cli', 'test', '__screenshots__', 'gallery');
+const BASELINES = path.join(ROOT, 'cli', 'test', '__screenshots__', 'gallery', ...(process.platform === 'win32' ? ['win32'] : []));
 // One page per family, plus both modes and an auth screen.
 const PAGE_IDS = ['containers', 'content', 'forms', 'data', 'charts', 'navigation_elements', 'line_structure', 'line_forms', 'auth'];
 

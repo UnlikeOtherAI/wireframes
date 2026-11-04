@@ -174,7 +174,7 @@ function renderAppBar(node, ctx, lib) {
   const actions = lib.items(props.actions).map((action) => (
     `<span class="wf-appbar-action">${lib.icon(lib.str(action.icon) || lib.str(action.label) || 'ellipsis', { size: 'lg' })}</span>`
   )).join('');
-  return { tag: 'header', inner: `${leading}${centre}<span class="wf-appbar-actions">${actions}</span>` };
+  return { tag: 'header', inner: `${leading}${centre}<span class="wf-appbar-actions">${actions}</span>`, useChildren: true };
 }
 
 function renderPageHeader(node, ctx, lib) {

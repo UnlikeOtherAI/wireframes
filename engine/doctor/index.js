@@ -3,6 +3,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
+const { validatePresentation } = require('../validate/presentation');
+const { validateIconReferences } = require('../icons/validate');
 const {
   SUPPORTED_SPEC_VERSION,
 } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
@@ -60,6 +62,9 @@ function loadDocument(filePath, result, expectedType) {
       return null;
     }
 
+    const appearance = validatePresentation(loaded.document);
+    result.errors.push(...appearance.errors.map((d) => ({ ...d, message: filePath + ': ' + d.message })));
+    result.warnings.push(...appearance.warnings, ...validateIconReferences(loaded.document, require('../icons/catalogue')));
     return loaded;
   } catch (error) {
     if (

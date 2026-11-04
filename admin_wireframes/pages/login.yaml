@@ -30,7 +30,7 @@ page:
             - id: login_logo_icon
               component: icon
               props:
-                name: vector-square
+                name: bezier-curve
                 size: 2xl
             - id: login_heading
               component: heading

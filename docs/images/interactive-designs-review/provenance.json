@@ -1,0 +1,26 @@
+{
+  "before": "47aaeeec9a75afc6ad57d1d93aef6c2f9f9882bf",
+  "after": "093731b4a9eec653679aeb4fb591e582a8759bec",
+  "host": "Windows Minis (Maxis disk queue prevented the final capture browser starting)",
+  "browser": "Chromium 156.0.8078.4 via Playwright 1.64.1",
+  "theme": "Light/default; Acme in company samples",
+  "galleryViewport": {
+    "width": 1280,
+    "height": 900
+  },
+  "tabletViewport": {
+    "width": 1024,
+    "height": 1366
+  },
+  "phoneViewport": {
+    "width": 430,
+    "height": 932
+  },
+  "newStates": [
+    "three-page prototype",
+    "focused search",
+    "scrolled account popover",
+    "company skin at two sizes"
+  ],
+  "capture": "Actual base/final engine; matching gallery fixtures; pure renderPage with deviceChrome:false, adaptive:true for native-host example states. Public fake fixture data only."
+}

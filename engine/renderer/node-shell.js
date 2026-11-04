@@ -1,11 +1,14 @@
 'use strict';
 
+const { resolveAppearance } = require('../design-system/resolve');
+const { skinShellStyle } = require('../design-system/paint');
+
 const { layoutToCss, layoutItemCss, absoluteChildStyle } = require('./layout');
 const { surfaceElevationOverride, wireframeNodeStyleOverrides } = require('./wireframe-styles');
 const { decideFrame } = require('./frame-rules');
 const { token, scale } = require('./sizing-tokens');
 const { buildNodeDataAttributes, joinAttrs, navigationAttrs, sourceAttrs } = require('./render-attrs');
-const { isObject, toSafeClass, paneMetaToStyle } = require('./render-utils');
+const { isObject, toSafeClass, paneMetaToStyle, escapeHtml } = require('./render-utils');
 const { frameClass, resolvePrimitiveName } = require('../schema/primitive-registry');
 
 // Elements that get a structural size from a token rather than from the author.
@@ -161,18 +164,21 @@ function buildShell(node, element, ctx) {
 
   // A leaf with no authored layout has nothing to lay out; emitting flexbox for
   // it only fights the element's own CSS.
-  const wantsLayout = hasChildren(node) || isObject(node.layout) || LAYOUT_DEFAULTS[element] != null;
+  const wantsLayout = (hasChildren(node) && element !== 'app_bar') || isObject(node.layout) || LAYOUT_DEFAULTS[element] != null;
   const layoutCss = wantsLayout
     ? layoutToCss(layout, size, { defaultGridColumns: ctx.defaultGridColumns, density: ctx.density })
     : layoutToCss({ type: 'none' }, size, { defaultGridColumns: ctx.defaultGridColumns, density: ctx.density });
 
+  const appearance = resolveAppearance(node, ctx);
   const outerOnly = [
     layoutItemCss(isObject(node.gridItem) ? node.gridItem : {}),
     absoluteChildStyle(node.position, ctx.parentLayoutType),
     paneMetaToStyle(paneData),
     surfaceElevationOverride(node.elevation, ctx.rendering),
     wrapStyle(element, node, decision, ctx),
-    wireframeNodeStyleOverrides(isObject(node.wireframeStyle) ? node.wireframeStyle : {}, ctx.pageStyle, ctx.rendering),
+    appearance
+      ? skinShellStyle(node, appearance, decision.frame, ctx)
+      : wireframeNodeStyleOverrides(isObject(node.wireframeStyle) ? node.wireframeStyle : {}, ctx.pageStyle, ctx.rendering),
   ].filter(Boolean).join(';');
 
   const style = [layoutCss, outerOnly].filter(Boolean).join(';');
@@ -199,6 +205,9 @@ function buildShell(node, element, ctx) {
   }
 
   const attrs = [`data-wf-frame="${decision.frame}"`];
+  const corner = appearance?.corner?.style || node.wireframeStyle?.corner?.style || ctx.pageStyle?.corner?.style;
+  if (corner === 'pill') attrs.push('data-wf-corner="pill"');
+  if (appearance) attrs.push('data-wf-skin-role="' + escapeHtml(appearance.role) + '"');
   if (ctx.explain === true) {
     attrs.push(`data-wf-why="${decision.rule}:${decision.reason}"`);
   }

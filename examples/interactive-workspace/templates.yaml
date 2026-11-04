@@ -1,0 +1,11 @@
+documentType: templates
+specVersion: "1.1"
+id: templates
+templates:
+  workspace:
+    layout: { type: stack, gap: 0, padding: 0 }
+    regions:
+      - id: main
+        kind: slot
+        role: main
+        layout: { type: stack, gap: 16, padding: 20 }

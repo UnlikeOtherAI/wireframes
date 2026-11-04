@@ -847,3 +847,19 @@ wf export
 ```
 
 And nothing more.
+
+## Icon search
+
+wf icons search <query> [--style solid|regular|brands] [--limit 1..20] [--json]
+
+Searches the full installed Font Awesome Free catalogue by canonical name, alias, label and terms.
+The default limit is 8; JSON is {query, icons: [{name, label, styles}]}.
+Examples: wf icons search "burger menu" returns bars; wf icons search search returns magnifying-glass.
+Unknown queries return an empty result; bad options/style/limit return a nonzero exit status.
+Use the returned name in icon.name or button/input icon; choose a returned style.
+
+## Named company skins
+
+Projects may store named skins in manifest.designSystem. Existing wf validate, wf build, wf serve, wf screenshots, wf pack and wf unpack use or preserve that data. Skinned manifests use spec/schema version 1.2; ordinary projects and other document types retain 1.1. The .wf container remains wf/1. No account or online service is required.
+
+Pure authoring clients use getDesignSystem and updateDesignSystem from engine/design-system; standard role assignment uses the existing node props.variant. No separate wf skin command family is shipped in this tranche. See [the API and rendering contract](design-system.md).

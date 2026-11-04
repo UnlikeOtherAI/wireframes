@@ -479,3 +479,18 @@ With this structure:
 * Global selected state
 * Safe for external tool integration
 * Exportable package
+
+## Sticky content and icon decoration
+
+Ordinary nodes support sticky: top|bottom|none, using the same containing-scroll semantics as template regions.
+A bar must precede content in that same region. A separate short wrapper or an overflow/clipping ancestor can limit its travel.
+The engine warns for top bars with no following sibling content and bars inside known independently scrolling containers.
+Input icon positions start/end are logical sides. The center treatment preserves the full-width input hit area and moves to start on focus or value.
+An icon and authored prefix/suffix on the same side is ICON_AFFIX_CONFLICT.
+See schema.md for exact props and corner.style: pill.
+
+## Skin validation and resolution
+
+Named skins are project content and need manifest spec/schema version 1.2. The validator checks their explicit schema, ID grammar, reserved IDs, standard registry role keys and selected-skin existence. Unknown properties and unsupported colour expressions fail validation atomically. Ordinary projects remain 1.1.
+
+The shared appearance resolver applies defaults, page style, primitive/variant role and explicit node border/corner leaves; it paints each node independently so container roles do not leak into child controls. State-owned error/danger/status cues survive generic palettes. See [precedence and painted parts](design-system.md).

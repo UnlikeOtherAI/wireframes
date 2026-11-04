@@ -989,3 +989,7 @@ state system (appState for cross-page, pageState for per-page).
 | [schema-canonical.yaml](schema-canonical.yaml) | Canonical YAML definition |
 | [schema.json](../../engine/schema/schema.json) | Formal JSON Schema |
 | [brief.md](brief.md) | CLI commands and behavior |
+
+## Presentation extensions
+
+See [icons and control decoration](rendering-presentation.md) and [named company skins](design-system.md).

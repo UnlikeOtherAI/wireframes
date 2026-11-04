@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://wireframe.spec/schema/v1.1.json",
-  "title": "Wireframe Specification v1.1",
+  "$id": "https://wireframe.spec/schema/v1.2.json",
+  "title": "Wireframe Specification v1.2",
   "type": "object",
   "oneOf": [
     {
@@ -651,7 +651,8 @@
               "type": "string",
               "enum": [
                 "sharp",
-                "rounded"
+                "rounded",
+                "pill"
               ]
             },
             "radius": {
@@ -695,7 +696,8 @@
               "type": "string",
               "enum": [
                 "sharp",
-                "rounded"
+                "rounded",
+                "pill"
               ]
             },
             "radius": {
@@ -1022,6 +1024,15 @@
           "items": {
             "$ref": "#/$defs/Node"
           }
+        },
+        "sticky": {
+          "type": "string",
+          "enum": [
+            "top",
+            "bottom",
+            "none"
+          ],
+          "description": "Stays at an edge of its containing scroll area. Put the bar before the content it must stay above."
         }
       },
       "allOf": [
@@ -2086,7 +2097,11 @@
           "const": "manifest"
         },
         "specVersion": {
-          "const": "1.1"
+          "type": "string",
+          "enum": [
+            "1.1",
+            "1.2"
+          ]
         },
         "id": {
           "$ref": "#/$defs/Id"
@@ -2120,6 +2135,9 @@
             },
             "sizing": {
               "$ref": "#/$defs/SizingTokens"
+            },
+            "designSystem": {
+              "$ref": "#/$defs/DesignSystem"
             }
           }
         }
@@ -2667,6 +2685,116 @@
         }
       }
     },
+    "SkinColors": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "border": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "accent": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^(#[0-9A-Fa-f]{6}|transparent)$"
+        }
+      }
+    },
+    "SkinAppearance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "border": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "style": {
+              "type": "string",
+              "enum": [
+                "solid",
+                "dashed"
+              ]
+            },
+            "width": {
+              "type": "string",
+              "enum": [
+                "thin",
+                "medium"
+              ]
+            }
+          }
+        },
+        "corner": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "style": {
+              "type": "string",
+              "enum": [
+                "sharp",
+                "rounded",
+                "pill"
+              ]
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "colors": {
+          "$ref": "#/$defs/SkinColors"
+        }
+      }
+    },
+    "Skin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "defaults": {
+          "$ref": "#/$defs/SkinAppearance"
+        },
+        "roles": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": {
+            "$ref": "#/$defs/SkinAppearance"
+          }
+        }
+      }
+    },
+    "DesignSystem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skins"
+      ],
+      "properties": {
+        "activeSkin": {
+          "type": "string"
+        },
+        "skins": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": {
+            "$ref": "#/$defs/Skin"
+          }
+        }
+      }
+    },
     "PrimitiveProps_section": {
       "type": "object",
       "description": "Generic container. The frame rules decide whether it gets a box.",
@@ -3157,6 +3285,17 @@
         "iconSize": {
           "type": "string"
         },
+        "iconPosition": {
+          "type": "string",
+          "enum": [
+            "start",
+            "end",
+            "center"
+          ]
+        },
+        "route": {
+          "type": "string"
+        },
         "variant": {
           "type": "string",
           "enum": [
@@ -3216,6 +3355,13 @@
         "label": {
           "type": "string"
         },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "default",
+            "plain"
+          ]
+        },
         "placeholder": {
           "type": "string"
         },
@@ -3242,6 +3388,25 @@
           "type": [
             "string",
             "number"
+          ]
+        },
+        "icon": {
+          "type": "string"
+        },
+        "iconStyle": {
+          "type": "string",
+          "enum": [
+            "solid",
+            "regular",
+            "brands"
+          ]
+        },
+        "iconPosition": {
+          "type": "string",
+          "enum": [
+            "start",
+            "end",
+            "center"
           ]
         },
         "prefix": {

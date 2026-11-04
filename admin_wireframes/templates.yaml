@@ -27,7 +27,7 @@ templates:
           - id: app_logo_icon
             component: icon
             props:
-              name: vector-square
+              name: bezier-curve
               size: lg
           - id: app_logo
             component: heading

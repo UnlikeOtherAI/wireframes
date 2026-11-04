@@ -1,7 +1,11 @@
 'use strict';
 
+const { documentAppearance } = require('../design-system/resolve');
+const { validateDesignSystem } = require('../design-system/validate');
+
 const { normalizePlatform: resolveChromePlatform } = require('../renderer/platform');
 const { resolveTemplatePage } = require('../resolver');
+const { buildOverlayRoots } = require('../resolver/nodes');
 const { stampDocumentSources } = require('./source-stamps');
 const {
   renderWireframeMarkup,
@@ -127,12 +131,17 @@ function resolvePageTree(documentMap, pageId) {
     return { ok: false, error: resolved.error };
   }
 
+  const templateOverlays = buildOverlayRoots(template.overlays, components, 'template');
+  if (!templateOverlays.ok) return templateOverlays;
+  const pageOverlays = buildOverlayRoots(page.overlays, components, 'page');
+  if (!pageOverlays.ok) return pageOverlays;
+
   const templateLayout = isObject(template.layout) ? template.layout : {};
   const bodyLayoutType = templateLayout.type === 'row' ? 'row' : 'stack';
 
   return {
     ok: true,
-    roots: Array.isArray(resolved.roots) ? resolved.roots : [],
+    roots: [...(Array.isArray(resolved.roots) ? resolved.roots : []), ...templateOverlays.roots, ...pageOverlays.roots],
     bodyLayoutType,
     bodyLayout: templateLayout,
     page,
@@ -260,6 +269,8 @@ function adaptiveLayout(page, viewport, options) {
 }
 
 function renderPage(documentMap, pageId, options = {}) {
+  const skinErrors = validateDesignSystem(documentMap.manifest);
+  if (skinErrors.length) return { ok: false, error: skinErrors[0].message, details: { errors: skinErrors } };
   const treeSource = options.annotateSource === true ? stampDocumentSources(documentMap) : documentMap;
   const treeResult = resolvePageTree(treeSource, pageId);
   if (!treeResult.ok) {
@@ -312,7 +323,7 @@ function renderPage(documentMap, pageId, options = {}) {
     adaptTo: adaptiveLayout(page, viewportResult, options),
     appStateDefaults,
     pageStateDefaults: isObject(page.pageState) ? page.pageState : {},
-    pageStyle: page.wireframeStyle || defaultWireframeStyle,
+    ...documentAppearance(documentMap, page.wireframeStyle),
     rendering: resolvePageRendering(page),
     defaultGridColumns,
     sizing: manifestSizing,
@@ -327,6 +338,8 @@ function renderPage(documentMap, pageId, options = {}) {
 }
 
 function buildProject(documentMap, options = {}) {
+  const skinErrors = validateDesignSystem(documentMap.manifest);
+  if (skinErrors.length) return { ok: false, error: skinErrors[0].message, details: { errors: skinErrors } };
   const basePath = normalizeBasePath(options.basePath || DEFAULT_BASE_PATH);
   const platform = normalizePlatform(options.platform || 'all');
   if (!platform) {
@@ -391,7 +404,8 @@ function buildProject(documentMap, options = {}) {
         orientation: viewportResult.orientation,
         platform: viewportResult.platform,
       },
-      wireframeStyle: page.wireframeStyle || defaultWireframeStyle,
+      wireframeStyle: documentAppearance(documentMap, page.wireframeStyle).pageStyle,
+      skin: documentAppearance(documentMap, page.wireframeStyle).skin,
       rendering: resolvePageRendering(page),
       defaultGridColumns,
       sizing: manifestSizing,
@@ -426,6 +440,7 @@ function buildProject(documentMap, options = {}) {
         appStateDefaults: target.appStateDefaults,
         pageStateDefaults: target.pageStateDefaults,
         pageStyle: target.wireframeStyle,
+        skin: target.skin,
         rendering: target.rendering || {},
         defaultGridColumns: target.defaultGridColumns,
         bodyLayoutType: target.bodyLayoutType || 'row',
