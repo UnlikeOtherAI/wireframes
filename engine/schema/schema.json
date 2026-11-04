@@ -666,7 +666,7 @@
     "WireframeStyleOverride": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Partial wireframe style for per-node and per-overlay overrides. No fields required \u2014 inherits from page.",
+      "description": "Partial wireframe style for per-node and per-overlay overrides. No fields required — inherits from page.",
       "properties": {
         "border": {
           "type": "object",
