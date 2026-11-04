@@ -166,3 +166,32 @@ test('direct rendering rejects hostile appearance CSS and unknown-component attr
     assert.equal(await page.locator('#hostile button').evaluate((el) => getComputedStyle(el).backgroundImage), 'none');
   } finally { await page.close(); }
 });
+
+test('image captions stay readable in Wireframe and keep a dark company palette', async () => {
+  const page = await browser.newPage({ viewport: {width:1024,height:1366} });
+  try {
+    for (const named of [false, true]) {
+      let map = skinProject();
+      if (named) {
+        const skin = JSON.parse(JSON.stringify(acme));
+        skin.roles.image = { colors: {text:'#FFFFFF',background:'#111111'} };
+        map = updateDesignSystem(map, {skin:{id:'dark',value:skin},activeSkin:'dark'}).documentMap;
+      }
+      map.pages.get('home').page.slots[0].content = [{id:'photo',component:'image',props:{alt:'Reusable water bottle on a studio background'}}];
+      const result = renderPage(map, 'home');
+      assert.equal(result.ok,true,result.error);
+      await page.setContent(result.html);
+      const paint = await page.locator('.wf-image-caption').evaluate(el => {
+        const css = getComputedStyle(el);
+        return {text:css.color,background:css.backgroundColor};
+      });
+      const luminance = css => css.match(/[\d.]+/g).slice(0,3).map(Number).map(v=>v/255)
+        .map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+      const a=luminance(paint.text),b=luminance(paint.background);
+      const ratio=(Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+      assert.ok(ratio>=4.5,JSON.stringify({named,...paint,ratio}));
+      if(named)assert.deepEqual(paint,{text:'rgb(255, 255, 255)',background:'rgb(17, 17, 17)'});
+      if(evidence)await page.screenshot({path:path.join(evidence,named?'image-caption-company.png':'image-caption-wireframe.png')});
+    }
+  } finally { await page.close(); }
+});

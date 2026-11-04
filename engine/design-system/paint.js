@@ -101,7 +101,7 @@ function paintMarkup(markup, node, appearance, options) {
     const css = [];
     if (!isError) css.push(colorCss(colors, {
       text: !['svg', 'path', 'circle', 'polyline', 'line'].includes(tag),
-      box: box && !plain,
+      box: (box && !plain) || classes.has('wf-image-caption'),
       edge,
     }));
     if (box && !plain) {
