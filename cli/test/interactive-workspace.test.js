@@ -25,7 +25,7 @@ test.after(async () => {
 });
 async function open() {
   const page = await browser.newPage({ viewport: { width: 1024, height: 1366 } });
-  await page.goto(pathToFileURL(path.join(output, 'tablet/home.html')).href, { waitUntil: 'networkidle' });
+  await page.goto(pathToFileURL(path.join(output, 'tablet/home_tablet.html')).href, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
   await shot(page, 'workspace-debug-initial');
   return page;
@@ -100,16 +100,16 @@ test('sticky bar and user menu keep working after a long scroll across three rea
     assert.ok(menu.x >= 0 && menu.x + menu.width <= 1025, 'menu overflows tablet');
     await shot(page, 'workspace-scrolled-menu');
     await page.getByRole('link', { name: 'Your profile', exact: true }).click();
-    await page.waitForURL(/profile\.html/);
+    await page.waitForURL(/profile_tablet\.html/);
     assert.equal(await page.getByRole('heading', { name: 'Your profile', exact: true }).count(), 1);
     await page.getByLabel('Name', { exact: true }).fill('Ada Byron');
     await shot(page, 'workspace-profile');
     await page.getByRole('link', { name: 'Asset library', exact: true }).click();
-    await page.waitForURL(/library\.html/);
+    await page.waitForURL(/library_tablet\.html/);
     await page.getByLabel('Find an asset', { exact: true }).fill('Launch');
     await shot(page, 'workspace-library');
     await page.getByRole('link', { name: 'Back to workspace', exact: true }).click();
-    await page.waitForURL(/home\.html/);
+    await page.waitForURL(/home_tablet\.html/);
     await page.getByRole('button', { name: 'Ada', exact: true }).click();
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#account_menu').isVisible(), false);
