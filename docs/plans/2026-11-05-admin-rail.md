@@ -47,3 +47,25 @@ legacy company-skin navs without an authored nav background.
 ## Non-goals
 No pairing, new identity flow, general style editor, new primitive, dynamic
 component registry, or CSS framework. No arbitrary icon SVG enters model context.
+
+## Review decisions
+Claude reviewed the contract and refinement read-only on Maxis before implementation.
+- Adopt: no default variant; preserve nav base-role inheritance and normal output.
+- Adopt: explicit background provenance excludes skin defaults and page style.
+  Restrict shell painting to nav/app_bar; broader painting would box inner controls.
+  Store this capability in the existing primitive registry, shared by catalogue
+  and resolver, rather than duplicate allowlists or add another registry.
+- Adopt: suppress accent-text propagation for selected new variants; rail fills
+  the icon box, sidebar fills the row. Legacy selected painting stays unchanged.
+- Adopt: collapsed-width token, authored sizes, 44pt targets, Free styles and routes.
+- Adjust: compare legacy node markup/computed geometry, since adding stylesheet
+  rules necessarily changes full inline-HTML bytes.
+- Adopt: explicit nav/app_bar backgrounds become visible; default-only skins
+  remain transparent. Expose those backgrounds without adding a nav border field.
+- No-icon rail entries retain a visible, bold label without an icon selection box.
+- Native touching/Files/colour checks remain required and are not provider-tested.
+
+The refinement review rejected painting all frameless wrappers: inner controls
+already paint their own boxes. Adopt the two registry shell-background
+capabilities only. Rail selection fills its 40px icon box; the 64px link remains
+the target. Use existing row/pane metadata for the main panel.

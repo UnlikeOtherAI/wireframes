@@ -420,6 +420,14 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-sheet-danger{color:var(--wf-danger);font-weight:600}
 .wf-sheet-cancel{border-radius:12px;background:#ffffff;font-weight:600;border-top:none}
 .wf-mode-line .wf-sheet-cancel{background:transparent;border:1px solid var(--wf-line-strong);border-radius:0}
+.wf-nav-rail{gap:2px;align-items:stretch}
+.wf-nav-rail .wf-nav-item{flex-direction:column;align-items:center;justify-content:center;min-height:64px;min-width:44px;width:100%;padding:4px 2px;gap:3px}
+.wf-nav-rail .wf-ico{display:flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;border-radius:10px}
+.wf-nav-rail .wf-icon-glyph{font-size:20px;width:24px;text-align:center}
+.wf-nav-rail .wf-nav-label{flex:0 0 auto;width:100%;font-size:11px;line-height:13px;text-align:center}
+.wf-nav-rail .wf-nav-on,.wf-mode-line .wf-nav-rail .wf-nav-on{background:transparent;outline:none;border-color:transparent}
+.wf-nav-rail .wf-nav-on .wf-ico{background:var(--wf-ink);color:var(--wf-bg)}
+.wf-nav-rail.wf-nav-collapsed .wf-nav-label{display:inline;position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .wf-page_header{display:flex;flex-direction:column;gap:10px;min-width:0}
 .wf-ph-main{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;min-width:0}
 .wf-ph-text{min-width:0;flex:1 1 240px}
@@ -1129,11 +1137,11 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-name">nav</span>
     <span class="cat-frame">never draws a box</span>
   </div>
-  <p class="cat-summary">Vertical side navigation; collapsed renders an icon rail.</p>
+  <p class="cat-summary">Side navigation; rail stacks icons above labels; collapsed hides labels.</p>
   <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><nav id="demo_nav" class="wf-node wf-nav" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-nav-item wf-nav-on"><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-gauge" data-wf-glyph="G"></i></span><span class="wf-nav-label">Dashboard</span></span><span class="wf-nav-item"><span class="wf-nav-label">Settings</span></span></nav></div>
   <div class="cat-split">
     <pre class="cat-code">- nav: { items: [{ icon: gauge, label: Dashboard, active: true }, { label: Settings }] }</pre>
-    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">collapsed</td><td>boolean</td></tr><tr><td class="">groups</td><td>boolean</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>sidenav</code>.</p></div>
+    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="">variant</td><td>rail | sidebar</td></tr><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">collapsed</td><td>boolean</td></tr><tr><td class="">groups</td><td>boolean</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>sidenav</code>.</p></div>
   </div>
 </article>
 <article class="cat-item" id="el-menu">

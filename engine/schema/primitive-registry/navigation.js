@@ -65,10 +65,12 @@ const navigationPrimitives = [
   },
   {
     name: 'nav',
+    shellBackground: true,
     family: 'navigation',
     frame: 'N',
-    summary: 'Vertical side navigation; collapsed renders an icon rail.',
+    summary: 'Side navigation; rail stacks icons above labels; collapsed hides labels.',
     props: {
+      variant: { type: 'string', enum: ['rail', 'sidebar'] },
       items: { type: 'array', primary: true },
       collapsed: { type: 'boolean' },
       groups: { type: 'boolean' },
@@ -89,6 +91,7 @@ const navigationPrimitives = [
   },
   {
     name: 'app_bar',
+    shellBackground: true,
     family: 'navigation',
     frame: 'E',
     summary: 'Mobile top chrome: leading glyph, title, trailing actions.',

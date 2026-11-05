@@ -3766,8 +3766,15 @@
     },
     "PrimitiveProps_nav": {
       "type": "object",
-      "description": "Vertical side navigation; collapsed renders an icon rail.",
+      "description": "Side navigation; rail stacks icons above labels; collapsed hides labels.",
       "properties": {
+        "variant": {
+          "type": "string",
+          "enum": [
+            "rail",
+            "sidebar"
+          ]
+        },
         "items": {
           "type": "array"
         },

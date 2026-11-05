@@ -327,7 +327,7 @@ primitives:
     - breadcrumb      # items, separator
     - pagination      # page, pages, variant (numbers|simple|dots)
     - stepper         # steps, current, orientation (row|stack)
-    - nav             # items, collapsed, groups
+    - nav             # items, collapsed, groups, variant: rail|sidebar (optional)
     - menu            # items
     - app_bar         # title, subtitle, leading, actions
     - action_sheet    # items, title, cancel

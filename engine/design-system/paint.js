@@ -52,7 +52,8 @@ function skinShellStyle(node, appearance, frame, options) {
     // A wrapper with no colour of its own must not inherit a parent's role colour.
     `color:${appearance.colors?.text || 'var(--wf-ink-2)'}`,
     colorCss(appearance.colors, { box: surface, edge: frame === 'edge' }),
-    ownBox ? cornerCss(appearance) : '',
+    !surface && appearance.shellBackground ? 'background-color:' + appearance.shellBackground : '',
+    ownBox || appearance.shellBackground ? cornerCss(appearance) : '',
     ownBox && node.component !== 'alert' ? borderCss(appearance) : '',
     surface && appearance.colors?.border ? 'outline-color:' + appearance.colors.border : '',
   ].filter(Boolean).join(';');
@@ -97,7 +98,9 @@ function paintMarkup(markup, node, appearance, options) {
     const box = button || has(classes, BOXES) || tag === 'textarea' || (component === 'image' && tag === 'img');
     const edge = classes.has('wf-rule');
     const isError = classes.has('wf-field-error') || classes.has('wf-menu-danger') || parent?.error;
-    const accented = has(classes, ACCENT_TEXT) || parent?.accented;
+    const navVariant = component === 'nav' && ['rail', 'sidebar'].includes(node.props?.variant);
+    const navSelected = navVariant && (classes.has('wf-nav-on') || parent?.navSelected);
+    const accented = !navSelected && (has(classes, ACCENT_TEXT) || parent?.accented);
     const css = [];
     if (!isError) css.push(colorCss(colors, {
       text: !['svg', 'path', 'circle', 'polyline', 'line'].includes(tag),
@@ -114,6 +117,8 @@ function paintMarkup(markup, node, appearance, options) {
         css.push(`background-color:${colors.accent};border-color:${colors.accent}`);
       }
       if (classes.has('wf-radio-mark')) css.push(`--wf-ink:${colors.accent}`);
+      const selectionBox = navSelected && (node.props.variant === 'rail' ? classes.has('wf-ico') : classes.has('wf-nav-on'));
+      if (selectionBox) css.push(`background-color:${colors.accent};color:${colors.text || '#ffffff'}`);
       if (accented) css.push(`color:${colors.accent}`);
       if (classes.has('wf-pagenum-on')) css.push('background-color:' + (colors.background || '#ffffff'));
       if (classes.has('wf-step-marker') && accented) css.push('background-color:' + colors.accent + ';color:#ffffff;border-color:' + colors.accent);
@@ -130,7 +135,7 @@ function paintMarkup(markup, node, appearance, options) {
     }
     if (isAction) opening = opening.replace(/\s*\/?\>$/, (end) => ` data-wf-skin-role="${escapeHtml(current.role)}"${end}`);
     if (!VOID.has(tag) && !opening.endsWith('/>')) {
-      stack.push({ tag, action, error: isError, accented, checked: classes.has('wf-choice-on') || parent?.checked });
+      stack.push({ tag, action, error: isError, accented, navSelected, checked: classes.has('wf-choice-on') || parent?.checked });
     }
     return appendStyle(opening, css.filter(Boolean).join(';'));
   });

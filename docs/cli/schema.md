@@ -664,3 +664,5 @@ Saving named skins requires manifest specVersion: "1.2" and manifest.schemaVersi
 ## Company logo slots
 
 Company logos are optional on each named skin: `logos` maps only `logo_1`, `logo_2` and `logo_3` to `{name, src}`. Names are nonempty and at most 80 characters. Sources are static PNG data URLs, at most 256 KiB decoded and 1024 pixels per side. An image uses `props: {kind: logo, slot: logo_1, width: 160, height: 64}`. Width and height size the container in points (positive, at most 4096); the logo preserves its aspect ratio inside it. Switching skin resolves the same slot from that skin. Missing slots keep a labelled placeholder and the same box. Asset bytes belong in the skin, never in node props or model context.
+
+Navigation supports optional nav.props.variant: rail|sidebar (omitted preserves legacy output). Rail uses sidebar.collapsedWidth, keeps labels and routes, and honours size.width. Nav/app_bar roles can paint an explicitly authored background; inherited page background does not fill them.

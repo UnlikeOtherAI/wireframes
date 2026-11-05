@@ -172,6 +172,8 @@ function renderNode(node, options = {}) {
     stateBindings,
     routeTable: isObject(options.routeTable) ? options.routeTable : {},
     skin: options.skin,
+    viewport: options.viewport,
+    sizing: options.sizing,
     currentRoute: options.routeId || '',
     projectPath: options.projectPath || '',
     imageOptions: {

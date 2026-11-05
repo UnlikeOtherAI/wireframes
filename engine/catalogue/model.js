@@ -21,7 +21,7 @@ function catalogueModel() {
     defaultVariant: entry.defaultVariant || null,
     colors: [
       ...(entry.name === 'spacer' || entry.name === 'skeleton' ? [] : ['text']),
-      ...(entry.frame === 'S' || entry.frame === 'C' || FILL.has(entry.name) ? ['background'] : []),
+      ...(entry.frame === 'S' || entry.frame === 'C' || FILL.has(entry.name) || entry.shellBackground ? ['background'] : []),
       ...(entry.frame !== 'N' || BORDER.has(entry.name) ? ['border'] : []),
       ...(ACCENT.has(entry.name) ? ['accent'] : []),
     ],
