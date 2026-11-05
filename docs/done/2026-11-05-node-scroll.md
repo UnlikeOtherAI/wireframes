@@ -1,6 +1,6 @@
 # Bounded native scrolling on ordinary nodes
 
-Status: proposed; no implementation or acceptance claimed.
+Status: implemented; engine/browser and mobile adapter checks passed on Maxis. Native verification remains with integration.
 
 ## Problem Statement
 An authored records list needs an independently scrolling body with its heading and pagination remaining visible. The only existing generic overflow:auto path is tied to a visible pane resize handle.
@@ -14,9 +14,9 @@ A bounded node can opt into native wheel, touch and keyboard scrolling without a
 ## Design
 Add optional boolean scroll to common Node, beside size/layout. Only true adds wf-scroll and tabindex=0. Use existing accessibility.label, when authored, as escaped aria-label and role=region; otherwise add no unnamed landmark. CSS provides overflow:auto, overscroll-behavior:contain, min-height/min-width:0 and flex-shrink:0 for immediate child nodes (including the existing child wrapper), so records retain their authored geometry. Explicit inline min-size remains authoritative. Existing size.height or size.maxHeight bounds the region; with no bound it grows normally. No new primitive, JS scrolling implementation, axis API or visible handle.
 
-The mobile adapter allows set path scroll and gives one short element-field hint. Existing node creation already preserves common fields. No new operation or prompt topic.
+The mobile adapter allows set path scroll and gives one short element-field hint. Existing node creation already preserves common fields. No new operation; a four-line request-selected scrolling topic discloses the canonical field.
 
-Computers uses existing button + anchored popover choices for 10/20 explicit routes. A 696px records scroller keeps the first row near y192 and pagination near y899. Sidebar may use the same contract within its available height. The original 25 pages/skins/logos remain unchanged.
+Computers uses existing button + anchored popover choices for 10/20 explicit routes. A 694px records scroller keeps the first row near y192 and pagination near y899 while fitting the coarse-pointer footer. Sidebar may use the same contract within its available height. The original 25 pages/skins/logos remain unchanged.
 
 ## Implementation Order
 1. Cross-provider adversarial review and independent decisions.
@@ -41,3 +41,10 @@ Claude Sonnet reviewed the plan and shell/CSS before implementation. Raw output 
 - Adopt: preserve inline pane overflow and more-specific collapsed-pane styling; native horizontal overflow remains supported. Verify no unintended horizontal scrollbar in the records fixture.
 - Reject moving scroll under size: this is behavior rather than a dimension and belongs beside sticky/layout. No existing common-node scroll field conflicts.
 - Adopt: sync all required schema/rendering docs and pin geometry to 1440×950.
+
+## Measured verification
+Engine 5497936 passed all 280 tests on Maxis. Focused Chromium checks exercised real wheel, a paced touch swipe, keyboard PageDown, overscroll containment, sticky child bounds, fixed outside footer, footer popover after scrolling, horizontal child width, titled sections, label escaping, false/missing behavior and collapsed panes. Matching neutral captures at base7732421 and final runtime cover 1280×650 and 390×650. Generated catalogue and short CLI guidance were regenerated.
+
+Mobile fb9cbab, using engine5497936 in its isolated test package, passed all 208 web tests. The private 1440×950 Computers flow passed 31 detail/return links, 22 menu links, both pagination sizes, popover Escape/outside dismissal, mouse scrolling and touch swipe → footer popup → actual 20-item route. Desktop rows remain104.38px high; the footer is y897.30px. The touch footer is y905.30px with44px targets and stays fully visible. Original25 pages/routes and original templates/components/skins/logos remain unchanged.
+
+The prototype changes are explicitly authored adapter operations, not small-model successes. A zero-duration injected gesture and a navigation-event wait failed during driver development; both traces remain. Paced native touch events and actual destination DOM checks passed without a product touch workaround. No native builds or hardware use occurred.
