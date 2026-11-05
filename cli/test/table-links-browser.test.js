@@ -16,7 +16,7 @@ function fixture(mode = 'card', routes = {detail: '/detail', home: '/home'}, ove
  ]}};
  return renderWireframeMarkup({roots:[{id:'main',kind:'container',nodes:overlay
   ?[{id:'open',component:'button',props:{label:'Devices'},interaction:[{type:'open_overlay',targetOverlay:'device_dialog'}]}]
-  :[table]},...(overlay?[{id:'device_dialog',kind:'overlay',type:'modal',trigger:'open',props:{title:'Devices'},nodes:[table]}]:[])],
+  :[table]},...(overlay?[{id:'device_dialog',kind:'overlay',type:'modal',trigger:'open',dismissOn:['outside','escape'],props:{title:'Devices'},nodes:[table]}]:[])],
   routeTable:routes,rendering:{mode},pageViewport:{device:'web',width:1280,height:800},deviceChrome:false});
 }
 test('table link objects navigate with mouse, keyboard and touch; scalar and unknown cells remain inert',async()=>{
