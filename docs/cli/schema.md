@@ -447,6 +447,7 @@ Optional:
 * `role` — semantic role (e.g. "main", "aside", "nav")
 * `layout` — child layout definition (stack, row, grid, absolute, overlay)
 * `size` — explicit dimensions (width, height, minWidth, maxWidth, minHeight, maxHeight)
+* `scroll` — boolean; opt into native overflow scrolling, bounded by existing size dimensions, without a resize handle
 * `gridItem` — grid positioning (span, offset, row, column)
 * `visibility` — conditional visibility via a Condition
 * `accessibility` — label, role, description for accessibility annotations

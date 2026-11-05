@@ -202,6 +202,7 @@ node:
     - layout
     - size
     - gridItem
+    - scroll          # boolean; native overflow:auto, no resize handle
     - position        # for absolute layout children only
     - visibility
     - accessibility

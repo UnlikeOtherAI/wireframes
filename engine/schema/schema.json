@@ -1033,6 +1033,10 @@
             "none"
           ],
           "description": "Stays at an edge of its containing scroll area. Put the bar before the content it must stay above."
+        },
+        "scroll": {
+          "type": "boolean",
+          "description": "Opt into native overflow scrolling without resizing. Bound the node with size.height/maxHeight or width/maxWidth; sticky children use this scroll boundary."
         }
       },
       "allOf": [

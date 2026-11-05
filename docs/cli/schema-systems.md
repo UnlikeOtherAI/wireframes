@@ -521,3 +521,5 @@ appearance. Unknown routes, malformed cells and unsafe route-table URLs remain i
 text. This adds no row-click or pagination behavior; table pagination remains illustrative.
 Link cells do not accept raw HTML or href values. Relative internal paths and fragments
 are supported; schemes, protocol-relative URLs, backslashes and whitespace are rejected.
+
+Nodes may set `scroll: true` beside `size` and `layout`. This opts the whole node into native overflow scrolling with contained overscroll and non-shrinking immediate children. Use `size.height`/`maxHeight` (or width bounds) to constrain it; unbounded content grows normally. Put headings and pagination outside the scroller when they must remain visible; `sticky: top` children stick within it. Label stack/row/grid/split scrollers with `accessibility.label` for a named keyboard-focusable region. False or omitted leaves existing markup unchanged. This does not add a resize handle, virtualization or automatic viewport sizing.
