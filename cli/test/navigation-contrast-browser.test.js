@@ -11,7 +11,7 @@ function fixture(colors,mode){
  map.pages.get('home').page.rendering={mode};
  map.pages.get('home').page.slots[0].content=[{
   id:'navs',component:'row',layout:{type:'row',gap:16},
-  children:['sidebar','rail'].map(variant=>({id:variant,component:'nav',props:{variant,items:[
+  children:['default','sidebar','rail'].map(variant=>({id:variant,component:'nav',props:{...(variant==='default'?{}:{variant}),items:[
    {label:'Home',route:'home',icon:'house'},{label:'Settings',route:'settings',icon:'gear'}
   ]}}))
  }];
@@ -38,7 +38,7 @@ for(const[palette,colors]of Object.entries({
     const result=renderPage(fixture(colors,mode),'home',{deviceChrome:false,routeTable:{home:'#home',settings:'#settings'},
      viewportOverride:{device:'web',width,height:600}});
     assert.equal(result.ok,true,result.error);await page.setContent(result.html);
-    for(const variant of['sidebar','rail']){
+    for(const variant of['default','sidebar','rail']){
      const selected=page.locator('#'+variant+' .wf-nav-on');
      const paint=variant==='rail'?selected.locator('.wf-ico'):selected;
      const foreground=variant==='rail'?selected.locator('.wf-icon-glyph'):selected.locator('.wf-nav-label');

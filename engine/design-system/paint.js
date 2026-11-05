@@ -100,7 +100,7 @@ function paintMarkup(markup, node, appearance, options) {
     const box = button || has(classes, BOXES) || tag === 'textarea' || (component === 'image' && tag === 'img');
     const edge = classes.has('wf-rule');
     const isError = classes.has('wf-field-error') || classes.has('wf-menu-danger') || parent?.error;
-    const navVariant = component === 'nav' && ['rail', 'sidebar'].includes(node.props?.variant);
+    const navVariant = component === 'nav';
     const navSelected = navVariant && (classes.has('wf-nav-on') || parent?.navSelected);
     const accented = !choice && !navSelected && (has(classes, ACCENT_TEXT) || parent?.accented);
     const css = [];
