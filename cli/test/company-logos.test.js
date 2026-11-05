@@ -54,6 +54,7 @@ test('logo slot rendering follows the active skin and preserves a missing slot b
   assert.equal(rendered.ok, true);
   assert.match(rendered.html, /data-wf-component="image"/);
   assert.match(rendered.html, /data-wf-logo-slot="logo_1"/);
+  assert.match(rendered.html, /data-wf-logo-width="240" data-wf-logo-height="96"/);
   assert.match(rendered.html, /width:240px;height:96px/);
   assert.match(rendered.html, /object-fit:contain/);
   const wireframe = updateDesignSystem(map, { activeSkin: 'wireframe' });
@@ -72,4 +73,15 @@ test('a slot without logo kind or invalid container dimensions fails validation'
     map.pages.get('home').page.slots[0].content.at(-1).props = props;
     assert.equal(validateProject(map).ok, false);
   }
+});
+
+test('reusable logo metadata retains resolved authored dimensions before responsive constraints', () => {
+  const map = project();
+  map.components.brand_logo = {root:{id:'brand_root',component:'image',
+    props:{kind:'logo',slot:'logo_1',width:600,height:64}}};
+  map.pages.get('home').page.slots[0].content = [{id:'brand_instance',use:'brand_logo'}];
+  const rendered = renderPage(map,'home',{annotateSource:true});
+  assert.equal(rendered.ok,true,rendered.error);
+  assert.match(rendered.html,/data-wf-logo-width="600" data-wf-logo-height="64"/);
+  assert.match(rendered.html,/width:600px;height:64px;max-width:100%/);
 });
