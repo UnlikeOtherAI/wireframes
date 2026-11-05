@@ -122,6 +122,7 @@ function resolveTargets(projectPath, platform, strictValidation, failOnWarnings)
         defaultGridColumns: target.defaultGridColumns,
         bodyLayoutType: target.bodyLayoutType || 'row',
         bodyLayout: target.bodyLayout,
+        pageInset: target.pageInset,
         projectPath,
         dataSources: target.dataSources,
         wireframeCssHref: './_shared/wireframe.css',

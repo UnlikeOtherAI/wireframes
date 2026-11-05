@@ -80,6 +80,7 @@ function explainNode({ projectPath, pageId, nodeId }) {
       defaultGridColumns: target.defaultGridColumns,
       bodyLayoutType: target.bodyLayoutType || 'row',
       bodyLayout: target.bodyLayout,
+        pageInset: target.pageInset,
       projectPath,
       dataSources: target.dataSources,
       sizing: target.sizing,

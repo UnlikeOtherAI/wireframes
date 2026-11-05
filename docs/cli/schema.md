@@ -679,3 +679,6 @@ appearance. Unknown routes, malformed cells and unsafe route-table URLs remain i
 text. This adds no row-click or pagination behavior; table pagination remains illustrative.
 Link cells do not accept raw HTML or href values. Relative internal paths and fragments
 are supported; schemes, protocol-relative URLs, backslashes and whitespace are rejected.
+
+### Explicit page inset
+Optional `page.inset` is a finite number from 0 to 4096 CSS pixels (rendered to six decimal places). It controls only outer page padding in every mode/platform; `0` is full bleed. Omit it to preserve card/web 16px and existing line/native defaults. Template/body padding and gap remain independent; each page opts in.

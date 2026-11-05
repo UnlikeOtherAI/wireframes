@@ -666,7 +666,7 @@
     "WireframeStyleOverride": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Partial wireframe style for per-node and per-overlay overrides. No fields required — inherits from page.",
+      "description": "Partial wireframe style for per-node and per-overlay overrides. No fields required \u2014 inherits from page.",
       "properties": {
         "border": {
           "type": "object",
@@ -2496,6 +2496,12 @@
               "items": {
                 "$ref": "#/$defs/Overlay"
               }
+            },
+            "inset": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4096,
+              "description": "Outer page padding in CSS pixels, independent of template/body padding. Omitted preserves mode/platform defaults."
             }
           }
         }

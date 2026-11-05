@@ -1000,3 +1000,6 @@ designSystemExtension:
 # Table columns with kind: link accept keyed or positional cells:
 # {text: Device A, route: device_a}. route names an existing internal sitemap route.
 # Scalar/unknown/unsafe link cells remain inert; pagination is illustrative.
+
+# Optional page.inset: number, 0..4096 CSS pixels; 0 is full bleed.
+# Omission keeps mode/platform defaults; not inherited from templates.

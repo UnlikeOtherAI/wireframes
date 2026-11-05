@@ -523,3 +523,6 @@ Link cells do not accept raw HTML or href values. Relative internal paths and fr
 are supported; schemes, protocol-relative URLs, backslashes and whitespace are rejected.
 
 Nodes may set `scroll: true` beside `size` and `layout`. This opts the whole node into native overflow scrolling with contained overscroll and non-shrinking immediate children. Use `size.height`/`maxHeight` (or width bounds) to constrain it; unbounded content grows normally. Put headings and pagination outside the scroller when they must remain visible; `sticky: top` children stick within it. Label stack/row/grid/split scrollers with `accessibility.label` for a named keyboard-focusable region. False or omitted leaves existing markup unchanged. This does not add a resize handle, virtualization or automatic viewport sizing.
+
+### Explicit page inset
+Optional `page.inset` is a finite number from 0 to 4096 CSS pixels (rendered to six decimal places). It controls only outer page padding in every mode/platform; `0` is full bleed. Omit it to preserve card/web 16px and existing line/native defaults. Template/body padding and gap remain independent; each page opts in.

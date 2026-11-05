@@ -1,4 +1,5 @@
 'use strict';
+const { pageInsetStyle } = require('../renderer/page-inset');
 
 const { mergeAppearance } = require('../design-system/resolve');
 const { skinPaintStyles } = require('../design-system/paint');
@@ -183,7 +184,7 @@ function renderPageShell(roots, viewportWidth, viewportHeight, renderOptions, bo
   );
   const bodyStyle = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
 
-  return `<div class="wf-page" style="width:${viewportWidth}px;min-height:${viewportHeight}px;">
+  return `<div class="wf-page" style="width:${viewportWidth}px;min-height:${viewportHeight}px;${pageInsetStyle(renderOptions.pageInset)}">
   ${renderOptions.deviceChrome === false ? '' : statusBarMarkup(platform)}
   ${topHtml}
   <div class="${bodyClass}"${bodyStyle}>
@@ -215,6 +216,7 @@ function renderWireframeMarkup({
   roots = [],
   pageViewport,
   pageRouteId = '',
+  pageInset,
   routeTable = {},
   appStateDefaults = {},
   pageStateDefaults = {},
@@ -250,6 +252,7 @@ function renderWireframeMarkup({
   const shellHeight = Number.isFinite(frame?.height) && frame.height > 0 ? frame.height : viewportHeight;
 
   const renderOptions = {
+    pageInset,
     annotateSource,
     deviceChrome,
     pageStyle,
