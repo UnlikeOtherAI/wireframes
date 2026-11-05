@@ -3373,7 +3373,7 @@
     },
     "PrimitiveProps_segmented": {
       "type": "object",
-      "description": "Segmented control / attached button group.",
+      "description": "Segmented control; unique option labels are selection values.",
       "properties": {
         "options": {
           "type": "array"
@@ -3689,7 +3689,7 @@
     },
     "PrimitiveProps_tab_bar": {
       "type": "object",
-      "description": "In-page tabs. Pass tabs[] for one line, or children for full control.",
+      "description": "Local tabs select by unique label; routed tabs navigate. Pass tabs[] or children.",
       "properties": {
         "tabs": {
           "type": "array"

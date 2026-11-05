@@ -1,5 +1,5 @@
 # Interactive appearance controls
-Status: proposed; no implementation or browser acceptance claimed.
+Status: implemented and verified in Chromium on Maxis. Native app and operating-system picker dialog acceptance remain unclaimed.
 
 ## Problem Statement
 Segmented controls, local tabs and colour fields look editable but do not change the preview. Chromium on cdf7819 confirmed unchanged active segments/tabs, an empty colour value and no native picker.
@@ -46,3 +46,9 @@ Local tabs remain native toggle buttons with aria-pressed, not an incomplete ARI
 Adopt narrow unsafe-path rejection for the new writable binding path. Defer broad state-runtime hardening and the pre-existing numeric-zero text binding issue unless exercised by the new field path.
 Keep the one-line Close label in this scoped accessibility change; no additional UI.
 Review artifact: owned Maxis build/appearance-controls/claude-review.json (plain text despite suffix; provider CLI returned a successful review).
+
+## Measured results
+At source 1277e6d, full pnpm test passed 264/264 on Maxis. Five durable appearance browser checks cover desktop mouse, coarse touch (including large segments), keyboard, actual panel visibility, linked labels with original button icon/action, page/app selection, app-value restoration, invalid hex recovery, disabled fields, hostile values and company-accent movement. Existing navigation/overlay mouse/touch checks also pass in the full suite.
+Matched 1280×900 initial and edited-state screenshots use actual base cdf7819 and final source in the owned evidence directory, for desktop and touch. Inspected renders show selected Large in both linked controls, Conversation content visible, changed hex swatch and launcher label. No private reference or project data is committed.
+The first full run's sole failure was the old close-button markup assertion; it now verifies the accessible Close name. Screenshot review caught and fixed active-tab underline specificity. No golden thresholds were changed; the existing gallery checks pass. Catalogue and generated primitive schema were regenerated; agent-guide generation produces no difference.
+Native colour-picker OS chrome was not driven: Chromium checks exercise the real colour input and its input/change events. iPad/WebKit and native replay remain the integrating owner's checks.
