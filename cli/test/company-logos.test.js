@@ -77,7 +77,7 @@ test('a slot without logo kind or invalid container dimensions fails validation'
 
 test('reusable logo metadata retains resolved authored dimensions before responsive constraints', () => {
   const map = project();
-  map.components.brand_logo = {root:{id:'brand_root',component:'image',
+  map.components.components.brand_logo = {root:{id:'brand_root',component:'image',
     props:{kind:'logo',slot:'logo_1',width:600,height:64}}};
   map.pages.get('home').page.slots[0].content = [{id:'brand_instance',use:'brand_logo'}];
   const rendered = renderPage(map,'home',{annotateSource:true});
