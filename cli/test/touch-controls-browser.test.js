@@ -3,9 +3,12 @@ const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 const {renderWireframeMarkup}=require('../../engine/screenshots/renderer');
 const nav=(id,variant)=>({id,component:'nav',props:{variant,items:[{label:'Home',route:'next'},{label:'Projects',route:'next'},{label:'Settings',route:'next'}]}});
-function fixture(){return renderWireframeMarkup({
+function fixture(mode){return renderWireframeMarkup({
  roots:[{id:'main',kind:'container',nodes:[
   {id:'bar',component:'app_bar',children:[{id:'burger',component:'button',props:{label:'Menu',icon:'bars',iconPosition:'center'},interaction:[{type:'open_overlay',targetOverlay:'dialog'}]}]},
+  {id:'routed_icon',component:'button',props:{label:'Menu route',icon:'bars',iconPosition:'center'},interaction:[{type:'navigation',targetRoute:'next'}]},
+  {id:'text_link',component:'button',props:{label:'Go',variant:'link'},interaction:[{type:'navigation',targetRoute:'next'}]},
+  {id:'floating',component:'button',props:{label:'Create',icon:'plus',fab:true}},
   {id:'small',component:'button',props:{label:'Small action',size:'sm'}},
   {id:'title',component:'heading',props:{text:'Navigation and touch controls'}},
   {id:'columns',component:'row',children:[nav('rail','rail'),nav('sidebar','sidebar')]},
@@ -13,17 +16,22 @@ function fixture(){return renderWireframeMarkup({
   {id:'unlock',component:'button',props:{label:'Enable route'},interaction:[{type:'set_state',stateKey:'locked',scope:'page',value:false}]},
   {id:'open',component:'button',props:{label:'Open dialog'},interaction:[{type:'open_overlay',targetOverlay:'dialog'}]}
  ]},{id:'dialog',kind:'overlay',type:'modal',trigger:'open',props:{title:'Dialog actions'},dismissOn:['outside','escape'],nodes:[{id:'message',component:'paragraph',props:{text:'Dialog body'}}]}],
- pageViewport:{device:'web',width:1280,height:800},pageRouteId:'home',routeTable:{home:'#home',next:'#next'},pageStateDefaults:{locked:true},rendering:{mode:'card'},deviceChrome:false
+ pageViewport:{device:'web',width:1280,height:800},pageRouteId:'home',routeTable:{home:'#home',next:'#next'},pageStateDefaults:{locked:true},rendering:{mode},deviceChrome:false
 });}
-for(const touch of [false,true]) test('real '+(touch?'touch':'mouse')+' controls preserve disabled navigation and close the dialog',async()=>{
+for(const mode of ['card','line']) for(const touch of [false,true]) test(mode+' real '+(touch?'touch':'mouse')+' controls preserve disabled navigation and close the dialog',async()=>{
  const browser=await chromium.launch({headless:true});
  try{
   const context=await browser.newContext({viewport:{width:1280,height:800},hasTouch:touch,isMobile:touch});
-  const page=await context.newPage();await page.setContent(fixture());
+  const page=await context.newPage();await page.setContent(fixture(mode));
   const tap=async(x,y)=>touch?page.touchscreen.tap(x,y):page.mouse.click(x,y);
   for(const [name,minimum] of [['Menu',touch?44:36],['Small action',touch?44:32]]) {
    const box=await page.getByRole('button',{name,exact:true}).boundingBox();
    assert.ok(box.width>=minimum&&box.height>=minimum,JSON.stringify({touch,name,box}));
+  }
+  for(const id of ['routed_icon','text_link','floating']) {
+   const box=await page.locator('#'+id+' button,#'+id+' a').boundingBox();
+   if(touch) assert.ok(box.width>=44&&box.height>=44,JSON.stringify({mode,id,box}));
+   if(id==='floating') assert.ok(box.width>=52&&box.height>=52,JSON.stringify(box));
   }
   const initial=page.url(),disabled=page.getByRole('button',{name:'Disabled route',exact:true});
   assert.equal(await disabled.isDisabled(),true);
