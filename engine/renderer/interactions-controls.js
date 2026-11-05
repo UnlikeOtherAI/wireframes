@@ -95,6 +95,10 @@ function initControls() {
     }
     var field = colour ? colour.text : node.querySelector('input');
     if (!field) return;
+    if (binding && field.hasAttribute('value')) {
+      var initialState = binding.scope === 'app' ? WF_APP_STATE : WF_PAGE_STATE;
+      if (getAtPath(initialState, binding.key) === undefined) setAtPath(initialState, binding.key, field.value);
+    }
     node.addEventListener('click', function (event) { event.stopPropagation(); });
     function changed(event) {
       if (field.disabled || (colour && colour.picker.disabled)) return;
