@@ -25,7 +25,7 @@ test('authored split widths survive equal-column defaults and narrow viewports',
     assert.equal((await box('split')).height, 416);
     assert.ok((await box('right')).width > 280);
     assert.ok(Math.abs((await box('first')).width - (await box('second')).width) < 1);
-    await page.getByRole('button', { name: 'Open settings' }).click();
+    await page.getByRole('link', { name: 'Open settings' }).click();
     assert.ok(page.url().endsWith('#settings'));
     await page.setViewportSize({ width: 360, height: 800 });
     const narrow = await box('split'), left = await box('left'), right = await box('right');
