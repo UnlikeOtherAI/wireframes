@@ -22,6 +22,10 @@ function stampNodes(value, documentAddress) {
   const stamped = {};
   for (const [key, entry] of Object.entries(value)) {
     stamped[key] = key === 'props' ? entry : stampNodes(entry, documentAddress);
+    if (key === 'overlays' && Array.isArray(stamped[key])) {
+      stamped[key] = stamped[key].map(overlay => isObject(overlay) && typeof overlay.id === 'string'
+        ? { ...overlay, __source: `${documentAddress}#${overlay.id}` } : overlay);
+    }
   }
   if (isNodeLike(value)) {
     stamped.__source = `${documentAddress}#${value.id}`;

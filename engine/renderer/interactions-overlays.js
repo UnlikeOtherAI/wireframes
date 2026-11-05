@@ -95,6 +95,11 @@ function setOverlayVisible(node, show) {
   }
 }
 function bindOverlayDismiss(node, overlayId, list) {
+  var close = node.querySelector(':scope > .wf-overlay-content > .wf-overlay-head > .wf-overlay-close');
+  if (close && !node._wfCloseHandler) {
+    node._wfCloseHandler = function (event) { event.preventDefault(); closeOverlay(overlayId); };
+    close.addEventListener('click', node._wfCloseHandler);
+  }
   if (list.indexOf('backdrop') >= 0) {
     var backdrop = node.querySelector('.wf-overlay-backdrop');
     if (backdrop && !node._wfBackdropHandler) {
@@ -116,7 +121,8 @@ function bindOverlayDismiss(node, overlayId, list) {
       var trigger = overlayTriggerNode(node);
       var target = event && event.target ? event.target : null;
       if (!target) return;
-      if (node.contains(target)) return;
+      var content = node.querySelector(':scope > .wf-overlay-content') || node;
+      if (content.contains(target)) return;
       if (trigger && trigger.contains && trigger.contains(target)) return;
       closeOverlay(overlayId);
     };
@@ -131,6 +137,11 @@ function bindOverlayDismiss(node, overlayId, list) {
   }
 }
 function unbindOverlayDismiss(node, overlayId) {
+  var close = node ? node.querySelector(':scope > .wf-overlay-content > .wf-overlay-head > .wf-overlay-close') : null;
+  if (node._wfCloseHandler && close) {
+    close.removeEventListener('click', node._wfCloseHandler);
+    node._wfCloseHandler = null;
+  }
   var backdrop = node ? node.querySelector('.wf-overlay-backdrop') : null;
   if (node._wfBackdropHandler && backdrop) {
     backdrop.removeEventListener('click', node._wfBackdropHandler);

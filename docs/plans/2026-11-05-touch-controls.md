@@ -30,3 +30,9 @@ No automatic colour changes, new props, new widgets, pairing work or admin conte
 
 ## Review decisions
 Claude reviewed the proposal on Maxis (output retained in build evidence). Adopted native disabled button semantics, wrapper click guarding, real close-button dimensions, fine/coarse comparisons and overflow checks. Kept wrapper interaction metadata behind the disabled guard so state-bound re-enabling remains possible; stripping it would break that path. Corrected the existing disabled binding to target the native button rather than its wrapper. Touchscreen hybrid computers intentionally receive larger rows too; fine-pointer desktop density is unchanged. Broad catalogue touch sizing is not claimed from this focused fixture.
+
+## Close-control follow-up
+Real browser testing found the visible X had no click handler, and outside-dismiss tested containment in the full-screen modal root, so its backdrop never counted as outside. Claude reviewed the correction before implementation. Adopted direct-child selectors to avoid nested-overlay selector leakage, binding/unbinding the one close handler, and content containment for outside-dismiss. Kept existing idempotent close and handler guards; no new overlay manager or nested portal policy. No stopPropagation is needed for the dedicated close control.
+
+## Overlay-selection follow-up
+Native long-press on modal padding selected nothing. Overlay roots lacked source annotations because canonical overlays use content rather than component/kind/children, and the overlay resolver dropped the stamp. Claude reviewed source propagation before implementation. Adopted explicit stamping of the overlays collection rather than treating every content array as a node, and copied only string stamps through resolution. Added page/template owner and spoof-overwrite coverage; other content arrays remain unstamped.

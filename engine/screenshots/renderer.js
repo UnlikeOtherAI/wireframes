@@ -61,6 +61,7 @@ function renderRoot(root, options) {
   if (root.kind === 'overlay') {
     return renderNode({
       id: root.id,
+      ...(typeof root.__source === 'string' ? { __source: root.__source } : {}),
       kind: 'overlay',
       type: root.type,
       trigger: root.trigger,
