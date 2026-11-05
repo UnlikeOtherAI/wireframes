@@ -5,7 +5,7 @@ const { validateDocumentAgainstSchema } = require('../../engine/schema/validator
 
 test('invalid navigation actions report the supported choices for recovery', () => {
   const document = {documentType: 'page', specVersion: '1.1', id: 'home', page: {
-    name: 'Home', regions: [{id: 'main', kind: 'container', nodes: [
+    id: 'home', template: 'default', viewport: {device: 'web'}, slots: [{slotId: 'main', content: [
       {id: 'next', component: 'button', props: {label: 'Next'}, interaction: [{type: 'navigate', targetRoute: 'settings'}]}
     ]}]
   }};
