@@ -69,6 +69,10 @@ function stampDocumentSources(documentMap) {
     pages: stampPages(documentMap.pages),
     templates: stampWrappedCollection(documentMap.templates, 'templates', 'template'),
     components: stampWrappedCollection(documentMap.components, 'components', 'component'),
+    ...(documentMap.componentRegistriesByPage instanceof Map ? {
+      componentRegistriesByPage: new Map([...documentMap.componentRegistriesByPage]
+        .map(([id, components]) => [id, stampCollection(components, 'component')])),
+    } : {}),
   };
 }
 
