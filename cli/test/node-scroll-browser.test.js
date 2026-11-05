@@ -28,8 +28,8 @@ for(const touch of[false,true])test('native '+(touch?'touch':'wheel/keyboard')+'
   if(touch){
    const cdp=await page.context().newCDPSession(page),x=box.x+box.width/2,y=box.y+box.height-25;
    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
-   for(let step=1;step<=6;step++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y-step*25}]});
-   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+   for(let step=1;step<=6;step++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y-step*25}]});await page.waitForTimeout(30);}
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(1000);await cdp.detach();
   }else{
    await region.hover();await page.mouse.wheel(0,240);
   }
@@ -40,6 +40,10 @@ for(const touch of[false,true])test('native '+(touch?'touch':'wheel/keyboard')+'
   if(!touch){await region.focus();const before=await region.evaluate(n=>n.scrollTop);await page.keyboard.press('PageDown');await page.waitForFunction(v=>document.getElementById('records').scrollTop>v,before);}
   await region.evaluate(n=>n.scrollTop=n.scrollHeight);await region.hover();await page.mouse.wheel(0,1500);
   await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>scrollY),0,'overscroll stays inside region');
+  if(touch)await page.locator('#page_size button').tap();else await page.locator('#page_size button').click();
+  await page.locator('#size_menu').waitFor({state:'visible'});
+  assert.ok((await page.locator('#size_menu').boundingBox()).y<footer.y);
+  await page.keyboard.press('Escape');assert.equal(await page.locator('#size_menu').isVisible(),false);
   await page.locator('#open_15').click();assert.equal(await page.evaluate(()=>location.hash),'#details');
   const after=await page.locator('#outside_footer').boundingBox();assert.ok(Math.abs(after.y-footer.y)<1);
  }finally{await browser.close();}
