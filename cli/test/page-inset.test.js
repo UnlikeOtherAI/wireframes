@@ -26,7 +26,7 @@ test('actual card/line/native edges obey inset with no horizontal overflow and w
  const browser=await chromium.launch({headless:true});
  try{for(const [mode,platform] of[['card','web'],['line','web'],['card','ios']])for(const width of[390,1280])for(const inset of[undefined,0,12.5]){
   const map=scrollProject(),doc=map.pages.get('home').page;
-  doc.viewport={device:platform==='ios'?'tablet':'web',platform};doc.rendering={mode};if(inset!==undefined)doc.inset=inset;
+  doc.viewport={device:platform==='ios'?'tablet':'web',platform,orientation:'portrait'};doc.rendering={mode};if(inset!==undefined)doc.inset=inset;
   map.templates.templates.main_template.layout={type:'stack',padding:0,gap:0};
   map.templates.templates.main_template.regions[0].layout={type:'stack',padding:0,gap:0};
   const page=await browser.newPage({viewport:{width,height:650}});
