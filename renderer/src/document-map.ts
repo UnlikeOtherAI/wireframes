@@ -1,5 +1,5 @@
 import { parseYaml } from './parser.js';
-import { resolveVirtualComponentImports } from './component-imports.js';
+import { resolveVirtualComponentImports, type ComponentModuleRegistry } from './component-imports.js';
 
 export interface DocumentMap {
   manifest: Record<string, unknown> | null;
@@ -7,7 +7,7 @@ export interface DocumentMap {
   templates: Record<string, unknown> | null;
   components: Record<string, unknown> | null;
   componentRegistriesByPage?: Map<string, Record<string, unknown>>;
-  componentRegistriesByFile?: Map<string, Record<string, unknown>>;
+  componentRegistriesByFile?: Map<string, ComponentModuleRegistry>;
   pages: Map<string, Record<string, unknown>>;
   datasets: Map<string, Record<string, unknown>>;
 }

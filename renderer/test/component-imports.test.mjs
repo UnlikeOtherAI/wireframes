@@ -129,7 +129,7 @@ test('unused module registries are available for bounded previews without pollut
   const files = source();
   files['components/unused.yaml'] = components('unused', { note: text('Unused module') });
   const { documentMap } = parseProject(files);
-  assert.ok(documentMap.componentRegistriesByFile.get('components/unused.yaml').note);
+  assert.ok(documentMap.componentRegistriesByFile.get('components/unused.yaml').componentIds.some(id => id.endsWith('.note')));
   assert.equal(documentMap.componentRegistriesByPage.get('home').note, undefined);
   const { assertComponentExpansion } = await import('../bundle/wireframe-renderer.min.js');
   const definitions = { leaf: text('Leaf') };
@@ -146,13 +146,35 @@ test('module preview guards retain global and template context with module-local
   files['components.yaml'] = JSON.stringify(root);
   files['components/footer.yaml'] = components('footer', { footer: { root: { id: 'footer', use: 'global_label' } } });
   const { documentMap } = parseProject(files);
-  const definitions = documentMap.componentRegistriesByFile.get('components/footer.yaml');
-  assert.ok(assertComponentExpansion([definitions.footer], definitions) > 0);
+  const module = documentMap.componentRegistriesByFile.get('components/footer.yaml');
+  assert.ok(assertComponentExpansion(module.componentIds.map(id => module.components[id]), module.components) > 0);
   assert.match(renderProject(files).pages.get('home'), /Global label/);
   files['components/footer.yaml'] = components('footer', {
     footer: { root: { id: 'footer', use: 'global_label' } }, global_label: text('Module label'),
   });
   const local = parseProject(files).documentMap.componentRegistriesByFile.get('components/footer.yaml');
-  assert.equal(local.global_label.root.props.text, 'Module label');
+  assert.equal(local.components[`${local.namespace}.global_label`].root.props.text, 'Module label');
+  assert.equal(local.components.global_label.root.props.text, 'Global label');
   assert.match(renderProject(files).pages.get('home'), /Module label/);
+});
+
+test('module expansion checks preserve inherited global lookups under local shadowing', async () => {
+  const { assertComponentExpansion } = await import('../bundle/wireframe-renderer.min.js');
+  const files = source();
+  const root = JSON.parse(files['components.yaml']);
+  root.components.global0 = text('Global leaf');
+  for (let i = 1; i <= 7; i++) root.components[`global${i}`] = { root: { id: `global${i}`, component: 'section',
+    children: [0, 1].map(n => ({ id: `instance${n}`, use: `global${i - 1}` })) } };
+  root.components.global_wrapper = { root: { id: 'wrapper', use: 'global7' } };
+  files['components.yaml'] = JSON.stringify(root);
+  files['components/unused.yaml'] = components('unused', {
+    global7: text('Module-local leaf'),
+    footer: { root: { id: 'footer', component: 'section', children: Array.from({ length: 24 }, (_, i) =>
+      ({ id: `wrapper${i}`, use: 'global_wrapper' })) } },
+  });
+  const module = parseProject(files).documentMap.componentRegistriesByFile.get('components/unused.yaml');
+  assert.throws(() => assertComponentExpansion(module.componentIds.map(id => module.components[id]), module.components),
+    /too large/);
+  assert.equal(module.components.global_wrapper.root.use, 'global7');
+  assert.equal(module.components[`${module.namespace}.global7`].root.props.text, 'Module-local leaf');
 });

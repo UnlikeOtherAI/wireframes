@@ -3,6 +3,7 @@ import { createComponentRegistryResolver } from '../../engine/component-registry
 
 type Document = Record<string, unknown>;
 type Definitions = Record<string, unknown>;
+export type ComponentModuleRegistry = { namespace: string; componentIds: string[]; components: Definitions };
 type Registry = { components: Definitions; sources: Record<string, unknown> };
 type Result = { ok: boolean; error?: string; registry: Registry };
 
@@ -44,7 +45,7 @@ export function normalizeVirtualImport(source: string, imported: string): string
 export function resolveVirtualComponentImports(documents: Map<string, Document>): {
   components: Document | null;
   componentRegistriesByPage: Map<string, Definitions>;
-  componentRegistriesByFile: Map<string, Definitions>;
+  componentRegistriesByFile: Map<string, ComponentModuleRegistry>;
 } {
   const sizes = new Map<string, number>();
   let sourceTotal = 0;
@@ -95,11 +96,20 @@ export function resolveVirtualComponentImports(documents: Map<string, Document>)
   const shared = resolver.createEmptyRegistry();
   merge(shared, { ok: true, registry: project });
   if (templates) merge(shared, resolver.loadImportedComponentRegistry(...templates));
-  const componentRegistriesByFile = new Map<string, Definitions>();
-  for (const [path] of modules) {
+  const componentRegistriesByFile = new Map<string, ComponentModuleRegistry>();
+  let namespace = 'nessie_preview';
+  const sharedIds = Object.keys(shared.components);
+  while (sharedIds.some(id => id === namespace || id.startsWith(`${namespace}.`))) namespace += '_preview';
+  for (const [path, document] of modules) {
     const registry = resolver.createEmptyRegistry();
-    merge(registry, resolver.loadComponentsDocumentRegistry(path, ''));
-    componentRegistriesByFile.set(path, Object.assign(Object.create(null), shared.components, registry.components));
+    merge(registry, { ok: true, registry: shared });
+    merge(registry, resolver.loadComponentsDocumentRegistry(path, namespace));
+    const componentIds = Object.keys(object(document.components) ? document.components : {})
+      .map(id => `${namespace}.${id}`);
+    if (componentIds.some(id => !Object.hasOwn(registry.components, id))) {
+      throw new Error(`Component definitions need an object root: ${path}`);
+    }
+    componentRegistriesByFile.set(path, { namespace, componentIds, components: registry.components });
   }
   const componentRegistriesByPage = new Map<string, Definitions>();
   for (const [path, document] of documents) {
