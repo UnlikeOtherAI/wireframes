@@ -206,6 +206,14 @@ function buildShell(node, element, ctx) {
   }
 
   const attrs = [`data-wf-frame="${decision.frame}"`];
+  if (node.scroll === true) {
+    classes.push('wf-scroll');
+    attrs.push('tabindex="0"');
+    const label = node.accessibility?.label;
+    if (['stack', 'row', 'grid', 'split'].includes(element) && typeof label === 'string' && label.trim()) {
+      attrs.push('role="region"', 'aria-label="' + escapeHtml(label) + '"');
+    }
+  }
   const corner = appearance?.corner?.style || node.wireframeStyle?.corner?.style || ctx.pageStyle?.corner?.style;
   if (corner === 'pill') attrs.push('data-wf-corner="pill"');
   if (appearance) attrs.push('data-wf-skin-role="' + escapeHtml(appearance.role) + '"');
