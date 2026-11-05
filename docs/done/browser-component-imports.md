@@ -38,3 +38,17 @@ refuse rendering. Two pages may use the same alias for different modules.
 ## Non-goals
 
 No network imports, schema changes, new renderer or filesystem access in browsers.
+
+## Verification
+
+On Windows Maxis, renderer tests passed 140/140 and the complete CLI suite passed
+243/243 at `e47bc449dc220b088a00985b3faf7d446e3255bb`, with no skips. CLI text
+fixtures used LF line endings. Nessie's browser journeys also rendered nested
+imports and live module changes at desktop and phone widths using this engine.
+
+Four adversarial review/fix rounds ended with a clean fourth review. The browser
+adapter keeps shared, page and module reference contexts separate; module
+previews use qualified IDs and check the actual synthetic page graph before
+rendering. Traversal, shared-map copying and expansion are bounded. Tests cover
+legacy singleton component files, namespace conflicts, cycles, path refusal,
+page alias isolation, and the expansion bypasses found during review.
