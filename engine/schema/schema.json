@@ -1033,6 +1033,10 @@
             "none"
           ],
           "description": "Stays at an edge of its containing scroll area. Put the bar before the content it must stay above."
+        },
+        "scroll": {
+          "type": "boolean",
+          "description": "Opt into native overflow scrolling without resizing. Bound the node with size.height/maxHeight or width/maxWidth; sticky children use this scroll boundary."
         }
       },
       "allOf": [
@@ -2492,6 +2496,12 @@
               "items": {
                 "$ref": "#/$defs/Overlay"
               }
+            },
+            "inset": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4096,
+              "description": "Outer page padding in CSS pixels, independent of template/body padding. Omitted preserves mode/platform defaults."
             }
           }
         }
@@ -2773,6 +2783,21 @@
           "additionalProperties": {
             "$ref": "#/$defs/SkinAppearance"
           }
+        },
+        "logos": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "logo_1": {
+              "$ref": "#/$defs/SkinLogo"
+            },
+            "logo_2": {
+              "$ref": "#/$defs/SkinLogo"
+            },
+            "logo_3": {
+              "$ref": "#/$defs/SkinLogo"
+            }
+          }
         }
       }
     },
@@ -2792,6 +2817,26 @@
           "additionalProperties": {
             "$ref": "#/$defs/Skin"
           }
+        }
+      }
+    },
+    "SkinLogo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "src"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "src": {
+          "type": "string",
+          "maxLength": 349550,
+          "pattern": "^data:image/png;base64,[A-Za-z0-9+/]+={0,2}$"
         }
       }
     },
@@ -3104,6 +3149,14 @@
         "ratio": {
           "type": "string"
         },
+        "slot": {
+          "type": "string",
+          "enum": [
+            "logo_1",
+            "logo_2",
+            "logo_3"
+          ]
+        },
         "width": {
           "type": [
             "number",
@@ -3330,7 +3383,7 @@
     },
     "PrimitiveProps_segmented": {
       "type": "object",
-      "description": "Segmented control / attached button group.",
+      "description": "Segmented control; unique option labels are selection values.",
       "properties": {
         "options": {
           "type": "array"
@@ -3646,7 +3699,7 @@
     },
     "PrimitiveProps_tab_bar": {
       "type": "object",
-      "description": "In-page tabs. Pass tabs[] for one line, or children for full control.",
+      "description": "Local tabs select by unique label; routed tabs navigate. Pass tabs[] or children.",
       "properties": {
         "tabs": {
           "type": "array"
@@ -3723,8 +3776,15 @@
     },
     "PrimitiveProps_nav": {
       "type": "object",
-      "description": "Vertical side navigation; collapsed renders an icon rail.",
+      "description": "Side navigation; rail stacks icons above labels; collapsed hides labels.",
       "properties": {
+        "variant": {
+          "type": "string",
+          "enum": [
+            "rail",
+            "sidebar"
+          ]
+        },
         "items": {
           "type": "array"
         },
@@ -3801,7 +3861,7 @@
     },
     "PrimitiveProps_table": {
       "type": "object",
-      "description": "Data table with typed columns, selection, sorting and loading/empty states.",
+      "description": "Data table with typed columns, routed link cells, selection, sorting and loading/empty states.",
       "properties": {
         "columns": {
           "type": "array"

@@ -147,6 +147,9 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-pane-right{margin-left:auto}
 .wf-pane-center{flex:1 1 auto;min-width:0}
 .wf-pane[data-wf-pane-collapsed="true"]{overflow:hidden}
+.wf-node.wf-scroll:not([data-wf-pane-collapsed="true"]){overflow:auto;overscroll-behavior:contain;min-height:0;min-width:0}
+.wf-scroll>.wf-node-children,.wf-scroll>.wf-node,.wf-scroll>.wf-node-children>.wf-node{flex-shrink:0!important}
+.wf-scroll:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
 .wf-density-compact .wf-table-cell{padding:7px 12px}
 .wf-density-compact .wf-list-row{padding:8px 12px;min-height:36px}
 .wf-badge{display:inline-flex;width:fit-content;max-width:100%}
@@ -250,10 +253,10 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-segmented{display:inline-flex;align-items:stretch;width:fit-content;border-radius:var(--wf-corner-radius,6px);overflow:hidden}
 .wf-mode-line .wf-segmented{border:1px solid var(--wf-line-strong);border-radius:0}
 .wf-mode-card .wf-segmented{border:1px solid var(--wf-line);background:var(--wf-fill-2)}
-.wf-segment{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:6px 14px;font:inherit;font-size:13px;background:transparent;border:none;cursor:pointer;color:var(--wf-ink-3);white-space:nowrap}
+.wf-segment{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:6px 14px;font:inherit;font-size:13px;background:transparent;border:none;cursor:pointer;color:var(--wf-choice-ink,var(--wf-ink-3));white-space:nowrap}
 .wf-segment+.wf-segment{border-left:1px solid var(--wf-line)}
 .wf-mode-line .wf-segment+.wf-segment{border-left-color:var(--wf-line-strong)}
-.wf-segment-on{background:#ffffff;color:var(--wf-ink);font-weight:600}
+.wf-segment-on{background:#ffffff;color:var(--wf-choice-accent,var(--wf-ink));font-weight:600}
 .wf-mode-line .wf-segment-on{background:var(--wf-fill)}
 .wf-segmented-lg .wf-segment{min-height:40px}
 .wf-field{width:100%;min-width:0}
@@ -290,8 +293,9 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-range-thumb{position:absolute;top:9px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#ffffff;border:1px solid var(--wf-ink-3)}
 .wf-color{display:flex;align-items:center;gap:0;border:1px solid var(--wf-line);border-radius:var(--wf-corner-radius,6px);overflow:hidden;background:#ffffff}
 .wf-mode-line .wf-color{border-color:var(--wf-line-strong);border-radius:0;background:transparent}
-.wf-color-swatch{width:36px;height:34px;flex:0 0 auto;background:repeating-conic-gradient(var(--wf-line-2) 0 25%,#ffffff 0 50%) 0 0/12px 12px}
+.wf-color input[type=color]{width:36px;height:34px;flex:0 0 36px;padding:3px;cursor:pointer}
 .wf-color input{border:none;outline:none;font:inherit;font-size:13px;padding:0 10px;min-height:34px;background:transparent;width:100%}
+@media(pointer:coarse){.wf-segmented .wf-segment,.wf-color input{min-height:44px}.wf-segment{min-width:44px}.wf-color input[type=color]{width:44px;height:44px;flex-basis:44px}}
 .wf-choice{display:inline-flex;align-items:flex-start;gap:9px;cursor:pointer;min-height:22px}
 .wf-choice-text{display:inline-flex;flex-direction:column;gap:1px;min-width:0}
 .wf-choice-label{font-size:13px;color:var(--wf-ink-2);line-height:1.4}
@@ -336,11 +340,14 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-mode-line .wf-editor-toolbar{border-bottom-color:var(--wf-line-strong)}
 .wf-editor-tool{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;color:var(--wf-ink-3)}
 .wf-editor-body{padding:12px}
+@media(any-pointer:coarse){.wf-page .wf-button button,.wf-page .wf-button .wf-button-link{min-height:44px;min-width:44px}}
 .wf-tab_bar{display:flex;align-items:stretch;gap:0;min-width:0;overflow:hidden}
 .wf-tab_bar[data-wf-frame="edge"]{border-bottom:1px solid var(--wf-line-2)}
 .wf-mode-line .wf-tab_bar[data-wf-frame="edge"]{border-bottom-color:var(--wf-line-strong)}
 .wf-tab{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;font-size:13px;font-weight:500;color:var(--wf-ink-3);white-space:nowrap;text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px}
-.wf-tab-on{color:var(--wf-ink);border-bottom-color:var(--wf-ink)}
+button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));background:transparent;border:0;border-bottom:2px solid transparent;cursor:pointer}
+@media(pointer:coarse){button.wf-tab{min-height:44px;min-width:44px}}
+.wf-tab.wf-tab-on{color:var(--wf-choice-accent,var(--wf-ink));border-bottom-color:var(--wf-choice-accent,var(--wf-ink))}
 .wf-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;font-size:10px;border-radius:9px;background:var(--wf-line-2);color:var(--wf-ink-2)}
 .wf-tabs-pill{border-bottom:none;gap:4px;padding:3px;background:var(--wf-fill);border-radius:var(--wf-corner-radius,8px);width:fit-content}
 .wf-tabs-pill .wf-tab{border-bottom:none;margin-bottom:0;border-radius:var(--wf-corner-radius,6px);padding:7px 14px}
@@ -420,6 +427,15 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-sheet-danger{color:var(--wf-danger);font-weight:600}
 .wf-sheet-cancel{border-radius:12px;background:#ffffff;font-weight:600;border-top:none}
 .wf-mode-line .wf-sheet-cancel{background:transparent;border:1px solid var(--wf-line-strong);border-radius:0}
+.wf-nav-rail{gap:2px;align-items:stretch}
+.wf-nav-rail .wf-nav-item{flex-direction:column;align-items:center;justify-content:center;min-height:64px;min-width:44px;width:100%;padding:4px 2px;gap:3px}
+.wf-nav-rail .wf-ico{display:flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;border-radius:10px}
+.wf-nav-rail .wf-icon-glyph{font-size:20px;width:24px;text-align:center}
+.wf-nav-rail .wf-nav-label{flex:0 0 auto;width:100%;font-size:11px;line-height:13px;text-align:center}
+.wf-nav-rail .wf-nav-on,.wf-mode-line .wf-nav-rail .wf-nav-on{background:transparent;outline:none;border-color:transparent}
+.wf-nav-rail .wf-nav-on .wf-ico{background:var(--wf-ink);color:var(--wf-bg)}
+.wf-nav-rail.wf-nav-collapsed .wf-nav-label{display:inline;position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media(any-pointer:coarse){.wf-nav:not(.wf-nav-rail) .wf-nav-item,.wf-menu-item{min-height:44px}}
 .wf-page_header{display:flex;flex-direction:column;gap:10px;min-width:0}
 .wf-ph-main{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;min-width:0}
 .wf-ph-text{min-width:0;flex:1 1 240px}
@@ -427,6 +443,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-ph-sub{margin:4px 0 0;font-size:13px;color:var(--wf-ink-3);line-height:1.5}
 .wf-ph-crumbs{margin-bottom:-2px}
 .wf-ph-tabs{margin-top:2px}
+@media(pointer:coarse){.wf-table-link{display:inline-flex;align-items:center;min-width:44px;min-height:44px}}
 .wf-table{padding:0;overflow:hidden;min-width:0}
 .wf-table-caption{padding:12px 14px 0;font-size:13px;font-weight:600;color:var(--wf-ink)}
 .wf-table-grid{display:grid;align-items:center;min-width:0}
@@ -550,6 +567,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-overlay-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--wf-line-2);flex:0 0 auto}
 .wf-overlay-title{font-size:15px;font-weight:600;color:var(--wf-ink)}
 .wf-overlay-close{background:none;border:none;font-size:18px;line-height:1;color:var(--wf-ink-4);cursor:pointer;padding:0 2px}
+@media(any-pointer:coarse){.wf-overlay-close{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px}}
 .wf-overlay-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--wf-line-2);flex:0 0 auto}
 .wf-mode-line .wf-overlay-head,.wf-mode-line .wf-overlay-foot{border-color:var(--wf-line-strong)}
 .wf-overlay-menu .wf-overlay-content>.wf-node-children,.wf-overlay-dropdown .wf-overlay-content>.wf-node-children{padding:6px;gap:0}
@@ -819,7 +837,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
   <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_image" class="wf-node wf-image wf-image-video" data-wf-frame="content" data-wf-state-bindings="{}"><div class="wf-image-placeholder" role="img" aria-label="Product shot" title="Product shot" style="aspect-ratio:16 / 9"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-play fa-xl" data-wf-glyph="P" style="font-size:24px;width:24px"></i><span class="wf-image-caption">Product shot</span></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- image: { alt: Product shot, kind: video, ratio: &quot;16:9&quot; }</pre>
-    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="">src</td><td>string</td></tr><tr><td class="cat-primary">alt</td><td>string</td></tr><tr><td class="">kind</td><td>image | video | map | embed | logo</td></tr><tr><td class="">ratio</td><td>string</td></tr><tr><td class="">width</td><td>number,string</td></tr><tr><td class="">height</td><td>number,string</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>media</code>.</p></div>
+    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="">src</td><td>string</td></tr><tr><td class="cat-primary">alt</td><td>string</td></tr><tr><td class="">kind</td><td>image | video | map | embed | logo</td></tr><tr><td class="">ratio</td><td>string</td></tr><tr><td class="">slot</td><td>logo_1 | logo_2 | logo_3</td></tr><tr><td class="">width</td><td>number,string</td></tr><tr><td class="">height</td><td>number,string</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>media</code>.</p></div>
   </div>
 </article>
 <article class="cat-item" id="el-rating">
@@ -924,8 +942,8 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-name">segmented</span>
     <span class="cat-frame">never draws a box</span>
   </div>
-  <p class="cat-summary">Segmented control / attached button group.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_segmented" class="wf-node wf-segmented wf-segmented-md" data-wf-frame="control" data-wf-state-bindings="{}"><button class="wf-segment">Day</button><button class="wf-segment wf-segment-on">Week</button><button class="wf-segment">Month</button></div></div>
+  <p class="cat-summary">Segmented control; unique option labels are selection values.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_segmented" class="wf-node wf-segmented wf-segmented-md" data-wf-frame="control" data-wf-state-bindings="{}"><button type="button" class="wf-segment" data-wf-choice-value="&quot;Day&quot;" aria-pressed="false">Day</button><button type="button" class="wf-segment wf-segment-on" data-wf-choice-value="&quot;Week&quot;" aria-pressed="true">Week</button><button type="button" class="wf-segment" data-wf-choice-value="&quot;Month&quot;" aria-pressed="false">Month</button></div></div>
   <div class="cat-split">
     <pre class="cat-code">- segmented: { options: [Day, Week, Month], value: Week }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">options</td><td>array</td></tr><tr><td class="">value</td><td>string</td></tr><tr><td class="">size</td><td>sm | md | lg</td></tr></tbody></table></div>
@@ -1069,8 +1087,8 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-name">tab_bar</span>
     <span class="cat-frame">draws one edge</span>
   </div>
-  <p class="cat-summary">In-page tabs. Pass tabs[] for one line, or children for full control.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_tab_bar" class="wf-node wf-tab_bar wf-tabs-underline" data-wf-frame="edge" data-wf-state-bindings="{}"><span class="wf-tab wf-tab-on">Overview</span><span class="wf-tab">Billing</span></div></div>
+  <p class="cat-summary">Local tabs select by unique label; routed tabs navigate. Pass tabs[] or children.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_tab_bar" class="wf-node wf-tab_bar wf-tabs-underline" data-wf-frame="edge" data-wf-state-bindings="{}"><button type="button" class="wf-tab wf-tab-on" data-wf-choice-value="&quot;Overview&quot;" aria-pressed="true">Overview</button><button type="button" class="wf-tab" data-wf-choice-value="&quot;Billing&quot;" aria-pressed="false">Billing</button></div></div>
   <div class="cat-split">
     <pre class="cat-code">- tab_bar: { tabs: [{ label: Overview, active: true }, { label: Billing }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">tabs</td><td>array</td></tr><tr><td class="">variant</td><td>underline | pill | enclosed</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>tabs</code>.</p></div>
@@ -1129,11 +1147,11 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-name">nav</span>
     <span class="cat-frame">never draws a box</span>
   </div>
-  <p class="cat-summary">Vertical side navigation; collapsed renders an icon rail.</p>
+  <p class="cat-summary">Side navigation; rail stacks icons above labels; collapsed hides labels.</p>
   <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><nav id="demo_nav" class="wf-node wf-nav" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-nav-item wf-nav-on"><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-gauge" data-wf-glyph="G"></i></span><span class="wf-nav-label">Dashboard</span></span><span class="wf-nav-item"><span class="wf-nav-label">Settings</span></span></nav></div>
   <div class="cat-split">
     <pre class="cat-code">- nav: { items: [{ icon: gauge, label: Dashboard, active: true }, { label: Settings }] }</pre>
-    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">collapsed</td><td>boolean</td></tr><tr><td class="">groups</td><td>boolean</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>sidenav</code>.</p></div>
+    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="">variant</td><td>rail | sidebar</td></tr><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">collapsed</td><td>boolean</td></tr><tr><td class="">groups</td><td>boolean</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>sidenav</code>.</p></div>
   </div>
 </article>
 <article class="cat-item" id="el-menu">
@@ -1190,7 +1208,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
     <span class="cat-name">table</span>
     <span class="cat-frame">the frame rules decide</span>
   </div>
-  <p class="cat-summary">Data table with typed columns, selection, sorting and loading/empty states.</p>
+  <p class="cat-summary">Data table with typed columns, routed link cells, selection, sorting and loading/empty states.</p>
   <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_table" class="wf-node wf-table wf-surface wf-table-state-default" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-table-header wf-table-grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)"><div class="wf-table-cell wf-table-header-cell" data-wf-table-column="0">Name</div><div class="wf-table-cell wf-table-header-cell" data-wf-table-column="1">Status</div><div class="wf-table-cell wf-table-header-cell" data-wf-table-column="2">Owner</div></div><div class="wf-table-body"><div class="wf-table-row wf-table-grid" data-wf-table-row="0" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)"><div class="wf-table-cell" data-wf-table-column="0">Dashboard</div><div class="wf-table-cell" data-wf-table-column="1">Draft</div><div class="wf-table-cell" data-wf-table-column="2">Lee</div></div></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- table: { columns: [Name, Status, Owner], rows: [[Dashboard, Draft, Lee]] }</pre>

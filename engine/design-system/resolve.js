@@ -79,6 +79,9 @@ function resolveAppearance(node, options = {}) {
   const variantRole = variant ? options.skin.roles?.[role] : null;
   const result = mergeAppearance(options.skin.defaults, options.pageStyle, baseRole, variantRole, node.wireframeStyle);
   result.colors = { ...result.colors };
+  if (getPrimitive(component)?.shellBackground) {
+    result.shellBackground = mergeAppearance(baseRole, variantRole, node.wireframeStyle).colors?.background;
+  }
   const props = node.props || {};
   // Severity belongs to state, not a generic company palette.
   const severity = (component === 'button' && variant === 'danger')

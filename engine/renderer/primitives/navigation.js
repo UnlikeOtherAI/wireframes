@@ -31,7 +31,8 @@ function renderTabBar(node, ctx, lib) {
     const body = `${glyph}${label ? lib.escapeHtml(label) : lib.renderSkeleton(6)}`;
     const active = tab.active === true ? ' wf-tab-on' : '';
     const badge = tab.badge != null ? `<span class="wf-tab-badge">${lib.escapeHtml(String(tab.badge))}</span>` : '';
-    return linkOrSpan(tab.route, `wf-tab${active}`, `${body}${badge}`, ctx, lib);
+    if (lib.str(tab.route)) return linkOrSpan(tab.route, `wf-tab${active}`, `${body}${badge}`, ctx, lib);
+    return `<button type="button" class="wf-tab${active}" data-wf-choice-value="${lib.escapeAttr(JSON.stringify(label))}" aria-pressed="${!!active}"${!label || node.selection?.selectable === false ? ' disabled' : ''}${!label ? ' aria-label="Empty tab"' : ''}>${body}${badge}</button>`;
   }).join('');
   return { inner: markup, className: `wf-tabs-${lib.toSafeClass(variant)}` };
 }
@@ -119,7 +120,7 @@ function renderStepper(node, ctx, lib) {
 
 function navItem(item, ctx, lib, depth = 0) {
   const label = lib.str(item.label);
-  const glyph = lib.iconSpan(item.icon);
+  const glyph = lib.iconSpan(item.icon, { style: item.iconStyle });
   const badge = item.badge != null ? `<span class="wf-nav-badge">${lib.escapeHtml(String(item.badge))}</span>` : '';
   const body = `${glyph}<span class="wf-nav-label">${label ? lib.escapeHtml(label) : lib.renderSkeleton(8)}</span>${badge}`;
   // A shared sidebar cannot know which page it is on, so the renderer marks
@@ -143,7 +144,15 @@ function renderNav(node, ctx, lib) {
     }
     return navItem(entry, ctx, lib);
   }).join('');
-  return { tag: 'nav', inner: markup, className: collapsed ? 'wf-nav-collapsed' : '' };
+  const variant = ['rail', 'sidebar'].includes(node.props?.variant) ? node.props.variant : '';
+  const classes = [collapsed ? 'wf-nav-collapsed' : '', variant ? 'wf-nav-' + variant : ''].filter(Boolean).join(' ');
+  let style = '';
+  if (variant === 'rail') {
+    const size = node.size || {};
+    const width = size.width == null ? lib.token('sidebar.collapsedWidth', ctx.viewport, ctx.sizing) : null;
+    style = [width ? 'width:' + width + 'px' : '', size.minWidth == null ? 'min-width:0' : '', 'flex:0 0 auto'].filter(Boolean).join(';');
+  }
+  return { tag: 'nav', inner: markup, className: classes, style };
 }
 
 function renderMenu(node, ctx, lib) {
@@ -163,6 +172,9 @@ function renderMenu(node, ctx, lib) {
 
 function renderAppBar(node, ctx, lib) {
   const props = node.props || {};
+  if (Array.isArray(node.children) && node.children.length && !props.title && !props.leading && !props.actions?.length) {
+    return { tag: 'header', inner: '', useChildren: true, style: 'justify-content:space-between' };
+  }
   const leading = lib.str(props.leading)
     ? `<span class="wf-appbar-leading">${lib.icon(props.leading, { size: 'lg' })}</span>`
     : '';
@@ -216,7 +228,7 @@ function renderActionSheet(node, ctx, lib) {
   const head = title ? `<div class="wf-sheet-title">${lib.bound(title, ctx)}</div>` : '';
   const rows = lib.items(props.items).map((item) => {
     const label = lib.str(item.label);
-    const glyph = lib.iconSpan(item.icon);
+    const glyph = lib.iconSpan(item.icon, { style: item.iconStyle });
     const danger = item.danger === true ? ' wf-sheet-danger' : '';
     return `<button class="wf-sheet-row${danger}">${glyph}${label ? lib.escapeHtml(label) : lib.renderSkeleton(8)}</button>`;
   }).join('');

@@ -298,7 +298,7 @@ function validateAgainstSingleSchema(value, schema, context) {
         'SCHEMA_ENUM',
         context.path,
         schemaPath,
-        `Value at ${context.path} is not one of the allowed enum values.`,
+        `Value at ${context.path} must be one of: ${resolvedSchema.enum.slice(0, 12).map((entry) => JSON.stringify(entry)).join(", ")}${resolvedSchema.enum.length > 12 ? ", …" : ""}.`,
       );
     }
   }

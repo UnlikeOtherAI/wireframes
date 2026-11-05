@@ -447,6 +447,7 @@ Optional:
 * `role` — semantic role (e.g. "main", "aside", "nav")
 * `layout` — child layout definition (stack, row, grid, absolute, overlay)
 * `size` — explicit dimensions (width, height, minWidth, maxWidth, minHeight, maxHeight)
+* `scroll` — boolean; opt into native overflow scrolling, bounded by existing size dimensions, without a resize handle
 * `gridItem` — grid positioning (span, offset, row, column)
 * `visibility` — conditional visibility via a Condition
 * `accessibility` — label, role, description for accessibility annotations
@@ -660,3 +661,24 @@ Buttons accept props.route as a route-ID shorthand when there are no explicit in
 An optional manifest.designSystem stores activeSkin and a skins map. Each named skin has name, optional defaults and roles; appearance values contain optional colors, border and corner. Colours are restricted to #RRGGBB (transparent is also allowed for background). They are not fields of ordinary wireframeStyle objects. Standard role keys derive from the primitive registry and existing variant enums; there is no custom role or new node field.
 
 Saving named skins requires manifest specVersion: "1.2" and manifest.schemaVersion: "1.2". Other document types and new ordinary projects remain 1.1. The .wf container stays wf/1. The reserved skin wireframe selects the legacy appearance. See [the complete contract](design-system.md).
+
+## Company logo slots
+
+Company logos are optional on each named skin: `logos` maps only `logo_1`, `logo_2` and `logo_3` to `{name, src}`. Names are nonempty and at most 80 characters. Sources are static PNG data URLs, at most 256 KiB decoded and 1024 pixels per side. An image uses `props: {kind: logo, slot: logo_1, width: 160, height: 64}`. Width and height size the container in points (positive, at most 4096); the logo preserves its aspect ratio inside it. Switching skin resolves the same slot from that skin. Missing slots keep a labelled placeholder and the same box. Asset bytes belong in the skin, never in node props or model context.
+
+Navigation supports optional nav.props.variant: rail|sidebar (omitted preserves legacy output). Rail uses sidebar.collapsedWidth, keeps labels and routes, and honours size.width. Nav/app_bar roles can paint an explicitly authored background; inherited page background does not fill them.
+
+
+### Table link cells
+
+A table column with `kind: link` accepts a cell `{text: "Device A", route: device_a}`.
+Use it in either keyed rows or positional arrays. The route is an existing sitemap route id;
+the renderer uses the route table and emits the normal navigation attributes. A nonempty
+string text becomes the accessible link name. Scalar cells keep their existing inert
+appearance. Unknown routes, malformed cells and unsafe route-table URLs remain inert
+text. This adds no row-click or pagination behavior; table pagination remains illustrative.
+Link cells do not accept raw HTML or href values. Relative internal paths and fragments
+are supported; schemes, protocol-relative URLs, backslashes and whitespace are rejected.
+
+### Explicit page inset
+Optional `page.inset` is a finite number from 0 to 4096 CSS pixels (rendered to six decimal places). It controls only outer page padding in every mode/platform; `0` is full bleed. Omit it to preserve card/web 16px and existing line/native defaults. Template/body padding and gap remain independent; each page opts in.

@@ -13,6 +13,7 @@ const search = (...args) => JSON.parse(execFileSync(process.execPath, [cli, 'ico
 test('real CLI finds burger menu, search aliases and each Free style', () => {
   assert.equal(search('burger menu')[0].name, 'bars');
   assert.equal(search('search')[0].name, 'magnifying-glass');
+  assert.equal(search('settings')[0].name, 'gear');
   assert.equal(search('navicon')[0].name, 'bars');
   assert.equal(search('github', '--style', 'brands')[0].name, 'github');
   assert.ok(search('envelope', '--style', 'regular')[0].styles.includes('regular'));
@@ -44,4 +45,22 @@ test('validates names and available Free styles without rejecting aliases', () =
     { component: 'icon', props: { name: 'not-a-real-wf-icon' } },
     { component: 'input', props: { icon: 'bars', iconStyle: 'regular' } },
   ], catalogue).map((d) => d.code), ['UNKNOWN_ICON', 'ICON_STYLE_UNAVAILABLE']);
+});
+
+test('unknown icon feedback gives bounded, usable Free names', () => {
+  const result = validateIconReferences([{ component: 'button', props: { icon: 'settings' } }], catalogue);
+  assert.equal(result[0].code, 'UNKNOWN_ICON');
+  assert.match(result[0].message, /gear \(solid\)/);
+  assert.ok(result[0].message.length < 400);
+});
+
+test('specific UI phrases choose plain Free icons without article or sibling noise', () => {
+  assert.equal(search('speech bubble')[0].name, 'comment');
+  const bubble = iconsForRequest(catalogue, 'Give the Channels menu item a speech-bubble icon.');
+  assert.match(bubble, /^comment \(regular\|solid\)/);
+  assert.doesNotMatch(bubble, /comment-sms|^a \(/m);
+  const mixed = iconsForRequest(catalogue, 'Add a speech bubble and a search icon.');
+  assert.match(mixed, /comment \(/);
+  assert.match(mixed, /magnifying-glass \(/);
+  assert.match(iconsForRequest(catalogue, 'Use a letter A icon.'), /a \(solid\)/);
 });

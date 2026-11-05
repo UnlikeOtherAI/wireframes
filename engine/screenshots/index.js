@@ -1,13 +1,11 @@
 'use strict';
 const { pageAppearance } = require('../design-system/resolve');
-
 const { normalizePlatform } = require('../renderer/platform');
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
 const { renderWireframeMarkup } = require(path.resolve(__dirname, 'renderer'));
 const { fsImageResolver } = require(path.resolve(__dirname, '..', 'renderer', 'fs-image-resolver'));
-
 const { runValidate } = require(path.resolve(__dirname, '..', 'validate', 'cli-adapter'));
 const { listPages } = require(path.resolve(__dirname, '..', 'page'));
 const { pageFilePath } = require(path.resolve(__dirname, '..', 'addressing', 'fs-resolver'));
@@ -16,7 +14,6 @@ const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema',
 const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
 const { buildTreeTargets } = require(path.resolve(__dirname, '..', 'tree'));
 const { getDatasetDocument } = require(path.resolve(__dirname, '..', 'data', 'utils'));
-
 const DEFAULT_OUTPUT_DIR = 'screenshots';
 const VIEWPORT_PRESETS = {
   web: { width: 1280, height: 900 },
@@ -329,6 +326,7 @@ function resolvePageTargets(projectPath, pageId) {
       dataSources,
       appStateDefaults,
       pageStateDefaults: isObject(page.pageState) ? page.pageState : {},
+      pageInset: page.inset,
       viewport: {
         width: viewportResult.width,
         height: viewportResult.height,
@@ -408,6 +406,7 @@ async function captureScreenshots(targets, outputPath, frame) {
         sizing: target.sizing,
         bodyLayoutType: target.bodyLayoutType || 'row',
         bodyLayout: target.bodyLayout,
+        pageInset: target.pageInset,
         projectPath: target.projectPath,
         frame,
         imageResolver: fsImageResolver,

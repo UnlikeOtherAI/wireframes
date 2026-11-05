@@ -13,6 +13,19 @@ function cellMarkup(column, value, ctx, lib) {
   if (value == null || value === '') {
     return kind === 'actions' ? '' : lib.renderSkeleton(7);
   }
+  if (kind === 'link' && lib.isObject(value)) {
+    const text = typeof value.text === 'string' || typeof value.text === 'number' ? String(value.text) : '';
+    const routeId = lib.str(value.route).trim();
+    const routes = ctx.routeTable;
+    const href = lib.isObject(routes) && Object.prototype.hasOwnProperty.call(routes, routeId) ? routes[routeId] : null;
+    // New cells accept internal prototype routes, never raw hrefs or URL schemes.
+    const safe = typeof href === 'string' && href !== '' && !/[\s\\\u0000-\u001f\u007f]/.test(href)
+      && !/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(href);
+    const body = lib.escapeHtml(text);
+    return typeof value.text === 'string' && text.trim() && routeId && safe
+      ? `<a class="wf-inline-link wf-table-link" ${lib.navigationAttrs({href, routeId}).join(' ')}>${body}</a>`
+      : `<span class="wf-inline-link">${body}</span>`;
+  }
   const text = String(value);
   if (kind === 'badge') {
     return `<span class="wf-badge wf-badge-outline"><span class="wf-badge-body">${lib.escapeHtml(text)}</span></span>`;

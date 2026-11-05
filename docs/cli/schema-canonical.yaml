@@ -202,6 +202,7 @@ node:
     - layout
     - size
     - gridItem
+    - scroll          # boolean; native overflow:auto, no resize handle
     - position        # for absolute layout children only
     - visibility
     - accessibility
@@ -327,7 +328,7 @@ primitives:
     - breadcrumb      # items, separator
     - pagination      # page, pages, variant (numbers|simple|dots)
     - stepper         # steps, current, orientation (row|stack)
-    - nav             # items, collapsed, groups
+    - nav             # items, collapsed, groups, variant: rail|sidebar (optional)
     - menu            # items
     - app_bar         # title, subtitle, leading, actions
     - action_sheet    # items, title, cancel
@@ -970,6 +971,16 @@ designSystemExtension:
     name: required non-empty display name
     defaults: optional SkinAppearance
     roles: map of canonical primitive or primitive.variant to SkinAppearance
+    logos:
+      keys: optional logo_1, logo_2, logo_3 only
+      value:
+        name: nonempty display name, maximum 80 characters
+        src: static PNG data URL, decoded maximum 256 KiB, maximum 1024 pixels per side
+  LogoImageProps:
+    kind: logo
+    slot: logo_1 or logo_2 or logo_3
+    width: positive container points, maximum 4096
+    height: positive container points, maximum 4096
   SkinAppearance:
     colors:
       text: "#RRGGBB"
@@ -985,3 +996,10 @@ designSystemExtension:
     - colors occur only in skin appearances, never ordinary wireframeStyle
     - selected named skin must exist; wireframe cannot be overwritten
     - defaults and roles cannot override state-owned error/status cues implicitly
+
+# Table columns with kind: link accept keyed or positional cells:
+# {text: Device A, route: device_a}. route names an existing internal sitemap route.
+# Scalar/unknown/unsafe link cells remain inert; pagination is illustrative.
+
+# Optional page.inset: number, 0..4096 CSS pixels; 0 is full bleed.
+# Omission keeps mode/platform defaults; not inherited from templates.

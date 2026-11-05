@@ -494,3 +494,35 @@ See schema.md for exact props and corner.style: pill.
 Named skins are project content and need manifest spec/schema version 1.2. The validator checks their explicit schema, ID grammar, reserved IDs, standard registry role keys and selected-skin existence. Unknown properties and unsupported colour expressions fail validation atomically. Ordinary projects remain 1.1.
 
 The shared appearance resolver applies defaults, page style, primitive/variant role and explicit node border/corner leaves; it paints each node independently so container roles do not leak into child controls. State-owned error/danger/status cues survive generic palettes. See [precedence and painted parts](design-system.md).
+
+## Company logo slots
+
+Company logos are optional on each named skin: `logos` maps only `logo_1`, `logo_2` and `logo_3` to `{name, src}`. Names are nonempty and at most 80 characters. Sources are static PNG data URLs, at most 256 KiB decoded and 1024 pixels per side. An image uses `props: {kind: logo, slot: logo_1, width: 160, height: 64}`. Width and height size the container in points (positive, at most 4096); the logo preserves its aspect ratio inside it. Switching skin resolves the same slot from that skin. Missing slots keep a labelled placeholder and the same box. Asset bytes belong in the skin, never in node props or model context.
+
+Navigation supports optional nav.props.variant: rail|sidebar (omitted preserves legacy output). Rail uses sidebar.collapsedWidth, keeps labels and routes, and honours size.width. Nav/app_bar roles can paint an explicitly authored background; inherited page background does not fill them.
+
+### Control selection and editable values
+The existing `selection` contract also applies to `segmented` and local
+`tab_bar` choices: unique option labels are string values stored at
+`scope` / `stateKey`. Link panel visibility using `state_equals`.
+Inputs use the existing `stateBindings.value` expression for two-way page/app
+state values; `props.value` state expressions register the same binding.
+Colour inputs publish only complete six-digit hex values. No new schema fields
+are required. See [interactive appearance fields](rendering.md#interactive-appearance-fields).
+
+
+### Table link cells
+
+A table column with `kind: link` accepts a cell `{text: "Device A", route: device_a}`.
+Use it in either keyed rows or positional arrays. The route is an existing sitemap route id;
+the renderer uses the route table and emits the normal navigation attributes. A nonempty
+string text becomes the accessible link name. Scalar cells keep their existing inert
+appearance. Unknown routes, malformed cells and unsafe route-table URLs remain inert
+text. This adds no row-click or pagination behavior; table pagination remains illustrative.
+Link cells do not accept raw HTML or href values. Relative internal paths and fragments
+are supported; schemes, protocol-relative URLs, backslashes and whitespace are rejected.
+
+Nodes may set `scroll: true` beside `size` and `layout`. This opts the whole node into native overflow scrolling with contained overscroll and non-shrinking immediate children. Use `size.height`/`maxHeight` (or width bounds) to constrain it; unbounded content grows normally. Put headings and pagination outside the scroller when they must remain visible; `sticky: top` children stick within it. Label stack/row/grid/split scrollers with `accessibility.label` for a named keyboard-focusable region. False or omitted leaves existing markup unchanged. This does not add a resize handle, virtualization or automatic viewport sizing.
+
+### Explicit page inset
+Optional `page.inset` is a finite number from 0 to 4096 CSS pixels (rendered to six decimal places). It controls only outer page padding in every mode/platform; `0` is full bleed. Omit it to preserve card/web 16px and existing line/native defaults. Template/body padding and gap remain independent; each page opts in.

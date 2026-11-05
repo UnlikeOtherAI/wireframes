@@ -1,6 +1,8 @@
 'use strict';
 
 const STYLES = new Set(['solid', 'regular', 'brands']);
+const QUERY_ALIASES = new Map([['settings', 'gear'], ['burger menu', 'bars'],
+  ['hamburger menu', 'bars'], ['speech bubble', 'comment'], ['chat bubble', 'comment']]);
 const normalize = (s) => String(s || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
   .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const contains = (text, phrase) => phrase !== '' && (' ' + text + ' ').includes(' ' + phrase + ' ');
@@ -29,7 +31,8 @@ function rank(icon, query) {
 }
 
 function searchIcons(index, query, { style, limit = 8 } = {}) {
-  const text = normalize(query);
+  const queryText = normalize(query);
+  const text = QUERY_ALIASES.get(queryText) || queryText;
   if (!text || (style && !STYLES.has(style))) return [];
   const count = Math.max(1, Math.min(20, Math.floor(Number(limit)) || 8));
   return index.filter((icon) => !style || icon.styles.includes(style))
@@ -38,18 +41,26 @@ function searchIcons(index, query, { style, limit = 8 } = {}) {
     .slice(0, count).map(({ icon }) => ({ name: icon.name, label: icon.label, styles: icon.styles }));
 }
 
-const GENERIC = new Set(['app', 'bar', 'button', 'header', 'interface', 'page', 'panel', 'text', 'tool', 'top', 'web']);
+const GENERIC = new Set(['app', 'bar', 'button', 'header', 'interface', 'page', 'panel', 'text', 'tool', 'top', 'web', 'icon', 'icons', 'menu', 'item', 'items', 'the']);
 function iconsForRequest(index, request, { limit = 8, maxChars = 1200 } = {}) {
   const text = normalize(request);
   if (!/\b(icon|icons|symbol|symbols|glyph|glyphs|burger|hamburger|search|menu)\b/.test(text)) return '';
+  let remaining = text;
+  const preferred = new Set();
+  for (const [phrase, name] of QUERY_ALIASES) if (contains(text, phrase)) {
+    preferred.add(name);
+    remaining = (' ' + remaining + ' ').replace(' ' + phrase + ' ', ' ').trim();
+  }
   const scored = index.map((icon) => {
-    let score = 0;
+    let score = preferred.has(icon.name) ? 2000 : 0;
     for (const name of [icon.name, ...icon.aliases]) {
-      if (contains(text, normalize(name))) score = Math.max(score, 1000 + normalize(name).length);
+      const key = normalize(name);
+      const literal = key.length > 1 || contains(remaining, 'letter ' + key) || contains(remaining, 'number ' + key);
+      if (literal && !GENERIC.has(key) && contains(remaining, key)) score = Math.max(score, 1000 + key.length);
     }
     for (const term of icon.terms) {
       const phrase = normalize(term);
-      if (phrase.length > 2 && !GENERIC.has(phrase) && contains(text, phrase)) {
+      if (phrase.length > 2 && !GENERIC.has(phrase) && contains(remaining, phrase)) {
         score = Math.max(score, 500 + phrase.length);
       }
     }

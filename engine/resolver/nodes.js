@@ -56,6 +56,7 @@ function buildOverlayRoots(overlays, components, source) {
     }
     list.push({
       id: overlay.id,
+      ...(typeof overlay.__source === 'string' ? { __source: overlay.__source } : {}),
       kind: 'overlay',
       type: overlay.type,
       trigger: overlay.trigger,

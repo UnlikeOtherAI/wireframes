@@ -992,4 +992,6 @@ state system (appState for cross-page, pageState for per-page).
 
 ## Presentation extensions
 
-See [icons and control decoration](rendering-presentation.md) and [named company skins](design-system.md).
+See [presentation and interactive controls](rendering-controls.md) for icons, company skins and logos, native controls, preview bindings and routed table cells.
+
+Bounded native node scrolling (`scroll: true`) is specified in [rendering-controls.md](rendering-controls.md).

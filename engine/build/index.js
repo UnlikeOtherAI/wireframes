@@ -264,6 +264,7 @@ function renderPage(documentMap, pageId, options = {}) {
     adaptTo: adaptiveLayout(page, viewportResult, options),
     appStateDefaults,
     pageStateDefaults: isObject(page.pageState) ? page.pageState : {},
+      pageInset: page.inset,
     ...documentAppearance(documentMap, page.wireframeStyle),
     rendering: resolvePageRendering(page),
     defaultGridColumns,
@@ -338,6 +339,7 @@ function buildProject(documentMap, options = {}) {
       dataSources,
       appStateDefaults,
       pageStateDefaults: isObject(page.pageState) ? page.pageState : {},
+      pageInset: page.inset,
       viewport: {
         width: viewportResult.width,
         height: viewportResult.height,
@@ -386,6 +388,7 @@ function buildProject(documentMap, options = {}) {
         defaultGridColumns: target.defaultGridColumns,
         bodyLayoutType: target.bodyLayoutType || 'row',
         bodyLayout: target.bodyLayout,
+        pageInset: target.pageInset,
         dataSources: target.dataSources,
         wireframeCssHref: './_shared/wireframe.css',
         fontAwesomeCssHref: './_shared/fa/css/all.min.css',

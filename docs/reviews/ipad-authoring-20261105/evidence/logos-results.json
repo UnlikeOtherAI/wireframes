@@ -1,0 +1,169 @@
+{
+  "source": "56e4a3385c255af25a66709f02208e4f47272608",
+  "results": [
+    {
+      "skin": "blue",
+      "width": 1280,
+      "file": "logos-blue-1280-after.png",
+      "measures": [
+        {
+          "natural": [
+            240,
+            80
+          ],
+          "fit": "contain",
+          "box": [
+            300,
+            120
+          ]
+        },
+        {
+          "natural": [
+            90,
+            160
+          ],
+          "fit": "contain",
+          "box": [
+            300,
+            120
+          ]
+        },
+        {
+          "natural": [
+            240,
+            80
+          ],
+          "fit": "contain",
+          "box": [
+            300,
+            120
+          ]
+        }
+      ],
+      "noPriorEquivalent": true
+    },
+    {
+      "skin": "purple",
+      "width": 1280,
+      "file": "logos-purple-1280-after.png",
+      "measures": [
+        {
+          "natural": [
+            240,
+            80
+          ],
+          "fit": "contain",
+          "box": [
+            300,
+            120
+          ]
+        },
+        {
+          "natural": [
+            90,
+            160
+          ],
+          "fit": "contain",
+          "box": [
+            300,
+            120
+          ]
+        },
+        {
+          "natural": [
+            240,
+            80
+          ],
+          "fit": "contain",
+          "box": [
+            300,
+            120
+          ]
+        }
+      ],
+      "noPriorEquivalent": true
+    },
+    {
+      "skin": "blue",
+      "width": 390,
+      "file": "logos-blue-390-after.png",
+      "measures": [
+        {
+          "natural": [
+            240,
+            80
+          ],
+          "fit": "contain",
+          "box": [
+            300,
+            120
+          ]
+        },
+        {
+          "natural": [
+            90,
+            160
+          ],
+          "fit": "contain",
+          "box": [
+            300,
+            120
+          ]
+        },
+        {
+          "natural": [
+            240,
+            80
+          ],
+          "fit": "contain",
+          "box": [
+            300,
+            120
+          ]
+        }
+      ],
+      "noPriorEquivalent": true
+    },
+    {
+      "skin": "purple",
+      "width": 390,
+      "file": "logos-purple-390-after.png",
+      "measures": [
+        {
+          "natural": [
+            240,
+            80
+          ],
+          "fit": "contain",
+          "box": [
+            300,
+            120
+          ]
+        },
+        {
+          "natural": [
+            90,
+            160
+          ],
+          "fit": "contain",
+          "box": [
+            300,
+            120
+          ]
+        },
+        {
+          "natural": [
+            240,
+            80
+          ],
+          "fit": "contain",
+          "box": [
+            300,
+            120
+          ]
+        }
+      ],
+      "noPriorEquivalent": true
+    }
+  ]
+}

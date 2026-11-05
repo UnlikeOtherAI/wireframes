@@ -20,6 +20,7 @@ const overlayStyles = [
     + 'padding:14px 18px;border-bottom:1px solid var(--wf-line-2);flex:0 0 auto}',
   '.wf-overlay-title{font-size:15px;font-weight:600;color:var(--wf-ink)}',
   '.wf-overlay-close{background:none;border:none;font-size:18px;line-height:1;color:var(--wf-ink-4);cursor:pointer;padding:0 2px}',
+  '@media(any-pointer:coarse){.wf-overlay-close{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px}}',
   '.wf-overlay-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;'
     + 'border-top:1px solid var(--wf-line-2);flex:0 0 auto}',
   '.wf-mode-line .wf-overlay-head,.wf-mode-line .wf-overlay-foot{border-color:var(--wf-line-strong)}',

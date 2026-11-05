@@ -210,6 +210,7 @@ function writePlatformArtifacts(platformResult, outputDir, assetUrlPrefix) {
       defaultGridColumns: page.defaultGridColumns,
       bodyLayoutType: page.bodyLayoutType || 'row',
       bodyLayout: page.bodyLayout,
+      pageInset: page.pageInset,
       projectPath: platformResult.projectPath,
       dataSources: page.dataSources,
       wireframeCssHref: './_shared/wireframe.css',
@@ -333,6 +334,7 @@ function runBuild({
         defaultGridColumns: target.defaultGridColumns,
         bodyLayoutType: target.bodyLayoutType || 'row',
         bodyLayout: target.bodyLayout,
+        pageInset: target.pageInset,
         projectPath: normalizedProjectPath,
       });
     }

@@ -853,6 +853,7 @@ And nothing more.
 wf icons search <query> [--style solid|regular|brands] [--limit 1..20] [--json]
 
 Searches the full installed Font Awesome Free catalogue by canonical name, alias, label and terms.
+Common phrases such as 'burger menu' and 'speech bubble' prefer bars and comment; explicit letter/number icons remain searchable.
 The default limit is 8; JSON is {query, icons: [{name, label, styles}]}.
 Examples: wf icons search "burger menu" returns bars; wf icons search search returns magnifying-glass.
 Unknown queries return an empty result; bad options/style/limit return a nonzero exit status.
@@ -863,3 +864,21 @@ Use the returned name in icon.name or button/input icon; choose a returned style
 Projects may store named skins in manifest.designSystem. Existing wf validate, wf build, wf serve, wf screenshots, wf pack and wf unpack use or preserve that data. Skinned manifests use spec/schema version 1.2; ordinary projects and other document types retain 1.1. The .wf container remains wf/1. No account or online service is required.
 
 Pure authoring clients use getDesignSystem and updateDesignSystem from engine/design-system; standard role assignment uses the existing node props.variant. No separate wf skin command family is shipped in this tranche. See [the API and rendering contract](design-system.md).
+
+## Company logo slots
+
+Company logos are optional on each named skin: `logos` maps only `logo_1`, `logo_2` and `logo_3` to `{name, src}`. Names are nonempty and at most 80 characters. Sources are static PNG data URLs, at most 256 KiB decoded and 1024 pixels per side. An image uses `props: {kind: logo, slot: logo_1, width: 160, height: 64}`. Width and height size the container in points (positive, at most 4096); the logo preserves its aspect ratio inside it. Switching skin resolves the same slot from that skin. Missing slots keep a labelled placeholder and the same box. Asset bytes belong in the skin, never in node props or model context.
+
+
+### Table link cells
+
+A table column with `kind: link` accepts a cell `{text: "Device A", route: device_a}`.
+Use it in either keyed rows or positional arrays. The route is an existing sitemap route id;
+the renderer uses the route table and emits the normal navigation attributes. A nonempty
+string text becomes the accessible link name. Scalar cells keep their existing inert
+appearance. Unknown routes, malformed cells and unsafe route-table URLs remain inert
+text. This adds no row-click or pagination behavior; table pagination remains illustrative.
+Link cells do not accept raw HTML or href values. Relative internal paths and fragments
+are supported; schemes, protocol-relative URLs, backslashes and whitespace are rejected.
+
+Nodes may set `scroll: true` beside `size` and `layout`. This opts the whole node into native overflow scrolling with contained overscroll and non-shrinking immediate children. Use `size.height`/`maxHeight` (or width bounds) to constrain it; unbounded content grows normally. Put headings and pagination outside the scroller when they must remain visible; `sticky: top` children stick within it. Label stack/row/grid/split scrollers with `accessibility.label` for a named keyboard-focusable region. False or omitted leaves existing markup unchanged. This does not add a resize handle, virtualization or automatic viewport sizing.

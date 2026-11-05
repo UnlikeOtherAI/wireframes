@@ -5,7 +5,7 @@ const dataPrimitives = [
     name: 'table',
     family: 'data',
     frame: 'C',
-    summary: 'Data table with typed columns, selection, sorting and loading/empty states.',
+    summary: 'Data table with typed columns, routed link cells, selection, sorting and loading/empty states.',
     props: {
       columns: { type: 'array', primary: true },
       rows: { type: 'array' },
