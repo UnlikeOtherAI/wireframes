@@ -7,7 +7,7 @@ function fixture(){return renderWireframeMarkup({
  roots:[{id:'main',kind:'container',nodes:[
   {id:'title',component:'heading',props:{text:'Navigation and touch controls'}},
   {id:'columns',component:'row',children:[nav('rail','rail'),nav('sidebar','sidebar')]},
-  {id:'disabled',component:'button',props:{label:'Disabled route',disabled:true},stateBindings:{disabled:'{{page.locked}}'},interaction:[{type:'navigation',targetRoute:'next'}]},
+  {id:'disabled',component:'button',props:{label:'Disabled route',disabled:true},stateBindings:{disabled:'{{state.locked}}'},interaction:[{type:'navigation',targetRoute:'next'}]},
   {id:'unlock',component:'button',props:{label:'Enable route'},interaction:[{type:'set_state',stateKey:'locked',scope:'page',value:false}]},
   {id:'open',component:'button',props:{label:'Open dialog'},interaction:[{type:'open_overlay',targetOverlay:'dialog'}]}
  ]},{id:'dialog',kind:'overlay',type:'modal',trigger:'open',props:{title:'Dialog actions'},dismissOn:['outside','escape'],nodes:[{id:'message',component:'paragraph',props:{text:'Dialog body'}}]}],
