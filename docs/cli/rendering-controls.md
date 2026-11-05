@@ -41,3 +41,5 @@ appearance. Unknown routes, malformed cells and unsafe route-table URLs remain i
 text. This adds no row-click or pagination behavior; table pagination remains illustrative.
 Link cells do not accept raw HTML or href values. Relative internal paths and fragments
 are supported; schemes, protocol-relative URLs, backslashes and whitespace are rejected.
+
+Selected skinned sidebar links and rail icon tiles use the authored accent when present. Without an accent, they retain the authored background and show an inset current-colour selection outline; the engine does not combine authored light text with its default light selection fill. Authored transparent or low-contrast palettes do not gain an automatic contrast guarantee.

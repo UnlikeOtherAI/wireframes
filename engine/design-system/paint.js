@@ -115,13 +115,17 @@ function paintMarkup(markup, node, appearance, options) {
       if (button || tag === 'textarea' || has(classes, ROUNDABLE)) css.push(cornerCss(current));
     }
     if (edge && colors.border) css.push(`background-color:${colors.border}`);
+    const selectionBox = navSelected && (node.props.variant === 'rail' ? classes.has('wf-ico') : classes.has('wf-nav-on'));
+    const selectionFill = colors.accent || colors.background;
+    if (selectionBox && selectionFill && !isError) {
+      css.push(`background-color:${selectionFill};color:${colors.text || '#ffffff'}`);
+      if (!colors.accent) css.push('box-shadow:inset 0 0 0 1px currentColor');
+    }
     if (colors.accent && !isError) {
       if (has(classes, ACCENT_FILL) || (classes.has('wf-check-mark') && parent?.checked)) {
         css.push(`background-color:${colors.accent};border-color:${colors.accent}`);
       }
       if (classes.has('wf-radio-mark')) css.push(`--wf-ink:${colors.accent}`);
-      const selectionBox = navSelected && (node.props.variant === 'rail' ? classes.has('wf-ico') : classes.has('wf-nav-on'));
-      if (selectionBox) css.push(`background-color:${colors.accent};color:${colors.text || '#ffffff'}`);
       if (accented) css.push(`color:${colors.accent}`);
       if (classes.has('wf-pagenum-on')) css.push('background-color:' + (colors.background || '#ffffff'));
       if (classes.has('wf-step-marker') && accented) css.push('background-color:' + colors.accent + ';color:#ffffff;border-color:' + colors.accent);
