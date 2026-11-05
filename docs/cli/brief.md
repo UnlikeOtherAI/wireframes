@@ -850,7 +850,7 @@ And nothing more.
 
 ## Icon search
 
-wf icons search <query> [--style solid|regular|brands] [--limit 1..20] [--json]
+wf icons search <query> [--style solid|regular|brands] [--limit 1..20] [--json] Common phrases such as ?burger menu? and ?speech bubble? prefer bars and comment; explicit letter/number icons remain searchable.
 
 Searches the full installed Font Awesome Free catalogue by canonical name, alias, label and terms.
 The default limit is 8; JSON is {query, icons: [{name, label, styles}]}.

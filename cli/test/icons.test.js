@@ -53,3 +53,14 @@ test('unknown icon feedback gives bounded, usable Free names', () => {
   assert.match(result[0].message, /gear \(solid\)/);
   assert.ok(result[0].message.length < 400);
 });
+
+test('specific UI phrases choose plain Free icons without article or sibling noise', () => {
+  assert.equal(search('speech bubble')[0].name, 'comment');
+  const bubble = iconsForRequest(catalogue, 'Give the Channels menu item a speech-bubble icon.');
+  assert.match(bubble, /^comment \(regular\|solid\)/);
+  assert.doesNotMatch(bubble, /comment-sms|^a \(/m);
+  const mixed = iconsForRequest(catalogue, 'Add a speech bubble and a search icon.');
+  assert.match(mixed, /comment \(/);
+  assert.match(mixed, /magnifying-glass \(/);
+  assert.match(iconsForRequest(catalogue, 'Use a letter A icon.'), /a \(solid\)/);
+});
