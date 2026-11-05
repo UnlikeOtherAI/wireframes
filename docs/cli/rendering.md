@@ -995,3 +995,5 @@ state system (appState for cross-page, pageState for per-page).
 See [icons and control decoration](rendering-presentation.md) and [named company skins](design-system.md).
 
 Company logo boxes and skin switching: [rendering-logos.md](rendering-logos.md).
+
+An app_bar with children and no title/leading/actions uses those children as its complete bar content; use real button children for working controls.

@@ -163,6 +163,9 @@ function renderMenu(node, ctx, lib) {
 
 function renderAppBar(node, ctx, lib) {
   const props = node.props || {};
+  if (Array.isArray(node.children) && node.children.length && !props.title && !props.leading && !props.actions?.length) {
+    return { tag: 'header', inner: '', useChildren: true, style: 'justify-content:space-between' };
+  }
   const leading = lib.str(props.leading)
     ? `<span class="wf-appbar-leading">${lib.icon(props.leading, { size: 'lg' })}</span>`
     : '';
