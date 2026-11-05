@@ -9,6 +9,8 @@ const { catalogueModel } = require('../../engine/catalogue/model');
 
 function fixture() {
   const map = skinProject();
+  map.manifest.specVersion = '1.2';
+  map.manifest.manifest.schemaVersion = '1.2';
   const page = map.pages.get('home').page;
   page.slots[0].content = [{
     id: 'shell', component: 'row', layout: { type: 'row', align: 'stretch', gap: 0 },
@@ -76,7 +78,11 @@ for (const width of [1280, 390]) {
       const active = page.getByRole('link', {name: 'Admin', exact: true});
       assert.equal(await active.locator('.wf-ico').evaluate((el) => getComputedStyle(el).backgroundColor), 'rgb(20, 87, 217)');
       assert.equal(await active.locator('.wf-icon-glyph').evaluate((el) => getComputedStyle(el).color), 'rgb(255, 255, 255)');
-      // White on #1457D9 is 6.38:1; captions on #0B172A exceed 17:1.
+      const luminance = (rgb) => rgb.map((v) => v / 255).map((v) => v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+        .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+      const contrast = (a, b) => (Math.max(luminance(a), luminance(b)) + 0.05) / (Math.min(luminance(a), luminance(b)) + 0.05);
+      assert.ok(contrast([255, 255, 255], [20, 87, 217]) >= 4.5);
+      assert.ok(contrast([255, 255, 255], [11, 23, 42]) >= 4.5);
       await page.getByRole('link', {name: 'Mail', exact: true}).click();
       assert.equal(await page.evaluate(() => location.hash), '#mail');
       map.pages.get('home').page.slots[0].content[0].children[0].size = {width: 96};
