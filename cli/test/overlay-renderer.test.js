@@ -49,7 +49,7 @@ test('a page overlay keeps its own chrome', () => {
 
     const html = fs.readFileSync(path.join(output, 'web', 'overlays_elements.html'), 'utf8');
     assert.match(html, /wf-overlay-title">Delete this project\?/, 'the overlay lost its title');
-    assert.match(html, /wf-overlay-close">/, 'a dismissible overlay lost its close button');
+    assert.match(html, /wf-overlay-close" aria-label="Close">/, 'a dismissible overlay lost its close button');
     assert.match(html, /wf-overlay-foot">[\s\S]*?Cancel[\s\S]*?Delete/, 'the overlay lost its footer actions');
   } finally {
     fs.rmSync(output, { recursive: true, force: true });

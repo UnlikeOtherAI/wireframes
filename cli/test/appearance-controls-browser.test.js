@@ -22,6 +22,7 @@ for(const touch of [false,true]) test('appearance controls update real previews 
   for(const [label,index] of [['Conversation',2],['First screen',1],['Bubble',0]]){
    await activate(page.locator('#preview_tabs').getByRole('button',{name:label,exact:true}));
    assert.deepEqual(await pressed('preview_tabs'),[label]);
+   assert.notEqual(await page.locator('#preview_tabs [aria-pressed=true]').evaluate(e=>getComputedStyle(e).borderBottomColor),'rgba(0, 0, 0, 0)');
    for(let i=0;i<3;i++)assert.equal(await page.locator('#panel_'+i).isVisible(),i===index);
   }
   const hex=page.getByRole('textbox',{name:'Colour hex',exact:true}),picker=page.getByLabel('Colour picker',{exact:true});

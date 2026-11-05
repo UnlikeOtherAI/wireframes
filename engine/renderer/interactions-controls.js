@@ -3,11 +3,14 @@
 // This fragment shares the existing interaction runtime's state and refresh cycle.
 function buildControlRuntimeCode() {
   return String.raw`
+function safeControlKey(key) {
+  return typeof key === 'string' && key.length > 0 && !key.split('.').some(function (part) { return !part || ['__proto__', 'constructor', 'prototype'].indexOf(part) >= 0; });
+}
 function controlBinding(node) {
   var bindings;
   try { bindings = JSON.parse(node.getAttribute('data-wf-state-bindings') || '{}'); } catch (_err) { return null; }
   var match = typeof bindings.value === 'string' && bindings.value.match(/^\{\{\s*(state|appState)\.([a-zA-Z0-9_.]+)\s*\}\}$/);
-  if (!match || match[2].split('.').some(function (key) { return !key || ['__proto__', 'constructor', 'prototype'].indexOf(key) >= 0; })) return null;
+  if (!match || !safeControlKey(match[2])) return null;
   return { scope: match[1] === 'appState' ? 'app' : 'page', key: match[2] };
 }
 function choiceButtons(node) {
@@ -21,7 +24,8 @@ function choiceValue(button) {
 function refreshChoices() {
   each('.wf-segmented,.wf-tab_bar', function (node) {
     if (!node._wfChoiceControl) return;
-    var key = node.getAttribute('data-selection-key');
+    var rawKey = node.getAttribute('data-selection-key');
+    var key = safeControlKey(rawKey) ? rawKey : null;
     var scope = node.getAttribute('data-selection-scope') || 'page';
     var value = key ? getAtPath(scope === 'app' ? WF_APP_STATE : WF_PAGE_STATE, key) : node._wfChoiceValue;
     var matched = false;
@@ -61,7 +65,8 @@ function initControls() {
     node._wfChoiceControl = true;
     var active = buttons.filter(function (button) { return button.getAttribute('aria-pressed') === 'true'; })[0];
     node._wfChoiceValue = active ? choiceValue(active) : undefined;
-    var key = node.getAttribute('data-selection-key');
+    var rawKey = node.getAttribute('data-selection-key');
+    var key = safeControlKey(rawKey) ? rawKey : null;
     var scope = node.getAttribute('data-selection-scope') || 'page';
     if (key) {
       var state = scope === 'app' ? WF_APP_STATE : WF_PAGE_STATE;
