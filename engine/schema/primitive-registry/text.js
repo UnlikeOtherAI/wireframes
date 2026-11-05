@@ -104,6 +104,7 @@ const textPrimitives = [
       alt: { type: 'string', primary: true },
       kind: { enum: ['image', 'video', 'map', 'embed', 'logo'] },
       ratio: { type: 'string' },
+      slot: { enum: ['logo_1', 'logo_2', 'logo_3'] },
       width: { type: ['number', 'string'] },
       height: { type: ['number', 'string'] },
     },

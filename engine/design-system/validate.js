@@ -1,6 +1,7 @@
 'use strict';
 
 const { PRIMITIVES } = require('../schema/primitive-registry');
+const { LOGO_SLOTS, logoForSkin } = require('./logos');
 const { validateDocumentAgainstSchema } = require('../schema/validator');
 const ID = /^[a-z][a-z0-9_]*$/;
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
@@ -37,6 +38,14 @@ function validateDesignSystem(manifestDocument, { schema = true } = {}) {
     }
     if (!isObject(skin)) continue;
     if (typeof skin.name === 'string' && skin.name.trim() === '') add('SKIN_NAME', `${at}.name`, 'A skin needs a display name.');
+    if (skin.logos !== undefined) {
+      if (!isObject(skin.logos)) add('SKIN_LOGO', at + '.logos', 'Company logos must be a map of up to three slots.');
+      else for (const slot of Object.keys(skin.logos)) {
+        if (!LOGO_SLOTS.includes(slot)) add('SKIN_LOGO_SLOT', at + '.logos', 'Use only logo_1, logo_2 and logo_3.');
+        else if (!logoForSkin(skin, slot)) add('SKIN_LOGO', at + '.logos.' + slot,
+          'A logo needs a nonempty name up to 80 characters and a static PNG up to 256 KiB and 1024 pixels per side.');
+      }
+    }
     for (const role of Object.keys(isObject(skin.roles) ? skin.roles : {})) {
       if (!roles.has(role)) add('SKIN_ROLE', `${at}.roles[${JSON.stringify(role)}]`, `Unknown standard appearance role "${role}".`);
     }

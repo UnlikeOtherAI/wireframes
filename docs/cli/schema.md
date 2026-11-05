@@ -660,3 +660,7 @@ Buttons accept props.route as a route-ID shorthand when there are no explicit in
 An optional manifest.designSystem stores activeSkin and a skins map. Each named skin has name, optional defaults and roles; appearance values contain optional colors, border and corner. Colours are restricted to #RRGGBB (transparent is also allowed for background). They are not fields of ordinary wireframeStyle objects. Standard role keys derive from the primitive registry and existing variant enums; there is no custom role or new node field.
 
 Saving named skins requires manifest specVersion: "1.2" and manifest.schemaVersion: "1.2". Other document types and new ordinary projects remain 1.1. The .wf container stays wf/1. The reserved skin wireframe selects the legacy appearance. See [the complete contract](design-system.md).
+
+## Company logo slots
+
+Company logos are optional on each named skin: `logos` maps only `logo_1`, `logo_2` and `logo_3` to `{name, src}`. Names are nonempty and at most 80 characters. Sources are static PNG data URLs, at most 256 KiB decoded and 1024 pixels per side. An image uses `props: {kind: logo, slot: logo_1, width: 160, height: 64}`. Width and height size the container in points (positive, at most 4096); the logo preserves its aspect ratio inside it. Switching skin resolves the same slot from that skin. Missing slots keep a labelled placeholder and the same box. Asset bytes belong in the skin, never in node props or model context.

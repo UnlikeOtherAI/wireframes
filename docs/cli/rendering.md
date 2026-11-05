@@ -993,3 +993,5 @@ state system (appState for cross-page, pageState for per-page).
 ## Presentation extensions
 
 See [icons and control decoration](rendering-presentation.md) and [named company skins](design-system.md).
+
+Company logo boxes and skin switching: [rendering-logos.md](rendering-logos.md).

@@ -1,5 +1,7 @@
 'use strict';
 
+const { renderLogo } = require('./logo');
+
 // Returns inner HTML for a node, or { tag, inner, className, style, noChildren }.
 
 function renderHeading(node, ctx, lib) {
@@ -112,6 +114,10 @@ const MEDIA_GLYPH = {
 };
 
 function renderImage(node, ctx, lib) {
+  if (node.props?.kind === 'logo' && node.props?.slot) {
+    const logo = renderLogo(node, ctx, lib);
+    if (logo) return logo;
+  }
   const src = lib.str(node.props?.src);
   const kind = lib.str(node.props?.kind) || 'image';
   const ratio = lib.str(node.props?.ratio);

@@ -1,6 +1,7 @@
 'use strict';
 
 const { toPx } = require('./layout');
+const { standardRole } = require('../design-system/resolve');
 const { readLocalImage } = require('./wireframe-styles');
 const {
   isObject,
@@ -128,6 +129,9 @@ function buildNodeClasses(node, primitive, level = null, paneSide = null, isSurf
 function sourceAttrs(node, options) {
   if (options?.annotateSource !== true || !isObject(node)) return '';
   const entries = [];
+  const role = standardRole(node);
+  if (role.component) entries.push('data-wf-component="' + escapeAttr(role.component) + '"');
+  if (role.variant) entries.push('data-wf-variant="' + escapeAttr(role.variant) + '"');
   if (typeof node.__source === 'string') entries.push(`data-wf-source="${escapeAttr(node.__source)}"`);
   if (typeof node.__definition === 'string') entries.push(`data-wf-definition="${escapeAttr(node.__definition)}"`);
   if (Number.isInteger(options.rowIndex)) entries.push(`data-wf-row="${options.rowIndex}"`);

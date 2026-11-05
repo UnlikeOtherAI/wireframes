@@ -970,6 +970,16 @@ designSystemExtension:
     name: required non-empty display name
     defaults: optional SkinAppearance
     roles: map of canonical primitive or primitive.variant to SkinAppearance
+    logos:
+      keys: optional logo_1, logo_2, logo_3 only
+      value:
+        name: nonempty display name, maximum 80 characters
+        src: static PNG data URL, decoded maximum 256 KiB, maximum 1024 pixels per side
+  LogoImageProps:
+    kind: logo
+    slot: logo_1 or logo_2 or logo_3
+    width: positive container points, maximum 4096
+    height: positive container points, maximum 4096
   SkinAppearance:
     colors:
       text: "#RRGGBB"

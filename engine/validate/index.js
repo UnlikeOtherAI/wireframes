@@ -2,6 +2,7 @@
 
 const { validateDocument, SchemaLoadError } = require('../schema');
 const { validatePresentation } = require('./presentation');
+const { validateLogoReferences } = require('../design-system/logo-references');
 const { validateIconReferences } = require('../icons/validate');
 const { SUPPORTED_SPEC_VERSION } = require('../schema/constants');
 
@@ -95,6 +96,7 @@ function validateProject(documentMap, options = {}) {
     }
   }
 
+  errors.push(...validateLogoReferences(documentMap));
   const presentation = validatePresentation(documentMap);
   errors.push(...presentation.errors);
   warnings.push(...presentation.warnings);
