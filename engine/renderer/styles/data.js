@@ -2,6 +2,7 @@
 
 const dataStyles = [
   // --- Table ---
+  '@media(pointer:coarse){.wf-table-link{display:inline-flex;align-items:center;min-width:44px;min-height:44px}}',
   '.wf-table{padding:0;overflow:hidden;min-width:0}',
   '.wf-table-caption{padding:12px 14px 0;font-size:13px;font-weight:600;color:var(--wf-ink)}',
   '.wf-table-grid{display:grid;align-items:center;min-width:0}',

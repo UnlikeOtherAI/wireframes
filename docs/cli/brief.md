@@ -868,3 +868,15 @@ Pure authoring clients use getDesignSystem and updateDesignSystem from engine/de
 ## Company logo slots
 
 Company logos are optional on each named skin: `logos` maps only `logo_1`, `logo_2` and `logo_3` to `{name, src}`. Names are nonempty and at most 80 characters. Sources are static PNG data URLs, at most 256 KiB decoded and 1024 pixels per side. An image uses `props: {kind: logo, slot: logo_1, width: 160, height: 64}`. Width and height size the container in points (positive, at most 4096); the logo preserves its aspect ratio inside it. Switching skin resolves the same slot from that skin. Missing slots keep a labelled placeholder and the same box. Asset bytes belong in the skin, never in node props or model context.
+
+
+### Table link cells
+
+A table column with `kind: link` accepts a cell `{text: "Device A", route: device_a}`.
+Use it in either keyed rows or positional arrays. The route is an existing sitemap route id;
+the renderer uses the route table and emits the normal navigation attributes. A nonempty
+string text becomes the accessible link name. Scalar cells keep their existing inert
+appearance. Unknown routes, malformed cells and unsafe route-table URLs remain inert
+text. This adds no row-click or pagination behavior; table pagination remains illustrative.
+Link cells do not accept raw HTML or href values. Relative internal paths and fragments
+are supported; schemes, protocol-relative URLs, backslashes and whitespace are rejected.

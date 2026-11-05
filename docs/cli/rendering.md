@@ -1021,3 +1021,15 @@ The equivalent explicit `stateBindings.value` is supported. Exact
 other expressions remain read-only. This is ephemeral prototype state, never
 an edit to the source design. Native picker dialog appearance depends on the
 browser and operating system.
+
+
+### Table link cells
+
+A table column with `kind: link` accepts a cell `{text: "Device A", route: device_a}`.
+Use it in either keyed rows or positional arrays. The route is an existing sitemap route id;
+the renderer uses the route table and emits the normal navigation attributes. A nonempty
+string text becomes the accessible link name. Scalar cells keep their existing inert
+appearance. Unknown routes, malformed cells and unsafe route-table URLs remain inert
+text. This adds no row-click or pagination behavior; table pagination remains illustrative.
+Link cells do not accept raw HTML or href values. Relative internal paths and fragments
+are supported; schemes, protocol-relative URLs, backslashes and whitespace are rejected.

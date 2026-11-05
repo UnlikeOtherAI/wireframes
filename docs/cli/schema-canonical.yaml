@@ -995,3 +995,7 @@ designSystemExtension:
     - colors occur only in skin appearances, never ordinary wireframeStyle
     - selected named skin must exist; wireframe cannot be overwritten
     - defaults and roles cannot override state-owned error/status cues implicitly
+
+# Table columns with kind: link accept keyed or positional cells:
+# {text: Device A, route: device_a}. route names an existing internal sitemap route.
+# Scalar/unknown/unsafe link cells remain inert; pagination is illustrative.

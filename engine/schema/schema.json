@@ -3851,7 +3851,7 @@
     },
     "PrimitiveProps_table": {
       "type": "object",
-      "description": "Data table with typed columns, selection, sorting and loading/empty states.",
+      "description": "Data table with typed columns, routed link cells, selection, sorting and loading/empty states.",
       "properties": {
         "columns": {
           "type": "array"
