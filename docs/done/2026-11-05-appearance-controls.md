@@ -52,3 +52,7 @@ At source 1277e6d, full pnpm test passed 264/264 on Maxis. Five durable appearan
 Matched 1280×900 initial and edited-state screenshots use actual base cdf7819 and final source in the owned evidence directory, for desktop and touch. Inspected renders show selected Large in both linked controls, Conversation content visible, changed hex swatch and launcher label. No private reference or project data is committed.
 The first full run's sole failure was the old close-button markup assertion; it now verifies the accessible Close name. Screenshot review caught and fixed active-tab underline specificity. No golden thresholds were changed; the existing gallery checks pass. Catalogue and generated primitive schema were regenerated; agent-guide generation produces no difference.
 Native colour-picker OS chrome was not driven: Chromium checks exercise the real colour input and its input/change events. iPad/WebKit and native replay remain the integrating owner's checks.
+
+## Authored input defaults
+A writable input binding now initializes a missing page/app state key from its authored value. Explicit page defaults and restored app values take precedence. A literal input value plus stateBindings.value can therefore retain its initial text while updating a preview label; no separate page-default edit is required.
+At64eee7a, the real Chromium check verified initial launcher text, live typing, explicit page/colour overrides and restored app text. Full Maxis suite passed267/267. Native replay remains unclaimed for this addition.
