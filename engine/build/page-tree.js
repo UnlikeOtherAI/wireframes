@@ -1,7 +1,7 @@
 'use strict';
 
 const { resolveTemplatePage } = require('../resolver');
-const { buildOverlayRoots } = require('../renderer/interactions-overlays');
+const { buildOverlayRoots } = require('../resolver/nodes');
 const isObject = (value) => value != null && typeof value === 'object' && !Array.isArray(value);
 
 function resolvePageTree(documentMap, pageId) {

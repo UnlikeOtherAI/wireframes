@@ -5,7 +5,6 @@ const { validateDesignSystem } = require('../design-system/validate');
 
 const { normalizePlatform: resolveChromePlatform } = require('../renderer/platform');
 const { resolvePageTree } = require('./page-tree');
-const { buildOverlayRoots } = require('../resolver/nodes');
 const { stampDocumentSources } = require('./source-stamps');
 const {
   renderWireframeMarkup,
