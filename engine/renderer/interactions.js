@@ -1,5 +1,6 @@
 'use strict';
 
+const { buildControlRuntimeCode } = require('./interactions-controls');
 const { buildPaneRuntimeCode } = require('./interactions-panes');
 const { buildOverlayRuntimeCode } = require('./interactions-overlays');
 
@@ -231,43 +232,7 @@ function showToast(message) {
   document.body.appendChild(t);
   setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
 }
-function refresh() {
-  each('[data-bind]', function (node) {
-    var expr = node.getAttribute('data-bind');
-    if (expr) node.textContent = String(resolveExpr('{{' + expr + '}}', null, WF_PAGE_STATE) || '');
-  });
-  each('[data-wf-state-bindings]', function (node) {
-    var bindings;
-    try { bindings = JSON.parse(node.getAttribute('data-wf-state-bindings') || '{}'); } catch (_err) { return; }
-    if (!isObj(bindings)) return;
-    var names = Object.keys(bindings);
-    for (var i = 0; i < names.length; i++) {
-      var name = names[i];
-      var value = resolveExpr(bindings[name], null, WF_PAGE_STATE);
-      if (name === 'text' || name === 'label') node.textContent = value == null ? '' : String(value);
-      else if (name === 'placeholder') {
-        var target = node.querySelector('input,textarea,select');
-        if (target) target.setAttribute('placeholder', value == null ? '' : String(value));
-      } else if (name === 'checked' || name === 'disabled') {
-        var input = node.querySelector(name === 'disabled' ? 'button,input,select,textarea' : 'input') || node;
-        var bool = !!(value === true || value === 'true');
-        if (bool) input.setAttribute(name, '');
-        else input.removeAttribute(name);
-        input[name] = bool;
-        if (name === 'disabled' && node.classList.contains('wf-button')) node.classList.toggle('wf-button-disabled', bool);
-      } else if (name === 'visibility') {
-        node.style.display = value ? '' : 'none';
-      } else if (name.slice(0, 6) === 'style.') {
-        node.style[name.slice(6)] = value == null ? '' : String(value);
-      } else {
-        try { node[name] = value; } catch (_err) {}
-      }
-    }
-  });
-  refreshVisibility();
-  refreshSelection();
-  refreshPanes();
-}
+` + buildControlRuntimeCode() + `
 function refreshVisibility() {
   each('[data-wf-visibility]', function (node) {
     var raw = node.getAttribute('data-wf-visibility') || '{}';
@@ -296,9 +261,10 @@ function formValues(formId) {
   var fields = root.querySelectorAll('input,textarea,select');
   for (var i = 0; i < fields.length; i++) {
     var field = fields[i];
+    if (field.hasAttribute('data-wf-color-picker')) continue;
     var cursor = field;
-    var key = null;
-    while (cursor && cursor !== root) {
+    var key = field.getAttribute('data-wf-form-key');
+    while (!key && cursor && cursor !== root) {
       if (cursor.getAttribute && cursor.getAttribute('id')) { key = cursor.getAttribute('id'); break; }
       cursor = cursor.parentNode;
     }
@@ -435,6 +401,7 @@ function bindGestures(node, gestureInteractions) {
 }
 function refreshSelection() {
   each('.wf-selectable[data-selection-key]', function (node) {
+    if (node._wfChoiceControl) return;
     var scope = node.getAttribute('data-selection-scope') || 'page';
     var key = node.getAttribute('data-selection-key') || '';
     var exprScope = (scope === 'app' || scope === 'appState') ? 'appState' : 'state';
@@ -446,6 +413,7 @@ function refreshSelection() {
 }
 function bindSelection() {
   each('.wf-selectable[data-selection-key]', function (node) {
+    if (node._wfChoiceControl) return;
     if (node._wfSelectionBound) return;
     node._wfSelectionBound = true;
     node.addEventListener('click', function () {
@@ -477,6 +445,7 @@ function bindRouteLinks() {
 }
 function init() {
   initState();
+  initControls();
   initPanes();
   refresh();
   bindSelection();

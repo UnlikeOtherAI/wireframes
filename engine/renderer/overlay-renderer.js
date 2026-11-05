@@ -177,7 +177,7 @@ function renderOverlay(node, options, childStyle, ctx) {
   const title = typeof props.title === 'string' && props.title.trim() !== '' ? props.title.trim() : '';
   const header = title
     ? `<header class="wf-overlay-head"><div class="wf-overlay-title">${ctx.escapeHtml(title)}</div>${
-      node.dismissOn ? '<button class="wf-overlay-close">×</button>' : ''
+      node.dismissOn ? '<button type="button" class="wf-overlay-close" aria-label="Close">×</button>' : ''
     }</header>`
     : '';
   const actions = Array.isArray(props.actions) && props.actions.length > 0

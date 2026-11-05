@@ -7,6 +7,8 @@ const navigationStyles = [
   '.wf-mode-line .wf-tab_bar[data-wf-frame="edge"]{border-bottom-color:var(--wf-line-strong)}',
   '.wf-tab{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;font-size:13px;font-weight:500;'
     + 'color:var(--wf-ink-3);white-space:nowrap;text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px}',
+  'button.wf-tab{font-family:inherit;background:transparent;border:0;border-bottom:2px solid transparent;cursor:pointer}',
+  '@media(pointer:coarse){button.wf-tab{min-height:44px;min-width:44px}}',
   '.wf-tab-on{color:var(--wf-ink);border-bottom-color:var(--wf-ink)}',
   '.wf-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;'
     + 'font-size:10px;border-radius:9px;background:var(--wf-line-2);color:var(--wf-ink-2)}',

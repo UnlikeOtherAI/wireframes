@@ -31,7 +31,8 @@ function renderTabBar(node, ctx, lib) {
     const body = `${glyph}${label ? lib.escapeHtml(label) : lib.renderSkeleton(6)}`;
     const active = tab.active === true ? ' wf-tab-on' : '';
     const badge = tab.badge != null ? `<span class="wf-tab-badge">${lib.escapeHtml(String(tab.badge))}</span>` : '';
-    return linkOrSpan(tab.route, `wf-tab${active}`, `${body}${badge}`, ctx, lib);
+    if (lib.str(tab.route)) return linkOrSpan(tab.route, `wf-tab${active}`, `${body}${badge}`, ctx, lib);
+    return `<button type="button" class="wf-tab${active}" data-wf-choice-value="${lib.escapeAttr(JSON.stringify(label))}" aria-pressed="${!!active}"${!label || node.selection?.selectable === false ? ' disabled' : ''}${!label ? ' aria-label="Empty tab"' : ''}>${body}${badge}</button>`;
   }).join('');
   return { inner: markup, className: `wf-tabs-${lib.toSafeClass(variant)}` };
 }

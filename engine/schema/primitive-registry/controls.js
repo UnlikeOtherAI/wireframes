@@ -28,7 +28,7 @@ const controlPrimitives = [
     name: 'segmented',
     family: 'controls',
     frame: 'N',
-    summary: 'Segmented control / attached button group.',
+    summary: 'Segmented control; unique option labels are selection values.',
     props: {
       options: { type: 'array', primary: true },
       value: { type: 'string' },

@@ -48,7 +48,7 @@ function renderSegmented(node, ctx, lib) {
     const label = lib.str(option.label);
     const active = label !== '' && label === value ? ' wf-segment-on' : '';
     const glyph = lib.iconSpan(option.icon);
-    return `<button class="wf-segment${active}">${glyph}${label ? lib.escapeHtml(label) : lib.renderSkeleton(5)}</button>`;
+    return `<button type="button" class="wf-segment${active}" data-wf-choice-value="${lib.escapeAttr(JSON.stringify(label))}" aria-pressed="${!!active}"${!label || node.selection?.selectable === false ? ' disabled' : ''}${!label ? ' aria-label="Empty option"' : ''}>${glyph}${label ? lib.escapeHtml(label) : lib.renderSkeleton(5)}</button>`;
   }).join('');
   return { inner: buttons, className: `wf-segmented-${lib.toSafeClass(size)}` };
 }
@@ -80,8 +80,9 @@ function renderInput(node, ctx, lib) {
   const placeholder = lib.resolveAttributeValue(
     lib.str(props.placeholder), ctx.bindingContext || {}, ctx.stateBindings, 'placeholder',
   );
+  const value = lib.resolveAttributeValue(props.value == null ? '' : String(props.value), ctx.bindingContext || {}, ctx.stateBindings, 'value');
   const inputId = String(node.id) + '__input';
-  const label = fieldLabel(props, ctx, lib, ['stepper', 'otp', 'range', 'color'].includes(type) ? null : inputId);
+  const label = fieldLabel(props, ctx, lib, ['stepper', 'otp', 'range'].includes(type) ? null : inputId);
   const help = fieldHelp(props, ctx, lib);
   const invalid = lib.str(props.error) ? ' wf-field-invalid' : '';
   const disabled = props.disabled === true ? ' disabled' : '';
@@ -102,8 +103,10 @@ function renderInput(node, ctx, lib) {
     };
   }
   if (type === 'color') {
+    const valid = /^#[0-9a-f]{6}$/i.test(value);
+    const name = lib.str(props.label) || 'Colour';
     return {
-      inner: `${label}<span class="wf-color"><span class="wf-color-swatch"></span><input type="text" placeholder="${lib.escapeAttr(placeholder || '#6b7280')}"${disabled} /></span>${help}`,
+      inner: `${label}<span class="wf-color"><input type="color" data-wf-color-picker aria-label="${lib.escapeAttr(name + ' picker')}" value="${valid ? value : '#000000'}"${disabled} /><input type="text" id="${lib.escapeAttr(inputId)}" data-wf-color-hex data-wf-form-key="${lib.escapeAttr(String(node.id))}" aria-label="${lib.escapeAttr(name + ' hex')}" aria-invalid="${!valid}" value="${lib.escapeAttr(value)}" placeholder="${lib.escapeAttr(placeholder || '#6b7280')}" spellcheck="false"${disabled} /></span>${help}`,
       className: `wf-field${invalid}`,
     };
   }
@@ -119,7 +122,7 @@ function renderInput(node, ctx, lib) {
     ? `<span class="wf-affix wf-affix-${position}" aria-hidden="true">${glyph}${centered ? `<span class="wf-input-placeholder">${lib.escapeHtml(placeholder)}</span>` : ''}</span>`
     : '';
   const control = `<span class="wf-control${centered ? ' wf-control-center' : ''}">${prefix}${position === 'start' ? decoration : ''}<input id="${lib.escapeAttr(inputId)}" type="${htmlType}" placeholder="${lib.escapeAttr(centered && !placeholder ? ' ' : placeholder)}"${!props.label ? ` aria-label="${lib.escapeAttr(placeholder || 'Text field')}"` : ''}${
-    props.value != null ? ` value="${lib.escapeAttr(String(props.value))}"` : ''
+    props.value != null ? ` value="${lib.escapeAttr(value)}"` : ''
   }${disabled} />${position !== 'start' ? decoration : ''}${suffix}</span>`;
   return { inner: `${label}${control}${help}`, className: `wf-field${invalid}${props.variant === 'plain' ? ' wf-input-plain' : ''}` };
 }
