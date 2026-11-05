@@ -169,7 +169,7 @@ test('module expansion checks preserve inherited global lookups under local shad
   files['components.yaml'] = JSON.stringify(root);
   files['components/unused.yaml'] = components('unused', {
     global7: text('Module-local leaf'),
-    footer: { root: { id: 'footer', component: 'section', children: Array.from({ length: 24 }, (_, i) =>
+    footer: { root: { id: 'footer', component: 'section', children: Array.from({ length: 64 }, (_, i) =>
       ({ id: `wrapper${i}`, use: 'global_wrapper' })) } },
   });
   const module = parseProject(files).documentMap.componentRegistriesByFile.get('components/unused.yaml');

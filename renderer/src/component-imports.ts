@@ -99,10 +99,16 @@ export function resolveVirtualComponentImports(documents: Map<string, Document>)
   const componentRegistriesByFile = new Map<string, ComponentModuleRegistry>();
   let namespace = 'nessie_preview';
   const sharedIds = Object.keys(shared.components);
+  let registryEntries = 0;
+  const copyShared = (registry: Registry) => {
+    registryEntries += sharedIds.length;
+    if (registryEntries > 200_000) throw new Error('Component registries are too large');
+    merge(registry, { ok: true, registry: shared });
+  };
   while (sharedIds.some(id => id === namespace || id.startsWith(`${namespace}.`))) namespace += '_preview';
   for (const [path, document] of modules) {
     const registry = resolver.createEmptyRegistry();
-    merge(registry, { ok: true, registry: shared });
+    copyShared(registry);
     merge(registry, resolver.loadComponentsDocumentRegistry(path, namespace));
     const componentIds = Object.keys(object(document.components) ? document.components : {})
       .map(id => `${namespace}.${id}`);
@@ -115,8 +121,7 @@ export function resolveVirtualComponentImports(documents: Map<string, Document>)
   for (const [path, document] of documents) {
     if (document.documentType !== 'page' || typeof document.id !== 'string') continue;
     const registry = resolver.createEmptyRegistry();
-    const copied = resolver.mergeComponentRegistry(registry, shared);
-    if (!copied.ok) throw new Error(copied.error);
+    copyShared(registry);
     merge(registry, resolver.loadImportedComponentRegistry(path, document));
     componentRegistriesByPage.set(document.id.trim(), registry.components);
   }
