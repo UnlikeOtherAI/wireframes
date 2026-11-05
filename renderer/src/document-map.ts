@@ -1,10 +1,13 @@
 import { parseYaml } from './parser.js';
+import { resolveVirtualComponentImports, type ComponentModuleRegistry } from './component-imports.js';
 
 export interface DocumentMap {
   manifest: Record<string, unknown> | null;
   sitemap: Record<string, unknown> | null;
   templates: Record<string, unknown> | null;
   components: Record<string, unknown> | null;
+  componentRegistriesByPage?: Map<string, Record<string, unknown>>;
+  componentRegistriesByFile?: Map<string, ComponentModuleRegistry>;
   pages: Map<string, Record<string, unknown>>;
   datasets: Map<string, Record<string, unknown>>;
 }
@@ -25,6 +28,7 @@ export function buildDocumentMap(
     datasets: new Map(),
   };
 
+  const documents = new Map<string, Record<string, unknown>>();
   const entries = Object.entries(yamlFiles);
   entries.sort(([a], [b]) => a.localeCompare(b));
 
@@ -34,6 +38,7 @@ export function buildDocumentMap(
       continue;
     }
 
+    documents.set(fileName, parsed);
     const documentType =
       typeof parsed.documentType === 'string'
         ? parsed.documentType.trim()
@@ -51,7 +56,7 @@ export function buildDocumentMap(
         documentMap.templates = parsed;
         break;
       case 'components':
-        documentMap.components = parsed;
+        // Component modules enter the registry only through explicit imports.
         break;
       case 'page':
         if (id) {
@@ -66,5 +71,6 @@ export function buildDocumentMap(
     }
   }
 
+  Object.assign(documentMap, resolveVirtualComponentImports(documents));
   return documentMap;
 }
