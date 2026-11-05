@@ -254,6 +254,7 @@ function refresh() {
         if (bool) input.setAttribute(name, '');
         else input.removeAttribute(name);
         input[name] = bool;
+        if (name === 'disabled' && node.classList.contains('wf-button')) node.classList.toggle('wf-button-disabled', bool);
       } else if (name === 'visibility') {
         node.style.display = value ? '' : 'none';
       } else if (name.slice(0, 6) === 'style.') {
