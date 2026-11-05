@@ -24,13 +24,12 @@ test('custom app bar has a leading 44-point menu button that opens a left drawer
     id: 'left_menu', type: 'drawer_left', trigger: 'burger', dismissOn: ['outside', 'escape'],
     content: [{ id: 'drawer_links', component: 'nav', props: { items: [{ title: 'Settings', route: 'home' }] } }],
   }];
-  const result = renderPage(map, 'home', { deviceChrome: false, viewportOverride: { device: 'tablet', platform: 'ios', width: 1024, height: 768 } });
+  const result = renderPage(map, 'home', { routeTable: { home: '#home' }, deviceChrome: false, viewportOverride: { device: 'tablet', platform: 'ios', width: 1024, height: 768 } });
   assert.equal(result.ok, true);
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'wireframe-admin-chrome-'));
   const html = result.html.replace(/<link[^>]*fa\/css\/all.min.css[^>]*>/,
     '<link rel="stylesheet" href="' + pathToFileURL(require.resolve('@fortawesome/fontawesome-free/css/all.min.css', { paths: [path.resolve(__dirname, '../../engine')] })).href + '">');
-  const runtime = require('../../engine/renderer/interactions').buildInteractionRuntime({ routeTable: { home: '#home' } });
-  fs.writeFileSync(path.join(temp, 'index.html'), html.replace('</body>', '<script>' + runtime + '</script></body>'));
+  fs.writeFileSync(path.join(temp, 'index.html'), html);
   const browser = await chromium.launch({ headless: true });
   try {
     const page = await browser.newPage({ viewport: { width: 1024, height: 768 } });
