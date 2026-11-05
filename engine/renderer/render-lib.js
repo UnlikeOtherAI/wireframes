@@ -77,7 +77,11 @@ function items(value, key = 'label') {
     .map((entry) => {
       if (entry == null) return null;
       if (typeof entry === 'string' || typeof entry === 'number') return { [key]: String(entry) };
-      return isObject(entry) ? entry : null;
+      if (!isObject(entry)) return null;
+      // List rows call their heading title; nav/menu rows call it label.
+      // Preserve explicit labels (including blank ones), and all other fields.
+      return key === 'label' && entry.label === undefined && typeof entry.title === 'string'
+        ? { ...entry, label: entry.title } : entry;
     })
     .filter(Boolean);
 }

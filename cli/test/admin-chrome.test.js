@@ -28,8 +28,9 @@ test('custom app bar has a leading 44-point menu button that opens a left drawer
   assert.equal(result.ok, true);
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'wireframe-admin-chrome-'));
   const html = result.html.replace(/<link[^>]*fa\/css\/all.min.css[^>]*>/,
-    '<link rel="stylesheet" href="' + pathToFileURL(require.resolve('@fortawesome/fontawesome-free/css/all.min.css')).href + '">');
-  fs.writeFileSync(path.join(temp, 'index.html'), html);
+    '<link rel="stylesheet" href="' + pathToFileURL(require.resolve('@fortawesome/fontawesome-free/css/all.min.css', { paths: [path.resolve(__dirname, '../../engine')] })).href + '">');
+  const runtime = require('../../engine/renderer/interactions').buildInteractionRuntime({ routeTable: { home: '#home' } });
+  fs.writeFileSync(path.join(temp, 'index.html'), html.replace('</body>', '<script>' + runtime + '</script></body>'));
   const browser = await chromium.launch({ headless: true });
   try {
     const page = await browser.newPage({ viewport: { width: 1024, height: 768 } });
