@@ -137,3 +137,22 @@ test('unused module registries are available for bounded previews without pollut
     children: [0, 1].map(n => ({ id: `use${n}`, use: i ? `level${i - 1}` : 'leaf' })) } };
   assert.throws(() => assertComponentExpansion(Object.values(definitions), definitions), /too large/);
 });
+
+test('module preview guards retain global and template context with module-local shadowing', async () => {
+  const { assertComponentExpansion } = await import('../bundle/wireframe-renderer.min.js');
+  const files = source();
+  const root = JSON.parse(files['components.yaml']);
+  root.components.global_label = text('Global label');
+  files['components.yaml'] = JSON.stringify(root);
+  files['components/footer.yaml'] = components('footer', { footer: { root: { id: 'footer', use: 'global_label' } } });
+  const { documentMap } = parseProject(files);
+  const definitions = documentMap.componentRegistriesByFile.get('components/footer.yaml');
+  assert.ok(assertComponentExpansion([definitions.footer], definitions) > 0);
+  assert.match(renderProject(files).pages.get('home'), /Global label/);
+  files['components/footer.yaml'] = components('footer', {
+    footer: { root: { id: 'footer', use: 'global_label' } }, global_label: text('Module label'),
+  });
+  const local = parseProject(files).documentMap.componentRegistriesByFile.get('components/footer.yaml');
+  assert.equal(local.global_label.root.props.text, 'Module label');
+  assert.match(renderProject(files).pages.get('home'), /Module label/);
+});

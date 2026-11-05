@@ -91,20 +91,22 @@ export function resolveVirtualComponentImports(documents: Map<string, Document>)
     ?? (rootCandidates.length === 1 ? rootCandidates[0] : modules.length === 1 ? modules[0] : undefined);
   const root = rootEntry?.[1];
   if (rootEntry) merge(project, resolver.loadComponentsDocumentRegistry(rootEntry[0], ''));
+  const templates = [...documents].find(([, doc]) => doc.documentType === 'templates');
+  const shared = resolver.createEmptyRegistry();
+  merge(shared, { ok: true, registry: project });
+  if (templates) merge(shared, resolver.loadImportedComponentRegistry(...templates));
   const componentRegistriesByFile = new Map<string, Definitions>();
   for (const [path] of modules) {
     const registry = resolver.createEmptyRegistry();
     merge(registry, resolver.loadComponentsDocumentRegistry(path, ''));
-    componentRegistriesByFile.set(path, registry.components);
+    componentRegistriesByFile.set(path, Object.assign(Object.create(null), shared.components, registry.components));
   }
-  const templates = [...documents].find(([, doc]) => doc.documentType === 'templates');
   const componentRegistriesByPage = new Map<string, Definitions>();
   for (const [path, document] of documents) {
     if (document.documentType !== 'page' || typeof document.id !== 'string') continue;
     const registry = resolver.createEmptyRegistry();
-    const copied = resolver.mergeComponentRegistry(registry, project);
+    const copied = resolver.mergeComponentRegistry(registry, shared);
     if (!copied.ok) throw new Error(copied.error);
-    if (templates) merge(registry, resolver.loadImportedComponentRegistry(...templates));
     merge(registry, resolver.loadImportedComponentRegistry(path, document));
     componentRegistriesByPage.set(document.id.trim(), registry.components);
   }
