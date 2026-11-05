@@ -51,7 +51,7 @@ for(const[palette,colors]of Object.entries({
      const link=page.locator('#'+variant).getByRole('link',{name:'Settings',exact:true});
      if(width===390)await link.tap();else await link.click();
      assert.equal(await page.evaluate(()=>location.hash),'#settings');
-     await page.evaluate(()=>history.replaceState(null,'',location.pathname));
+     await page.evaluate(()=>location.hash='#home');
     }
     await page.close();
    }
