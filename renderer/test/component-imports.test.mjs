@@ -98,3 +98,20 @@ test('virtual import expansion has a finite budget even without a cycle', () => 
     index === 13 ? {} : { left: `./${index + 1}.yaml`, right: `./${index + 1}.yaml` });
   assert.throws(() => parseProject(files), /expansion is too large/);
 });
+
+test('recursive YAML aliases are refused before component cloning', () => {
+  const files = source();
+  files['components/copy.yaml'] = 'documentType: components\nid: copy\ncomponents:\n  caption:\n    root: &loop {id: recursive, component: section, children: [*loop]}\n';
+  assert.throws(() => parseProject(files), /recursive YAML aliases/);
+});
+
+test('source annotations survive imported page registries', async () => {
+  const { createRequire } = await import('node:module');
+  const { renderPage } = createRequire(import.meta.url)('../../engine/build/index.js');
+  const { documentMap } = parseProject(source());
+  const before = JSON.stringify([...documentMap.componentRegistriesByPage]);
+  const { html } = renderPage(documentMap, 'home', { annotateSource: true });
+  assert.match(html, /data-wf-definition="component:shared.footer"/);
+  assert.match(html, /data-wf-definition="component:shared.copy.caption"/);
+  assert.equal(JSON.stringify([...documentMap.componentRegistriesByPage]), before);
+});

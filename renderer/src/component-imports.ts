@@ -9,6 +9,21 @@ type Result = { ok: boolean; error?: string; registry: Registry };
 const object = (value: unknown): value is Document =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
 
+function sourceSize(value: unknown, ancestors = new Set<object>(), depth = 0): number {
+  if (depth > 64) throw new Error('Component source is too deeply nested');
+  if (!value || typeof value !== 'object') return 1;
+  if (ancestors.has(value)) throw new Error('Component source contains recursive YAML aliases');
+  ancestors.add(value);
+  let size = 1;
+  for (const [key, child] of Object.entries(value)) {
+    if (['__proto__', 'constructor', 'prototype'].includes(key)) throw new Error('Unsafe component source property');
+    size += sourceSize(child, ancestors, depth + 1);
+    if (size > 100_000) throw new Error('Component source is too large');
+  }
+  ancestors.delete(value);
+  return size;
+}
+
 /** Import paths are relative to their source document and stay inside the virtual project. */
 export function normalizeVirtualImport(source: string, imported: string): string {
   if (!imported || imported.startsWith('/') || /[\\\u0000:?#]/u.test(imported)) {
@@ -30,18 +45,27 @@ export function resolveVirtualComponentImports(documents: Map<string, Document>)
   components: Document | null;
   componentRegistriesByPage: Map<string, Definitions>;
 } {
+  const sizes = new Map<string, number>();
+  let sourceTotal = 0;
   for (const [path, document] of documents) {
+    const size = sourceSize(document);
+    sizes.set(path, size);
+    sourceTotal += size;
+    if (sourceTotal > 100_000) throw new Error('Component source is too large');
     if (document.imports !== undefined && !object(document.imports)) {
       throw new Error(`Component imports must be an alias map: ${path}`);
     }
   }
   let visits = 0;
+  let copiedSize = 0;
   const maxVisits = Math.max(128, documents.size * 16);
   const resolver = createComponentRegistryResolver({
     loadDocument: (path: string) => {
       if (++visits > maxVisits) throw new Error('Component import expansion is too large');
       const document = documents.get(path);
       if (!document) throw new Error(`Imported components file does not exist: ${path}`);
+      copiedSize += sizes.get(path) ?? 0;
+      if (copiedSize > 200_000) throw new Error('Component import expansion is too large');
       if (document.imports !== undefined && !object(document.imports)) {
         throw new Error(`Component imports must be an alias map: ${path}`);
       }
