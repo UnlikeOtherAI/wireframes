@@ -17,3 +17,5 @@ Responsive viewport arithmetic, CSS injection, automatic screenshot matching, in
 
 ## Review decisions
 Claude Sonnet reviewed the plan before implementation. Adopt finite 0..4096 bounds shared with the adapter, six-decimal CSS formatting, explicit all-mode semantics, page-scope/collision/rollback tests and actual edge/overflow measurements. Retain inline padding: inspection found only whole-padding declarations on .wf-page (card default and iOS/Android zero), no safe-area or per-side reservations to overwrite. Explicit page inset deliberately wins over those defaults. No template inheritance: every page opts in. Browser WF rendering and API use the same pure renderPage path; filesystem, serve, screenshots and why descriptors carry the same field. Existing unsupported clients require an engine update; no invented compatibility promise. No global CSS change means no unrelated catalogue regeneration.
+
+Focused checks found the custom schema validator does not implement maximum. Page document validation therefore also calls the same bounded helper; unrelated validator semantics are unchanged.

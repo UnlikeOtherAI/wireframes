@@ -2,6 +2,7 @@
 
 const { SUPPORTED_SPEC_VERSION } = require('./constants');
 const { validateDocumentAgainstSchema } = require('./validator');
+const { validPageInset } = require('../renderer/page-inset');
 const { validateDesignSystem } = require('../design-system/validate');
 
 const SUPPORTED_DOCUMENT_TYPES = new Set([
@@ -145,6 +146,9 @@ function validateDocument(document, filePath, supportedSpecVersion = SUPPORTED_S
 
   if (!skipSchemaValidation) {
     const schemaErrors = validateDocumentAgainstSchema(document, filePath);
+    if (documentType === 'page' && document.page?.inset !== undefined && !validPageInset(document.page.inset)) {
+      schemaErrors.push({ code: 'PAGE_INSET', path: '$.page.inset', message: 'Page inset must be a finite number from 0 to 4096.' });
+    }
     if (documentType === 'manifest') schemaErrors.push(...validateDesignSystem(document, { schema: false }));
     if (schemaErrors.length > 0) {
       throw new SchemaLoadError(
