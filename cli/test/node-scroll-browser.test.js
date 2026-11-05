@@ -48,7 +48,8 @@ test('horizontal children retain width and titled sections scroll as whole nodes
  const browser=await chromium.launch();
  try{
   const page=await browser.newPage({viewport:{width:600,height:500}});
-  const map=scrollProject();map.pages.get('home').page.slots[0].content=[
+  const map=scrollProject();map.pages.get('home').page.pageState={closed:true};map.pages.get('home').page.slots[0].content=[
+   {id:'collapsed',component:'stack',scroll:true,size:{height:120},pane:{side:'left',resizable:false,collapsible:true,collapsedSize:0,state:{scope:'page',sizeKey:'pane_width',collapsedKey:'closed'}},children:[]},
    {id:'horizontal',component:'row',scroll:true,size:{width:240},layout:{type:'row',gap:0},children:[
     {id:'wide_input',component:'input',size:{width:200},props:{label:'Name'}},
     {id:'wide_button',component:'button',size:{width:200},props:{label:'Save'}}]},
@@ -59,5 +60,6 @@ test('horizontal children retain width and titled sections scroll as whole nodes
   assert.ok(await page.locator('#horizontal').evaluate(n=>n.scrollWidth>n.clientWidth));
   assert.ok((await page.locator('#wide_input').boundingBox()).width>=199);
   assert.ok(await page.locator('#section').evaluate(n=>n.scrollHeight>n.clientHeight));
+  assert.equal(await page.locator('#collapsed').evaluate(n=>getComputedStyle(n).overflow),'hidden');
  }finally{await browser.close();}
 });

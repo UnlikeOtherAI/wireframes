@@ -32,7 +32,7 @@ const containerStyles = [
   '.wf-pane[data-wf-pane-collapsed="true"]{overflow:hidden}',
 
   // Explicit scrolling does not add a resize handle or compress its records.
-  '.wf-node.wf-scroll{overflow:auto;overscroll-behavior:contain;min-height:0;min-width:0}',
+  '.wf-node.wf-scroll:not([data-wf-pane-collapsed="true"]){overflow:auto;overscroll-behavior:contain;min-height:0;min-width:0}',
   '.wf-scroll>.wf-node-children,.wf-scroll>.wf-node,.wf-scroll>.wf-node-children>.wf-node{flex-shrink:0!important}',
   '.wf-scroll:focus-visible{outline:2px solid currentColor;outline-offset:-2px}',
 
