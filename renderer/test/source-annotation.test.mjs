@@ -25,12 +25,12 @@ function loadQuickstart() {
   return map;
 }
 
-const stripAnnotations = (html) => html.replace(/ data-wf-(source|definition|row)="[^"]*"/g, '');
+const stripAnnotations = (html) => html.replace(/ data-wf-(source|definition|row|component|variant)="[^"]*"/g, '');
 
 describe('source annotation', () => {
   it('leaves default output free of annotations', () => {
     const { html } = renderPage(loadQuickstart(), 'billing');
-    assert.doesNotMatch(html, /data-wf-source/);
+    assert.doesNotMatch(html, /data-wf-(source|definition|row|component|variant)=/);
   });
 
   it('changes nothing but the annotations when enabled', () => {
