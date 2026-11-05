@@ -1,0 +1,19 @@
+{
+  "base": "bce1df422bcc9562deb734a9b73bcbbe0ee00846",
+  "runtime": "56e4a3385c255af25a66709f02208e4f47272608",
+  "host": "Maxis Windows11",
+  "browser": "Playwright Chromium",
+  "viewports": [
+    [
+      1280,
+      900
+    ],
+    [
+      390,
+      900
+    ]
+  ],
+  "pairs": 24,
+  "newLogoStates": 4,
+  "privateAssets": false
+}
