@@ -249,7 +249,7 @@ function refresh() {
         var target = node.querySelector('input,textarea,select');
         if (target) target.setAttribute('placeholder', value == null ? '' : String(value));
       } else if (name === 'checked' || name === 'disabled') {
-        var input = node.querySelector('input') || node;
+        var input = node.querySelector(name === 'disabled' ? 'button,input,select,textarea' : 'input') || node;
         var bool = !!(value === true || value === 'true');
         if (bool) input.setAttribute(name, '');
         else input.removeAttribute(name);
@@ -361,6 +361,9 @@ function bindInteractions() {
       else nonGestures.push(parsed[i]);
     }
     node.addEventListener('click', function (event) {
+      if (node.classList.contains('wf-button') && (node.hasAttribute('disabled') || node.querySelector('button:disabled'))) {
+        event.preventDefault(); event.stopPropagation(); return;
+      }
       for (var j = 0; j < nonGestures.length; j++) runInteraction(nonGestures[j], node, event);
     });
     var tagName = typeof node.tagName === 'string' ? node.tagName.toLowerCase() : '';

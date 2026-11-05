@@ -34,7 +34,7 @@ function renderButton(node, ctx, lib) {
   ].filter(Boolean).join(' ');
 
   const accessibleName = iconOnly ? ` aria-label="${lib.escapeAttr(label || iconName.replace(/-/g, ' '))}"` : '';
-  const inner = ctx.navigationTarget
+  const inner = ctx.navigationTarget && props.disabled !== true
     ? `<a class="wf-button-link"${accessibleName}${ctx.navAttrs()}>${spinner}${body}</a>`
     : `<button${disabled}${accessibleName}>${spinner}${body}</button>`;
   return { inner, className: classes };

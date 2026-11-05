@@ -29,4 +29,4 @@ An iPad with a mouse still has a coarse pointer available; any-pointer covers it
 No automatic colour changes, new props, new widgets, pairing work or admin content changes. Primary-button contrast is a company-skin role correction through the app.
 
 ## Review decisions
-Pending.
+Claude reviewed the proposal on Maxis (output retained in build evidence). Adopted native disabled button semantics, wrapper click guarding, real close-button dimensions, fine/coarse comparisons and overflow checks. Kept wrapper interaction metadata behind the disabled guard so state-bound re-enabling remains possible; stripping it would break that path. Corrected the existing disabled binding to target the native button rather than its wrapper. Touchscreen hybrid computers intentionally receive larger rows too; fine-pointer desktop density is unchanged. Broad catalogue touch sizing is not claimed from this focused fixture.
