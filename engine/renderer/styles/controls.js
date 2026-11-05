@@ -147,6 +147,7 @@ const controlStyles = [
   '.wf-mode-line .wf-editor-toolbar{border-bottom-color:var(--wf-line-strong)}',
   '.wf-editor-tool{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;color:var(--wf-ink-3)}',
   '.wf-editor-body{padding:12px}',
+  '@media(any-pointer:coarse){.wf-page .wf-button button,.wf-page .wf-button .wf-button-link{min-height:44px;min-width:44px}}',
 ].join('\n');
 
 module.exports = { controlStyles };

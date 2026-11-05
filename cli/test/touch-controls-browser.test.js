@@ -5,6 +5,8 @@ const {renderWireframeMarkup}=require('../../engine/screenshots/renderer');
 const nav=(id,variant)=>({id,component:'nav',props:{variant,items:[{label:'Home',route:'next'},{label:'Projects',route:'next'},{label:'Settings',route:'next'}]}});
 function fixture(){return renderWireframeMarkup({
  roots:[{id:'main',kind:'container',nodes:[
+  {id:'bar',component:'app_bar',children:[{id:'burger',component:'button',props:{label:'Menu',icon:'bars',iconPosition:'center'},interaction:[{type:'open_overlay',targetOverlay:'dialog'}]}]},
+  {id:'small',component:'button',props:{label:'Small action',size:'sm'}},
   {id:'title',component:'heading',props:{text:'Navigation and touch controls'}},
   {id:'columns',component:'row',children:[nav('rail','rail'),nav('sidebar','sidebar')]},
   {id:'disabled',component:'button',props:{label:'Disabled route',disabled:true},stateBindings:{disabled:'{{state.locked}}'},interaction:[{type:'navigation',targetRoute:'next'}]},
@@ -19,6 +21,10 @@ for(const touch of [false,true]) test('real '+(touch?'touch':'mouse')+' controls
   const context=await browser.newContext({viewport:{width:1280,height:800},hasTouch:touch,isMobile:touch});
   const page=await context.newPage();await page.setContent(fixture());
   const tap=async(x,y)=>touch?page.touchscreen.tap(x,y):page.mouse.click(x,y);
+  for(const [name,minimum] of [['Menu',touch?44:36],['Small action',touch?44:32]]) {
+   const box=await page.getByRole('button',{name,exact:true}).boundingBox();
+   assert.ok(box.width>=minimum&&box.height>=minimum,JSON.stringify({touch,name,box}));
+  }
   const initial=page.url(),disabled=page.getByRole('button',{name:'Disabled route',exact:true});
   assert.equal(await disabled.isDisabled(),true);
   const rect=await page.locator('#disabled').boundingBox();await tap(rect.x+1,rect.y+1);
