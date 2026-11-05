@@ -1,6 +1,6 @@
 # Routed table link cells
 
-Status: proposed; implementation and browser results are pending.
+Status: implemented and verified in portable Chromium and CLI interfaces; native host selection remains an integration check.
 
 ## Problem Statement
 A table column with kind: link paints a link-like span. A prototype cannot open a detail from its named cell.
@@ -42,3 +42,10 @@ Claude Sonnet reviewed this plan in a no-tools read-only request on Maxis; raw o
 - Adopt complete schema/reference/brief/rendering documentation and generated guide/catalogue synchronization.
 - Reject splitting table.js solely on speculation: it is under 200 lines before this small addition and remains well below the 500-line limit.
 - Capture only the new routed-cell state before/after at matching viewports; private project data stays out of the public fixture.
+
+## Measured verification
+- Maxis engine source 567906e: full pnpm test 270/270; three durable browser tests cover keyed/positional cells, line/card mouse/keyboard/touch navigation/return, 44px coarse targets, hostile/missing routes and labels, and overlay open/dismiss.
+- Actual CLI quickstart-copy fixture: wf validate and wf build passed; clicking Device A in built overview.html opened team.html, then Overview returned to overview.html. No server or private input was used.
+- Matching neutral screenshots at desktop 1280×800 and touch 768×1024 were captured from actual base 4eda010 and implemented code; desktop before/after inspected. Artifacts remain in the assigned external table-links directory.
+- Catalogue regenerated. The first full test found only a Windows output-encoding error in a regenerated guide; regenerating through Node byte output restored exact UTF-8 and the complete rerun passed.
+- New object cells intentionally replace [object Object] with their text. Scalar link cells remain inert and unchanged. No native/iPad, row-click, runtime pagination or unknown-route warning claim.

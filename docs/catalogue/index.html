@@ -439,6 +439,7 @@ button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));bac
 .wf-ph-sub{margin:4px 0 0;font-size:13px;color:var(--wf-ink-3);line-height:1.5}
 .wf-ph-crumbs{margin-bottom:-2px}
 .wf-ph-tabs{margin-top:2px}
+@media(pointer:coarse){.wf-table-link{display:inline-flex;align-items:center;min-width:44px;min-height:44px}}
 .wf-table{padding:0;overflow:hidden;min-width:0}
 .wf-table-caption{padding:12px 14px 0;font-size:13px;font-weight:600;color:var(--wf-ink)}
 .wf-table-grid{display:grid;align-items:center;min-width:0}
@@ -1203,7 +1204,7 @@ button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));bac
     <span class="cat-name">table</span>
     <span class="cat-frame">the frame rules decide</span>
   </div>
-  <p class="cat-summary">Data table with typed columns, selection, sorting and loading/empty states.</p>
+  <p class="cat-summary">Data table with typed columns, routed link cells, selection, sorting and loading/empty states.</p>
   <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_table" class="wf-node wf-table wf-surface wf-table-state-default" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-table-header wf-table-grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)"><div class="wf-table-cell wf-table-header-cell" data-wf-table-column="0">Name</div><div class="wf-table-cell wf-table-header-cell" data-wf-table-column="1">Status</div><div class="wf-table-cell wf-table-header-cell" data-wf-table-column="2">Owner</div></div><div class="wf-table-body"><div class="wf-table-row wf-table-grid" data-wf-table-row="0" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)"><div class="wf-table-cell" data-wf-table-column="0">Dashboard</div><div class="wf-table-cell" data-wf-table-column="1">Draft</div><div class="wf-table-cell" data-wf-table-column="2">Lee</div></div></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- table: { columns: [Name, Status, Owner], rows: [[Dashboard, Draft, Lee]] }</pre>
