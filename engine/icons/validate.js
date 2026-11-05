@@ -1,5 +1,7 @@
 'use strict';
 
+const { searchIcons } = require('./search');
+
 function validateIconReferences(documents, index) {
   const names = new Map();
   for (const icon of index) {
@@ -9,7 +11,11 @@ function validateIconReferences(documents, index) {
   const check = (name, style, path) => {
     if (typeof name !== 'string' || !name.trim() || name.includes('{{')) return;
     const icon = names.get(name.trim());
-    if (!icon) diagnostics.push({ code: 'UNKNOWN_ICON', message: path + ': unknown Font Awesome Free icon "' + name + '". Use wf icons search.', path });
+    if (!icon) {
+      const suggestions = searchIcons(index, name, { limit: 3 }).map((entry) => entry.name + ' (' + entry.styles.join('|') + ')');
+      const help = suggestions.length ? ' Use ' + suggestions.join(', ') + '.' : ' Omit the icon or choose an available Free icon.';
+      diagnostics.push({ code: 'UNKNOWN_ICON', message: path + ': unknown Font Awesome Free icon "' + name + '".' + help, path });
+    }
     else if (style && !icon.styles.includes(style)) diagnostics.push({
       code: 'ICON_STYLE_UNAVAILABLE',
       message: path + ': "' + name + '" supports ' + icon.styles.join(', ') + ', not ' + (style || 'solid') + '.',

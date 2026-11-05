@@ -45,3 +45,10 @@ test('validates names and available Free styles without rejecting aliases', () =
     { component: 'input', props: { icon: 'bars', iconStyle: 'regular' } },
   ], catalogue).map((d) => d.code), ['UNKNOWN_ICON', 'ICON_STYLE_UNAVAILABLE']);
 });
+
+test('unknown icon feedback gives bounded, usable Free names', () => {
+  const result = validateIconReferences([{ component: 'button', props: { icon: 'settings' } }], catalogue);
+  assert.equal(result[0].code, 'UNKNOWN_ICON');
+  assert.match(result[0].message, /gear \(solid\)/);
+  assert.ok(result[0].message.length < 400);
+});
