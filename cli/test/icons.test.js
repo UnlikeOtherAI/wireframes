@@ -13,6 +13,7 @@ const search = (...args) => JSON.parse(execFileSync(process.execPath, [cli, 'ico
 test('real CLI finds burger menu, search aliases and each Free style', () => {
   assert.equal(search('burger menu')[0].name, 'bars');
   assert.equal(search('search')[0].name, 'magnifying-glass');
+  assert.equal(search('settings')[0].name, 'gear');
   assert.equal(search('navicon')[0].name, 'bars');
   assert.equal(search('github', '--style', 'brands')[0].name, 'github');
   assert.ok(search('envelope', '--style', 'regular')[0].styles.includes('regular'));

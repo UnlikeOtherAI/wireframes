@@ -29,7 +29,8 @@ function rank(icon, query) {
 }
 
 function searchIcons(index, query, { style, limit = 8 } = {}) {
-  const text = normalize(query);
+  const queryText = normalize(query);
+  const text = queryText === 'settings' ? 'gear' : queryText;
   if (!text || (style && !STYLES.has(style))) return [];
   const count = Math.max(1, Math.min(20, Math.floor(Number(limit)) || 8));
   return index.filter((icon) => !style || icon.styles.includes(style))
