@@ -4,7 +4,8 @@
 function assertComponentExpansion(roots, definitions, maxNodes = 50000) {
   const memo = new Map();
   const visiting = new Set();
-  const cost = (value) => {
+  const cost = (value, depth = 0) => {
+    if (depth > 128) throw new Error('Expanded wireframe is too deeply nested');
     if (!value || typeof value !== 'object') return 1;
     let size = 1;
     if (typeof value.use === 'string') {
@@ -13,13 +14,13 @@ function assertComponentExpansion(roots, definitions, maxNodes = 50000) {
       if (!memo.has(id)) {
         if (!Object.hasOwn(definitions, id)) throw new Error(`Unknown component: ${id}`);
         visiting.add(id);
-        memo.set(id, cost(definitions[id]));
+        memo.set(id, cost(definitions[id], depth + 1));
         visiting.delete(id);
       }
       size += memo.get(id);
     }
     for (const child of Object.values(value)) {
-      size += cost(child);
+      size += cost(child, depth + 1);
       if (size > maxNodes) throw new Error('Expanded wireframe is too large');
     }
     return size;
