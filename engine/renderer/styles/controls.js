@@ -81,7 +81,7 @@ const controlStyles = [
   '.wf-color input[type=color]{width:36px;height:34px;flex:0 0 36px;padding:3px;cursor:pointer}',
   '.wf-color input{border:none;outline:none;font:inherit;font-size:13px;padding:0 10px;min-height:34px;background:transparent;width:100%}',
 
-  '@media(pointer:coarse){.wf-segment,.wf-color input{min-height:44px}.wf-segment{min-width:44px}.wf-color input[type=color]{width:44px;height:44px;flex-basis:44px}}',
+  '@media(pointer:coarse){.wf-segmented .wf-segment,.wf-color input{min-height:44px}.wf-segment{min-width:44px}.wf-color input[type=color]{width:44px;height:44px;flex-basis:44px}}',
 
   // --- Choices ---
   '.wf-choice{display:inline-flex;align-items:flex-start;gap:9px;cursor:pointer;min-height:22px}',

@@ -50,6 +50,10 @@ for(const touch of [false,true]) test('appearance controls update real previews 
   assert.equal(await page.locator('#panel_2').isVisible(),true);
   await activate(page.locator('#preview_tabs').getByRole('link',{name:'Settings',exact:true}));
   assert.ok(page.url().endsWith('#settings'));
+  if(touch){
+   await page.setContent(pageFor([{id:'large',component:'segmented',props:{options:['One','Two'],size:'lg',value:'One'}}]));
+   assert.ok((await page.locator('#large button').first().boundingBox()).height>=44);
+  }
  }finally{await browser.close();}
 });
 test('control selection restores app state and does not trigger selectable ancestors',async()=>{
