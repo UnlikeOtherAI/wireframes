@@ -28,6 +28,8 @@ const {
   ) => { ok: boolean; error?: string; html?: string }
 };
 
+export { parseYaml } from './parser.js';
+
 export type { DocumentMap } from './document-map.js';
 export type { InteractionRuntimeOptions } from './interactions.js';
 export type { DataSourceEntry } from './data.js';

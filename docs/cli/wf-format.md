@@ -102,3 +102,19 @@ size budget.
 | `engine/wf-format/fs.js` | the disk half: reads a folder, writes a folder |
 | `renderer/src/wf.ts` | `parseWf` / `serializeWf` for the browser |
 | `renderer/src/mount.ts` | `createWireframe`, the live mount |
+
+## Reusable component files in browser projects
+
+The browser renderer uses the same component import resolver as filesystem
+projects. Keep reusable modules in `components/` and import them from the root
+`components.yaml`, templates or individual pages. For example, the root may
+contain `imports: { shared: components/footer.yaml }`; nodes then instantiate
+`use: shared.footer`. Imported files are ordinary `documentType: components`
+documents containing a `components` map whose entries each have a `root` node.
+Nested imports qualify names by every alias, such as `shared.copy.caption`.
+Paths resolve relative to the importing document. A page can therefore import
+`../components/footer.yaml`. Browser imports stay inside the supplied virtual
+project and cannot read a filesystem or fetch network resources. Missing files,
+cycles, invalid aliases, conflicting qualified names and excessive import
+expansion refuse rendering. Two pages may use the same alias for different
+modules; their imported component registries remain independent.

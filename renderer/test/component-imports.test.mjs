@@ -1,0 +1,100 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { parseProject, renderProject } from '../bundle/wireframe-renderer.min.js';
+import { MANIFEST_YAML, TEMPLATES_YAML, simplePage } from './fixtures.mjs';
+
+const components = (id, definitions, imports = {}) => JSON.stringify({
+  documentType: 'components', specVersion: '1.1', id, components: definitions, imports,
+});
+const text = (label) => ({ root: { id: 'label', component: 'text', props: { text: label } } });
+const source = () => ({
+  'manifest.yaml': MANIFEST_YAML,
+  'sitemap.yaml': JSON.stringify({ documentType: 'sitemap', specVersion: '1.1', id: 'sitemap', routes: [
+    { id: 'home', path: '/', page: 'home' }, { id: 'about', path: '/about', page: 'about' },
+  ] }),
+  'templates.yaml': TEMPLATES_YAML,
+  'components.yaml': components('components', {}, { shared: 'components/footer.yaml' }),
+  'components/footer.yaml': components('footer', {
+    footer: { root: { id: 'footer', component: 'section', children: [{ id: 'caption', use: 'copy.caption' }] } },
+  }, { copy: './copy.yaml' }),
+  'components/copy.yaml': components('copy', { caption: text('Shared across pages') }),
+  ...Object.fromEntries(['home', 'about'].map(id => [`pages/${id}.yaml`,
+    simplePage(id, id).replace('- component: text\n          id: t1\n          props:\n            text: '+id,
+      '- id: footer\n          use: shared.footer') ])),
+});
+
+test('browser rendering imports nested component files and reflects a shared edit on both pages', () => {
+  const files = source();
+  const original = JSON.stringify(files);
+  const rendered = renderProject(files);
+  assert.match(rendered.pages.get('home'), /Shared across pages/);
+  assert.match(rendered.pages.get('about'), /Shared across pages/);
+  assert.equal(JSON.stringify(files), original, 'resolution must not rewrite the source files');
+  files['components/copy.yaml'] = components('copy', { caption: text('Updated footer') });
+  const next = renderProject(files);
+  for (const page of next.pages.values()) {
+    assert.match(page, /Updated footer/);
+    assert.doesNotMatch(page, /Shared across pages/);
+  }
+});
+
+test('page imports with the same alias resolve independently', () => {
+  const files = source();
+  for (const id of ['home', 'about']) {
+    files[`components/${id}.yaml`] = components(id, { note: text(`${id} only`) });
+    files[`pages/${id}.yaml`] = JSON.stringify({ documentType: 'page', specVersion: '1.1', id,
+      imports: { local: `../components/${id}.yaml` },
+      page: { template: 'main', viewport: { device: 'web' },
+        slots: [{ slotId: 'body', content: [{ id: 'note', use: 'local.note' }] }] },
+    });
+  }
+  const rendered = renderProject(files);
+  assert.match(rendered.pages.get('home'), /home only/);
+  assert.doesNotMatch(rendered.pages.get('home'), /about only/);
+  assert.match(rendered.pages.get('about'), /about only/);
+  assert.doesNotMatch(rendered.pages.get('about'), /home only/);
+});
+
+test('template imports are available to the page renderer', () => {
+  const files = source();
+  files['templates.yaml'] = JSON.stringify({ documentType: 'templates', specVersion: '1.1', id: 'templates',
+    imports: { header: 'components/header.yaml' }, templates: { main: { regions: [
+      { id: 'header', kind: 'persistent', children: [{ id: 'site_header', use: 'header.title' }] },
+      { id: 'body', kind: 'slot' },
+    ] } },
+  });
+  files['components/header.yaml'] = components('header', { title: text('Imported header') });
+  assert.match(renderProject(files).pages.get('home'), /Imported header/);
+});
+
+for (const [path, message] of [
+  ['components/missing.yaml', /does not exist/], ['../outside.yaml', /escapes the project/],
+  ['/outside.yaml', /relative project path/], ['https://example.invalid/module.yaml', /relative project path/],
+  ['pages/home.yaml', /must be a components document/],
+]) test(`browser imports refuse ${path}`, () => {
+  const files = source();
+  files['components.yaml'] = components('components', {}, { shared: path });
+  assert.throws(() => parseProject(files), message);
+});
+
+test('browser imports refuse circular modules, bad aliases and conflicting definitions', () => {
+  const files = source();
+  files['components/copy.yaml'] = components('copy', { caption: text('Cycle') }, { cycle: '../components.yaml' });
+  assert.throws(() => parseProject(files), /Circular component import/);
+  files['components/copy.yaml'] = components('copy', { caption: text('Copy') });
+  files['components.yaml'] = components('components', {}, { 'Bad-alias': 'components/footer.yaml' });
+  assert.throws(() => parseProject(files), /Invalid import alias/);
+  files['components.yaml'] = components('components', {}, { shared: 'components/copy.yaml' });
+  files['templates.yaml'] = JSON.stringify({ documentType: 'templates', id: 'templates',
+    imports: { shared: 'components/other.yaml' }, templates: {} });
+  files['components/other.yaml'] = components('other', { caption: text('Other') });
+  assert.throws(() => parseProject(files), /Duplicate component id/);
+});
+
+test('virtual import expansion has a finite budget even without a cycle', () => {
+  const files = source();
+  files['components.yaml'] = components('components', {}, { shared: 'components/0.yaml' });
+  for (let index = 0; index < 14; index++) files[`components/${index}.yaml`] = components(`module${index}`, {},
+    index === 13 ? {} : { left: `./${index + 1}.yaml`, right: `./${index + 1}.yaml` });
+  assert.throws(() => parseProject(files), /expansion is too large/);
+});
