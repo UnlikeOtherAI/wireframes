@@ -1,6 +1,6 @@
 # Selected navigation background fallback
 
-Status: proposed; renderer and browser checks pending.
+Status: implemented and verified in Chromium on Maxis. Native app verification is separate.
 
 ## Problem Statement
 A skin with white navigation text and a dark background but no accent produces a selected sidebar item with white text on the renderer's default light fill. The selected label becomes unreadable.
@@ -12,7 +12,7 @@ A skin with white navigation text and a dark background but no accent produces a
 Selected sidebar links and rail icon areas retain readable authored colours when no accent is specified. Explicit accent remains first priority. Unskinned output stays unchanged.
 
 ## Design
-For nav sidebar/rail only, identify the existing selected painted area. Paint its background from colors.accent when present, otherwise from the resolved authored background. Keep the authored text, selected class, weight and navigation behavior. Add no schema, colour derivation or state API. The fallback preserves authored contrast; it cannot repair an intrinsically low-contrast chosen palette.
+For nav sidebar/rail only, identify the existing selected painted area. Paint its background from colors.accent when present, otherwise from the resolved authored background. Keep the authored text, selected class, weight and navigation behavior. The no-accent fallback adds a one-pixel inset currentColor outline so selection remains visible. Add no schema, colour derivation or state API. The fallback preserves authored contrast; it cannot repair an intrinsically low-contrast chosen palette.
 
 ## Implementation Order
 1. Adversarial provider review and decisions.
@@ -34,3 +34,8 @@ Claude Sonnet reviewed the plan and existing renderer before implementation. Raw
 - Defer: automatic correction of intrinsically low-contrast authored accent/text pairs and unrelated badge palettes. This change preserves authored colours, not arbitrary palette validity.
 - Reject: a new colour sanitizer. safeAppearance already limits colours to six-digit hex or background transparent; appendStyle escapes attributes.
 - Adopt: state explicitly that transparent backgrounds carry no guaranteed contrast; missing authored background preserves legacy styling.
+
+## Measured verification
+At a385485 before and 2d9ab8a after, matching 1280×500 and 390×500 Chromium captures cover dark, light and explicit-accent palettes in line/card modes. Mouse and touch navigation work. Dark sidebar contrast improved from 1.10:1 to 14.61:1; light rail contrast improved from 1.09:1 to 14.91:1. Explicit accent stayed 6.19:1. Selected classes/weight remain, and the fallback outline is present.
+
+All 275 engine tests passed on Maxis. Catalogue regeneration produced no tracked difference. Raw review, captures and computed styles remain in the task's ignored/external evidence directories. No native build was run for this renderer tranche.
