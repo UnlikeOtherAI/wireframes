@@ -75,7 +75,8 @@ const ROW_FLEXIBLE = new Set(['input', 'select', 'textarea', 'tags_input', 'sear
 function rowFlexStyle(element, node, ctx) {
   if (ctx.parentLayoutType !== 'row') return '';
   const size = isObject(node.size) ? node.size : {};
-  if (size.width != null || isObject(node.gridItem)) return '';
+  if (isObject(node.gridItem) || ctx.paneData) return '';
+  if (size.width != null) return 'flex:0 1 auto';
   if (ROW_INTRINSIC.has(element)) return 'flex:0 0 auto';
   // A field in a row grows into the space, but only so far: a zoom select
   // should not eat a toolbar. Override with size.width.
