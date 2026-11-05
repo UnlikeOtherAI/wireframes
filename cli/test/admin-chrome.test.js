@@ -22,7 +22,7 @@ test('custom app bar has a leading 44-point menu button that opens a left drawer
   }];
   map.pages.get('home').page.overlays = [{
     id: 'left_menu', type: 'drawer_left', trigger: 'burger', dismissOn: ['outside', 'escape'],
-    content: [{ id: 'drawer_links', component: 'nav', props: { items: [{ label: 'Settings', route: 'home' }] } }],
+    content: [{ id: 'drawer_links', component: 'nav', props: { items: [{ title: 'Settings', route: 'home' }] } }],
   }];
   const result = renderPage(map, 'home', { deviceChrome: false, viewportOverride: { device: 'tablet', platform: 'ios', width: 1024, height: 768 } });
   assert.equal(result.ok, true);
