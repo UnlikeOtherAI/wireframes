@@ -58,11 +58,14 @@ test('control selection restores app state and does not trigger selectable ances
   const context=await browser.newContext();await context.route('https://prototype.test/**',r=>r.fulfill({body:'<html></html>',contentType:'text/html'}));
   const page=await context.newPage();await page.goto('https://prototype.test/');
   const html=pageFor([{id:'parent',component:'card',selection:{scope:'page',stateKey:'parent'},interaction:[{type:'navigation',targetRoute:'wrong'}],children:[
-   {id:'choices',component:'segmented',selection:{scope:'app',stateKey:'size'},props:{options:['Small','Large'],value:'Small'}}
+   {id:'choices',component:'segmented',selection:{scope:'app',stateKey:'size'},props:{options:['Small','Large'],value:'Small'}},
+   {id:'app_text',component:'input',props:{label:'Saved text',value:'{{appState.label}}'}}
   ]}],{routeTable:{wrong:'#wrong'}});
   await page.setContent(html);await page.locator('#choices').getByRole('button',{name:'Large'}).click();
   assert.equal(page.url(),'https://prototype.test/');assert.equal(await page.locator('#parent').evaluate(e=>e.classList.contains('wf-selected')),false);
+  await page.getByRole('textbox',{name:'Saved text'}).fill('Remember this');
   await page.setContent(html);assert.deepEqual(await page.locator('#choices [aria-pressed=true]').allTextContents(),['Large']);
+  assert.equal(await page.getByRole('textbox',{name:'Saved text'}).inputValue(),'Remember this');
  }finally{await browser.close();}
 });
 test('bound colour disabling, hostile values, empty choices and unresolved routes stay safe',async()=>{

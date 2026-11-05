@@ -89,6 +89,10 @@ function initControls() {
   each('.wf-input', function (node) {
     var colour = colourInputs(node), binding = controlBinding(node);
     if (!colour && !binding) return;
+    if (binding && binding.scope === 'app' && getAtPath(WF_APP_STATE, binding.key) === undefined) {
+      var stored = storageRead(binding.key);
+      if (stored !== undefined) setAtPath(WF_APP_STATE, binding.key, stored);
+    }
     var field = colour ? colour.text : node.querySelector('input');
     if (!field) return;
     node.addEventListener('click', function (event) { event.stopPropagation(); });
