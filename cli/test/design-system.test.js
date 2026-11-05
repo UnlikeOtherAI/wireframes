@@ -77,7 +77,8 @@ test('metadata covers exactly the registry, all standard variants and defaults',
   for (const entry of PRIMITIVES) {
     const component = info.components.find((item) => item.component === entry.name);
     assert.deepEqual(component.variants, entry.props?.variant?.enum || []);
-    if (component.variants.length) assert.ok(component.variants.includes(component.defaultVariant), entry.name);
+    assert.equal(component.defaultVariant, entry.defaultVariant || null);
+    if (component.defaultVariant) assert.ok(component.variants.includes(component.defaultVariant), entry.name);
   }
   assert.deepEqual(info.components.find((entry) => entry.component === 'spacer').colors, []);
 });
