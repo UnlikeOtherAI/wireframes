@@ -44,6 +44,7 @@ export function normalizeVirtualImport(source: string, imported: string): string
 export function resolveVirtualComponentImports(documents: Map<string, Document>): {
   components: Document | null;
   componentRegistriesByPage: Map<string, Definitions>;
+  componentRegistriesByFile: Map<string, Definitions>;
 } {
   const sizes = new Map<string, number>();
   let sourceTotal = 0;
@@ -84,8 +85,18 @@ export function resolveVirtualComponentImports(documents: Map<string, Document>)
     if (!merged.ok) throw new Error(merged.error);
   };
   const project = resolver.createEmptyRegistry();
-  const root = documents.get('components.yaml');
-  if (root) merge(project, resolver.loadComponentsDocumentRegistry('components.yaml', ''));
+  const modules = [...documents].filter(([, doc]) => doc.documentType === 'components');
+  const rootCandidates = modules.filter(([path]) => !/^components\//iu.test(path));
+  const rootEntry = modules.find(([path]) => path === 'components.yaml')
+    ?? (rootCandidates.length === 1 ? rootCandidates[0] : modules.length === 1 ? modules[0] : undefined);
+  const root = rootEntry?.[1];
+  if (rootEntry) merge(project, resolver.loadComponentsDocumentRegistry(rootEntry[0], ''));
+  const componentRegistriesByFile = new Map<string, Definitions>();
+  for (const [path] of modules) {
+    const registry = resolver.createEmptyRegistry();
+    merge(registry, resolver.loadComponentsDocumentRegistry(path, ''));
+    componentRegistriesByFile.set(path, registry.components);
+  }
   const templates = [...documents].find(([, doc]) => doc.documentType === 'templates');
   const componentRegistriesByPage = new Map<string, Definitions>();
   for (const [path, document] of documents) {
@@ -97,5 +108,6 @@ export function resolveVirtualComponentImports(documents: Map<string, Document>)
     merge(registry, resolver.loadImportedComponentRegistry(path, document));
     componentRegistriesByPage.set(document.id.trim(), registry.components);
   }
-  return { components: root ? { ...root, components: project.components } : null, componentRegistriesByPage };
+  return { components: root ? { ...root, components: project.components } : null,
+    componentRegistriesByPage, componentRegistriesByFile };
 }

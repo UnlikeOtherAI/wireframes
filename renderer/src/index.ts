@@ -29,6 +29,8 @@ const {
 };
 
 export { parseYaml } from './parser.js';
+// @ts-expect-error Shared CJS engine module has no TypeScript declarations.
+export { assertComponentExpansion } from '../../engine/component-registry/expansion.js';
 
 export type { DocumentMap } from './document-map.js';
 export type { InteractionRuntimeOptions } from './interactions.js';

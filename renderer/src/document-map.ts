@@ -7,6 +7,7 @@ export interface DocumentMap {
   templates: Record<string, unknown> | null;
   components: Record<string, unknown> | null;
   componentRegistriesByPage?: Map<string, Record<string, unknown>>;
+  componentRegistriesByFile?: Map<string, Record<string, unknown>>;
   pages: Map<string, Record<string, unknown>>;
   datasets: Map<string, Record<string, unknown>>;
 }

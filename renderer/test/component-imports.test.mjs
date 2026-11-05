@@ -115,3 +115,25 @@ test('source annotations survive imported page registries', async () => {
   assert.match(html, /data-wf-definition="component:shared.copy.caption"/);
   assert.equal(JSON.stringify([...documentMap.componentRegistriesByPage]), before);
 });
+
+test('legacy singleton component documents retain arbitrary paths and yml suffixes', () => {
+  for (const path of ['library.yaml', 'shared/library.yml']) {
+    const files = source();
+    delete files['components.yaml'];
+    files[path] = components('library', { 'shared.footer': text('Legacy footer') });
+    assert.match(renderProject(files).pages.get('home'), /Legacy footer/);
+  }
+});
+
+test('unused module registries are available for bounded previews without polluting pages', async () => {
+  const files = source();
+  files['components/unused.yaml'] = components('unused', { note: text('Unused module') });
+  const { documentMap } = parseProject(files);
+  assert.ok(documentMap.componentRegistriesByFile.get('components/unused.yaml').note);
+  assert.equal(documentMap.componentRegistriesByPage.get('home').note, undefined);
+  const { assertComponentExpansion } = await import('../bundle/wireframe-renderer.min.js');
+  const definitions = { leaf: text('Leaf') };
+  for (let i = 0; i < 18; i++) definitions[`level${i}`] = { root: { id: `node${i}`, component: 'section',
+    children: [0, 1].map(n => ({ id: `use${n}`, use: i ? `level${i - 1}` : 'leaf' })) } };
+  assert.throws(() => assertComponentExpansion(Object.values(definitions), definitions), /too large/);
+});
