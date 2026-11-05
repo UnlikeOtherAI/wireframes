@@ -6,7 +6,7 @@ const navigationPrimitives = [
     defaultVariant: 'underline',
     family: 'navigation',
     frame: 'E',
-    summary: 'In-page tabs. Pass tabs[] for one line, or children for full control.',
+    summary: 'Local tabs select by unique label; routed tabs navigate. Pass tabs[] or children.',
     props: {
       tabs: { type: 'array', primary: true },
       variant: { enum: ['underline', 'pill', 'enclosed'] },
