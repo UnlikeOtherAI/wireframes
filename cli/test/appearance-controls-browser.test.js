@@ -83,3 +83,20 @@ test('bound colour disabling, hostile values, empty choices and unresolved route
   assert.equal(await page.getByLabel('Colour picker',{exact:true}).isDisabled(),true);assert.equal(await page.getByRole('textbox',{name:'Colour hex'}).isDisabled(),true);
  }finally{await browser.close();}
 });
+test('company-skin accent follows the selected option instead of the authored option',async()=>{
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await browser.newPage();await page.setContent(pageFor([
+   {id:'sizes',component:'segmented',props:{options:['Small','Large'],value:'Small'}},
+   {id:'tabs',component:'tab_bar',props:{tabs:[{label:'Bubble',active:true},{label:'Conversation'}]}}
+  ],{skin:{name:'Example company',defaults:{colors:{text:'#123456',accent:'#A020F0'}}}}));
+  for(const [id,first,next] of [['sizes','Small','Large'],['tabs','Bubble','Conversation']]){
+   const before=page.locator('#'+id).getByRole('button',{name:first,exact:true});
+   const after=page.locator('#'+id).getByRole('button',{name:next,exact:true});
+   assert.equal(await before.evaluate(e=>getComputedStyle(e).color),'rgb(160, 32, 240)');
+   await after.click();
+   assert.equal(await before.evaluate(e=>getComputedStyle(e).color),'rgb(18, 52, 86)');
+   assert.equal(await after.evaluate(e=>getComputedStyle(e).color),'rgb(160, 32, 240)');
+  }
+ }finally{await browser.close();}
+});

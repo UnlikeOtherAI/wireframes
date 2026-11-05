@@ -31,10 +31,10 @@ const controlStyles = [
   '.wf-mode-line .wf-segmented{border:1px solid var(--wf-line-strong);border-radius:0}',
   '.wf-mode-card .wf-segmented{border:1px solid var(--wf-line);background:var(--wf-fill-2)}',
   '.wf-segment{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:6px 14px;font:inherit;font-size:13px;'
-    + 'background:transparent;border:none;cursor:pointer;color:var(--wf-ink-3);white-space:nowrap}',
+    + 'background:transparent;border:none;cursor:pointer;color:var(--wf-choice-ink,var(--wf-ink-3));white-space:nowrap}',
   '.wf-segment+.wf-segment{border-left:1px solid var(--wf-line)}',
   '.wf-mode-line .wf-segment+.wf-segment{border-left-color:var(--wf-line-strong)}',
-  '.wf-segment-on{background:#ffffff;color:var(--wf-ink);font-weight:600}',
+  '.wf-segment-on{background:#ffffff;color:var(--wf-choice-accent,var(--wf-ink));font-weight:600}',
   '.wf-mode-line .wf-segment-on{background:var(--wf-fill)}',
   '.wf-segmented-lg .wf-segment{min-height:40px}',
 

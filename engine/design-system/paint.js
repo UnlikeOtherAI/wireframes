@@ -88,6 +88,8 @@ function paintMarkup(markup, node, appearance, options) {
     }
     const classes = new Set((opening.match(/\sclass="([^"]*)"/)?.[1] || '').split(/\s+/));
     const parent = stack[stack.length - 1];
+    const choiceButton = /\sdata-wf-choice-value=/.test(opening);
+    const choice = choiceButton || parent?.choice;
     const action = classes.has('wf-act') ? actionAppearance(classes, options) : parent?.action;
     const current = action || appearance;
     const colors = current.colors || {};
@@ -100,13 +102,14 @@ function paintMarkup(markup, node, appearance, options) {
     const isError = classes.has('wf-field-error') || classes.has('wf-menu-danger') || parent?.error;
     const navVariant = component === 'nav' && ['rail', 'sidebar'].includes(node.props?.variant);
     const navSelected = navVariant && (classes.has('wf-nav-on') || parent?.navSelected);
-    const accented = !navSelected && (has(classes, ACCENT_TEXT) || parent?.accented);
+    const accented = !choice && !navSelected && (has(classes, ACCENT_TEXT) || parent?.accented);
     const css = [];
     if (!isError) css.push(colorCss(colors, {
-      text: !['svg', 'path', 'circle', 'polyline', 'line'].includes(tag),
+      text: !choice && !['svg', 'path', 'circle', 'polyline', 'line'].includes(tag),
       box: (box && !plain) || classes.has('wf-image-caption'),
       edge,
     }));
+    if (choiceButton) css.push('--wf-choice-ink:' + (colors.text || 'var(--wf-ink-3)') + ';--wf-choice-accent:' + (colors.accent || colors.text || 'var(--wf-ink)'));
     if (box && !plain) {
       css.push(borderCss(current, invalid));
       if (button || tag === 'textarea' || has(classes, ROUNDABLE)) css.push(cornerCss(current));
@@ -135,7 +138,7 @@ function paintMarkup(markup, node, appearance, options) {
     }
     if (isAction) opening = opening.replace(/\s*\/?\>$/, (end) => ` data-wf-skin-role="${escapeHtml(current.role)}"${end}`);
     if (!VOID.has(tag) && !opening.endsWith('/>')) {
-      stack.push({ tag, action, error: isError, accented, navSelected, checked: classes.has('wf-choice-on') || parent?.checked });
+      stack.push({ tag, action, choice, error: isError, accented, navSelected, checked: classes.has('wf-choice-on') || parent?.checked });
     }
     return appendStyle(opening, css.filter(Boolean).join(';'));
   });
