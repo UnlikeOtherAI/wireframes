@@ -149,7 +149,7 @@ function refresh() {
         }
         if (name === 'disabled' && node.classList.contains('wf-button')) node.classList.toggle('wf-button-disabled', bool);
       } else if (name === 'visibility') {
-        node.style.display = value ? '' : 'none';
+        setHidden(node, !value);
       } else if (name.slice(0, 6) === 'style.') {
         node.style[name.slice(6)] = value == null ? '' : String(value);
       } else {

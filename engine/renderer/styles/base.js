@@ -42,6 +42,9 @@ const baseStyles = [
   '.wf-root-title{display:none}',
   '.wf-root-body{display:block;min-width:0}',
   '.wf-node-children{display:contents}',
+  // Hidden by visibility rules. An attribute, not inline display, so showing a node
+  // again keeps the display its layout set (flex for a stack or row).
+  '[data-wf-hidden]{display:none!important}',
 
   // --- The frame contract ---
   // Only [data-wf-frame="surface"] draws a container box.

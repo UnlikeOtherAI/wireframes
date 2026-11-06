@@ -233,13 +233,17 @@ function showToast(message) {
   setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
 }
 ` + buildControlRuntimeCode() + `
+function setHidden(node, hidden) {
+  if (hidden) node.setAttribute('data-wf-hidden', '');
+  else node.removeAttribute('data-wf-hidden');
+}
 function refreshVisibility() {
   each('[data-wf-visibility]', function (node) {
     var raw = node.getAttribute('data-wf-visibility') || '{}';
     try {
       var c = JSON.parse(raw);
-      node.style.display = evalCondition(c.condition || c, null) ? '' : 'none';
-    } catch (_err) { node.style.display = ''; }
+      setHidden(node, !evalCondition(c.condition || c, null));
+    } catch (_err) { setHidden(node, false); }
   });
 }
 ` + buildOverlayRuntimeCode() + `
