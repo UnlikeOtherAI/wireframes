@@ -41,6 +41,7 @@ function spyOnFrame(testId: string) {
 function nodeClickFrom(frame: HTMLIFrameElement) {
   window.dispatchEvent(new MessageEvent('message', {
     source: frame.contentWindow,
+    origin: window.location.origin,
     data: { type: 'wf:nodeClick', nodeId: 'home', address: 'wf://page/home#home' },
   }))
 }

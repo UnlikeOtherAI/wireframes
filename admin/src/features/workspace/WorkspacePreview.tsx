@@ -50,10 +50,13 @@ export function WorkspacePreview({
     postMeasure(iframeRef.current, measure)
   }, [measure])
 
-  // Listen for messages from the preview iframe
+  // Listen for messages from the preview iframe. The srcdoc page shares this
+  // window's origin, so a message from anywhere else is not the preview's,
+  // even when it comes from the frame's browsing context.
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (event.source !== iframeRef.current?.contentWindow) return
+      if (event.origin !== window.location.origin) return
       if (event.data?.type === 'wf:navigate' && typeof event.data.routeId === 'string') {
         onNavigate?.(event.data.routeId)
       }
@@ -234,24 +237,31 @@ function extractNodeIdFromAddress(address: string): string | null {
   return address || null
 }
 
+const NODE_ID = /^[a-z][a-z0-9_]*$/
+
 /**
  * What a click in the preview selects. The page reports the clicked node and
  * the rendered nodes around it, innermost first; the first one the node tree
  * knows wins. A node rendered inside an imported or built-in component is not
- * in the tree, so its click lands on the closest page-authored instance.
+ * in the tree, so its click lands on the closest page-authored instance. The
+ * page's own message never names the address. Without a node map (a bare
+ * preview) only a well-formed node id on this page is selected.
  */
 function clickedNodeAddress(
-  data: { nodeId?: unknown; ancestorIds?: unknown; address?: unknown },
+  data: { nodeId?: unknown; ancestorIds?: unknown },
   nodeIdToAddress: Map<string, string> | undefined,
   activePage: string,
 ): string | null {
   if (typeof data.nodeId !== 'string') return null
-  const around = Array.isArray(data.ancestorIds) ? data.ancestorIds : []
-  for (const id of [data.nodeId, ...around]) {
-    const address = typeof id === 'string' ? nodeIdToAddress?.get(id) : undefined
-    if (address) return address
+  if (nodeIdToAddress) {
+    const around = Array.isArray(data.ancestorIds) ? data.ancestorIds : []
+    for (const id of [data.nodeId, ...around]) {
+      const address = typeof id === 'string' ? nodeIdToAddress.get(id) : undefined
+      if (address) return address
+    }
+    return null
   }
-  return typeof data.address === 'string' ? data.address : `wf://page/${activePage}#${data.nodeId}`
+  return NODE_ID.test(data.nodeId) ? `wf://page/${activePage}#${data.nodeId}` : null
 }
 
 function injectNodeClickBridge(html: string, interactive: boolean): string {

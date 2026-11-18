@@ -7,6 +7,7 @@ import * as addressing from '../../../engine/addressing/index.js'
 
 // The real renderer renders these pages: nothing here stubs the preview.
 const { Workspace } = await import('../features/workspace/Workspace')
+const { WorkspacePreview } = await import('../features/workspace/WorkspacePreview')
 
 const { parseAddress, buildPageRoots, resolveAddressInRoots } = addressing as {
   parseAddress: (address: string) => { ok: boolean; pathSegments: string[] }
@@ -217,5 +218,43 @@ describe('Workspace selection of fills on imported and built-in components', { t
     expect(onNodeSelect).toHaveBeenLastCalledWith('wf://page/home#main.hero.custom_media')
     expect(pageNodeAt(parse(edited['pages/home.yaml']) as Record<string, unknown>, 'wf://page/home#main.kit_panel.custom_footer').id)
       .toBe('custom_footer')
+  })
+})
+
+describe('Preview messages are trusted only from the preview itself', () => {
+  it('ignores a click or navigation from the frame with another origin', async () => {
+    const onNodeSelect = vi.fn()
+    const onNavigate = vi.fn()
+    render(<WorkspacePreview yamlFiles={{}} activePage="home" device="web" renderMode="card" onNodeSelect={onNodeSelect} onNavigate={onNavigate} />)
+    const frame = previewFrame()
+    act(() => {
+      for (const data of [{ type: 'wf:nodeClick', nodeId: 'home' }, { type: 'wf:navigate', routeId: 'about' }]) {
+        window.dispatchEvent(new MessageEvent('message', { source: frame.contentWindow, origin: 'https://elsewhere.example', data }))
+      }
+    })
+    expect(onNodeSelect).not.toHaveBeenCalled()
+    expect(onNavigate).not.toHaveBeenCalled()
+  })
+
+  it('never takes an address from the message, and selects only known or well-formed nodes', () => {
+    const onNodeSelect = vi.fn()
+    const send = (frame: HTMLIFrameElement, data: unknown) => act(() => {
+      window.dispatchEvent(new MessageEvent('message', { source: frame.contentWindow, origin: window.location.origin, data }))
+    })
+    const { unmount } = render(<WorkspacePreview yamlFiles={{}} activePage="home" device="web" renderMode="card" onNodeSelect={onNodeSelect} />)
+    send(previewFrame(), { type: 'wf:nodeClick', nodeId: 'title', address: 'wf://component/std.login#login' })
+    expect(onNodeSelect).toHaveBeenLastCalledWith('wf://page/home#title')
+    send(previewFrame(), { type: 'wf:nodeClick', nodeId: 'Bad id', address: 'wf://page/home#main.title' })
+    send(previewFrame(), { type: 'wf:nodeClick', address: 'wf://page/home#main.title' })
+    expect(onNodeSelect).toHaveBeenCalledTimes(1)
+    unmount()
+
+    // With a node map, an id the tree does not know selects nothing.
+    const map = new Map([['card', 'wf://page/home#main.card']])
+    render(<WorkspacePreview yamlFiles={{}} activePage="home" device="web" renderMode="card" onNodeSelect={onNodeSelect} nodeIdToAddress={map} />)
+    send(previewFrame(), { type: 'wf:nodeClick', nodeId: 'card__inner', ancestorIds: ['card'] })
+    expect(onNodeSelect).toHaveBeenLastCalledWith('wf://page/home#main.card')
+    send(previewFrame(), { type: 'wf:nodeClick', nodeId: 'stray', ancestorIds: ['other'] })
+    expect(onNodeSelect).toHaveBeenCalledTimes(2)
   })
 })

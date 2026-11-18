@@ -207,6 +207,7 @@ describe('Workspace', () => {
     window.dispatchEvent(
       new MessageEvent('message', {
         source: iframe.contentWindow,
+        origin: window.location.origin,
         data: {
           type: 'wf:nodeClick',
           nodeId: 'title',
