@@ -98,6 +98,8 @@ const controlStyles = [
   '.wf-field-invalid{--wf-tone:var(--wf-danger)}',
   '.wf-field-invalid .wf-control,.wf-field-invalid textarea{border-color:var(--wf-tone);border-width:2px}',
   '.wf-select-searchable .wf-control select{padding-left:0}',
+  // Disabled fields fade: the inherited ink colour hides the native disabled look.
+  '.wf-control:has(>[data-wf-disabled]),.wf-color:has(>[data-wf-disabled]),.wf-textarea textarea[data-wf-disabled]{opacity:.55;cursor:not-allowed}',
   // Read-only keeps the value but drops the editable look; disabled wins when both are set.
   '.wf-mode-card .wf-control:has(>[data-wf-readonly]:not([data-wf-disabled])),.wf-mode-card .wf-textarea textarea[data-wf-readonly]:not([data-wf-disabled])'
     + '{background:var(--wf-fill-2)}',
@@ -124,6 +126,7 @@ const controlStyles = [
   '.wf-range[data-wf-disabled],.wf-otp[data-wf-disabled],.wf-numstepper[data-wf-disabled],.wf-picker-wheel[data-wf-disabled],'
     + '.wf-editor-body[data-wf-disabled],.wf-choice-list[data-wf-disabled]{opacity:.5}',
   '.wf-numstepper[data-wf-readonly] .wf-numstepper-btn{color:var(--wf-ink-4);cursor:default}',
+  '.wf-numstepper-btn[data-wf-disabled]{color:var(--wf-ink-4);cursor:not-allowed}',
   '.wf-color{display:flex;align-items:center;gap:0;border:1px solid var(--wf-line);border-radius:var(--wf-corner-radius,6px);overflow:hidden;background:#ffffff}',
   '.wf-mode-line .wf-color{border-color:var(--wf-line-strong);border-radius:0;background:transparent}',
   '.wf-color input[type=color]{width:36px;height:34px;flex:0 0 36px;padding:3px;cursor:pointer}',

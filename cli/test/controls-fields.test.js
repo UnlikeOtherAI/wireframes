@@ -76,7 +76,8 @@ test('readonly plus disabled: both written, on the element that owns them', () =
   const segmented = html('segmented', { options: ['A', 'B'], readonly: true, value: 'A' });
   assert.match(segmented, /<div class="wf-segment-track" role="group" data-wf-readonly>/);
   assert.match(segmented, /class="wf-node wf-segmented wf-segmented-md wf-segmented-field"/);
-  assert.match(html('segmented', { options: ['A'], disabled: true }), /<button type="button" class="wf-segment" data-wf-choice-value="&quot;A&quot;" disabled/);
+  const off = html('segmented', { options: ['A'], disabled: true });
+  assert.match(off, /<div class="wf-segment-track" role="group" data-wf-disabled><button type="button" class="wf-segment" data-wf-choice-value="&quot;A&quot;" disabled aria-pressed="false" data-wf-disabled>/);
   assert.match(html('picker', { options: ['A'], readonly: true }), /<div class="wf-picker-wheel" data-wf-readonly>/);
   // Colour: the hex field is natively read-only, the picker only says so.
   const colour = html('input', { inputType: 'color', value: '#112233', readonly: true });
@@ -242,4 +243,15 @@ test('lint: a value list outside a range, and help with description', () => {
     assert.deepEqual(lint(component, { label: 'A', description: 'D' }), []);
   }
   assert.deepEqual(lint('input', { help: 'H', description: 'D' }).filter((entry) => entry.code === 'HELP_PROP_ALIAS'), []);
+});
+
+test('AMBIGUOUS_VALUE treats a checkbox choice_group as multiple choice', () => {
+  const ambiguous = (props) => {
+    const result = { errors: [], warnings: [], info: [] };
+    validatePrimitiveProps(result, { id: 'g', component: 'choice_group', props }, 'page "home"');
+    return result.info.filter((entry) => entry.code === 'AMBIGUOUS_VALUE').length;
+  };
+  assert.equal(ambiguous({ kind: 'checkbox', options: ['A', 'B'], value: ['A', 'B'] }), 0);
+  assert.equal(ambiguous({ options: ['A', 'B'], value: ['A', 'B'] }), 0, 'checkbox is the default kind');
+  assert.equal(ambiguous({ kind: 'radio', options: ['A', 'B'], value: ['A', 'B'] }), 1);
 });

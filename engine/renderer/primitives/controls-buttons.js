@@ -60,16 +60,17 @@ function segmentButtons(node, lib, state) {
 }
 
 /**
- * Segmented control. With a label, help, error, required or readonly it
- * becomes a field: the label above, the segments in a named group, the help
- * below. Otherwise it renders exactly as it always did.
+ * Segmented control. With any field prop (label, help, error, required,
+ * disabled, readonly) it becomes a field: the label above, the segments in
+ * a group that carries the field state, the help below. Otherwise it renders
+ * exactly as it always did.
  */
 function renderSegmented(node, ctx, lib) {
   const props = node.props || {};
   const size = lib.str(props.size) || 'md';
   const state = fieldState(props, lib);
   const buttons = segmentButtons(node, lib, state);
-  const isField = lib.str(props.label) || lib.str(props.help) || state.invalid || state.required || state.readonly;
+  const isField = lib.str(props.label) || lib.str(props.help) || Object.values(state).includes(true);
   if (!isField) return { inner: buttons, className: `wf-segmented-${lib.toSafeClass(size)}` };
 
   const labelId = lib.str(props.label) ? partId(node, 'label') : '';
