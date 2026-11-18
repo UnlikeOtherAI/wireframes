@@ -46,6 +46,7 @@ Shared library. No CLI/API/framework deps. Pure JavaScript (CommonJS).
 | addressing | `wf://` URI parsing and node lookup |
 | validate | Schema + semantic validation |
 | doctor | Project health checks |
+| lint | Naming and element rules. `lint/source` runs every check on YAML text and returns each finding with its range, for editors ([source-lint.md](cli/source-lint.md)) |
 
 Consumed by: CLI, API, Admin (via API).
 
