@@ -273,15 +273,26 @@ edited like any local component:
 * The definition goes into `components.yaml`, which is created when missing, or
   into the existing components document given by `--file` (relative to the
   project).
+* The target must be inside the project once `..`, absolute paths and symbolic
+  links are resolved. A path or link that leads outside is refused, and nothing
+  is written.
 * It is stored as `<name>`, or as `--as <id>`, with its root id set to match.
 * An id the target document already has is refused; pick another with `--as`.
-* Nothing is written unless the resulting document validates.
+* An existing document keeps its text, comments included: the definition is
+  added after its last component. Nothing is written unless the result
+  validates, and the file is then replaced in one step.
 * It prints the id to use, `use: <id>`, or the alias-qualified id when `--file`
   names a document the project imports (`use: mk.landing_hero`).
 
-Built-ins are read-only. `wf component remove std.<name>`, and `wf node`
-writes to a `wf://component/std.<name>` address, fail with a message that
-points to `wf component copy`. `wf inspect` and `wf tree component` read them.
+A built-in is read-only only when the project has no component of that id. Then
+`wf component remove std.<name>`, and `wf node` writes to a
+`wf://component/std.<name>` address, fail with a message that points to
+`wf component copy`. `wf inspect` and `wf tree component` read them. A
+`std.<name>` the project defines under a `std` alias is the project's own and
+is read and edited in its file.
+
+`wf component remove` removes components defined in `components.yaml`. For an
+imported id it names the file that defines it.
 
 ---
 
@@ -296,10 +307,13 @@ wf node remove <address>
 
 Adds, updates, or removes elements and sections within a page or template tree.
 
-Works with both page and template addresses:
+Works with page, template and component addresses:
 
 * `wf://page/dashboard#...` — edits the page YAML
 * `wf://template/app_shell#...` — edits the template YAML
+* `wf://component/kit.panel#...` — edits the file that defines the component.
+  The id resolves like a `use:`, imported ids included. A file outside the
+  project is read, never written.
 
 ### wf node add
 

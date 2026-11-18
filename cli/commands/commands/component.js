@@ -8,11 +8,7 @@ const {
 } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'component'));
 const { describeComponent } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'component', 'describe'));
 const { copyComponent } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'component', 'copy'));
-const {
-  builtinComponentDefinition,
-  builtinComponentIds,
-  builtinCopyHint,
-} = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'stdlib'));
+const { builtinComponentIds } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'stdlib'));
 
 const SUBCOMMAND_USAGE = 'Usage: wf component <add|remove|list|show|copy> [id]';
 
@@ -90,11 +86,6 @@ function runComponent(args, context = {}) {
       return;
     }
 
-    if (builtinComponentDefinition(targetId.trim())) {
-      console.error(`wf component remove failed: ${builtinCopyHint(targetId.trim())}`);
-      process.exitCode = 1;
-      return;
-    }
     const result = removeComponent({ projectPath: cwd, componentId: targetId.trim() });
     if (result.ok) {
       console.log(`Removed component: ${result.componentId}`);

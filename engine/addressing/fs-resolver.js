@@ -1,8 +1,9 @@
 'use strict';
 
-const fs = require('node:fs');
 const path = require('node:path');
+const { loadProjectComponentRegistry } = require(path.resolve(__dirname, '..', 'component-registry'));
 const { resolveComponentDefinition } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
+const { projectFileTarget } = require(path.resolve(__dirname, '..', 'component-registry', 'project-file'));
 const { builtinCopyHint } = require(path.resolve(__dirname, '..', 'stdlib'));
 const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
 const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
@@ -27,7 +28,7 @@ function componentsFilePath(projectPath) {
 }
 
 function resolveAddress(projectPath, address) {
-  const { parseAddress, buildPageRoots, buildTemplateRoots, buildComponentRootsFromMap, isObject, SUPPORTED_DOCTYPES } = core();
+  const { parseAddress, buildPageRoots, buildTemplateRoots, isObject, SUPPORTED_DOCTYPES } = core();
   const parsed = parseAddress(address);
   if (!parsed.ok) return parsed;
 
@@ -77,42 +78,68 @@ function resolveAddress(projectPath, address) {
     };
   }
 
-  const cPath = componentsFilePath(projectPath);
-  const loaded = fs.existsSync(cPath) || !resolveComponentDefinition(parsed.documentId, null)
-    ? loadDocumentFromFile(cPath, { supportedSpecVersion: SUPPORTED_SPEC_VERSION })
-    : null;
-  const own = isObject(loaded?.document?.components) ? loaded.document.components : {};
-  if (!Object.hasOwn(own, parsed.documentId)) {
-    // A built-in std pattern is read-only: it can be inspected, never written.
-    const builtin = resolveComponentDefinition(parsed.documentId, own);
-    if (builtin) {
-      const builtinResult = buildComponentRootsFromMap({ [parsed.documentId]: structuredClone(builtin) }, parsed.documentId);
-      if (!builtinResult.ok) return builtinResult;
-      return {
-        ok: true,
-        documentPath: null,
-        document: null,
-        readOnly: builtinCopyHint(parsed.documentId),
-        roots: builtinResult.roots,
-        segments: parsed.pathSegments,
-        rawAddress: parsed.raw,
-        documentType: 'component',
-        documentId: parsed.documentId,
-      };
-    }
-  }
-  const componentsResult = buildComponentRootsFromMap(own, parsed.documentId);
-  if (!componentsResult.ok) return componentsResult;
+  return resolveComponentAddress(projectPath, parsed);
+}
 
-  return {
-    ok: true,
-    documentPath: cPath,
-    document: loaded.document,
-    roots: componentsResult.roots,
+function displayPath(projectPath, filePath) {
+  return path.relative(projectPath, filePath).split(path.sep).join('/');
+}
+
+/**
+ * A component address resolves the way a `use:` does: through the project
+ * registry, so a `std.<name>` the project defines (under a `std` alias) is the
+ * project's, read from and written to the file that defines it. Only an id the
+ * project lacks falls back to a built-in pattern, and that one is read-only.
+ */
+function resolveComponentAddress(projectPath, parsed) {
+  const { buildComponentRootsFromMap, isObject } = core();
+  const componentId = parsed.documentId;
+  const located = {
     segments: parsed.pathSegments,
     rawAddress: parsed.raw,
     documentType: 'component',
-    documentId: parsed.documentId,
+    documentId: componentId,
+  };
+
+  const loadedRegistry = loadProjectComponentRegistry(projectPath);
+  if (!loadedRegistry.ok) {
+    return { ok: false, error: `Unable to load project components: ${loadedRegistry.error}` };
+  }
+  const { components, sources } = loadedRegistry.registry;
+
+  if (!Object.hasOwn(components, componentId)) {
+    const builtin = resolveComponentDefinition(componentId, components);
+    if (!builtin) return { ok: false, error: `Component "${componentId}" does not exist.` };
+    const builtinResult = buildComponentRootsFromMap({ [componentId]: structuredClone(builtin) }, componentId);
+    if (!builtinResult.ok) return builtinResult;
+    return {
+      ok: true,
+      ...located,
+      documentPath: null,
+      document: null,
+      readOnly: builtinCopyHint(componentId),
+      roots: builtinResult.roots,
+    };
+  }
+
+  // The registry holds rewritten copies; the roots come from the authored document.
+  const source = sources[componentId];
+  const loaded = loadDocumentFromFile(source.sourcePath, { supportedSpecVersion: SUPPORTED_SPEC_VERSION });
+  const authored = isObject(loaded.document?.components) ? loaded.document.components[source.localId] : null;
+  const componentsResult = buildComponentRootsFromMap({ [componentId]: authored }, componentId);
+  if (!componentsResult.ok) return componentsResult;
+
+  const target = projectFileTarget(projectPath, source.sourcePath);
+  return {
+    ok: true,
+    ...located,
+    documentPath: source.sourcePath,
+    document: loaded.document,
+    ...(target.inside ? {} : {
+      readOnly: `Component "${componentId}" is defined in ${displayPath(projectPath, source.sourcePath)}, outside the project. `
+        + 'wf only writes files inside the project; edit that file directly.',
+    }),
+    roots: componentsResult.roots,
   };
 }
 

@@ -2,6 +2,8 @@
 
 const { PRIMITIVE_COMPONENTS } = require('../schema/primitives');
 const { childNodeLists } = require('./child-nodes');
+const { resolveComponentDefinition } = require('./definition-lookup');
+const { STD_PREFIX } = require('../stdlib');
 const IMPORT_ALIAS_REGEX = /^[a-z][a-z0-9_]*$/;
 
 function isObject(value) {
@@ -35,7 +37,25 @@ function qualifyReference(namespacePrefix, reference) {
   return namespacePrefix ? `${namespacePrefix}.${reference}` : reference;
 }
 
-function remapComponentReference(reference, localComponentIds, importAliases, namespacePrefix) {
+/**
+ * A module's own `std` alias shadows only the ids it defines. Any other
+ * `std.<name>` keeps the authored id, so the lookup rule still finds the
+ * built-in pattern; the qualified id is kept when neither has it, so the
+ * error names it.
+ */
+function qualifyImportedReference(reference, context) {
+  const qualified = qualifyReference(context.namespacePrefix, reference);
+  if (
+    reference.startsWith(STD_PREFIX)
+    && !Object.hasOwn(context.importedComponents, qualified)
+    && resolveComponentDefinition(reference, null)
+  ) {
+    return reference;
+  }
+  return qualified;
+}
+
+function remapComponentReference(reference, context) {
   if (typeof reference !== 'string') {
     return reference;
   }
@@ -47,14 +67,14 @@ function remapComponentReference(reference, localComponentIds, importAliases, na
 
   if (normalized.includes('.')) {
     const [alias] = normalized.split('.');
-    if (importAliases.has(alias)) {
-      return qualifyReference(namespacePrefix, normalized);
+    if (context.importAliases.has(alias)) {
+      return qualifyImportedReference(normalized, context);
     }
     return normalized;
   }
 
-  if (localComponentIds.has(normalized)) {
-    return qualifyReference(namespacePrefix, normalized);
+  if (context.localComponentIds.has(normalized)) {
+    return qualifyReference(context.namespacePrefix, normalized);
   }
 
   return normalized;
@@ -66,21 +86,11 @@ function rewriteComponentNode(node, context) {
   }
 
   if (typeof node.use === 'string') {
-    node.use = remapComponentReference(
-      node.use,
-      context.localComponentIds,
-      context.importAliases,
-      context.namespacePrefix,
-    );
+    node.use = remapComponentReference(node.use, context);
   }
 
   if (typeof node.component === 'string' && !PRIMITIVE_COMPONENTS.has(node.component)) {
-    node.component = remapComponentReference(
-      node.component,
-      context.localComponentIds,
-      context.importAliases,
-      context.namespacePrefix,
-    );
+    node.component = remapComponentReference(node.component, context);
   }
 
   for (const list of childNodeLists(node)) {
@@ -157,33 +167,11 @@ function createComponentRegistryResolver({
       };
     }
 
-    const registry = createEmptyRegistry();
     const components = isObject(loaded.document?.components) ? loaded.document.components : {};
-    const localComponentIds = new Set(Object.keys(components));
     const imports = readImportMap(loaded.document);
-    const importAliases = new Set(Object.keys(imports));
-    const context = {
-      localComponentIds,
-      importAliases,
-      namespacePrefix,
-    };
 
-    for (const [componentId, componentDoc] of Object.entries(components)) {
-      if (!isObject(componentDoc) || !isObject(componentDoc.root)) {
-        continue;
-      }
-
-      const qualifiedId = qualifyReference(namespacePrefix, componentId);
-      const cloned = cloneDeep(componentDoc);
-      rewriteComponentNode(cloned.root, context);
-
-      registry.components[qualifiedId] = cloned;
-      registry.sources[qualifiedId] = {
-        sourcePath: absolutePath,
-        localId: componentId,
-      };
-    }
-
+    // Imports load first, so a reference can tell what its alias defines.
+    const imported = createEmptyRegistry();
     for (const [alias, relativeImportPath] of Object.entries(imports)) {
       if (!IMPORT_ALIAS_REGEX.test(alias)) {
         return {
@@ -209,10 +197,39 @@ function createComponentRegistryResolver({
         return importedRegistry;
       }
 
-      const mergeResult = mergeComponentRegistry(registry, importedRegistry.registry);
+      const mergeResult = mergeComponentRegistry(imported, importedRegistry.registry);
       if (!mergeResult.ok) {
         return mergeResult;
       }
+    }
+
+    const registry = createEmptyRegistry();
+    const context = {
+      localComponentIds: new Set(Object.keys(components)),
+      importAliases: new Set(Object.keys(imports)),
+      importedComponents: imported.components,
+      namespacePrefix,
+    };
+
+    for (const [componentId, componentDoc] of Object.entries(components)) {
+      if (!isObject(componentDoc) || !isObject(componentDoc.root)) {
+        continue;
+      }
+
+      const qualifiedId = qualifyReference(namespacePrefix, componentId);
+      const cloned = cloneDeep(componentDoc);
+      rewriteComponentNode(cloned.root, context);
+
+      registry.components[qualifiedId] = cloned;
+      registry.sources[qualifiedId] = {
+        sourcePath: absolutePath,
+        localId: componentId,
+      };
+    }
+
+    const mergeResult = mergeComponentRegistry(registry, imported);
+    if (!mergeResult.ok) {
+      return mergeResult;
     }
 
     return {

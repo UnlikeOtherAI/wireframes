@@ -6,6 +6,9 @@ const yaml = require('js-yaml');
 const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
 const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 const { childNodeLists } = require(path.resolve(__dirname, '..', 'component-registry', 'child-nodes'));
+const { loadProjectComponentRegistry } = require(path.resolve(__dirname, '..', 'component-registry'));
+const { resolveComponentDefinition } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
+const { builtinCopyHint } = require(path.resolve(__dirname, '..', 'stdlib'));
 
 const COMPONENT_ID_REGEX = /^[a-z][a-z0-9_]*$/;
 
@@ -247,13 +250,33 @@ function addComponent({ projectPath, componentId }) {
   };
 }
 
+/**
+ * Why a dotted id cannot be removed here, judged by what it resolves to: a
+ * component another file defines (imported under an alias, `std` included) or,
+ * only when the project has none, a built-in pattern.
+ */
+function importedRemoveError(projectPath, componentId) {
+  const loaded = loadProjectComponentRegistry(projectPath);
+  if (!loaded.ok) {
+    return `Unable to load project components: ${loaded.error}`;
+  }
+  const source = loaded.registry.sources[componentId];
+  if (source) {
+    const file = path.relative(projectPath, source.sourcePath).split(path.sep).join('/');
+    return `Component "${componentId}" is defined in ${file} as "${source.localId}". `
+      + `wf component remove only removes components defined in components.yaml; delete "${source.localId}" from ${file}.`;
+  }
+  return resolveComponentDefinition(componentId, loaded.registry.components) ? builtinCopyHint(componentId) : null;
+}
+
 function removeComponent({ projectPath, componentId }) {
   const normalizedId = typeof componentId === 'string' ? componentId.trim() : '';
 
   if (!isValidId(normalizedId)) {
     return {
       ok: false,
-      error: `Invalid component id "${componentId}". Use snake_case alpha-numeric with underscores starting with a letter.`,
+      error: (normalizedId.includes('.') && importedRemoveError(projectPath, normalizedId))
+        || `Invalid component id "${componentId}". Use snake_case alpha-numeric with underscores starting with a letter.`,
     };
   }
 
