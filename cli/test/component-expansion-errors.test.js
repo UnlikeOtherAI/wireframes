@@ -105,3 +105,59 @@ test('N1 a cause the reference or cycle checks already report is not reported tw
   assert.deepEqual(cycleErrors.map((entry) => entry.code), ['CIRCULAR_TEMPLATE_REFERENCE'], JSON.stringify(cycleErrors));
   assert.deepEqual(expansionErrors(cycleErrors), [], 'the project cycle check already names kit.loop');
 });
+
+/**
+ * The probe for R1: the page fills `main`, so the template's fallback for it, which
+ * holds the `fallback_target` placeholder, never renders, and neither does the
+ * page's injection for it.
+ */
+function overriddenFallbackProject(mutate) {
+  const projectPath = pageImportProject((docs) => {
+    docs.page.page.slots[0].content = [{ id: 'real_failure', use: 'kit.loop' }];
+    docs.page.page.injectables = [{ injectableId: 'fallback_target', content: [{ id: 'unused', use: 'kit.missing' }] }];
+    if (mutate) mutate(docs);
+  });
+  const templatesPath = path.join(projectPath, 'templates.yaml');
+  const templates = readYaml(templatesPath);
+  const templateId = readYaml(path.join(projectPath, 'pages', 'home.yaml')).page.template;
+  templates.templates[templateId].regions.find((region) => region.id === 'main').children = [
+    node('fallback_target', 'stack', {}, { injectable: true }),
+  ];
+  writeYaml(templatesPath, templates);
+  return projectPath;
+}
+
+test('R1 an injection whose placeholder does not render is not reported when a region fails', () => {
+  const projectPath = overriddenFallbackProject();
+  const errors = runValidate({ projectPath }).errors;
+  assert.deepEqual(errors.map((entry) => entry.code), ['CIRCULAR_TEMPLATE_REFERENCE'], JSON.stringify(errors));
+  assert.match(errors[0].message, /Node "real_failure" in page "home" slot "main" cannot be expanded/);
+  const located = lintSources(readSources(projectPath)).diagnostics.filter((entry) => /cannot be expanded/.test(entry.message));
+  assert.deepEqual(located.map((entry) => [entry.code, entry.path]), [['CIRCULAR_TEMPLATE_REFERENCE', '$.page.slots[0].content[0]']]);
+
+  // With the cycle fixed the page builds, and the injection still never renders.
+  const pagePath = path.join(projectPath, 'pages', 'home.yaml');
+  const page = readYaml(pagePath);
+  page.page.slots[0].content = [node('replacement', 'text', { text: 'Replaced fallback' })];
+  writeYaml(pagePath, page);
+  assert.deepEqual(runValidate({ projectPath }).errors, []);
+});
+
+test('R1 an injection a rendered placeholder reaches is still reported when a region fails', () => {
+  // `page_actions` is a placeholder in the template's persistent header; its content
+  // holds a second placeholder, so `relayed` renders through it.
+  const projectPath = overriddenFallbackProject((docs) => {
+    docs.page.page.injectables.push(
+      { injectableId: 'page_actions', content: [node('relay', 'stack', {}, { children: [{ id: 'relayed', injectable: true }] }), { id: 'shown', use: 'kit.missing' }] },
+      { injectableId: 'relayed', content: [{ id: 'deep', use: 'kit.loop' }] },
+    );
+  });
+  const errors = expansionErrors(runValidate({ projectPath }).errors);
+  assert.deepEqual(errors.map((entry) => entry.message.match(/^Node "(\w+)"/)[1]).sort(), ['deep', 'real_failure', 'shown'], JSON.stringify(errors));
+  const located = lintSources(readSources(projectPath)).diagnostics.filter((entry) => /cannot be expanded/.test(entry.message));
+  assert.deepEqual(located.map((entry) => entry.path).sort(), [
+    '$.page.injectables[1].content[1]',
+    '$.page.injectables[2].content[0]',
+    '$.page.slots[0].content[0]',
+  ]);
+});
