@@ -84,6 +84,11 @@ for (const mode of ['card', 'line']) test(mode + ': hover, pins, gaps, Escape an
 
     await hover(page, '#locked', 10, 10);
     assert.equal((await labels(page)).width, fmt((await rectOf(page, '#locked')).width), 'disabled controls are measurable');
+    await click(page, '#locked', 10, 10);
+    const pinned = await page.locator('[data-wf-measure-box="pin"]').evaluate((el) => el.getBoundingClientRect().width);
+    assert.equal(fmt(pinned), fmt((await rectOf(page, '#locked')).width), 'a disabled control can be pinned');
+    await click(page, '#locked', 10, 10);
+    assert.equal(await page.locator('[data-wf-measure-box="pin"]').count(), 0, 'clicking the pin again releases it');
 
     await click(page, '#left_card');
     assert.equal(await page.locator('.wf-runtime-toast').count(), 0, 'clicking pins instead of running the action');

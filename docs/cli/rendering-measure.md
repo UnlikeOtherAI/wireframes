@@ -33,6 +33,9 @@ Every page load starts with measurement off; hosts replay their state on load.
   draw nothing. When the measured line falls outside the pinned box, a dashed
   guide extends the pinned edge to it.
 
+Bands that are entirely outside the viewport are not drawn; dimension lines
+that are partly outside keep their chip inside the viewport.
+
 Labels show the border-box size in the page's own CSS pixels, rounded to one
 decimal place only when formatted (`320`, `43.4`). Colours are a magenta ink
 (`#c2185b`) with a white halo, white chip text, green hatching for padding and
@@ -63,11 +66,16 @@ resize. While it exists, a style inside it shows a crosshair cursor.
 
 ## Input while measuring
 
-Capture-phase listeners on `window` for `pointerdown`, `mousedown`, `click`,
-`keydown`, `touchstart` and `touchend` stop each event before any page handler
-runs. `mousedown` and `click` are also default-prevented, so links do not
-follow, fields do not focus and selects do not open. Touch listeners are
-passive and wheel events are untouched, so scrolling keeps working.
+Capture-phase listeners on `window` for `pointerdown`, `pointerup`,
+`mousedown`, `click`, `keydown`, `touchstart` and `touchend` stop each event
+before any page handler runs. `mousedown` and `click` are also
+default-prevented, so links do not follow, fields do not focus and selects do
+not open. Touch listeners are passive and wheel events are untouched, so
+scrolling keeps working.
+
+A pick (pin or release) happens on a `pointerup` that ends within 8 px of its
+`pointerdown`, not on `click`: browsers send disabled form controls pointer
+events but no click, and a drag or scroll is not a pick.
 
 - **Escape** is handled once: it unpins, or does nothing when nothing is
   pinned. Overlays do not also close.

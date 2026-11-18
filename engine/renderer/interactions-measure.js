@@ -14,11 +14,11 @@
  * those events.
  */
 function buildMeasureRuntimeCode() {
-  return `var WF_MEASURE = { on: false, layer: null, marks: null, hover: null, pin: null, x: 0, y: 0, hasPoint: false, touch: false };
+  return `var WF_MEASURE = { on: false, layer: null, marks: null, hover: null, pin: null, press: null, x: 0, y: 0, hasPoint: false, touch: false };
 var WF_MEASURE_INK = '#c2185b';
 var WF_MEASURE_HALO = 'rgba(255,255,255,.9)';
 var WF_MEASURE_TARGETS = '.wf-node[id],.wf-root[id],.wf-overlay[id]';
-var WF_MEASURE_STOPPED = ['pointerdown', 'mousedown', 'click', 'keydown', 'touchstart', 'touchend'];
+var WF_MEASURE_STOPPED = ['pointerdown', 'pointerup', 'mousedown', 'click', 'keydown', 'touchstart', 'touchend'];
 var WF_MEASURE_MARK = 'position:absolute;margin:0;padding:0;border:0;box-sizing:border-box;';
 var WF_MEASURE_CHIP = 'font:600 11px/16px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;'
   + 'letter-spacing:0;text-transform:none;white-space:nowrap;color:#ffffff;background:' + WF_MEASURE_INK + ';'
@@ -131,7 +131,8 @@ function measureDimensions(box) {
   measureVLine(box.top, box.bottom, Math.round(x), 'height', box.height);
 }
 function measureBand(left, top, width, height, fill, kind, value) {
-  if (width < 1 || height < 1) return;
+  var view = measureViewport();
+  if (width < 1 || height < 1 || left >= view.w || top >= view.h || left + width <= 0 || top + height <= 0) return;
   measureMark(left, top, width, height, fill).setAttribute('data-wf-measure-band', kind);
   measureChip(left + width / 2, top + height / 2, value, kind);
 }
@@ -266,9 +267,8 @@ function measureKey(event) {
 }
 // Mouse: a click pins, and clicking the pin again releases it. Touch has no
 // hover, so after the first tap pins, tapping another target measures to it.
-function measureClick(event) {
-  if (event.detail === 0) return;
-  var target = measureTargetAt(event.clientX, event.clientY);
+function measurePick(x, y) {
+  var target = measureTargetAt(x, y);
   if (WF_MEASURE.touch && WF_MEASURE.pin && target !== WF_MEASURE.pin) {
     WF_MEASURE.hover = target;
   } else {
@@ -278,13 +278,26 @@ function measureClick(event) {
   measureDraw();
   try { if (!document.hasFocus()) window.focus(); } catch (_err) {}
 }
+// A press picks on pointerup rather than click: disabled controls receive
+// pointer events but no click. Drags and scrolls are not picks.
+function measurePress(event) {
+  if (event.type === 'pointerdown') {
+    WF_MEASURE.touch = event.pointerType === 'touch';
+    WF_MEASURE.press = event.isPrimary && event.button === 0 ? { id: event.pointerId, x: event.clientX, y: event.clientY } : null;
+    return;
+  }
+  var press = WF_MEASURE.press;
+  WF_MEASURE.press = null;
+  if (press && press.id === event.pointerId && Math.abs(event.clientX - press.x) <= 8 && Math.abs(event.clientY - press.y) <= 8) {
+    measurePick(event.clientX, event.clientY);
+  }
+}
 function measureCapture(event) {
   if (!WF_MEASURE.on) return;
   event.stopImmediatePropagation();
-  if (event.type === 'keydown') { measureKey(event); return; }
-  if (event.type === 'pointerdown') WF_MEASURE.touch = event.pointerType === 'touch';
-  if (event.type === 'mousedown' || event.type === 'click') event.preventDefault();
-  if (event.type === 'click') measureClick(event);
+  if (event.type === 'keydown') measureKey(event);
+  else if (event.type === 'pointerdown' || event.type === 'pointerup') measurePress(event);
+  else if (event.type === 'mousedown' || event.type === 'click') event.preventDefault();
 }
 function measureMove(event) {
   if (event.pointerType === 'touch') return;
@@ -316,7 +329,7 @@ function setMeasure(on) {
   if (!on) {
     measureListeners(false);
     if (WF_MEASURE.layer && WF_MEASURE.layer.parentNode) WF_MEASURE.layer.parentNode.removeChild(WF_MEASURE.layer);
-    WF_MEASURE.layer = WF_MEASURE.marks = WF_MEASURE.hover = WF_MEASURE.pin = null;
+    WF_MEASURE.layer = WF_MEASURE.marks = WF_MEASURE.hover = WF_MEASURE.pin = WF_MEASURE.press = null;
     WF_MEASURE.hasPoint = false;
     return;
   }
