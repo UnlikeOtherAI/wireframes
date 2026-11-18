@@ -1,5 +1,7 @@
 'use strict';
 
+const { leadingChild } = require('../../schema/leading-child');
+
 function hrefFor(route, ctx, lib) {
   const routeId = lib.str(route);
   if (!routeId || !lib.isObject(ctx.routeTable)) return null;
@@ -170,17 +172,6 @@ function renderMenu(node, ctx, lib) {
   return { inner: markup };
 }
 
-/**
- * The child an app bar names as its leading control. `leading` is an icon name, or the id
- * of one of the bar's children, which is then drawn before the title in place of a glyph:
- * a glyph cannot be pressed, and a menu or back button has to be.
- */
-function leadingChild(node) {
-  const name = node && node.props ? node.props.leading : null;
-  if (typeof name !== 'string' || name === '' || !Array.isArray(node.children)) return null;
-  return node.children.find((child) => child && child.id === name) || null;
-}
-
 function renderAppBar(node, ctx, lib) {
   const props = node.props || {};
   if (Array.isArray(node.children) && node.children.length && !props.title && !props.leading && !props.actions?.length) {
@@ -250,7 +241,6 @@ function renderActionSheet(node, ctx, lib) {
 }
 
 module.exports = {
-  leadingChild,
   navigationRenderers: {
     action_sheet: renderActionSheet,
     tab_bar: renderTabBar,
