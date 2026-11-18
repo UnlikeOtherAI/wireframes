@@ -1414,12 +1414,20 @@ function bindRouteLinks() {
     }
   });
 }
+// A form element renders a real <form>, so its buttons and Enter in a field
+// submit it natively and reload the page. A prototype submits through its own
+// submit interactions only.
+function blockNativeSubmit() {
+  if (!document || typeof document.addEventListener !== 'function') return;
+  document.addEventListener('submit', function (event) { event.preventDefault(); }, true);
+}
 function init() {
   initMeasure();
   initState();
   initControls();
   initPanes();
   refresh();
+  blockNativeSubmit();
   bindSelection();
   bindInteractions();
   bindRouteLinks();
