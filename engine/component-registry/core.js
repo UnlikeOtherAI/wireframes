@@ -2,7 +2,7 @@
 
 const { PRIMITIVE_COMPONENTS } = require('../schema/primitives');
 const { childNodeLists } = require('./child-nodes');
-const { resolveComponentDefinition } = require('./definition-lookup');
+const { builtinReference } = require('./definition-lookup');
 const { STD_PREFIX } = require('../stdlib');
 const IMPORT_ALIAS_REGEX = /^[a-z][a-z0-9_]*$/;
 
@@ -39,18 +39,14 @@ function qualifyReference(namespacePrefix, reference) {
 
 /**
  * A module's own `std` alias shadows only the ids it defines. Any other
- * `std.<name>` keeps the authored id, so the lookup rule still finds the
- * built-in pattern; the qualified id is kept when neither has it, so the
- * error names it.
+ * `std.<name>` names the built-in pattern alone, so a `std` alias elsewhere in
+ * the project cannot take its place; the qualified id is kept when neither has
+ * it, so the error names it.
  */
 function qualifyImportedReference(reference, context) {
   const qualified = qualifyReference(context.namespacePrefix, reference);
-  if (
-    reference.startsWith(STD_PREFIX)
-    && !Object.hasOwn(context.importedComponents, qualified)
-    && resolveComponentDefinition(reference, null)
-  ) {
-    return reference;
+  if (reference.startsWith(STD_PREFIX) && !Object.hasOwn(context.importedComponents, qualified)) {
+    return builtinReference(reference) ?? qualified;
   }
   return qualified;
 }
