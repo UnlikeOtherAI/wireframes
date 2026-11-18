@@ -6,6 +6,7 @@ const { validateLogoReferences } = require('../design-system/logo-references');
 const { validateIconReferences } = require('../icons/validate');
 const { SUPPORTED_SPEC_VERSION } = require('../schema/constants');
 const { checkComponentSlots } = require('../doctor/component-slots');
+const { checkStdAlias } = require('../doctor/std-alias');
 
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
@@ -110,7 +111,15 @@ function validateProject(documentMap, options = {}) {
       definitions: registriesByPage?.get(pageId),
     })),
   });
-  for (const diagnostic of slotDiagnostics) {
+  const projectDefinitions = isObject(documentMap.components?.components) ? documentMap.components.components : {};
+  const stdAliasDiagnostics = checkStdAlias([
+    { label: 'components', document: documentMap.components, definitions: projectDefinitions },
+    { label: 'templates', document: documentMap.templates, definitions: projectDefinitions },
+    ...[...pages].map(([pageId, pageDoc]) => ({
+      label: `page "${pageId}"`, document: pageDoc, definitions: registriesByPage?.get(pageId) ?? projectDefinitions,
+    })),
+  ]);
+  for (const diagnostic of [...slotDiagnostics, ...stdAliasDiagnostics]) {
     (diagnostic.severity === 'errors' ? errors : info).push({ code: diagnostic.code, message: diagnostic.message });
   }
 

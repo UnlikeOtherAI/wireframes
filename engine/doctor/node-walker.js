@@ -7,6 +7,7 @@
  */
 
 const { childNodeLists } = require('../component-registry/child-nodes');
+const { resolveComponentDefinition } = require('../component-registry/definition-lookup');
 const {
   addDiagnostic,
   isObject,
@@ -80,7 +81,7 @@ function validateNode(node, context, depth = 1) {
   validateNodeRules(node, context);
 
   if (node.use != null) {
-    const componentEntry = context.componentRoots && context.componentRoots[node.use];
+    const componentEntry = resolveComponentDefinition(node.use, context.componentRoots);
     if (isObject(componentEntry) && isObject(componentEntry.root)) {
       if (!context.useStack.has(node.use)) {
         // A nested definition's ids are namespaced under this instance when it
