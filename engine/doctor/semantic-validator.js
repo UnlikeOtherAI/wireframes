@@ -6,6 +6,7 @@
 // `semantic-interactions.js`.
 
 const { resolveTemplatePage } = require('../resolver');
+const { appendPath } = require('../schema/validator');
 const {
   isObject,
   addDiagnostic,
@@ -77,6 +78,7 @@ function collectComponentRoots(componentMap, result, routeIds, defaultGridColumn
     const context = createNodeContext({
       result,
       document: 'components',
+      within: `${appendPath('$.components', componentId)}.root`,
       pageId: `component "${componentId}"`,
       routeIds,
       appState: {},

@@ -242,5 +242,7 @@ test('a component may reuse an id that a nested component also uses', () => {
   const repeated = createSlotsProject(withLayout([{ id: 'body', component: 'text' }]));
   const real = duplicates(runValidate({ projectPath: repeated }));
   assert.ok(real.some((error) => /"layout".*"body"/.test(error.message)), JSON.stringify(real));
-  assert.ok(inMemory(repeated).some((diagnostic) => /"layout".*"body"/.test(diagnostic.message)), 'the source linter reports the real duplicate');
+  const located = inMemory(repeated).find((diagnostic) => /"layout".*"body"/.test(diagnostic.message));
+  assert.ok(located, 'the source linter reports the real duplicate');
+  assert.equal(located.source, 'components.yaml');
 });

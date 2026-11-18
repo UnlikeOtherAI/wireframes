@@ -50,6 +50,7 @@ function createNodeContext(options) {
   const {
     result,
     document,
+    within,
     pageId,
     routeIds,
     appState,
@@ -63,8 +64,10 @@ function createNodeContext(options) {
 
   return {
     result,
-    // The document map's label for what is being walked, so a finding can be found in its text.
+    // The document map's label for what is being walked, so a finding can be found in its text,
+    // and the path of the component definition being walked, when it is one.
     document,
+    within,
     pageId,
     routeIds,
     appState,
