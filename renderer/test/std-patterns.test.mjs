@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assertComponentExpansion, createWireframe, renderProject, serializeWf } from '../bundle/wireframe-renderer.min.js';
+import { assertComponentExpansion, createWireframe, parseProject, renderProject, serializeWf } from '../bundle/wireframe-renderer.min.js';
 import { MANIFEST_YAML, SITEMAP_BASIC, TEMPLATES_YAML } from './fixtures.mjs';
 
 const doc = (value) => JSON.stringify({ specVersion: '1.1', ...value });
@@ -76,4 +76,34 @@ test('the project wins over a built-in std pattern of the same id', () => {
 test('the expansion guard knows the built-ins', () => {
   assert.ok(assertComponentExpansion([{ id: 'x', use: 'std.settings_page' }], {}) > 10);
   assert.throws(() => assertComponentExpansion([{ id: 'x', use: 'std.nope' }], {}), /Unknown component: std\.nope/);
+});
+
+// `kit` imports its own `std` alias, which defines only `badge`.
+const nestedStd = (content) => ({
+  ...files(content),
+  'components/kit.yaml': doc({ documentType: 'components', id: 'kit', imports: { std: './mine.yaml' }, components: {
+    landing: { root: { id: 'landing', component: 'section', children: [
+      { id: 'tag', use: 'std.badge' },
+      { id: 'banner', use: 'std.hero', props: { title: 'Kit hero' } },
+    ] } },
+  } }),
+  'components/mine.yaml': doc({ documentType: 'components', id: 'mine', components: {
+    badge: { root: { id: 'badge', component: 'text', props: { text: 'Kit badge' } } },
+  } }),
+});
+
+test('a module std alias shadows only its own ids in the browser bundle', () => {
+  const rooted = nestedStd([{ id: 'promo', use: 'kit.landing' }]);
+  rooted['components.yaml'] = doc({ documentType: 'components', id: 'components', components: {}, imports: { kit: './components/kit.yaml' } });
+  const html = renderProject(rooted).pages.get('home');
+  assert.match(html, /Kit badge/, 'the module alias wins for badge');
+  assert.match(html, /id="promo__banner__title"[^>]*><h1>Kit hero/, 'std.hero falls back to the built-in');
+
+  const paged = nestedStd([{ id: 'promo', use: 'kit.landing' }]);
+  paged['pages/home.yaml'] = paged['pages/home.yaml'].replace('"documentType":"page"', '"documentType":"page","imports":{"kit":"../components/kit.yaml"}');
+  assert.match(renderProject(paged).pages.get('home'), /Kit hero/, 'the same through a page import');
+
+  const registry = parseProject(rooted).documentMap.componentRegistriesByFile.get('components/kit.yaml');
+  assert.deepEqual(registry.components[`${registry.namespace}.landing`].root.children.map((node) => node.use),
+    [`${registry.namespace}.std.badge`, 'std.hero'], 'the per-file registry an editor previews with resolves the same way');
 });
