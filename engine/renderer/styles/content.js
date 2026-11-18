@@ -120,6 +120,7 @@ const contentStyles = [
   '.wf-alert-body{flex:1 1 auto;min-width:0}',
   '.wf-alert-title{font-size:13px;font-weight:600;color:var(--wf-ink);line-height:1.4}',
   '.wf-alert-text{font-size:12px;color:var(--wf-ink-2);line-height:1.5}',
+  '.wf-alert-body>.wf-actions{margin-top:10px}',
   '.wf-alert-close{background:none;border:none;font-size:16px;color:var(--wf-ink-4);cursor:pointer;line-height:1;padding:0 2px}',
   '.wf-alert-inline{padding:8px 10px}',
 ].join('\n');

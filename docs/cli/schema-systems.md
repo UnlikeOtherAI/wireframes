@@ -200,6 +200,8 @@ Optional:
 * `placement` — top, bottom, left, right, center
 * `dismissOn` — array of dismissal triggers: backdrop, escape, button, timeout, outside
 * `wireframeStyle` — per-overlay style override
+* `props.title` — title in the overlay header
+* `props.actions` — footer actions: `{ label, variant, route, disabled, tone }`, no other keys. They render like every other action row (§15.4).
 
 Rules:
 
@@ -460,9 +462,11 @@ navigate: `nav`, `breadcrumb`, `tab_bar`, `bottom_tab_bar`, `menu`, `list`,
 (an action renders as a plain button). An item route is ignored when the
 element itself carries an interaction, so anchors never nest.
 
-**Actions.** Action rows (`page_header.actions`, and the `actions` drawn in
-the head of `card`, `section` and `form`) take
-`{ label, icon, variant, route, disabled, pressed, tone }`. A disabled action
+**Actions.** Action rows (`page_header.actions`, the `actions` drawn in the
+head of `card`, `section` and `form`, `alert.actions` below the alert text,
+and overlay footer `actions`) take
+`{ label, icon, variant, route, disabled, pressed, tone }`; the overlay schema
+allows only `label`, `variant`, `route`, `disabled` and `tone`. A disabled action
 is a button with `aria-disabled="true"` and no link; `pressed` (true or false)
 makes it a toggle button with `aria-pressed`; `tone` adds the shared
 `wf-tone-*` class. Rendering details are in

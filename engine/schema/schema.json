@@ -541,6 +541,22 @@
                       "danger",
                       "link"
                     ]
+                  },
+                  "route": {
+                    "type": "string"
+                  },
+                  "disabled": {
+                    "type": "boolean"
+                  },
+                  "tone": {
+                    "type": "string",
+                    "enum": [
+                      "neutral",
+                      "info",
+                      "success",
+                      "warning",
+                      "danger"
+                    ]
                   }
                 }
               }
@@ -2951,6 +2967,9 @@
         "description": {
           "type": "string"
         },
+        "actions": {
+          "type": "array"
+        },
         "media": {
           "type": "string"
         },
@@ -4052,7 +4071,7 @@
     },
     "PrimitiveProps_chart": {
       "type": "object",
-      "description": "Greeked chart placeholder in nine shapes. Deterministic, never random.",
+      "description": "Greeked chart placeholder in ten shapes. Deterministic, never random. gantt draws data [{ label, start, end, tone }] as bars on one axis labelled by ticks.",
       "properties": {
         "chartType": {
           "type": "string",
@@ -4066,7 +4085,8 @@
             "donut",
             "gauge",
             "sparkline",
-            "heatmap"
+            "heatmap",
+            "gantt"
           ]
         },
         "title": {
@@ -4077,6 +4097,9 @@
           "description": "Accepted alias for title; title wins when both are set."
         },
         "data": {
+          "type": "array"
+        },
+        "ticks": {
           "type": "array"
         },
         "series": {
@@ -4125,7 +4148,7 @@
     },
     "PrimitiveProps_tree": {
       "type": "object",
-      "description": "Nested tree or file browser.",
+      "description": "Nested tree or file browser. Items stay open unless they set expanded: false.",
       "properties": {
         "items": {
           "type": "array"
@@ -4137,7 +4160,7 @@
     },
     "PrimitiveProps_accordion": {
       "type": "object",
-      "description": "Collapsible rows; set open on the item that starts expanded.",
+      "description": "Collapsible rows; set expanded on the item that starts open.",
       "properties": {
         "items": {
           "type": "array"
@@ -4172,6 +4195,9 @@
         },
         "inline": {
           "type": "boolean"
+        },
+        "actions": {
+          "type": "array"
         }
       }
     }

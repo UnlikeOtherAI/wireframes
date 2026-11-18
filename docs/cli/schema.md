@@ -562,7 +562,7 @@ or a control with its own chrome; **edge only** draws one divider edge;
 | Element | Box | Props |
 |---|---|---|
 | `section` | rules decide | title, description |
-| `card` | always | title, description, media, footer |
+| `card` | always | title, description, actions, media, footer |
 | `stack` | never | gap, padding, align |
 | `row` | never | gap, padding, align, justify, wrap, nowrap |
 | `grid` | never | columns, gap, minItemWidth |
@@ -631,7 +631,7 @@ or a control with its own chrome; **edge only** draws one divider edge;
 |---|---|---|
 | `table` | rules decide | columns, rows, caption, selectable, state: default\|loading\|empty, emptyText, dense, pagination |
 | `list` | rules decide | items, kind: plain\|avatar\|action\|file\|chat\|timeline\|settings, divided, selectable, refreshable |
-| `chart` | rules decide | chartType: bar\|vertical\|horizontal\|line\|area\|pie\|donut\|gauge\|sparkline\|heatmap, title, label, data, series, legend, axes, height |
+| `chart` | rules decide | chartType: bar\|vertical\|horizontal\|line\|area\|pie\|donut\|gauge\|sparkline\|heatmap\|gantt, title, label, data, ticks, series, legend, axes, height |
 | `calendar` | always | view: month\|week\|day\|picker, date, events |
 | `kanban` | never | columns |
 | `tree` | rules decide | items, expanded |
@@ -641,7 +641,7 @@ or a control with its own chrome; **edge only** draws one divider edge;
 
 | Element | Box | Props |
 |---|---|---|
-| `alert` | always | text, title, variant: info\|success\|warning\|error\|neutral, icon, dismissible, inline |
+| `alert` | always | text, title, variant: info\|success\|warning\|error\|neutral, icon, dismissible, inline, actions |
 
 ### Aliases
 

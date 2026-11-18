@@ -94,8 +94,9 @@ Spread a preset to change its token, for example
 
 ## Actions
 
-`lib.actionButtons` renders every action row: `page_header.actions`, and the
-`actions` in the head block of `card`, `section` and `form`:
+`lib.actionButtons` renders every action row: `page_header.actions`, the
+`actions` in the head block of `card`, `section` and `form`, `alert.actions`
+and overlay footers ([rendering-data.md](rendering-data.md#actions)):
 
 | Action | Markup |
 |---|---|

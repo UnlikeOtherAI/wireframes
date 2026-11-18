@@ -115,3 +115,30 @@ page:
             title: Nothing selected
             text: Pick a project from the list to see its detail here.
             action: Browse projects
+        - id: line_actions_grid
+          component: grid
+          props:
+            columns: 2
+          children:
+            - id: line_card_actions
+              component: card
+              props:
+                title: Card actions
+                actions:
+                  - { label: Open, route: line_data }
+                  - { label: Archive, disabled: true }
+                  - { label: Delete, tone: danger }
+              children:
+                - id: line_card_actions_body
+                  component: paragraph
+                  props:
+                    lines: 2
+            - id: line_alert_actions
+              component: alert
+              props:
+                title: Your trial ends in three days
+                text: Add a payment method to keep every project.
+                variant: warning
+                actions:
+                  - { label: Add payment method, variant: primary, route: line_forms }
+                  - { label: Download, disabled: true }

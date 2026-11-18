@@ -3,9 +3,11 @@
 // Greeked chart placeholders. Every shape is a pure function of the node id and
 // the declared data, so the same YAML always produces the same SVG.
 
+const { ganttBody } = require('./chart-gantt');
+
 const SHAPES = new Set([
   'bar', 'vertical', 'horizontal', 'line', 'area',
-  'pie', 'donut', 'gauge', 'sparkline', 'heatmap',
+  'pie', 'donut', 'gauge', 'sparkline', 'heatmap', 'gantt',
 ]);
 
 const W = 320;
@@ -123,10 +125,30 @@ function axesShape() {
   return `<line class="wf-chart-axis" x1="0" y1="${H}" x2="${W}" y2="${H}" /><line class="wf-chart-axis" x1="0" y1="0" x2="0" y2="${H}" />`;
 }
 
+function chartHeading(props, ctx, lib) {
+  const title = lib.textProp(props, 'title', 'label');
+  return title ? `<div class="wf-chart-title">${lib.bound(title, ctx)}</div>` : '';
+}
+
+function chartLegend(props, seriesCount, lib) {
+  return props.legend === true
+    ? `<div class="wf-chart-legend">${Array.from({ length: Math.max(1, Math.min(4, seriesCount)) }, (_, i) => (
+      `<span class="wf-legend-key"><span class="wf-legend-swatch wf-series-${i}"></span>${lib.renderSkeleton(5)}</span>`
+    )).join('')}</div>`
+    : '';
+}
+
 function renderChart(node, ctx, lib) {
   const props = node.props || {};
   const shape = SHAPES.has(props.chartType) ? props.chartType : 'bar';
   const seriesCount = lib.num(props.series, 1);
+
+  if (shape === 'gantt') {
+    return {
+      inner: `${chartHeading(props, ctx, lib)}${ganttBody(node, ctx, lib)}${chartLegend(props, seriesCount, lib)}`,
+      className: 'wf-chart-gantt',
+    };
+  }
 
   let body;
   if (shape === 'bar' || shape === 'vertical') body = bars(node, lib, false);
@@ -149,18 +171,11 @@ function renderChart(node, ctx, lib) {
     };
   }
 
-  const title = lib.textProp(props, 'title', 'label');
-  const heading = title ? `<div class="wf-chart-title">${lib.bound(title, ctx)}</div>` : '';
-  const legend = props.legend === true
-    ? `<div class="wf-chart-legend">${Array.from({ length: Math.max(1, Math.min(4, seriesCount)) }, (_, i) => (
-      `<span class="wf-legend-key"><span class="wf-legend-swatch wf-series-${i}"></span>${lib.renderSkeleton(5)}</span>`
-    )).join('')}</div>`
-    : '';
   const height = lib.num(props.height, null);
   const heightStyle = height ? ` style="height:${height}px"` : '';
 
   return {
-    inner: `${heading}<svg class="wf-chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"${heightStyle}>${axes}${body}</svg>${legend}`,
+    inner: `${chartHeading(props, ctx, lib)}<svg class="wf-chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"${heightStyle}>${axes}${body}</svg>${chartLegend(props, seriesCount, lib)}`,
     className: `wf-chart-${lib.toSafeClass(shape)}`,
   };
 }

@@ -14,6 +14,7 @@ const feedbackPrimitives = [
       icon: { type: 'string' },
       dismissible: { type: 'boolean' },
       inline: { type: 'boolean' },
+      actions: { type: 'array', items: true },
     },
     aliases: { banner: 'alert', callout: 'alert' },
     example: '- alert: { title: Trial ends soon, text: 3 days left, variant: warning }',

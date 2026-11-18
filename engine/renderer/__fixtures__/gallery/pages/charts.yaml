@@ -155,3 +155,83 @@ page:
                 cards:
                   - title: Primitive registry
                     meta: Schema
+
+        # --- Gantt, and the shared item model in tree and accordion ---
+        - id: gantt_grid
+          component: grid
+          props:
+            columns: 2
+          children:
+            - id: gantt_release
+              component: chart
+              props:
+                chartType: gantt
+                title: Release plan
+                ticks: [W1, W2, W3, W4, W5, W6]
+                data:
+                  - { label: Research, start: 0, end: 6 }
+                  - { label: Design review, start: 5, end: 14, tone: info }
+                  - { label: Build, start: 10, end: 30 }
+                  - { label: QA and fixes, start: 26, end: 36, tone: warning }
+                  - { label: Launch, start: 35, end: 36, tone: success }
+            - id: gantt_states_card
+              component: card
+              props:
+                title: Gantt placeholders
+                description: No data draws seeded bars; an empty list draws the empty state.
+              children:
+                - id: gantt_seeded
+                  component: chart
+                  props:
+                    chartType: gantt
+                - id: gantt_empty
+                  component: chart
+                  props:
+                    chartType: gantt
+                    data: []
+                    ticks: [Q1, Q2, Q3, Q4]
+            - id: gantt_narrow_card
+              component: card
+              props:
+                title: Narrow gantt with a fixed height
+              size:
+                width: 300
+              children:
+                - id: gantt_narrow
+                  component: chart
+                  props:
+                    chartType: gantt
+                    height: 84
+                    ticks: [Mon, Fri]
+                    data:
+                      - { label: Migrate the billing database, start: 0, end: 3 }
+                      - { label: Rotate every production credential, start: 2, end: 5, tone: danger }
+                      - { label: Announce the maintenance window, start: 0, end: 1 }
+                      - { label: Verify the restored backups, start: 4, end: 5 }
+            - id: items_states_card
+              component: card
+              props:
+                title: Item states
+                description: Canonical keys, a selected file, a closed folder and an open answer.
+              layout:
+                type: grid
+                columns: 2
+                gap: 16
+              children:
+                - id: tree_states
+                  component: tree
+                  props:
+                    items:
+                      - label: src
+                        items:
+                          - { label: index.js, icon: file-code, selected: true }
+                          - { label: render.js, icon: file-code }
+                      - label: test
+                        expanded: false
+                        items: [render.test.js]
+                - id: accordion_states
+                  component: accordion
+                  props:
+                    items:
+                      - { label: Who can see this project?, description: Everyone in the workspace with a seat., expanded: true }
+                      - { label: Can I export it? }

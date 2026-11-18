@@ -92,8 +92,9 @@ const TOGGLE_ACTION_OWNER = { aria: { disabled: 'aria-disabled', pressed: 'aria-
  * Inline button markup for `actions: []` props on headers, cards and alerts.
  * A routed action is a link unless it is disabled; a disabled action never
  * navigates. `pressed` makes it a toggle button, and `tone` colours it.
+ * `tag` and `className` name the row element, so an overlay keeps its footer.
  */
-function actionButtons(value, ctx) {
+function actionButtons(value, ctx, { tag = 'div', className = 'wf-actions' } = {}) {
   const list = normalizeItems(value, itemProfiles.basic);
   if (list.length === 0) return '';
   const buttons = list.map((action) => {
@@ -114,7 +115,7 @@ function actionButtons(value, ctx) {
       ? `<a class="${cls}" ${navigationAttrs({ href, routeId: route }).join(' ')}${stateAttrs(state)}>${inner}</a>`
       : `<button class="${cls}"${stateAttrs(state, { owner: toggle ? TOGGLE_ACTION_OWNER : ACTION_OWNER })}>${inner}</button>`;
   });
-  return `<div class="wf-actions">${buttons.join('')}</div>`;
+  return `<${tag} class="${className}">${buttons.join('')}</${tag}>`;
 }
 
 /** A `title`/`description` block shared by card, section, form and upload. */

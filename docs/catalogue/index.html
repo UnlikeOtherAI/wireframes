@@ -236,6 +236,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-alert-body{flex:1 1 auto;min-width:0}
 .wf-alert-title{font-size:13px;font-weight:600;color:var(--wf-ink);line-height:1.4}
 .wf-alert-text{font-size:12px;color:var(--wf-ink-2);line-height:1.5}
+.wf-alert-body>.wf-actions{margin-top:10px}
 .wf-alert-close{background:none;border:none;font-size:16px;color:var(--wf-ink-4);cursor:pointer;line-height:1;padding:0 2px}
 .wf-alert-inline{padding:8px 10px}
 .wf-button{width:fit-content;max-width:100%}
@@ -568,6 +569,9 @@ button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:
 .wf-list-chat .wf-list-body{padding:9px 12px;border-radius:12px;background:var(--wf-fill);max-width:72%;flex:0 1 auto}
 .wf-mode-line .wf-list-chat .wf-list-body{background:transparent;border:1px solid var(--wf-line)}
 .wf-list-chat .wf-list-text{white-space:normal}
+a.wf-list-row,a.wf-list-body{color:inherit;text-decoration:none;cursor:pointer}
+a.wf-list-row:hover{background:var(--wf-fill-2)}
+.wf-list-row[data-wf-disabled]{opacity:.5;cursor:not-allowed}
 .wf-chart{min-width:0;display:flex;flex-direction:column;gap:6px}
 .wf-chart-title{font-size:12px;font-weight:600;color:var(--wf-ink-3)}
 .wf-chart-svg{width:100%;height:var(--wf-chart-h,160px);display:block;overflow:visible}
@@ -600,6 +604,23 @@ button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:
 .wf-legend-swatch.wf-series-2{background:var(--wf-line-2)}
 .wf-chart-sparkline{height:34px}
 .wf-chart-sparkline-wrap .wf-chart-svg{height:34px}
+.wf-gantt{--wf-gantt-label-w:min(140px,35%);display:flex;flex-direction:column;gap:4px;min-width:0}
+.wf-gantt-plot{min-width:0;overflow-y:auto}
+.wf-gantt-rows{position:relative;display:flex;flex-direction:column;min-width:0}
+.wf-gantt-grid{position:absolute;top:0;bottom:0;left:var(--wf-gantt-label-w);right:0;pointer-events:none}
+.wf-gantt-gridline{position:absolute;top:0;bottom:0;border-left:1px dashed var(--wf-line-2)}
+.wf-gantt-row{display:grid;grid-template-columns:var(--wf-gantt-label-w) minmax(0,1fr);align-items:center;height:28px;flex:0 0 auto;min-width:0}
+.wf-gantt-label{padding-right:10px;font-size:12px;color:var(--wf-ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wf-gantt-track{position:relative;align-self:stretch;min-width:0}
+.wf-gantt-bar{position:absolute;top:7px;bottom:7px;min-width:2px;box-sizing:border-box;background:var(--wf-line);border:1px solid var(--wf-ink-4);border-radius:3px}
+.wf-gantt-bar[class*="wf-tone-"]{background:var(--wf-tone);border-color:var(--wf-tone)}
+.wf-mode-line .wf-gantt-bar{background:transparent;border-color:var(--wf-line-strong);border-radius:0}
+.wf-mode-line .wf-gantt-bar[class*="wf-tone-"]{border:2px solid var(--wf-tone)}
+.wf-gantt-empty{display:flex;align-items:center;justify-content:center;min-height:84px;font-size:12px;font-style:italic;color:var(--wf-ink-4)}
+.wf-gantt-axis{position:relative;height:16px;margin-left:var(--wf-gantt-label-w);font-size:10px;color:var(--wf-ink-4)}
+.wf-gantt-tick{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
+.wf-gantt-tick-start{transform:none}
+.wf-gantt-tick-end{transform:translateX(-100%)}
 .wf-calendar{padding:0;min-width:0}
 .wf-cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--wf-line-2)}
 .wf-cal-title{font-size:13px;font-weight:600;color:var(--wf-ink)}
@@ -630,6 +651,8 @@ button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:
 .wf-tree-caret{width:12px;flex:0 0 auto;color:var(--wf-ink-4);font-size:10px}
 .wf-tree-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wf-tree-row .wf-icon-glyph{color:var(--wf-ink-4);font-size:13px}
+.wf-tree-row[data-wf-selected]{color:var(--wf-ink);font-weight:600;background:var(--wf-fill-2)}
+.wf-mode-line .wf-tree-row[data-wf-selected]{background:transparent;box-shadow:inset 2px 0 0 var(--wf-line-strong)}
 .wf-accordion{display:flex;flex-direction:column;min-width:0;padding:0}
 .wf-accordion-item+.wf-accordion-item{border-top:1px solid var(--wf-line-2)}
 .wf-accordion-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 14px;cursor:pointer;min-width:0}
@@ -742,7 +765,7 @@ button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:
   <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_card" class="wf-node wf-card wf-surface" style="display:flex;flex-direction:column;gap:16px;padding:16px" data-wf-frame="surface" data-wf-state-bindings="{}"><header class="wf-block-head"><div class="wf-block-text"><div class="wf-card-title">Revenue</div></div></header><div class="wf-node-children" style="display:flex;flex-direction:column;gap:16px"><div id="demo_card_0" class="wf-node wf-stat wf-group" style="min-height:96px" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">This month</span></div><div class="wf-stat-value">$12.4k</div></div></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- card: { title: Revenue, children: [{ stat: { label: This month, value: $12.4k } }] }</pre>
-    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">title</td><td>string</td></tr><tr><td class="">description</td><td>string</td></tr><tr><td class="">media</td><td>string</td></tr><tr><td class="">footer</td><td>boolean</td></tr></tbody></table></div>
+    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">title</td><td>string</td></tr><tr><td class="">description</td><td>string</td></tr><tr><td class="">actions</td><td>array</td></tr><tr><td class="">media</td><td>string</td></tr><tr><td class="">footer</td><td>boolean</td></tr></tbody></table></div>
   </div>
 </article>
 <article class="cat-item" id="el-stack">
@@ -1327,7 +1350,7 @@ button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:
   <p class="cat-summary">List rows. kind covers plain, avatar, action, file, chat and timeline shapes.</p>
   <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_list" class="wf-node wf-list wf-surface wf-list-avatar wf-list-divided" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-list-row"><span class="wf-list-lead"><span class="wf-avatar-chip" style="width:36px;height:36px;border-radius:50%;font-size:13px">AD</span></span><span class="wf-list-body"><span class="wf-list-title">Ada</span><span class="wf-list-text">Invited you</span></span></div></div></div>
   <div class="cat-split">
-    <pre class="cat-code">- list: { kind: avatar, items: [{ title: Ada, text: Invited you }] }</pre>
+    <pre class="cat-code">- list: { kind: avatar, items: [{ label: Ada, description: Invited you }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">kind</td><td>plain | avatar | action | file | chat | timeline | settings</td></tr><tr><td class="">divided</td><td>boolean</td></tr><tr><td class="">selectable</td><td>boolean</td></tr><tr><td class="">refreshable</td><td>boolean</td></tr></tbody></table></div>
   </div>
 </article>
@@ -1336,11 +1359,11 @@ button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:
     <span class="cat-name">chart</span>
     <span class="cat-frame">the frame rules decide</span>
   </div>
-  <p class="cat-summary">Greeked chart placeholder in nine shapes. Deterministic, never random.</p>
+  <p class="cat-summary">Greeked chart placeholder in ten shapes. Deterministic, never random. gantt draws data [{ label, start, end, tone }] as bars on one axis labelled by ticks.</p>
   <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_chart" class="wf-node wf-chart wf-surface wf-chart-area" style="padding:16px;min-height:160px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-chart-title">Signups</div><svg class="wf-chart-svg" viewBox="0 0 320 120" preserveAspectRatio="none" aria-hidden="true"><line class="wf-chart-axis" x1="0" y1="120" x2="320" y2="120" /><line class="wf-chart-axis" x1="0" y1="0" x2="0" y2="120" /><polygon class="wf-chart-area" points="0,120 0.0,76.2 40.0,24.2 80.0,56.2 120.0,88.2 160.0,32.2 200.0,64.2 240.0,12.2 280.0,44.2 320.0,80.3 320,120" /><polyline class="wf-chart-line wf-series-0" points="0.0,76.2 40.0,24.2 80.0,56.2 120.0,88.2 160.0,32.2 200.0,64.2 240.0,12.2 280.0,44.2 320.0,80.3" /></svg><div class="wf-chart-legend"><span class="wf-legend-key"><span class="wf-legend-swatch wf-series-0"></span><span class="wf-bar" style="width:5ch"></span></span></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- chart: { chartType: area, title: Signups, legend: true }</pre>
-    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">chartType</td><td>bar | vertical | horizontal | line | area | pie | donut | gauge | sparkline | heatmap</td></tr><tr><td class="">title</td><td>string</td></tr><tr><td class="">label</td><td>alias of title</td></tr><tr><td class="">data</td><td>array</td></tr><tr><td class="">series</td><td>number</td></tr><tr><td class="">legend</td><td>boolean</td></tr><tr><td class="">axes</td><td>boolean</td></tr><tr><td class="">height</td><td>number</td></tr></tbody></table></div>
+    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">chartType</td><td>bar | vertical | horizontal | line | area | pie | donut | gauge | sparkline | heatmap | gantt</td></tr><tr><td class="">title</td><td>string</td></tr><tr><td class="">label</td><td>alias of title</td></tr><tr><td class="">data</td><td>array</td></tr><tr><td class="">ticks</td><td>array</td></tr><tr><td class="">series</td><td>number</td></tr><tr><td class="">legend</td><td>boolean</td></tr><tr><td class="">axes</td><td>boolean</td></tr><tr><td class="">height</td><td>number</td></tr></tbody></table></div>
   </div>
 </article>
 <article class="cat-item" id="el-calendar">
@@ -1372,10 +1395,10 @@ button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:
     <span class="cat-name">tree</span>
     <span class="cat-frame">the frame rules decide</span>
   </div>
-  <p class="cat-summary">Nested tree or file browser.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_tree" class="wf-node wf-tree wf-surface" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-tree-row" style="padding-left:0px"><span class="wf-tree-caret">▾</span><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-folder fa-sm" data-wf-glyph="F" style="font-size:14px;width:14px"></i></span><span class="wf-tree-label">src</span></div><div class="wf-tree-row" style="padding-left:16px"><span class="wf-tree-caret wf-tree-leaf"></span><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-file fa-sm" data-wf-glyph="F" style="font-size:14px;width:14px"></i></span><span class="wf-tree-label">index.js</span></div></div></div>
+  <p class="cat-summary">Nested tree or file browser. Items stay open unless they set expanded: false.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_tree" class="wf-node wf-tree wf-surface" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-tree-row" style="padding-left:0px" role="button" aria-expanded="true" data-wf-expanded><span class="wf-tree-caret">▾</span><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-folder fa-sm" data-wf-glyph="F" style="font-size:14px;width:14px"></i></span><span class="wf-tree-label">src</span></div><div class="wf-tree-row" style="padding-left:16px"><span class="wf-tree-caret wf-tree-leaf"></span><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-file fa-sm" data-wf-glyph="F" style="font-size:14px;width:14px"></i></span><span class="wf-tree-label">index.js</span></div></div></div>
   <div class="cat-split">
-    <pre class="cat-code">- tree: { items: [{ label: src, children: [{ label: index.js }] }] }</pre>
+    <pre class="cat-code">- tree: { items: [{ label: src, items: [{ label: index.js }] }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">expanded</td><td>boolean</td></tr></tbody></table></div>
   </div>
 </article>
@@ -1384,8 +1407,8 @@ button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:
     <span class="cat-name">accordion</span>
     <span class="cat-frame">the frame rules decide</span>
   </div>
-  <p class="cat-summary">Collapsible rows; set open on the item that starts expanded.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_accordion" class="wf-node wf-accordion wf-surface" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-accordion-item wf-accordion-open"><div class="wf-accordion-head"><span class="wf-accordion-title">Billing</span><span class="wf-accordion-caret">−</span></div><div class="wf-accordion-body">Card on file</div></div><div class="wf-accordion-item"><div class="wf-accordion-head"><span class="wf-accordion-title">Members</span><span class="wf-accordion-caret">+</span></div></div></div></div>
+  <p class="cat-summary">Collapsible rows; set expanded on the item that starts open.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_accordion" class="wf-node wf-accordion wf-surface" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-accordion-item wf-accordion-open"><div class="wf-accordion-head" role="button" aria-expanded="true" data-wf-expanded><span class="wf-accordion-title">Billing</span><span class="wf-accordion-caret">−</span></div><div class="wf-accordion-body">Card on file</div></div><div class="wf-accordion-item"><div class="wf-accordion-head" role="button" aria-expanded="false"><span class="wf-accordion-title">Members</span><span class="wf-accordion-caret">+</span></div></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- accordion: { items: [{ title: Billing, text: Card on file, open: true }, { title: Members }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr></tbody></table></div>
@@ -1401,7 +1424,7 @@ button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:
   <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_alert" class="wf-node wf-alert wf-surface wf-alert-warning" data-wf-frame="surface" data-wf-state-bindings="{}"><span class="wf-alert-glyph"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-triangle-exclamation fa-lg" data-wf-glyph="T" style="font-size:20px;width:20px"></i></span><div class="wf-alert-body"><div class="wf-alert-title">Trial ends soon</div><div class="wf-alert-text">3 days left</div></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- alert: { title: Trial ends soon, text: 3 days left, variant: warning }</pre>
-    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">text</td><td>string</td></tr><tr><td class="">title</td><td>string</td></tr><tr><td class="">variant</td><td>info | success | warning | error | neutral</td></tr><tr><td class="">icon</td><td>string</td></tr><tr><td class="">dismissible</td><td>boolean</td></tr><tr><td class="">inline</td><td>boolean</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>banner</code>, <code>callout</code>.</p></div>
+    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">text</td><td>string</td></tr><tr><td class="">title</td><td>string</td></tr><tr><td class="">variant</td><td>info | success | warning | error | neutral</td></tr><tr><td class="">icon</td><td>string</td></tr><tr><td class="">dismissible</td><td>boolean</td></tr><tr><td class="">inline</td><td>boolean</td></tr><tr><td class="">actions</td><td>array</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>banner</code>, <code>callout</code>.</p></div>
   </div>
 </article>
       </main>
