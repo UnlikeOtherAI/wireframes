@@ -5,6 +5,7 @@ const path = require('node:path');
 const yaml = require('js-yaml');
 const { runDoctor } = require(path.resolve(__dirname, '..', 'doctor'));
 const { validatePrimitiveProps } = require('./rules/primitive-props');
+const { childNodeLists } = require('../component-registry/child-nodes');
 
 const RESERVED_KEYWORDS = new Set([
   'page',
@@ -128,8 +129,8 @@ function validateNodeIds(result, node, context, includeUsage) {
     validateIdentifier(result, context, node.id);
   }
 
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
+  for (const list of childNodeLists(node)) {
+    for (const child of list) {
       validateNodeIds(result, child, `${context} > ${node.id ?? 'node'}`, includeUsage);
     }
   }

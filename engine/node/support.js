@@ -15,6 +15,7 @@ const {
 } = require(path.resolve(__dirname, '..', 'addressing', 'fs-resolver'));
 
 const { PRIMITIVE_COMPONENTS } = require(path.resolve(__dirname, '..', 'schema', 'primitives'));
+const { childNodeLists } = require(path.resolve(__dirname, '..', 'component-registry', 'child-nodes'));
 
 const WF_ID_REGEX = /^[a-z][a-z0-9_]*$/;
 
@@ -64,8 +65,8 @@ function collectNodeIds(nodes, set) {
       set.add(node.id);
     }
 
-    if (Array.isArray(node.children)) {
-      collectNodeIds(node.children, set);
+    for (const list of childNodeLists(node)) {
+      collectNodeIds(list, set);
     }
   }
 }

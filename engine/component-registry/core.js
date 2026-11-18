@@ -1,6 +1,7 @@
 'use strict';
 
 const { PRIMITIVE_COMPONENTS } = require('../schema/primitives');
+const { childNodeLists } = require('./child-nodes');
 const IMPORT_ALIAS_REGEX = /^[a-z][a-z0-9_]*$/;
 
 function isObject(value) {
@@ -82,8 +83,8 @@ function rewriteComponentNode(node, context) {
     );
   }
 
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
+  for (const list of childNodeLists(node)) {
+    for (const child of list) {
       rewriteComponentNode(child, context);
     }
   }

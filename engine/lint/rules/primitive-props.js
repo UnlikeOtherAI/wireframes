@@ -4,6 +4,7 @@ const { PRIMITIVE_COMPONENTS } = require('../../schema/primitives');
 const { getPrimitive, resolvePrimitiveName, knownProps } = require('../../schema/primitive-registry');
 const { decideFrame } = require('../../renderer/frame-rules');
 const { ROLES } = require('../../renderer/sizing-tokens');
+const { childNodeLists } = require('../../component-registry/child-nodes');
 
 const TEXT_PRIMITIVES = new Set(['heading', 'paragraph', 'text']);
 const FIELD_PRIMITIVES = new Set(['input', 'select', 'textarea', 'picker']);
@@ -160,7 +161,7 @@ function validateRole(result, node, context) {
 function childNodes(node) {
   if (!isObject(node)) return [];
   return [
-    ...(Array.isArray(node.children) ? node.children : []),
+    ...childNodeLists(node).flat(),
     ...(Array.isArray(node.content) ? node.content : []),
     ...(Array.isArray(node.nodes) ? node.nodes : []),
   ];

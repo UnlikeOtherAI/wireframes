@@ -6,6 +6,7 @@
  * trigger nodes, and the depth and size limits.
  */
 
+const { childNodeLists } = require('../component-registry/child-nodes');
 const {
   addDiagnostic,
   isObject,
@@ -89,8 +90,8 @@ function validateNode(node, context, depth = 1) {
     }
   }
 
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
+  for (const list of childNodeLists(node)) {
+    for (const child of list) {
       validateNode(child, context, depth + 1);
     }
   }

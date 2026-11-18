@@ -5,6 +5,7 @@ const path = require('node:path');
 const yaml = require('js-yaml');
 const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
 const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
+const { childNodeLists } = require(path.resolve(__dirname, '..', 'component-registry', 'child-nodes'));
 
 const COMPONENT_ID_REGEX = /^[a-z][a-z0-9_]*$/;
 
@@ -54,8 +55,8 @@ function walkNodes(node, callback) {
 
   callback(node);
 
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
+  for (const list of childNodeLists(node)) {
+    for (const child of list) {
       walkNodes(child, callback);
     }
   }
