@@ -6,13 +6,43 @@ function buildControlRuntimeCode() {
 function safeControlKey(key) {
   return typeof key === 'string' && key.length > 0 && !key.split('.').some(function (part) { return !part || ['__proto__', 'constructor', 'prototype'].indexOf(part) >= 0; });
 }
-function controlBinding(node) {
-  var bindings;
-  try { bindings = JSON.parse(node.getAttribute('data-wf-state-bindings') || '{}'); } catch (_err) { return null; }
-  var match = typeof bindings.value === 'string' && bindings.value.match(/^\{\{\s*(state|appState)\.([a-zA-Z0-9_.]+)\s*\}\}$/);
+// An exact state.key / appState.key expression is writable; anything else is read-only.
+function exactBinding(expr) {
+  var match = typeof expr === 'string' && expr.match(/^\{\{\s*(state|appState)\.([a-zA-Z0-9_.]+)\s*\}\}$/);
   if (!match || !safeControlKey(match[2])) return null;
   return { scope: match[1] === 'appState' ? 'app' : 'page', key: match[2] };
 }
+function controlBinding(node) {
+  var bindings;
+  try { bindings = JSON.parse(node.getAttribute('data-wf-state-bindings') || '{}'); } catch (_err) { return null; }
+  return exactBinding(bindings.value);
+}
+function setDataState(el, name, value) {
+  if (value === true) el.setAttribute('data-wf-' + name, '');
+  else if (value === 'mixed') el.setAttribute('data-wf-' + name, 'mixed');
+  else el.removeAttribute('data-wf-' + name);
+}
+function ariaToggle(value) { return value === 'mixed' ? 'mixed' : String(value === true); }
+function choiceMark(node) {
+  if (!node.classList || !(node.classList.contains('wf-checkbox') || node.classList.contains('wf-radio') || node.classList.contains('wf-toggle'))) return null;
+  return node.querySelector('.wf-choice [role=checkbox],.wf-choice [role=radio],.wf-choice [role=switch]');
+}
+// A drawn checkbox, radio or switch: ARIA, data attribute and the classes that paint it move together.
+function setChoiceChecked(mark, value) {
+  mark.setAttribute('aria-checked', ariaToggle(value));
+  setDataState(mark, 'checked', value);
+  var row = mark.closest('.wf-choice');
+  var list = mark.closest('.wf-choice-list');
+  if (row) row.classList.toggle(list ? (mark.getAttribute('role') === 'radio' ? 'wf-radio-on' : 'wf-checkbox-on') : 'wf-choice-on', value === true);
+  if (mark.classList.contains('wf-toggle-track')) mark.classList.toggle('wf-toggle-on', value === true);
+}
+function setChoiceDisabled(node, mark, value) {
+  if (value) mark.setAttribute('aria-disabled', 'true'); else mark.removeAttribute('aria-disabled');
+  setDataState(mark, 'disabled', value);
+  var row = node.querySelector('.wf-choice');
+  if (row) row.classList.toggle('wf-choice-disabled', value);
+}
+function isReadonly(el) { return !!(el && el.hasAttribute('data-wf-readonly')); }
 function choiceButtons(node) {
   return Array.prototype.filter.call(node.querySelectorAll('[data-wf-choice-value]'), function (button) {
     return button.closest('.wf-segmented,.wf-tab_bar') === node;
@@ -34,6 +64,7 @@ function refreshChoices() {
       if (active) matched = true;
       button.classList.toggle(node.classList.contains('wf-segmented') ? 'wf-segment-on' : 'wf-tab-on', active);
       button.setAttribute('aria-pressed', String(active));
+      setDataState(button, 'selected', active);
     });
   });
 }
@@ -79,7 +110,7 @@ function initControls() {
     buttons.forEach(function (button) {
       button.addEventListener('click', function (event) {
         event.stopPropagation();
-        if (button.disabled || node.getAttribute('data-selection-selectable') === 'false') return;
+        if (button.disabled || node.getAttribute('data-selection-selectable') === 'false' || isReadonly(button.closest('.wf-segment-track'))) return;
         node._wfChoiceValue = choiceValue(button);
         if (key) setState(scope, key, node._wfChoiceValue);
         else refreshChoices();
@@ -102,6 +133,10 @@ function initControls() {
     node.addEventListener('click', function (event) { event.stopPropagation(); });
     function changed(event) {
       if (field.disabled || (colour && colour.picker.disabled)) return;
+      if (field.readOnly) {
+        if (colour && event.target === colour.picker) colour.picker.value = validHex(field.value) ? field.value : '#000000';
+        return;
+      }
       if (colour) {
         if (event.target === colour.picker) field.value = colour.picker.value;
         var valid = validHex(field.value);
@@ -118,6 +153,60 @@ function initControls() {
       colour.picker.addEventListener('input', changed);
       colour.picker.addEventListener('change', changed);
     }
+  });
+  initToggles();
+}
+// Toggle buttons and toolbar items flip pressed (or checked) with their ARIA.
+function initToggles() {
+  each('.wf-button button[aria-pressed],.wf-toolbar button[aria-pressed],.wf-toolbar button[role=checkbox]', function (button) {
+    button.addEventListener('click', function () {
+      if (button.disabled || isReadonly(button)) return;
+      var name = button.getAttribute('role') === 'checkbox' ? 'checked' : 'pressed';
+      var next = button.getAttribute('aria-' + name) !== 'true';
+      button.setAttribute('aria-' + name, String(next));
+      setDataState(button, name, next);
+    });
+  });
+  each('.wf-checkbox,.wf-radio,.wf-toggle', function (node) {
+    var mark = choiceMark(node);
+    if (!mark) return;
+    var bindings;
+    try { bindings = JSON.parse(node.getAttribute('data-wf-state-bindings') || '{}'); } catch (_err) { bindings = {}; }
+    var bound = isObj(bindings) && typeof bindings.checked === 'string';
+    var writable = bound ? exactBinding(bindings.checked) : null;
+    var authored = node.hasAttribute('data-wf-interactions');
+    node.addEventListener('click', function () {
+      if (mark.getAttribute('aria-disabled') === 'true' || isReadonly(mark)) return;
+      var next = mark.getAttribute('role') === 'radio' ? true : mark.getAttribute('aria-checked') !== 'true';
+      // A bound checkbox follows its state; an authored interaction owns that state.
+      if (bound) { if (writable && !authored) setState(writable.scope, writable.key, next); return; }
+      setChoiceChecked(mark, next);
+    });
+  });
+  each('.wf-choice-list[role=radiogroup],.wf-choice-list[role=group]', function (group) {
+    var radio = group.getAttribute('role') === 'radiogroup';
+    Array.prototype.forEach.call(group.querySelectorAll('.wf-choice'), function (row) {
+      var mark = row.querySelector('[role=checkbox],[role=radio]');
+      if (!mark) return;
+      row.addEventListener('click', function () {
+        if (isReadonly(group) || group.hasAttribute('data-wf-disabled') || mark.hasAttribute('data-wf-disabled') || isReadonly(mark)) return;
+        if (!radio) { setChoiceChecked(mark, mark.getAttribute('aria-checked') !== 'true'); return; }
+        Array.prototype.forEach.call(group.querySelectorAll('[role=radio]'), function (other) { setChoiceChecked(other, other === mark); });
+      });
+    });
+  });
+  // A read-only select keeps its value: any change the user makes is put back.
+  each('select[data-wf-readonly]', function (select) {
+    function keep() { select._wfKeep = Array.prototype.map.call(select.options, function (option) { return option.selected; }); }
+    keep();
+    select.addEventListener('focus', keep);
+    select.addEventListener('pointerdown', keep);
+    select.addEventListener('keydown', keep);
+    select.addEventListener('change', function (event) {
+      var kept = select._wfKeep || [];
+      Array.prototype.forEach.call(select.options, function (option, i) { option.selected = !!kept[i]; });
+      event.stopImmediatePropagation();
+    });
   });
 }
 function refresh() {
@@ -139,13 +228,21 @@ function refresh() {
         var target = node.querySelector('[data-wf-color-hex],input:not([data-wf-color-picker]),textarea,select');
         if (target) target.setAttribute('placeholder', value == null ? '' : String(value));
       } else if (name === 'checked' || name === 'disabled') {
-        var input = node.querySelector(name === 'disabled' ? 'button,input,select,textarea' : 'input') || node;
         var bool = !!(value === true || value === 'true');
+        var mark = choiceMark(node);
+        if (mark) {
+          if (name === 'checked') setChoiceChecked(mark, bool);
+          else setChoiceDisabled(node, mark, bool);
+          continue;
+        }
+        var input = node.querySelector(name === 'disabled' ? 'button,input,select,textarea' : 'input') || node;
         if (bool) input.setAttribute(name, '');
         else input.removeAttribute(name);
         input[name] = bool;
+        if (name === 'disabled' && input !== node) setDataState(input, 'disabled', bool);
         if (name === 'disabled' && colourInputs(node)) {
           colourInputs(node).picker.disabled = bool; colourInputs(node).text.disabled = bool;
+          setDataState(colourInputs(node).picker, 'disabled', bool); setDataState(colourInputs(node).text, 'disabled', bool);
         }
         if (name === 'disabled' && node.classList.contains('wf-button')) node.classList.toggle('wf-button-disabled', bool);
       } else if (name === 'visibility') {
