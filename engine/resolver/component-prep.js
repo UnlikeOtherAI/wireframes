@@ -112,41 +112,43 @@ function namespaceNodeIds(nodes, namespace) {
   return idMap;
 }
 
-function rewriteScopedNodeReferences(nodes, idMap) {
-  if (!Array.isArray(nodes) || !(idMap instanceof Map) || idMap.size === 0) {
+function rewriteInteractionReferences(node, idMap) {
+  if (!Array.isArray(node.interaction)) {
     return;
   }
-
-  visitNodes(nodes, (node) => {
-    if (!Array.isArray(node.interaction)) {
-      return;
+  for (const interaction of node.interaction) {
+    if (isObject(interaction) && typeof interaction.formId === 'string' && idMap.has(interaction.formId)) {
+      interaction.formId = idMap.get(interaction.formId);
     }
-    for (const interaction of node.interaction) {
-      if (isObject(interaction) && typeof interaction.formId === 'string' && idMap.has(interaction.formId)) {
-        interaction.formId = idMap.get(interaction.formId);
-      }
-    }
-  });
+  }
 }
 
 /**
  * Namespace every id below `root` under `namespace`, and point scoped
- * references (submit form ids) inside that subtree at the renamed ids. The
- * root keeps its id: it takes the instance id.
+ * references (submit form ids) on the root and inside its subtree at the
+ * renamed ids. The root keeps its id: it takes the instance id, so a reference
+ * to the definition's own root id (`authoredRootId`) follows it there.
  */
-function namespaceDescendants(root, namespace) {
+function namespaceDescendants(root, namespace, authoredRootId) {
   if (typeof namespace !== 'string' || namespace.trim() === '') {
     return;
   }
   const lists = childNodeLists(root);
   const idMap = new Map();
+  if (typeof authoredRootId === 'string' && authoredRootId.trim() !== '' && typeof root.id === 'string') {
+    idMap.set(authoredRootId, root.id);
+  }
   for (const list of lists) {
     for (const [oldId, newId] of namespaceNodeIds(list, namespace)) {
       idMap.set(oldId, newId);
     }
   }
+  if (idMap.size === 0) {
+    return;
+  }
+  rewriteInteractionReferences(root, idMap);
   for (const list of lists) {
-    rewriteScopedNodeReferences(list, idMap);
+    visitNodes(list, (node) => rewriteInteractionReferences(node, idMap));
   }
 }
 

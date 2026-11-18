@@ -74,7 +74,7 @@ function prepareSlottedInstance(node, componentDoc, fills) {
   const prepared = resolveComponentPropTemplates(root, mergedProps);
   prepared.id = id;
 
-  namespaceDescendants(prepared, id);
+  namespaceDescendants(prepared, id, componentDoc.root.id);
 
   // Everything else on the instance overrides the root as authored by the
   // caller, so it gets none of the definition's preparation.

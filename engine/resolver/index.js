@@ -99,7 +99,12 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
     resolvedNode[key] = value;
   }
 
-  namespaceDescendants(resolvedNode, id);
+  namespaceDescendants(resolvedNode, id, componentDoc.root.id);
+  // Interactions written on the instance are the caller's, in the caller's
+  // scope: only the definition's own references follow its renamed ids.
+  if (Object.hasOwn(instanceOverrides, 'interaction')) {
+    resolvedNode.interaction = resolveComponentPropTemplates(instanceOverrides.interaction, mergedProps);
+  }
 
   return expandDefinitionTree(resolvedNode, node.use, components, componentStack, injectableMap);
 }
