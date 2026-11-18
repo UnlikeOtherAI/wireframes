@@ -5,7 +5,7 @@
 - **containers**: section, card, stack, row, grid, split, form, carousel
 - **text**: heading, paragraph, text, code, badge, avatar, icon, image, rating, stat, progress, skeleton, divider, spacer, empty_state
 - **controls**: button, segmented, input, textarea, select, checkbox, radio, toggle, choice_group, tags_input, upload, picker, editor
-- **navigation**: tab_bar, bottom_tab_bar, breadcrumb, pagination, stepper, nav, menu, app_bar, action_sheet, page_header
+- **navigation**: tab_bar, bottom_tab_bar, breadcrumb, pagination, stepper, nav, menu, menubar, command, app_bar, action_sheet, page_header
 - **data**: table, list, chart, calendar, kanban, tree, accordion
 - **feedback**: alert
 

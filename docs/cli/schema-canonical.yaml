@@ -345,8 +345,10 @@ primitives:
     - breadcrumb      # items, separator
     - pagination      # page, pages, variant (numbers|simple|dots)
     - stepper         # steps, current, orientation (row|stack)
-    - nav             # items, collapsed, groups, variant: rail|sidebar (optional)
+    - nav             # items, collapsed, groups, open, variant: rail|sidebar|top (optional)
     - menu            # items
+    - menubar         # items (menus with nested items), open
+    - command         # placeholder, query, items, empty, footer
     - app_bar         # title, subtitle, leading, actions
     - action_sheet    # items, title, cancel
     - page_header     # title, subtitle, breadcrumb, actions, tabs
@@ -407,6 +409,8 @@ frameClass:
   stepper: N
   nav: N
   menu: N
+  menubar: N
+  command: C
   app_bar: E
   action_sheet: N
   page_header: N

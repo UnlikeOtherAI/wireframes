@@ -131,6 +131,106 @@ const navigationStyles = [
 
   '@media(any-pointer:coarse){.wf-nav:not(.wf-nav-rail) .wf-nav-item,.wf-menu-item{min-height:44px}}',
 
+  // --- Item states (rendering-navigation.md). Legacy markup gains state
+  // attributes, so only disabled rows and new classes are styled here. ---
+  '.wf-tab[data-wf-disabled],.wf-btab[data-wf-disabled],.wf-nav-item[data-wf-disabled],.wf-nav-link[data-wf-disabled],'
+    + '.wf-menu-item[data-wf-disabled],.wf-command-item[data-wf-disabled],.wf-sheet-row[data-wf-disabled],'
+    + '.wf-menubar-trigger[data-wf-disabled],.wf-step[data-wf-disabled]{opacity:.45;cursor:default}',
+  '.wf-crumb[data-wf-disabled]{opacity:.55}',
+  '.wf-nav-sep{height:1px;background:var(--wf-line-2);margin:6px 10px}',
+  '.wf-mode-line .wf-nav-sep,.wf-mode-line .wf-menu-sep,.wf-mode-line .wf-command-sep,.wf-mode-line .wf-nav-panel-sep{background:var(--wf-line-strong)}',
+  '.wf-nav-chevron{display:inline-flex;flex:0 0 auto;margin-left:auto;color:var(--wf-ink-4)}',
+  '.wf-nav-item .wf-nav-chevron .wf-icon-glyph{width:auto;min-width:0;font-size:10px}',
+  '.wf-nav-collapsed .wf-nav-chevron,.wf-nav-collapsed .wf-nav-sep{display:none}',
+  '.wf-menu-heading{padding:8px 12px 4px;font-size:11px;font-weight:600;color:var(--wf-ink-4)}',
+  '.wf-menu-item[data-wf-selected]{background:var(--wf-fill);color:var(--wf-ink)}',
+  '.wf-menu-item[data-wf-current]{color:var(--wf-ink);font-weight:600}',
+  '.wf-mode-line .wf-menu-item[data-wf-selected]{background:transparent;outline:1px dashed var(--wf-line-strong);outline-offset:-1px}',
+  '.wf-menu-sub{display:inline-flex;flex:0 0 auto;color:var(--wf-ink-4)}',
+  '.wf-menu-sub .wf-icon-glyph{font-size:10px;width:auto;min-width:0}',
+  '.wf-sheet-sep{height:8px;background:var(--wf-fill)}',
+  '.wf-mode-line .wf-sheet-sep{height:0;background:transparent;border-top:1px dashed var(--wf-line-strong)}',
+  '.wf-sheet-heading{padding:10px 16px 4px;font-size:12px;color:var(--wf-ink-3);text-align:center}',
+
+  // --- Key chips: command and menubar shortcuts ---
+  '.wf-keys{display:inline-flex;align-items:center;gap:3px;flex:0 0 auto}',
+  '.wf-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;'
+    + 'font:inherit;font-size:11px;line-height:1;color:var(--wf-ink-3);background:var(--wf-fill-2);'
+    + 'border:1px solid var(--wf-line-2);border-bottom-width:2px;border-radius:4px}',
+  '.wf-mode-line .wf-kbd{background:transparent;border:1px solid var(--wf-line-strong);border-radius:0}',
+
+  // --- Top navigation: a horizontal site menu whose open item draws its panel ---
+  '.wf-nav-top{flex-direction:row;align-items:center;flex-wrap:wrap;gap:4px}',
+  '.wf-nav-top .wf-nav-item{flex:0 0 auto}',
+  '.wf-nav-top .wf-nav-label{flex:0 0 auto}',
+  '.wf-nav-top .wf-nav-sep{width:1px;height:20px;margin:0 6px}',
+  '.wf-nav-top .wf-nav-group{padding:0 8px}',
+  '.wf-nav-menu{position:relative;display:flex}',
+  'button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:0;cursor:pointer;gap:6px}',
+  '.wf-nav-trigger .wf-nav-chevron{margin-left:0}',
+  '.wf-nav-trigger[data-wf-expanded]{background:var(--wf-fill);color:var(--wf-ink)}',
+  '.wf-mode-line .wf-nav-trigger[data-wf-expanded]{background:transparent;outline:1px dashed var(--wf-line-strong);outline-offset:-1px}',
+  '.wf-nav-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:30;display:flex;flex-direction:column;gap:2px;'
+    + 'width:320px;padding:8px;background:#ffffff;border:1px solid var(--wf-line-2);border-radius:10px;'
+    + 'box-shadow:0 10px 30px rgba(17,24,39,.12)}',
+  '.wf-mode-line .wf-nav-panel{border-color:var(--wf-line-strong);border-radius:0;box-shadow:none}',
+  '.wf-nav-link{display:flex;align-items:flex-start;gap:12px;padding:10px;min-width:0;color:var(--wf-ink-2);'
+    + 'text-decoration:none;border-radius:var(--wf-corner-radius,8px)}',
+  '.wf-mode-line .wf-nav-link{border-radius:0}',
+  '.wf-nav-link-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 36px;width:36px;height:36px;'
+    + 'border-radius:8px;background:var(--wf-fill);color:var(--wf-ink-2)}',
+  '.wf-mode-line .wf-nav-link-icon{background:transparent;border:1px dashed var(--wf-line);border-radius:0}',
+  '.wf-nav-link-text{display:flex;flex-direction:column;gap:2px;min-width:0}',
+  '.wf-nav-link-label{font-size:13px;font-weight:600;color:var(--wf-ink)}',
+  '.wf-nav-link-desc{font-size:12px;line-height:1.4;color:var(--wf-ink-3)}',
+  '.wf-nav-panel-heading{padding:8px 10px 2px;font-size:10px;font-weight:600;text-transform:uppercase;'
+    + 'letter-spacing:.07em;color:var(--wf-ink-4)}',
+  '.wf-nav-panel-sep{height:1px;background:var(--wf-line-2);margin:4px 6px}',
+
+  // --- Menubar: a row of menu triggers; the open one draws its panel ---
+  '.wf-menubar{display:flex;align-items:center;flex-wrap:wrap;gap:2px;min-width:0}',
+  '.wf-menubar-menu{position:relative;display:flex}',
+  '.wf-menubar-trigger{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;font:inherit;'
+    + 'font-size:13px;font-weight:500;color:var(--wf-ink-2);background:transparent;border:0;'
+    + 'border-radius:var(--wf-corner-radius,6px);cursor:pointer}',
+  '.wf-menubar-trigger[data-wf-expanded]{background:var(--wf-fill);color:var(--wf-ink)}',
+  '.wf-mode-line .wf-menubar-trigger{border-radius:0}',
+  '.wf-mode-line .wf-menubar-trigger[data-wf-expanded]{background:transparent;outline:1px dashed var(--wf-line-strong);outline-offset:-1px}',
+  '.wf-menubar-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:30;min-width:220px;padding:5px;'
+    + 'background:#ffffff;border:1px solid var(--wf-line-2);border-radius:8px;box-shadow:0 10px 30px rgba(17,24,39,.12)}',
+  '.wf-mode-line .wf-menubar-panel{border-color:var(--wf-line-strong);border-radius:0;box-shadow:none}',
+  '.wf-menubar-panel .wf-menu-item{padding:6px 10px}',
+
+  // --- Command palette: search row, grouped results, optional key-hint footer ---
+  '.wf-command{display:flex;flex-direction:column;min-width:0}',
+  '.wf-command-search{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 8px 8px;font-size:14px;'
+    + 'border-bottom:1px solid var(--wf-line-2)}',
+  '.wf-mode-line .wf-command-search{border-bottom-color:var(--wf-line-strong)}',
+  '.wf-command-search .wf-icon-glyph{color:var(--wf-ink-4)}',
+  '.wf-command-query{color:var(--wf-ink)}',
+  '.wf-command-placeholder{color:var(--wf-ink-4)}',
+  '.wf-command-list{display:flex;flex-direction:column;gap:2px;padding-top:6px;min-width:0}',
+  '.wf-command-group{display:flex;flex-direction:column;min-width:0}',
+  '.wf-command-heading{padding:8px 8px 4px;font-size:11px;font-weight:600;color:var(--wf-ink-4)}',
+  '.wf-command-items{display:flex;flex-direction:column;gap:1px;margin:0;padding:0;list-style:none;min-width:0}',
+  '.wf-command-item{display:flex;align-items:center;gap:10px;min-height:40px;padding:6px 8px;font-size:13px;'
+    + 'color:var(--wf-ink-2);text-decoration:none;border-radius:var(--wf-corner-radius,6px);min-width:0}',
+  '.wf-mode-line .wf-command-item{border-radius:0}',
+  '.wf-command-item .wf-icon-glyph{width:16px;min-width:16px;color:var(--wf-ink-4)}',
+  '.wf-command-item[data-wf-selected]{background:var(--wf-fill);color:var(--wf-ink)}',
+  '.wf-mode-line .wf-command-item[data-wf-selected]{background:transparent;outline:1px dashed var(--wf-line-strong);outline-offset:-1px}',
+  '.wf-command-item[data-wf-current]{font-weight:600}',
+  '.wf-command-text{display:flex;flex-direction:column;flex:1 1 auto;min-width:0}',
+  '.wf-command-label,.wf-command-desc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+  '.wf-command-desc{font-size:11.5px;color:var(--wf-ink-4)}',
+  '.wf-command-sep{height:1px;margin:6px 0;background:var(--wf-line-2)}',
+  '.wf-command-empty{padding:28px 8px;font-size:13px;text-align:center;color:var(--wf-ink-3)}',
+  '.wf-command-footer{display:flex;flex-wrap:wrap;gap:16px;margin-top:6px;padding:10px 8px 0;font-size:11px;'
+    + 'color:var(--wf-ink-3);border-top:1px solid var(--wf-line-2)}',
+  '.wf-mode-line .wf-command-footer{border-top-color:var(--wf-line-strong)}',
+  '.wf-command-hint{display:inline-flex;align-items:center;gap:6px}',
+  '@media(any-pointer:coarse){.wf-command-item,.wf-menubar-trigger{min-height:44px}}',
+
   // --- Page header ---
   '.wf-page_header{display:flex;flex-direction:column;gap:10px;min-width:0}',
   '.wf-ph-main{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;min-width:0}',
