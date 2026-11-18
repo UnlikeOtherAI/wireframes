@@ -24,6 +24,7 @@ import { buildStarterDocument } from './editor/documentTemplates'
 import { ResizeHandle } from './editor/ResizeHandle'
 import { buildYamlFilesMap, problemsToDiagnostics } from './editor/projectEditorUtils'
 import { usePaneLayout } from './editor/usePaneLayout'
+import { usePreviewMeasureStore } from '../stores/previewMeasureStore'
 import { getCookie, setCookie } from '../utils/cookies'
 import {
   adminColors,
@@ -55,6 +56,8 @@ export function ProjectEditorPage() {
     return stored === 'source' || stored === 'preview' ? stored : 'preview'
   })
   const { containerRef, navWidth, chatWidth, startResize } = usePaneLayout(chatPinned)
+  const measure = usePreviewMeasureStore((state) => state.measure)
+  const setMeasure = usePreviewMeasureStore((state) => state.setMeasure)
 
   const handleChatPinnedChange = useCallback((nextPinned: boolean) => {
     setChatPinned(nextPinned)
@@ -285,6 +288,8 @@ export function ProjectEditorPage() {
                 onDeviceChange={handleDeviceChange}
                 renderMode={renderMode}
                 onRenderModeChange={handleRenderModeChange}
+                measure={measure}
+                onMeasureChange={setMeasure}
               />
               <PreviewBreadcrumb
                 pageId={previewPageId}
@@ -335,6 +340,7 @@ export function ProjectEditorPage() {
                     onNodeSelect={setSelectedNode}
                     highlightedNode={selectedNode}
                     nodeIdToAddress={nodeIdToAddress}
+                    measure={measure}
                   />
                 </div>
               )}

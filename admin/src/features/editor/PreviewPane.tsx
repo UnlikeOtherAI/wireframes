@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { DeviceType } from './usePreviewRenderer'
 import { DEVICE_VIEWPORTS } from './usePreviewRenderer'
+import { postMeasure } from '../workspace/postMeasure'
 
 interface PreviewPaneProps {
   html: string | null
@@ -9,12 +10,19 @@ interface PreviewPaneProps {
   hasWarnings?: boolean
   device: DeviceType
   onNavigate?: (routeId: string) => void
+  measure?: boolean
 }
 
-export function PreviewPane({ html, error, hasWarnings, device, onNavigate }: PreviewPaneProps) {
+export function PreviewPane({ html, error, hasWarnings, device, onNavigate, measure = false }: PreviewPaneProps) {
   const { t } = useTranslation()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const viewport = DEVICE_VIEWPORTS[device]
+  const measureRef = useRef(measure)
+
+  useEffect(() => {
+    measureRef.current = measure
+    postMeasure(iframeRef.current, measure)
+  }, [measure])
 
   // Listen for navigation messages from the preview iframe
   useEffect(() => {
@@ -37,6 +45,8 @@ export function PreviewPane({ html, error, hasWarnings, device, onNavigate }: Pr
     doc.open()
     doc.write(content)
     doc.close()
+    // Each write is a new page: replay the measure state into it.
+    postMeasure(iframe, measureRef.current)
   }, [])
 
   useEffect(() => {

@@ -7,6 +7,7 @@ import { NodeTree } from './NodeTree'
 import { SitemapView } from './SitemapView'
 import { WorkspacePreview } from './WorkspacePreview'
 import { useResolvedNodes, useSitemapNodes, buildNodeIdToAddressMap } from './useWorkspaceData'
+import { usePreviewMeasureStore } from '../../stores/previewMeasureStore'
 
 export interface WorkspaceProps {
   yamlFiles: Record<string, string>
@@ -35,6 +36,8 @@ export interface WorkspaceRef {
   setDevice(device: DeviceType): void
   setMode(mode: RenderMode): void
   highlightNode(address: string): void
+  /** Switch the measurement overlay; the choice is shared with every preview. */
+  setMeasure(on: boolean): void
   getRenderedHtml(): string
   refresh(): void
 }
@@ -62,6 +65,8 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
   const [refreshKey, setRefreshKey] = useState(0)
   const [zoom, setZoom] = useState(100)
   const renderedHtmlRef = useRef('')
+  const measure = usePreviewMeasureStore((state) => state.measure)
+  const setMeasure = usePreviewMeasureStore((state) => state.setMeasure)
 
   const resolvedNodes = useResolvedNodes(yamlFiles, activePage)
   const nodeIdToAddress = useMemo(() => buildNodeIdToAddressMap(resolvedNodes), [resolvedNodes])
@@ -106,6 +111,9 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
       highlightNode(address: string) {
         setHighlightedNode(address)
       },
+      setMeasure(on: boolean) {
+        setMeasure(on)
+      },
       getRenderedHtml() {
         return renderedHtmlRef.current
       },
@@ -113,7 +121,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
         setRefreshKey((k) => k + 1)
       },
     }),
-    [onPageChange, onDeviceChange, onRenderModeChange],
+    [onPageChange, onDeviceChange, onRenderModeChange, setMeasure],
   )
 
   return (
@@ -164,6 +172,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
           onHtmlChange={handleHtmlChange}
           zoom={zoom}
           nodeIdToAddress={nodeIdToAddress}
+          measure={measure}
         />
 
         {/* Right panel: Node tree or Sitemap */}

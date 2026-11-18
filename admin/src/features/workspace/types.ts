@@ -31,6 +31,12 @@ export const DEVICE_ORDER: DeviceType[] = [
   'full_scale',
 ]
 
+/** Host-to-page message that switches the measurement overlay on or off. */
+export interface MeasureMessage {
+  type: 'wf:measure'
+  on: boolean
+}
+
 export interface ResolvedNode {
   id: string
   address: string
