@@ -1,0 +1,169 @@
+documentType: page
+specVersion: "1.1"
+id: app_navigation
+page:
+  id: app_navigation
+  template: app_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: card
+  slots:
+    - slotId: main
+      content:
+        - id: appnav_header
+          component: page_header
+          props:
+            title: App navigation
+            subtitle: Command palette, menubar, top navigation, toolbar and gantt, with item states.
+
+        - id: appnav_grid
+          component: grid
+          props:
+            columns: 2
+          children:
+            - id: appnav_top_card
+              component: card
+              props:
+                title: Top navigation
+              size:
+                minHeight: 245
+              children:
+                - id: appnav_top
+                  component: nav
+                  props:
+                    variant: top
+                    open: Products
+                    items:
+                      - label: Products
+                        items:
+                          - label: Analytics
+                            icon: chart-line
+                            description: Dashboards and reports for every team.
+                            route: charts
+                          - label: Automation
+                            icon: bolt
+                            description: Workflows that run on a schedule.
+                            route: forms
+                            current: true
+                          - type: separator
+                          - label: Integrations
+                            icon: plug
+                            description: Coming soon.
+                            disabled: true
+                      - label: Solutions
+                        items: [Startups, Enterprise]
+                      - label: Pricing
+                        route: data
+                      - label: Docs
+                        route: content
+                      - type: separator
+                      - label: Changelog
+                        disabled: true
+                        route: content
+            - id: appnav_menubar_card
+              component: card
+              props:
+                title: Menubar
+              size:
+                minHeight: 245
+              children:
+                - id: appnav_menubar
+                  component: menubar
+                  props:
+                    open: Edit
+                    items:
+                      - label: File
+                        items: [New, Open, Save]
+                      - label: Edit
+                        items:
+                          - label: Undo
+                            shortcut: "⌘Z"
+                          - label: Redo
+                            shortcut: "⇧⌘Z"
+                            disabled: true
+                          - type: separator
+                          - type: group
+                            label: Clipboard
+                            items:
+                              - label: Cut
+                                shortcut: "⌘X"
+                              - label: Copy
+                                shortcut: "⌘C"
+                                selected: true
+                              - label: Paste
+                                shortcut: "⌘V"
+                      - label: View
+                        items: [Zoom in, Zoom out]
+                      - label: Window
+                        disabled: true
+                        items: [Minimise]
+                      - label: Help
+            - id: appnav_command_card
+              component: card
+              props:
+                title: Command palette
+              children:
+                - id: appnav_command
+                  component: command
+                  props:
+                    placeholder: Search or run a command
+                    footer: true
+                    items:
+                      - type: group
+                        label: Suggestions
+                        items:
+                          - label: New project
+                            icon: plus
+                            shortcut: "⌘N"
+                            selected: true
+                          - label: Invite teammates
+                            icon: user-plus
+                            description: Send an email invite
+                            shortcut: "⌘⇧I"
+                          - label: Billing
+                            icon: credit-card
+                            description: Plan and invoices
+                            disabled: true
+                      - type: group
+                        label: Navigation
+                        items:
+                          - label: Go to dashboard
+                            icon: gauge
+                            route: content
+                            shortcut: G D
+            - id: appnav_side
+              component: stack
+              props:
+                gap: 20
+              children:
+                - id: appnav_toolbar_card
+                  component: card
+                  props:
+                    title: Toolbar
+                  children:
+                    - id: appnav_toolbar
+                      component: toolbar
+                      props:
+                        items:
+                          - { label: Bold, icon: bold, pressed: true }
+                          - { label: Italic, icon: italic, pressed: false }
+                          - { type: separator }
+                          - type: group
+                            label: Alignment
+                            items:
+                              - { label: Align left, icon: align-left, checked: true }
+                              - { label: Align centre, icon: align-center }
+                          - { type: separator }
+                          - { label: Link, icon: link }
+                          - { label: Delete, icon: trash, disabled: true }
+                - id: appnav_gantt
+                  component: chart
+                  props:
+                    chartType: gantt
+                    title: Release plan
+                    ticks: [W1, W2, W3, W4]
+                    data:
+                      - { label: Design, start: 0, end: 8 }
+                      - { label: Build, start: 6, end: 20, tone: info }
+                      - { label: Launch, start: 19, end: 20, tone: success }
