@@ -1,144 +1,14 @@
 'use strict';
 
-function isObject(value) {
-  return value != null && typeof value === 'object' && !Array.isArray(value);
-}
-
-const PROP_TOKEN_PATTERN = /\{\{\s*props\.([a-zA-Z0-9_.]+)\s*\}\}/g;
-
-function cloneDeep(value) {
-  if (Array.isArray(value)) {
-    return value.map((entry) => cloneDeep(entry));
-  }
-
-  if (!isObject(value)) {
-    return value;
-  }
-
-  const clone = {};
-  for (const [key, item] of Object.entries(value)) {
-    clone[key] = cloneDeep(item);
-  }
-
-  return clone;
-}
-
-function getPathValue(source, path) {
-  if (!isObject(source) || typeof path !== 'string' || path.trim() === '') {
-    return undefined;
-  }
-
-  const parts = path.split('.');
-  let current = source;
-
-  for (const part of parts) {
-    if (!isObject(current) || !Object.prototype.hasOwnProperty.call(current, part)) {
-      return undefined;
-    }
-    current = current[part];
-  }
-
-  return current;
-}
-
-function resolveComponentPropString(value, props) {
-  if (typeof value !== 'string' || !value.includes('{{')) {
-    return value;
-  }
-
-  const exactMatch = value.match(/^\{\{\s*props\.([a-zA-Z0-9_.]+)\s*\}\}$/);
-  if (exactMatch) {
-    const exactValue = getPathValue(props, exactMatch[1]);
-    return exactValue === undefined ? '' : cloneDeep(exactValue);
-  }
-
-  return value.replace(PROP_TOKEN_PATTERN, (_match, propPath) => {
-    const resolved = getPathValue(props, propPath);
-    return resolved === undefined || resolved == null ? '' : String(resolved);
-  });
-}
-
-function resolveComponentPropTemplates(value, props) {
-  if (Array.isArray(value)) {
-    return value.map((entry) => resolveComponentPropTemplates(entry, props));
-  }
-
-  if (isObject(value)) {
-    const resolved = {};
-    for (const [key, item] of Object.entries(value)) {
-      resolved[key] = resolveComponentPropTemplates(item, props);
-    }
-    return resolved;
-  }
-
-  return resolveComponentPropString(value, props);
-}
-
-function namespaceNodeIds(nodes, namespace) {
-  if (!Array.isArray(nodes) || typeof namespace !== 'string' || !namespace.trim()) {
-    return new Map();
-  }
-
-  const idMap = new Map();
-
-  function visit(node) {
-    if (!isObject(node)) {
-      return;
-    }
-
-    if (typeof node.id === 'string' && node.id.trim() !== '') {
-      const oldId = node.id;
-      const newId = `${namespace}__${oldId}`;
-      node.id = newId;
-      idMap.set(oldId, newId);
-    }
-
-    if (Array.isArray(node.children)) {
-      for (const child of node.children) {
-        visit(child);
-      }
-    }
-  }
-
-  for (const node of nodes) {
-    visit(node);
-  }
-
-  return idMap;
-}
-
-function rewriteScopedNodeReferences(nodes, idMap) {
-  if (!Array.isArray(nodes) || !(idMap instanceof Map) || idMap.size === 0) {
-    return;
-  }
-
-  function visit(node) {
-    if (!isObject(node)) {
-      return;
-    }
-
-    if (Array.isArray(node.interaction)) {
-      for (const interaction of node.interaction) {
-        if (!isObject(interaction)) {
-          continue;
-        }
-        if (typeof interaction.formId === 'string' && idMap.has(interaction.formId)) {
-          interaction.formId = idMap.get(interaction.formId);
-        }
-      }
-    }
-
-    if (Array.isArray(node.children)) {
-      for (const child of node.children) {
-        visit(child);
-      }
-    }
-  }
-
-  for (const node of nodes) {
-    visit(node);
-  }
-}
+const { collectSlotPlaceholders } = require('../component-registry/slot-placeholders');
+const {
+  cloneDeep,
+  isObject,
+  mergeNodeProps,
+  namespaceDescendants,
+  resolveComponentPropTemplates,
+} = require('./component-prep');
+const { prepareSlottedInstance } = require('./slotted-instance');
 
 function buildContentMap(list, idField) {
   const map = new Map();
@@ -155,51 +25,6 @@ function buildContentMap(list, idField) {
   }
 
   return map;
-}
-
-function mergeComponentProps(instanceProps, defaults) {
-  const defaultProps = isObject(defaults) ? defaults : {};
-  const resolvedProps = isObject(instanceProps) ? instanceProps : {};
-
-  return {
-    ...defaultProps,
-    ...resolvedProps,
-  };
-}
-
-function mergeNodeProps(instanceProps, rootProps, defaults) {
-  return {
-    ...mergeComponentProps(defaults, {}),
-    ...mergeComponentProps(rootProps, {}),
-    ...mergeComponentProps(instanceProps, {}),
-  };
-}
-
-function resolveNodes(nodes, components, componentStack, injectableMap) {
-  if (!Array.isArray(nodes)) {
-    return {
-      ok: true,
-      nodes: [],
-    };
-  }
-
-  const output = [];
-
-  for (const node of nodes) {
-    const resolved = resolveComponentNode(node, components, componentStack, injectableMap);
-    if (!resolved.ok) {
-      return resolved;
-    }
-
-    for (const resolvedNode of resolved.nodes) {
-      output.push(resolvedNode);
-    }
-  }
-
-  return {
-    ok: true,
-    nodes: output,
-  };
 }
 
 function resolveComponentNode(node, components, componentStack, injectableMap) {
@@ -254,10 +79,15 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
     };
   }
 
-  const { use, props, id } = node;
+  if (collectSlotPlaceholders(componentDoc).length > 0) {
+    return resolveSlottedInstance(node, componentDoc, components, componentStack, injectableMap);
+  }
+
+  const { props, id } = node;
   const instanceOverrides = cloneDeep({ ...node });
   delete instanceOverrides.use;
   delete instanceOverrides.props;
+  delete instanceOverrides.slots;
 
   const resolvedNode = {
     ...cloneDeep(componentDoc.root),
@@ -275,12 +105,46 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
     resolvedNode[key] = value;
   }
 
-  if (Array.isArray(resolvedNode.children) && typeof id === 'string' && id.trim() !== '') {
-    const idMap = namespaceNodeIds(resolvedNode.children, id);
-    rewriteScopedNodeReferences(resolvedNode.children, idMap);
+  namespaceDescendants(resolvedNode, id);
+
+  return expandDefinitionTree(resolvedNode, node.use, components, componentStack, injectableMap);
+}
+
+/**
+ * Instance `children` fill `default`; `slots` fill the rest. Fills are the
+ * caller's content, so they expand in the caller's scope, before the callee
+ * is on the stack: a caller-authored instance of the same component inside a
+ * fill is finite nesting, not recursion.
+ */
+function resolveSlottedInstance(node, componentDoc, components, componentStack, injectableMap) {
+  const authored = [];
+  if (Array.isArray(node.children)) {
+    authored.push(['default', node.children]);
+  }
+  if (isObject(node.slots)) {
+    for (const [name, nodes] of Object.entries(node.slots)) {
+      if (Array.isArray(nodes) && !(name === 'default' && Array.isArray(node.children))) {
+        authored.push([name, nodes]);
+      }
+    }
   }
 
-  componentStack.add(node.use);
+  const fills = new Map();
+  for (const [name, nodes] of authored) {
+    const expanded = resolveInjectableNodes(nodes, injectableMap, components, componentStack);
+    if (!expanded.ok) {
+      return expanded;
+    }
+    fills.set(name, expanded.nodes);
+  }
+
+  const prepared = prepareSlottedInstance(node, componentDoc, fills);
+  return expandDefinitionTree(prepared, node.use, components, componentStack, injectableMap);
+}
+
+/** Expand the nested instances a prepared definition tree contains, with the definition on the stack. */
+function expandDefinitionTree(resolvedNode, use, components, componentStack, injectableMap) {
+  componentStack.add(use);
   if (Array.isArray(resolvedNode.children)) {
     const childResult = resolveInjectableNodes(
       resolvedNode.children,
@@ -289,7 +153,7 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
       componentStack,
     );
     if (!childResult.ok) {
-      componentStack.delete(node.use);
+      componentStack.delete(use);
       return childResult;
     }
     resolvedNode.children = childResult.nodes;
@@ -302,14 +166,14 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
       componentStack,
       injectableMap,
     );
-    componentStack.delete(node.use);
+    componentStack.delete(use);
     if (!nestedResult.ok) {
       return nestedResult;
     }
     return nestedResult;
   }
 
-  componentStack.delete(node.use);
+  componentStack.delete(use);
 
   return {
     ok: true,
