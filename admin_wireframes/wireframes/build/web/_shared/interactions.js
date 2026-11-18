@@ -695,10 +695,33 @@ function unbindOverlayDismiss(node, overlayId) {
     window.removeEventListener('scroll', node._wfPositionHandler, true);
     node._wfPositionHandler = null;
   }
-  if (node._wfDismissTimer) {
-    clearTimeout(node._wfDismissTimer);
-    node._wfDismissTimer = null;
-  }
+  clearOverlayTimeout(overlayId);
+}
+// Timed dismissals by overlay id. Measuring pauses them, and they resume with
+// the time they had left when it ends.
+var WF_OVERLAY_TIMEOUTS = {};
+function startOverlayTimeout(id) {
+  var pending = WF_OVERLAY_TIMEOUTS[id];
+  pending.due = Date.now() + pending.left;
+  pending.handle = setTimeout(function () { closeOverlay(id); }, pending.left);
+}
+function clearOverlayTimeout(id) {
+  var pending = WF_OVERLAY_TIMEOUTS[id];
+  if (!pending) return;
+  clearTimeout(pending.handle);
+  delete WF_OVERLAY_TIMEOUTS[id];
+}
+function pauseOverlayTimeouts(paused) {
+  Object.keys(WF_OVERLAY_TIMEOUTS).forEach(function (id) {
+    var pending = WF_OVERLAY_TIMEOUTS[id];
+    if (paused && pending.handle) {
+      clearTimeout(pending.handle);
+      pending.handle = null;
+      pending.left = Math.max(0, pending.due - Date.now());
+    } else if (!paused && !pending.handle) {
+      startOverlayTimeout(id);
+    }
+  });
 }
 function openOverlay(id) {
   var node = document.getElementById(id);
@@ -706,8 +729,10 @@ function openOverlay(id) {
   var dismiss = overlayDismissList(node);
   setOverlayVisible(node, true);
   positionAnchoredOverlay(node);
+  clearOverlayTimeout(id);
   if (dismiss.indexOf('timeout') >= 0) {
-    node._wfDismissTimer = setTimeout(function () { closeOverlay(id); }, 3000);
+    WF_OVERLAY_TIMEOUTS[id] = { left: 3000, due: 0, handle: null };
+    if (!isMeasuring()) startOverlayTimeout(id);
   }
   bindOverlayDismiss(node, id, dismiss);
 }
@@ -982,7 +1007,11 @@ function measurePick(x, y) {
   try { if (!document.hasFocus()) window.focus(); } catch (_err) {}
 }
 // A press picks on pointerup rather than click: disabled controls receive
-// pointer events but no click. Drags and scrolls are not picks.
+// pointer events but no click. Drags and scrolls are not picks: moving more
+// than 8px from the press, or a pointercancel, drops it even if it comes back.
+function measureNear(press, event) {
+  return Math.abs(event.clientX - press.x) <= 8 && Math.abs(event.clientY - press.y) <= 8;
+}
 function measurePress(event) {
   if (event.type === 'pointerdown') {
     WF_MEASURE.touch = event.pointerType === 'touch';
@@ -991,9 +1020,10 @@ function measurePress(event) {
   }
   var press = WF_MEASURE.press;
   WF_MEASURE.press = null;
-  if (press && press.id === event.pointerId && Math.abs(event.clientX - press.x) <= 8 && Math.abs(event.clientY - press.y) <= 8) {
-    measurePick(event.clientX, event.clientY);
-  }
+  if (press && press.id === event.pointerId && measureNear(press, event)) measurePick(event.clientX, event.clientY);
+}
+function measureCancel(event) {
+  if (WF_MEASURE.press && WF_MEASURE.press.id === event.pointerId) WF_MEASURE.press = null;
 }
 function measureCapture(event) {
   if (!WF_MEASURE.on) return;
@@ -1003,6 +1033,8 @@ function measureCapture(event) {
   else if (event.type === 'mousedown' || event.type === 'click') event.preventDefault();
 }
 function measureMove(event) {
+  var press = WF_MEASURE.press;
+  if (press && press.id === event.pointerId && !measureNear(press, event)) WF_MEASURE.press = null;
   if (event.pointerType === 'touch') return;
   WF_MEASURE.touch = false;
   WF_MEASURE.x = event.clientX;
@@ -1022,6 +1054,7 @@ function measureListeners(add) {
     window[method](WF_MEASURE_STOPPED[i], measureCapture, { capture: true, passive: WF_MEASURE_STOPPED[i].indexOf('touch') === 0 });
   }
   window[method]('pointermove', measureMove, { capture: true, passive: true });
+  window[method]('pointercancel', measureCancel, true);
   window[method]('mouseout', measureLeave, true);
   window[method]('scroll', measureRefresh, { capture: true, passive: true });
   window[method]('resize', measureRefresh);
@@ -1029,6 +1062,7 @@ function measureListeners(add) {
 function setMeasure(on) {
   if (on === WF_MEASURE.on || !document.body) return;
   WF_MEASURE.on = on;
+  pauseOverlayTimeouts(on);
   if (!on) {
     measureListeners(false);
     if (WF_MEASURE.layer && WF_MEASURE.layer.parentNode) WF_MEASURE.layer.parentNode.removeChild(WF_MEASURE.layer);
