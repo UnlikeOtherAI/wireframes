@@ -145,3 +145,36 @@ test('#16 the inserted definition is the only text that changes, wherever the co
     assert.equal(output.slice(0, prefix) + output.slice(output.length - suffix), source, `${name}: only an insertion`);
   }
 });
+
+test('N4 copy into an empty flow map keeps the comments inside its braces', () => {
+  const definition = { root: { id: 'extra', component: 'section' } };
+  const head = 'documentType: components\nspecVersion: "1.1"\nid: c\n';
+  const commented = `${head}components: { # inner mapping note\n  # empty on purpose\n} # outside note\n`;
+  const cases = {
+    'comments before the closing brace': commented,
+    'indented closing brace': `${head}components: {\n    # empty on purpose\n  }\n`,
+    crlf: commented.replace(/\n/g, '\r\n'),
+  };
+  for (const [name, source] of Object.entries(cases)) {
+    const output = insertComponentDefinition(source, 'extra', definition);
+    const expected = yaml.load(source);
+    expected.components.extra = definition;
+    assert.deepEqual(yaml.load(output), expected, name);
+    for (const comment of source.match(/# [a-z ]+/g)) assert.ok(output.includes(comment), `${name}: "${comment}" kept`);
+    let prefix = 0;
+    while (prefix < source.length && source[prefix] === output[prefix]) prefix += 1;
+    const suffix = source.length - prefix;
+    assert.equal(output.slice(0, prefix) + output.slice(output.length - suffix), source, `${name}: only an insertion`);
+    if (source.includes('\r\n')) assert.doesNotMatch(output.replace(/\r\n/g, ''), /\n/, `${name}: line endings kept`);
+  }
+
+  const projectPath = createStdProject([]);
+  const filePath = path.join(projectPath, 'components.yaml');
+  fs.writeFileSync(filePath, cases['comments before the closing brace'], 'utf8');
+  const copied = wf(projectPath, 'component', 'copy', 'std.hero');
+  assert.equal(copied.status, 0, copied.stderr);
+  const text = fs.readFileSync(filePath, 'utf8');
+  for (const comment of ['# inner mapping note', '# empty on purpose', '# outside note']) assert.ok(text.includes(comment), comment);
+  assert.equal(readYaml(filePath).components.hero.root.id, 'hero');
+});
+

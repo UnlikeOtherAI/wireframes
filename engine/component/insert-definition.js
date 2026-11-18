@@ -38,11 +38,26 @@ function blockAfterLine(text, offset, block, eol) {
   return { start: at, end: at, text: `${lead}${block}` };
 }
 
+/** Whether an empty flow mapping holds comments: they are all that can be between its braces. */
+const hasInnerComments = (text, mapping) => text.slice(mapping.start + 1, mapping.end - 1).trim() !== '';
+
+/**
+ * The only entry of an empty flow mapping. Its comments stay where they are: a
+ * comment runs to the end of its line, so `}` is on a later line, and the entry
+ * goes on a line of its own just before it.
+ */
+function fillEmptyFlow(text, mapping, key, value, eol) {
+  if (!hasInnerComments(text, mapping)) return { start: mapping.start + 1, end: mapping.start + 1, text: ` ${flowEntry(key, value)} ` };
+  const close = mapping.end - 1;
+  const at = text.lastIndexOf('\n', close - 1) + 1;
+  return { start: at, end: at, text: `${' '.repeat(columnOf(text, close) + DEFAULT_STEP)}${flowEntry(key, value)}${eol}` };
+}
+
 /** Adds `key: value` as the last entry of a block mapping, or of a flow mapping (`{}` included). */
 function appendToMapping(text, mapping, key, value, eol) {
   const entries = [...mapping.entries.values()];
   if (isFlow(text, mapping)) {
-    if (entries.length === 0) return [{ start: mapping.start + 1, end: mapping.start + 1, text: ` ${flowEntry(key, value)} ` }];
+    if (entries.length === 0) return [fillEmptyFlow(text, mapping, key, value, eol)];
     const last = entries[entries.length - 1];
     const end = last.value && last.value.end > last.key.end ? last.value.end : last.key.end;
     return [{ start: end, end, text: `, ${flowEntry(key, value)}` }];
@@ -51,7 +66,7 @@ function appendToMapping(text, mapping, key, value, eol) {
   return [blockAfterLine(text, mapping.end, blockEntry(key, value, columnOf(text, first), DEFAULT_STEP, eol), eol)];
 }
 
-/** `components: {}` in a block document becomes a block mapping of one entry, comments kept. */
+/** `components: {}` in a block document becomes a block mapping of one entry; a comment after `}` stays. */
 function fillEmptyBlock(text, entry, key, value, eol) {
   const indent = columnOf(text, entry.key.start) + DEFAULT_STEP;
   return [
@@ -63,7 +78,10 @@ function fillEmptyBlock(text, entry, key, value, eol) {
 function editsFor(text, root, id, definition, eol) {
   const entry = root.entries.get('components');
   if (!entry?.value || entry.value.kind !== 'mapping') return null;
-  if (entry.value.entries.size === 0 && !isFlow(text, root)) return fillEmptyBlock(text, entry, id, definition, eol);
+  // Only braces with nothing between them can be rewritten as a block without losing text.
+  if (entry.value.entries.size === 0 && !isFlow(text, root) && !hasInnerComments(text, entry.value)) {
+    return fillEmptyBlock(text, entry, id, definition, eol);
+  }
   return appendToMapping(text, entry.value, id, definition, eol);
 }
 
