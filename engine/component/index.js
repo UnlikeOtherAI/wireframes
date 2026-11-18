@@ -7,7 +7,7 @@ const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema
 const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 const { childNodeLists } = require(path.resolve(__dirname, '..', 'component-registry', 'child-nodes'));
 const { loadProjectComponentRegistry } = require(path.resolve(__dirname, '..', 'component-registry'));
-const { resolveComponentDefinition } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
+const { resolveAuthoredComponent } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
 const { builtinCopyHint } = require(path.resolve(__dirname, '..', 'stdlib'));
 
 const COMPONENT_ID_REGEX = /^[a-z][a-z0-9_]*$/;
@@ -266,7 +266,7 @@ function importedRemoveError(projectPath, componentId) {
     return `Component "${componentId}" is defined in ${file} as "${source.localId}". `
       + `wf component remove only removes components defined in components.yaml; delete "${source.localId}" from ${file}.`;
   }
-  return resolveComponentDefinition(componentId, loaded.registry.components) ? builtinCopyHint(componentId) : null;
+  return resolveAuthoredComponent(componentId, loaded.registry.components) ? builtinCopyHint(componentId) : null;
 }
 
 function removeComponent({ projectPath, componentId }) {

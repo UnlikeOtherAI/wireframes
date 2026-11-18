@@ -259,7 +259,9 @@ Outline:
 Props come from `propDefaults`, `propHints` and the `{{props.x}}` tokens the
 component uses. Slots list each placeholder once with its fallback (`none` when
 it has none, `empty` for `children: []`). The outline shows nested instances
-with the named fills the component writes for them (`slots.footer:`). An unknown
+with the named fills the component writes for them (`slots.footer:`). A
+module's `std.<name>` that its own `std` alias lacks means the built-in whatever
+the project's `std` alias defines, and reads `(use:std.<name>, built-in)`. An unknown
 id exits 1; a missing id exits 2. Slots are described in the schema brief,
 §3.3 "Slots".
 

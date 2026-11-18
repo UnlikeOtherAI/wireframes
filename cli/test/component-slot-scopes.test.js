@@ -6,6 +6,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 const yaml = require('js-yaml');
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -191,19 +192,26 @@ test('N2 slot findings in a page or template import are underlined in the module
       writeYaml(path.join(projectPath, 'pages', 'about.yaml'), about);
     }
 
+    // Each alias a module is imported under is a scope of its own, named in the
+    // finding, so two pages importing it as `kit` and `parts` report it twice.
+    const times = importer === 'two pages' ? 2 : 1;
     const sources = readSources(projectPath);
     const kitText = sources.find((source) => source.name === 'components/kit.yaml').text;
     const located = lintSources(sources).diagnostics
       .filter((entry) => ['SLOT_OUTSIDE_COMPONENT', 'UNKNOWN_COMPONENT_SLOT'].includes(entry.code));
     assert.deepEqual(located.map((entry) => [entry.code, entry.source, entry.path]), [
-      ['SLOT_OUTSIDE_COMPONENT', 'components/kit.yaml', '$.components.hollow.root.slot'],
-      ['UNKNOWN_COMPONENT_SLOT', 'components/kit.yaml', '$.components.wrapper.root.children[0].slots.typo'],
+      ...Array(times).fill(['SLOT_OUTSIDE_COMPONENT', 'components/kit.yaml', '$.components.hollow.root.slot']),
+      ...Array(times).fill(['UNKNOWN_COMPONENT_SLOT', 'components/kit.yaml', '$.components.wrapper.root.children[0].slots.typo']),
     ], `${importer}: ${JSON.stringify(located)}`);
     const underlined = located.map((entry) => kitText.slice(entry.range.start.offset, entry.range.end.offset));
-    assert.deepEqual(underlined, ['slot', 'typo'], importer);
+    assert.deepEqual(underlined, [...Array(times).fill('slot'), ...Array(times).fill('typo')], importer);
+    if (times === 2) {
+      assert.deepEqual(located.map((entry) => entry.message.match(/"(kit|parts)\.(?:hollow|wrapper)"/)[1]).sort(), ['kit', 'kit', 'parts', 'parts']);
+    }
 
     const disk = runValidate({ projectPath }).errors;
-    assert.deepEqual(slotCodes(disk), ['SLOT_OUTSIDE_COMPONENT', 'UNKNOWN_COMPONENT_SLOT'], `${importer}: once each on disk`);
+    assert.deepEqual(slotCodes(disk), [...Array(times).fill('SLOT_OUTSIDE_COMPONENT'), ...Array(times).fill('UNKNOWN_COMPONENT_SLOT')],
+      `${importer}: once per alias on disk`);
   }
 });
 
@@ -222,4 +230,78 @@ test('N2 an unused imported component is underlined in the module that defines i
     // Underlined at the definition, as for a component of components.yaml: the first line of its value.
     assert.match(text.slice(0, entry.range.start.offset), new RegExp(`\\n {2}${localId}:\\s*$`), entry.message);
   }
+});
+
+/**
+ * The probe for R2: one shared wrapper, imported on two pages under different
+ * aliases, fills `footer` on `foreign.panel`, an alias the module does not own.
+ * Each page gives `foreign` its own file: home's panel declares `footer`, the
+ * other page's only `header`.
+ */
+function sharedAcrossScopesProject() {
+  const doc = (id, components) => ({ documentType: 'components', specVersion: '1.1', id, components });
+  const projectPath = createSlotsProject((docs) => {
+    delete docs.components.imports;
+    docs.page.imports = { first: '../components/shared.yaml', foreign: '../components/good.yaml' };
+    docs.page.page.slots[0].content = [{ id: 'wrapper', use: 'first.wrapper' }];
+  });
+  const home = readYaml(path.join(projectPath, 'pages', 'home.yaml'));
+  const other = structuredClone(home);
+  other.id = 'second';
+  other.page.id = 'second';
+  other.imports = { second: '../components/shared.yaml', foreign: '../components/bad.yaml' };
+  other.page.slots[0].content = [{ id: 'wrapper', use: 'second.wrapper' }];
+  writeYaml(path.join(projectPath, 'pages', 'second.yaml'), other);
+  const sitemapPath = path.join(projectPath, 'sitemap.yaml');
+  const sitemap = readYaml(sitemapPath);
+  sitemap.routes.push({ ...sitemap.routes[0], id: 'second', path: '/second', page: 'second' });
+  writeYaml(sitemapPath, sitemap);
+  writeYaml(path.join(projectPath, 'components', 'shared.yaml'), doc('shared', {
+    wrapper: { root: { id: 'wrapper', component: 'stack', children: [{
+      id: 'nested', use: 'foreign.panel', slots: { footer: [{ id: 'foot', component: 'text', props: { text: 'Footer from shared' } }] },
+    }] } },
+  }));
+  writeYaml(path.join(projectPath, 'components', 'good.yaml'), doc('good', {
+    panel: { root: { id: 'panel', component: 'stack', children: [{ id: 'foot', slot: 'footer' }] } },
+  }));
+  writeYaml(path.join(projectPath, 'components', 'bad.yaml'), doc('bad', {
+    panel: { root: { id: 'panel', component: 'stack', children: [{ id: 'head', slot: 'header', children: [] }] } },
+  }));
+  return projectPath;
+}
+
+test('R2 a shared definition is slot-checked in every scope that imports it', () => {
+  const projectPath = sharedAcrossScopesProject();
+  const errors = runValidate({ projectPath }).errors;
+  assert.deepEqual(errors.map((entry) => entry.code), ['UNKNOWN_COMPONENT_SLOT'], JSON.stringify(errors));
+  assert.match(errors[0].message, /"nested" of component "foreign\.panel" in component "second\.wrapper" fills slot "footer".*Valid slots: "header"/);
+
+  const located = lintSources(readSources(projectPath)).diagnostics.filter((entry) => entry.severity === 'error');
+  assert.deepEqual(located.map((entry) => [entry.code, entry.source, entry.path]), [
+    ['UNKNOWN_COMPONENT_SLOT', 'components/shared.yaml', '$.components.wrapper.root.children[0].slots.footer'],
+  ]);
+
+  const build = spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'wf.js'), 'build'], { cwd: projectPath, encoding: 'utf8' });
+  assert.equal(build.status, 1, 'the build refuses the page that would drop the footer');
+  assert.match(build.stderr, /Project validation failed/);
+});
+
+test('R2 only identical slot findings are reported once', () => {
+  const projectPath = sharedAcrossScopesProject();
+  // Both foreign panels now lack `footer` the same way: one finding, at the one place it is written.
+  writeYaml(path.join(projectPath, 'components', 'good.yaml'), readYaml(path.join(projectPath, 'components', 'bad.yaml')));
+  const errors = runValidate({ projectPath }).errors;
+  assert.deepEqual(errors.map((entry) => entry.message.match(/in component "(\w+)\.wrapper"/)[1]).sort(), ['first', 'second'],
+    'each alias names its own scope, so the two findings differ');
+
+  const pagePath = path.join(projectPath, 'pages', 'second.yaml');
+  const other = readYaml(pagePath);
+  other.imports.first = other.imports.second;
+  delete other.imports.second;
+  other.page.slots[0].content[0].use = 'first.wrapper';
+  writeYaml(pagePath, other);
+  const same = runValidate({ projectPath }).errors;
+  assert.deepEqual(same.map((entry) => entry.code), ['UNKNOWN_COMPONENT_SLOT'], `the same alias and target: ${JSON.stringify(same)}`);
+  const located = lintSources(readSources(projectPath)).diagnostics.filter((entry) => entry.severity === 'error');
+  assert.deepEqual(located.map((entry) => entry.source), ['components/shared.yaml']);
 });

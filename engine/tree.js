@@ -12,7 +12,7 @@ const {
   loadProjectComponentRegistry,
 } = require('./component-registry');
 const { resolveTemplatePage } = require('./resolver');
-const { resolveComponentDefinition } = require('./component-registry/definition-lookup');
+const { resolveAuthoredComponent } = require('./component-registry/definition-lookup');
 const { resolveNodes, buildOverlayRoots } = require('./resolver/nodes');
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
@@ -199,7 +199,7 @@ function buildTemplateTree(projectPath, templateId) {
   };
 }
 function buildComponentTree(projectPath, componentId, components) {
-  const component = resolveComponentDefinition(componentId, components);
+  const component = resolveAuthoredComponent(componentId, components);
   if (!isObject(component) || !isObject(component.root)) {
     return {
       ok: false,

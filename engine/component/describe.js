@@ -2,7 +2,10 @@
 
 const path = require('node:path');
 const { loadProjectComponentRegistry } = require(path.resolve(__dirname, '..', 'component-registry'));
-const { resolveComponentDefinition } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
+const {
+  authoredReference,
+  resolveAuthoredComponent,
+} = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
 const { builtinComponentSummary } = require(path.resolve(__dirname, '..', 'stdlib'));
 const {
   collectSlotPlaceholders,
@@ -45,7 +48,11 @@ function propLines(definition) {
 function nodeLabel(node) {
   const id = typeof node.id === 'string' ? node.id : '<unnamed>';
   if (isSlotPlaceholder(node)) return `${id} (slot:${node.slot})`;
-  if (typeof node.use === 'string') return `${id} (use:${node.use})`;
+  if (typeof node.use === 'string') {
+    // A module's `std.<name>` that means the built-in, whatever `std.<name>` means elsewhere.
+    const use = authoredReference(node.use);
+    return use === node.use ? `${id} (use:${use})` : `${id} (use:${use}, built-in)`;
+  }
   if (typeof node.component === 'string') return `${id} (component:${node.component})`;
   return id;
 }
@@ -98,7 +105,7 @@ function describeComponent({ projectPath, componentId }) {
 
   const loaded = loadProjectComponentRegistry(projectPath);
   if (!loaded.ok) return { ok: false, error: loaded.error };
-  const definition = resolveComponentDefinition(id, loaded.registry.components);
+  const definition = resolveAuthoredComponent(id, loaded.registry.components);
   if (!isObject(definition) || !isObject(definition.root)) {
     return { ok: false, error: `Component "${id}" does not exist.` };
   }

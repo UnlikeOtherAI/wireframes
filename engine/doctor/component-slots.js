@@ -13,7 +13,7 @@
 
 const { appendPath } = require('../schema/validator');
 const { childNodeEntries } = require('../component-registry/child-nodes');
-const { resolveComponentDefinition } = require('../component-registry/definition-lookup');
+const { authoredReference, resolveComponentDefinition } = require('../component-registry/definition-lookup');
 const {
   collectSlotPlaceholders,
   componentSlotNames,
@@ -58,7 +58,9 @@ function checkInstance(node, at, definitions, where, report) {
   const definition = resolveComponentDefinition(node.use, definitions);
   if (!isObject(definition) || !isObject(definition.root)) return;
 
-  const instance = `Instance "${node.id}" of component "${node.use}" in ${where}`;
+  // Named as written: a module's built-in-only `std.<name>` reads as `std.<name>`.
+  const use = authoredReference(node.use);
+  const instance = `Instance "${node.id}" of component "${use}" in ${where}`;
   const declared = componentSlotNames(definition);
   const slots = isObject(node.slots) ? node.slots : {};
   const fillAt = (name) => under(at, ['slots', name], true);
@@ -66,7 +68,7 @@ function checkInstance(node, at, definitions, where, report) {
   if (declared.length === 0) {
     for (const name of Object.keys(slots)) {
       report('errors', 'UNKNOWN_COMPONENT_SLOT',
-        `${instance} fills slot "${name}", but "${node.use}" declares no slots. Valid slots: none.`, fillAt(name));
+        `${instance} fills slot "${name}", but "${use}" declares no slots. Valid slots: none.`, fillAt(name));
     }
     return;
   }
@@ -82,14 +84,14 @@ function checkInstance(node, at, definitions, where, report) {
   for (const [name, fill] of Object.entries(slots)) {
     if (!declared.includes(name)) {
       report('errors', 'UNKNOWN_COMPONENT_SLOT',
-        `${instance} fills slot "${name}", which "${node.use}" does not declare. Valid slots: ${slotList(declared)}.`, fillAt(name));
+        `${instance} fills slot "${name}", which "${use}" does not declare. Valid slots: ${slotList(declared)}.`, fillAt(name));
     } else if (Array.isArray(fill)) {
       filled.add(name);
     }
   }
   if (hasChildren && !declared.includes('default')) {
     report('errors', 'UNKNOWN_COMPONENT_SLOT',
-      `${instance} passes children, which fill slot "default", but "${node.use}" does not declare it. Valid slots: ${slotList(declared)}.`,
+      `${instance} passes children, which fill slot "default", but "${use}" does not declare it. Valid slots: ${slotList(declared)}.`,
       under(at, ['children'], true));
   }
 
@@ -163,7 +165,7 @@ function checkDefinition(componentId, definition, definitions, rootAt, report) {
 
 /**
  * Each `sources` map is the registry's: component id to `{ sourcePath, localId }`.
- * Without one, a definition is located and told apart by its registry id.
+ * Without one, a definition is located by its registry id.
  *
  * @param {object} input
  * @param {object} input.definitions Component id to definition, ids qualified by import alias.
@@ -177,8 +179,19 @@ function checkDefinition(componentId, definition, definitions, rootAt, report) {
 function checkComponentSlots({
   definitions = {}, sources, templates = {}, templateDefinitions, templateSources, pages = [],
 }) {
+  // A definition can render differently in each scope: a reference to an alias
+  // its own file does not import resolves to whatever the importing page or
+  // template gives that alias. So every definition is checked in every scope that
+  // can see it, and a finding is dropped only when it repeats one exactly: same
+  // code, same place and same message.
   const diagnostics = [];
-  const report = (severity, code, message, at) => diagnostics.push({ severity, code, message, at });
+  const reported = new Set();
+  const report = (severity, code, message, at) => {
+    const key = JSON.stringify([severity, code, message, at.document, at.file ?? null, at.path, at.key === true]);
+    if (reported.has(key)) return;
+    reported.add(key);
+    diagnostics.push({ severity, code, message, at });
+  };
 
   const templateScope = isObject(templateDefinitions) ? templateDefinitions : definitions;
   const scopes = [
@@ -186,21 +199,10 @@ function checkComponentSlots({
     { definitions: templateScope, sources: isObject(templateDefinitions) ? templateSources : sources },
     ...pages.map((entry) => ({ definitions: entry?.definitions, sources: entry?.sources })),
   ];
-  // A definition a template or page imports is checked in the first registry
-  // that imported it, so its nested instances resolve as they render. Registries
-  // share what they import: one file's definition is checked once, whatever
-  // alias each registry gives it. Without a source, the same registry id and the
-  // same body are the same definition.
-  const checked = new Set();
   for (const scope of scopes) {
     if (!isObject(scope.definitions)) continue;
     for (const [componentId, definition] of Object.entries(scope.definitions)) {
       const source = isObject(scope.sources) ? scope.sources[componentId] : null;
-      const key = isObject(source)
-        ? `${source.sourcePath}\u0000${source.localId}`
-        : `${componentId}\u0000${JSON.stringify(definition)}`;
-      if (checked.has(key)) continue;
-      checked.add(key);
       checkDefinition(componentId, definition, scope.definitions, rootPlace(componentId, source), report);
     }
   }
