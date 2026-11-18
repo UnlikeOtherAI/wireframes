@@ -78,7 +78,8 @@ function buildZipCommand({
   if (!includeAssets) {
     excludes.push('assets/*');
   }
-  if (!relativeOutput.startsWith('..')) {
+  // `..` as a whole segment leaves the project; a folder such as `..exports` does not.
+  if (!/^\.\.(?:\/|$)/u.test(relativeOutput) && !path.isAbsolute(relativeOutput)) {
     excludes.push(relativeOutput);
   }
 

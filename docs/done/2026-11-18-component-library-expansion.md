@@ -706,9 +706,20 @@ These changed or sharpened the design while it was built. The code and the docs 
   the project registry, so `inspect`, `wf node` writes and `remove` act on the
   definition's real source file. A component is read-only only when lookup fell back
   to a built-in.
-- **`wf component copy` (review).** The target must resolve inside the project. The
-  definition's text is inserted into the existing document, so comments and formatting
-  survive. The result is validated, then written atomically.
+- **`wf component copy` (review).** The target must resolve inside the project; only a
+  whole `..` segment leaves it, so `..components/` is inside. The definition's text is
+  inserted into the existing document, so comments and formatting survive, including
+  inside an empty flow map. The result is validated, then written atomically.
+- **Expansion errors (re-check).** Content that cannot expand is a validation error at
+  the authored entry (`CIRCULAR_TEMPLATE_REFERENCE` or `BROKEN_COMPONENT_REFERENCE`), for
+  page slots, template regions, injectables and overlays, including unknown ids inside
+  root-imported modules. An overlay that fails to expand is not walked for id and form
+  checks until it does.
+- **Module-local `std` misses (re-check).** A module's `std.<name>` that its own `std`
+  alias lacks becomes `builtin:std.<name>`, which only the built-in can satisfy, so a
+  parent's `std` alias never captures it. `wf component show` prints that form.
+- **Imported findings (re-check).** Slot and unused-component findings for imported
+  definitions are located in the file that defines them.
 - **Gallery pages (review).** Two pages were added despite §4.7: `app_navigation` (card)
   and `line_navigation` (line). They keep the new navigation elements, toolbar and
   gantt inside the 1280×900 screenshot. Both baseline sets include them; the macOS set
