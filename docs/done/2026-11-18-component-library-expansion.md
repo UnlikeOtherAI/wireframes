@@ -661,3 +661,10 @@ These changed or sharpened the design while it was built. The code and the docs 
   the byte-for-byte drift tests.
 - **Canonical YAML (integration).** `schema-canonical.yaml` parses again, and a test
   keeps it loadable.
+- **Source lint (sync with `main`).** `main` moved the doctor and lint rules into
+  in-memory modules shared by disk and YAML text (`docs/cli/source-lint.md`). The slot
+  rules and `STD_ALIAS_SHADOWED` run in `doctor/project-checks.js`, so `lintSources`
+  reports them with a range. `child-nodes.js` gives each child list's path, so a fill is
+  located as `slots.<name>[i]`. The semantic walk lives in `doctor/node-walker.js` and
+  what a node refers to in `doctor/semantic-interactions.js`; `node-rules.js` was folded
+  into them.

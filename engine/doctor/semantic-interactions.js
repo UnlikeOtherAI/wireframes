@@ -1,33 +1,11 @@
 'use strict';
 
-/**
- * Checks that look at one node at a time: interactions, conditions, panes,
- * selections, grid spans, table columns and near-miss component names.
- */
-
-const { resolvePrimitiveName } = require('../schema/primitive-registry');
+// What a node does and refers to: interactions, conditions, panes, selections and
+// overlay definitions. `node-walker.js` walks the tree and calls these.
 
 const STATE_KEY_PATTERN = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/;
 
-// Nudges for names that are not primitives. The registry owns the real aliases
-// (which resolve silently); these are only the near-misses worth a warning.
-const COMPONENT_ALIASES = {
-  container: 'stack',
-  box: 'card',
-  panel: 'card',
-  label: 'text',
-  textfield: 'input',
-  separator: 'divider',
-  hr: 'divider',
-  bottom_tabs: 'bottom_tab_bar',
-  nav_bar: 'bottom_tab_bar',
-  sidebar: 'nav',
-  listview: 'list',
-  datagrid: 'table',
-  dropdown: 'select',
-  modal: 'overlay (kind: overlay, type: modal)',
-  tooltip: 'overlay (kind: overlay, type: tooltip)',
-};
+const OVERLAYS_REQUIRING_TRIGGER = new Set(['dropdown', 'popover', 'menu', 'tooltip']);
 
 const INTERACTION_REQUIRED_FIELDS = {
   navigation: ['targetRoute'],
@@ -48,18 +26,28 @@ function hasOwn(value, key) {
   return Object.prototype.hasOwnProperty.call(value, key);
 }
 
-function addDiagnostic(result, code, message) {
-  result.errors.push({
-    code,
-    message,
-  });
+/**
+ * `at` says where the finding is. Only a result that sets `locations` keeps it, so what
+ * the disk commands and the API print is unchanged.
+ */
+function addDiagnostic(result, code, message, at) {
+  result.errors.push(at && result.locations ? { code, message, at } : { code, message });
 }
 
-function addWarning(result, code, message) {
+function addWarning(result, code, message, at) {
   if (!result.warnings) {
     result.warnings = [];
   }
-  result.warnings.push({ code, message });
+  result.warnings.push(at && result.locations ? { code, message, at } : { code, message });
+}
+
+/**
+ * The node a finding is about, in the document being walked. `within` is the path of
+ * the component definition being walked, when it is one.
+ */
+function atNode(context, nodeId) {
+  if (!context.document || typeof nodeId !== 'string') return undefined;
+  return context.within ? { document: context.document, node: nodeId, within: context.within } : { document: context.document, node: nodeId };
 }
 
 function hasStateKey(state, key) {
@@ -84,7 +72,7 @@ function hasStateKey(state, key) {
   return true;
 }
 
-function validateCondition(condition, context) {
+function validateCondition(condition, context, nodeId) {
   if (!isObject(condition)) {
     return;
   }
@@ -98,6 +86,7 @@ function validateCondition(condition, context) {
         context.result,
         'MISSING_STATE_KEY',
         `Condition state_equals references missing ${scope} state key "${key}".`,
+        atNode(context, nodeId),
       );
     }
     return;
@@ -109,6 +98,7 @@ function validateCondition(condition, context) {
         context.result,
         'INVALID_ROUTE_REFERENCE',
         `Condition route_match references unknown route "${condition.routeId}".`,
+        atNode(context, nodeId),
       );
     }
     return;
@@ -119,19 +109,19 @@ function validateCondition(condition, context) {
       return;
     }
     for (const child of condition.conditions) {
-      validateCondition(child, context);
+      validateCondition(child, context, nodeId);
     }
     return;
   }
 
   if (condition.type === 'not') {
-    validateCondition(condition.condition, context);
-    return;
+    validateCondition(condition.condition, context, nodeId);
   }
 }
 
 function validateInteraction(interaction, context, nodeId) {
   const { result, routeIds, actionIds, overlayIds, pendingSubmitRefs } = context;
+  const at = atNode(context, nodeId);
 
   if (!isObject(interaction)) {
     return;
@@ -144,6 +134,7 @@ function validateInteraction(interaction, context, nodeId) {
         result,
         'INTERACTION_MISSING_REQUIRED_FIELD',
         `Interaction type "${interaction.type}" on node "${nodeId}" is missing required field "${field}".`,
+        at,
       );
       return;
     }
@@ -155,6 +146,7 @@ function validateInteraction(interaction, context, nodeId) {
         result,
         'INVALID_TARGET_ROUTE',
         `Navigation interaction on node "${nodeId}" references unknown targetRoute "${interaction.targetRoute}".`,
+        at,
       );
     }
     return;
@@ -166,6 +158,7 @@ function validateInteraction(interaction, context, nodeId) {
         result,
         'INVALID_TARGET_OVERLAY',
         `Interaction "${interaction.type}" on node "${nodeId}" references unknown overlay "${interaction.targetOverlay}".`,
+        at,
       );
     }
     return;
@@ -180,6 +173,7 @@ function validateInteraction(interaction, context, nodeId) {
         result,
         'MISSING_STATE_KEY',
         `${interaction.type} interaction on node "${nodeId}" references missing ${scope} state key "${interaction.stateKey}".`,
+        at,
       );
     }
     return;
@@ -191,14 +185,14 @@ function validateInteraction(interaction, context, nodeId) {
         result,
         'INVALID_ACTION_REFERENCE',
         `Action interaction on node "${nodeId}" references unknown action "${interaction.actionId}".`,
+        at,
       );
     }
     return;
   }
 
   if (interaction.type === 'submit') {
-    pendingSubmitRefs.push(interaction.formId);
-    return;
+    pendingSubmitRefs.push({ formId: interaction.formId, nodeId });
   }
 }
 
@@ -215,6 +209,7 @@ function validatePane(pane, context, nodeId) {
       context.result,
       'MISSING_STATE_KEY',
       `Pane on node "${nodeId}" references missing ${scope} sizeKey "${pane.state.sizeKey}".`,
+      atNode(context, nodeId),
     );
   }
 
@@ -223,6 +218,7 @@ function validatePane(pane, context, nodeId) {
       context.result,
       'MISSING_STATE_KEY',
       `Pane on node "${nodeId}" references missing ${scope} collapsedKey "${pane.state.collapsedKey}".`,
+      atNode(context, nodeId),
     );
   }
 }
@@ -240,136 +236,63 @@ function validateSelection(selection, context, nodeId) {
       context.result,
       'MISSING_STATE_KEY',
       `Selection on node "${nodeId}" references missing ${scope} state key "${selection.stateKey}".`,
+      atNode(context, nodeId),
     );
   }
 }
 
-function validateChildrenGrid(node, context) {
-  if (!isObject(node.layout) || node.layout.type !== 'grid' || !Array.isArray(node.children)) {
+function validateOverlayDefinition(overlay, context, overlaySource) {
+  const { result, overlayIds, overlayTriggerRefs } = context;
+  if (!isObject(overlay)) {
     return;
   }
 
-  const columns = Number.isInteger(node.layout.columns) ? node.layout.columns : context.defaultGridColumns;
-
-  for (const child of node.children) {
-    if (!isObject(child)) {
-      continue;
-    }
-
-    if (isObject(child.gridItem) && Number.isInteger(child.gridItem.span)) {
-      if (columns != null && child.gridItem.span > columns) {
-        addDiagnostic(
-          context.result,
-          'INVALID_GRID_SPAN',
-          `Node "${child.id}" in page "${context.pageId}" has span ${child.gridItem.span} greater than grid columns ${columns}.`,
-        );
-      }
-
-      if (isObject(child.size) && hasOwn(child.size, 'width')) {
-        addDiagnostic(
-          context.result,
-          'INVALID_GRID_SPAN',
-          `Node "${child.id}" in page "${context.pageId}" defines both gridItem.span and size.width.`,
-        );
-      }
-    }
-
-  }
-}
-
-function validateTableNode(node, context) {
-  if (node?.component !== 'table') {
+  if (typeof overlay.id !== 'string') {
     return;
   }
 
-  const props = isObject(node.props) ? node.props : {};
-  const columns = Array.isArray(props.columns) ? props.columns : [];
-  if (columns.length === 0) {
-    addDiagnostic(
-      context.result,
-      'TABLE_MISSING_COLUMNS',
-      `Table node "${node.id}" in page "${context.pageId}" must define at least one column.`,
-    );
+  const at = atNode(context, overlay.id);
+
+  if (overlayIds.has(overlay.id)) {
+    addDiagnostic(result, 'DUPLICATE_OVERLAY_ID', `Duplicate overlay id "${overlay.id}" in ${overlaySource}.`, at);
     return;
   }
 
-  const invalidColumn = columns.find((column) => {
-    if (typeof column === 'string') {
-      return column.trim() === '';
+  overlayIds.add(overlay.id);
+
+  if (OVERLAYS_REQUIRING_TRIGGER.has(overlay.type)) {
+    if (!hasOwn(overlay, 'trigger')) {
+      addDiagnostic(
+        result,
+        'OVERLAY_MISSING_TRIGGER',
+        `Overlay "${overlay.id}" of type "${overlay.type}" requires trigger.`,
+        at,
+      );
     }
-    if (!isObject(column)) {
-      return true;
+    if (!hasOwn(overlay, 'placement')) {
+      addDiagnostic(
+        result,
+        'OVERLAY_MISSING_PLACEMENT',
+        `Overlay "${overlay.id}" of type "${overlay.type}" requires placement.`,
+        at,
+      );
     }
-    const hasKey = typeof column.key === 'string' && column.key.trim() !== '';
-    const hasLabel = typeof column.label === 'string' && column.label.trim() !== '';
-    return !hasKey && !hasLabel;
-  });
 
-  if (invalidColumn !== undefined) {
-    addDiagnostic(
-      context.result,
-      'TABLE_INVALID_COLUMN',
-      `Table node "${node.id}" in page "${context.pageId}" has a column without a valid key or label. Provide at least one — key will auto-derive from label if omitted.`,
-    );
-  }
-}
-
-/** Every per-node rule, in the order the walker always ran them. */
-function validateNodeRules(node, context) {
-  const nodeId = node.id;
-
-  if (typeof node.component === 'string'
-    && COMPONENT_ALIASES[node.component]
-    && resolvePrimitiveName(node.component) == null) {
-    addWarning(
-      context.result,
-      'COMPONENT_ALIAS',
-      `Node "${nodeId}" uses component "${node.component}" — did you mean "${COMPONENT_ALIASES[node.component]}"?`,
-    );
-  }
-
-  if (Array.isArray(node.interaction)) {
-    for (const interaction of node.interaction) {
-      validateInteraction(interaction, context, nodeId);
+    if (hasOwn(overlay, 'trigger')) {
+      overlayTriggerRefs.push({ overlayId: overlay.id, trigger: overlay.trigger, at });
     }
   }
-
-  if (isObject(node.selection)) {
-    validateSelection(node.selection, context, nodeId);
-  }
-
-  if (isObject(node.pane)) {
-    validatePane(node.pane, context, nodeId);
-  }
-
-  if (isObject(node.visibility)) {
-    validateCondition(node.visibility.condition, context);
-  }
-
-  if (isObject(node.condition)) {
-    validateCondition(node.condition, context);
-  }
-
-  if (Array.isArray(node.interaction)) {
-    for (const interaction of node.interaction) {
-      if (isObject(interaction?.condition)) {
-        validateCondition(interaction.condition, context);
-      }
-    }
-  }
-}
-
-/** Rules that need the node's children, run after the walker has visited them. */
-function validateNodeContainerRules(node, context) {
-  validateChildrenGrid(node, context);
-  validateTableNode(node, context);
 }
 
 module.exports = {
+  isObject,
+  hasOwn,
   addDiagnostic,
   addWarning,
-  hasOwn,
-  isObject,
-  validateNodeContainerRules,
-  validateNodeRules,
+  atNode,
+  validateCondition,
+  validateInteraction,
+  validatePane,
+  validateSelection,
+  validateOverlayDefinition,
 };

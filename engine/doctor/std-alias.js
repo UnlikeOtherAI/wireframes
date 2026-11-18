@@ -10,12 +10,14 @@ const isObject = (value) => value != null && typeof value === 'object' && !Array
  * built-in pattern of the same name. Works on in-memory documents, so the CLI
  * doctor and the in-memory `validateProject` entry point share it.
  *
- * `entries` are `{ label, document, definitions }`, where `definitions` is the
- * registry that document resolves against. Returns `{ severity, code, message }`.
+ * `entries` are `{ label, document, definitions, documentLabel? }`, where
+ * `definitions` is the registry that document resolves against and
+ * `documentLabel` is the document map's name for it. Returns
+ * `{ severity, code, message, at }`, `at` pointing at the `std` import key.
  */
 function checkStdAlias(entries) {
   const diagnostics = [];
-  for (const { label, document, definitions } of entries) {
+  for (const { label, document, definitions, documentLabel } of entries) {
     if (!isObject(document?.imports) || !Object.hasOwn(document.imports, 'std')) continue;
     const shadowed = isObject(definitions)
       ? builtinComponentIds().filter((id) => Object.hasOwn(definitions, id))
@@ -26,6 +28,7 @@ function checkStdAlias(entries) {
       message: `${label} imports components as "std", so its std.<name> components win over the built-in std patterns`
         + `${shadowed.length > 0 ? ` (shadowed: ${shadowed.join(', ')})` : ''}. `
         + 'Other std.<name> ids still resolve to the built-ins; rename the alias to use both.',
+      at: documentLabel ? { document: documentLabel, path: '$.imports.std', key: true } : undefined,
     });
   }
   return diagnostics;
