@@ -992,6 +992,6 @@ state system (appState for cross-page, pageState for per-page).
 
 ## Presentation extensions
 
-See [presentation and interactive controls](rendering-controls.md) for icons, company skins and logos, native controls, preview bindings and routed table cells, and [state attributes and ARIA](rendering-states.md) for disabled, read-only, pressed, checked, selected and current states.
+See [presentation and interactive controls](rendering-controls.md) for icons, company skins and logos, native controls, preview bindings and routed table cells, [state attributes and ARIA](rendering-states.md) for disabled, read-only, pressed, checked, selected and current states, and [the measurement overlay](rendering-measure.md) for dimension lines and pinned distances drawn by the page runtime.
 
 Bounded native node scrolling (`scroll: true`) is specified in [rendering-controls.md](rendering-controls.md).

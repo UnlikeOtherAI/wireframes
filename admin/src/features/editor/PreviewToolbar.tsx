@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { DeviceSelector } from './DeviceSelector'
 import { RenderModeToggle } from './RenderModeToggle'
+import { MeasureToggle } from './MeasureToggle'
 import type { DeviceType, RenderMode } from './usePreviewRenderer'
 import { adminColors } from '../../styles/adminTheme'
 
@@ -9,6 +10,8 @@ interface PreviewToolbarProps {
   onDeviceChange: (device: DeviceType) => void
   renderMode: RenderMode
   onRenderModeChange: (mode: RenderMode) => void
+  measure: boolean
+  onMeasureChange: (on: boolean) => void
 }
 
 export function PreviewToolbar({
@@ -16,6 +19,8 @@ export function PreviewToolbar({
   onDeviceChange,
   renderMode,
   onRenderModeChange,
+  measure,
+  onMeasureChange,
 }: PreviewToolbarProps) {
   const { t } = useTranslation()
 
@@ -35,6 +40,7 @@ export function PreviewToolbar({
     >
       <DeviceSelector value={device} onChange={onDeviceChange} />
       <RenderModeToggle value={renderMode} onChange={onRenderModeChange} />
+      <MeasureToggle pressed={measure} onChange={onMeasureChange} />
     </div>
   )
 }

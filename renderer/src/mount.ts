@@ -35,6 +35,12 @@ export interface WireframeInstance {
   navigate(routeId: string): void;
   setMode(mode: Mode): void;
   setPlatform(platform: Platform): void;
+  /**
+   * Draw the measurement overlay: dimension lines on hover, and distances from
+   * a pinned target. It stays on across setPage, setMode, setPlatform and
+   * in-page navigation until switched off.
+   */
+  setMeasure(on: boolean): void;
   /** The frame decision for a node, as the page actually rendered it. */
   explain(nodeId: string): { frame: string; rule: number | null; reason: string } | null;
   html(): string;
@@ -86,11 +92,18 @@ export function createWireframe(
   let platform: Platform | undefined = options.platform;
   let pageId = options.page && project.pageIds.includes(options.page) ? options.page : project.pageIds[0];
   let current = '';
+  let measure = false;
 
   const frame = document.createElement('iframe');
   frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
   frame.style.cssText = 'width:100%;height:100%;border:0;display:block;background:transparent';
   container.appendChild(frame);
+
+  // Every render loads a new page, which starts with measurement off.
+  const sendMeasure = (): void => {
+    frame.contentWindow?.postMessage({ type: 'wf:measure', on: measure }, '*');
+  };
+  frame.addEventListener('load', () => { if (measure) sendMeasure(); });
 
   const routeTable = routeTableOf(project);
   const pageByRoute = new Map<string, string>();
@@ -148,6 +161,7 @@ export function createWireframe(
     },
     setMode(next) { mode = next; render(); },
     setPlatform(next) { platform = next; render(); },
+    setMeasure(on) { measure = on === true; sendMeasure(); },
     explain(nodeId) {
       const match = current.match(new RegExp(`<[a-z]+[^>]*\\sid="${nodeId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[^>]*>`, 'i'));
       if (!match) return null;

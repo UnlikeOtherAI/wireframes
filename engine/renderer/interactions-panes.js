@@ -4,7 +4,7 @@
  * Returns the pane-related runtime code string for the interaction runtime.
  * This is a fragment of the client-side JS IIFE — it relies on variables
  * and helpers (isObj, isFinite, getAtPath, setState, WF_APP_STATE,
- * WF_PAGE_STATE, WF_PANES) declared in the surrounding scope.
+ * WF_PAGE_STATE, WF_PANES, isMeasuring) declared in the surrounding scope.
  */
 function buildPaneRuntimeCode() {
   return `function paneState(scope, key) {
@@ -94,6 +94,7 @@ function bindPaneResizePersistence(entry) {
   var scope = entry.config.state.scope;
   var key = entry.config.state.sizeKey;
   entry._wfPaneObserver = new ResizeObserver(function (entries) {
+    if (isMeasuring()) return;
     var candidate = entries && entries[0];
     if (!candidate || !candidate.contentRect) return;
     var value = axis === 'height' ? candidate.contentRect.height : candidate.contentRect.width;

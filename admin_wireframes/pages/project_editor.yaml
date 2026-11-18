@@ -21,6 +21,7 @@ page:
     active_file: dashboard
     active_device: web
     active_orientation: portrait
+    measuring: false
   overlays:
     - id: history_modal
       type: modal
@@ -742,6 +743,15 @@ page:
                                   - { value: "75", label: "75%" }
                                   - { value: "100", label: "100%" }
                                   - { value: "150", label: "150%" }
+                            - id: ws_measure
+                              component: button
+                              props:
+                                label: "Measure"
+                                icon: ruler-combined
+                              interaction:
+                                - type: toggle
+                                  stateKey: measuring
+                                  scope: page
                             - id: ws_refresh
                               component: button
                               props:
@@ -796,6 +806,16 @@ page:
                                   component: text
                                   props:
                                     label: "Use the chat to describe changes. Generation happens automatically."
+                                - id: ws_measure_hint
+                                  component: text
+                                  visibility:
+                                    condition:
+                                      type: state_equals
+                                      scope: page
+                                      key: measuring
+                                      equals: true
+                                  props:
+                                    label: "Measuring: hover an element for its width and height, click to pin it, then hover another for the distance. Esc unpins. Clicks measure instead of navigating or selecting."
 
                         # --- Sitemap tree view (shown when workspace_mode = sitemap) ---
                         - id: ws_sitemap

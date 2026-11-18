@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DEVICE_VIEWPORTS, type DeviceType, type RenderMode } from './types'
+import { postMeasure } from './postMeasure'
 
 interface WorkspacePreviewProps {
   yamlFiles: Record<string, string>
@@ -14,6 +15,7 @@ interface WorkspacePreviewProps {
   onHtmlChange?: (html: string) => void
   zoom?: number
   nodeIdToAddress?: Map<string, string>
+  measure?: boolean
 }
 
 export function WorkspacePreview({
@@ -28,6 +30,7 @@ export function WorkspacePreview({
   onHtmlChange,
   zoom = 100,
   nodeIdToAddress,
+  measure = false,
 }: WorkspacePreviewProps) {
   const { t } = useTranslation()
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -38,6 +41,14 @@ export function WorkspacePreview({
   const renderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const viewport = DEVICE_VIEWPORTS[device]
   const scale = zoom / 100
+  const measureRef = useRef(measure)
+
+  // Every load is a fresh page, so the desired measure state is replayed on
+  // load as well as whenever it changes.
+  useEffect(() => {
+    measureRef.current = measure
+    postMeasure(iframeRef.current, measure)
+  }, [measure])
 
   // Listen for messages from the preview iframe
   useEffect(() => {
@@ -46,7 +57,7 @@ export function WorkspacePreview({
       if (event.data?.type === 'wf:navigate' && typeof event.data.routeId === 'string') {
         onNavigate?.(event.data.routeId)
       }
-      if (event.data?.type === 'wf:nodeClick' && typeof event.data.nodeId === 'string') {
+      if (event.data?.type === 'wf:nodeClick' && !measureRef.current && typeof event.data.nodeId === 'string') {
         const resolvedAddress = nodeIdToAddress?.get(event.data.nodeId)
           ?? event.data.address
           ?? `wf://page/${activePage}#${event.data.nodeId}`
@@ -191,6 +202,7 @@ export function WorkspacePreview({
           title={t('workspace.preview')}
           sandbox={interactive ? 'allow-scripts allow-same-origin' : undefined}
           srcDoc={srcdoc || undefined}
+          onLoad={() => postMeasure(iframeRef.current, measureRef.current)}
           style={{
             width: viewport.width,
             height: viewport.minHeight,

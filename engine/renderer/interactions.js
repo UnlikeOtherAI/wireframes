@@ -3,6 +3,7 @@
 const { buildControlRuntimeCode } = require('./interactions-controls');
 const { buildPaneRuntimeCode } = require('./interactions-panes');
 const { buildOverlayRuntimeCode } = require('./interactions-overlays');
+const { buildMeasureRuntimeCode } = require('./interactions-measure');
 
 function sanitizeOptions({
   routeId = '',
@@ -247,6 +248,7 @@ function refreshVisibility() {
   });
 }
 ` + buildOverlayRuntimeCode() + `
+` + buildMeasureRuntimeCode() + `
 function wfNavigate(id) {
   try {
     if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
@@ -348,7 +350,7 @@ function bindInteractions() {
       if (node.getAttribute && !node.getAttribute('tabindex')) node.setAttribute('tabindex', '0');
       if (node.getAttribute && !node.getAttribute('role')) node.setAttribute('role', 'button');
       node.addEventListener('keydown', function (event) {
-        if (event.key !== 'Enter' && event.key !== ' ') return;
+        if (isMeasuring() || (event.key !== 'Enter' && event.key !== ' ')) return;
         if (event.preventDefault) event.preventDefault();
         for (var k = 0; k < nonGestures.length; k++) runInteraction(nonGestures[k], node, event);
       });
@@ -362,6 +364,7 @@ function bindGestures(node, gestureInteractions) {
   var start = null, timer = null, pinch = null;
   var lastTap = 0, lastX = 0, lastY = 0;
   function trigger(type, event) {
+    if (isMeasuring()) return;
     node.classList.add('wf-gesture-pulse');
     setTimeout(function () { node.classList.remove('wf-gesture-pulse'); }, 250);
     for (var i = 0; i < gestureInteractions.length; i++) if (gestureInteractions[i].gestureType === type) runInteraction(gestureInteractions[i], node, event);
@@ -448,6 +451,7 @@ function bindRouteLinks() {
   });
 }
 function init() {
+  initMeasure();
   initState();
   initControls();
   initPanes();
