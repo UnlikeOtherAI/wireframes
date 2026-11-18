@@ -3,21 +3,27 @@
 const isObject = (value) => value != null && typeof value === 'object' && !Array.isArray(value);
 
 /**
- * The node arrays that sit below a node in authored YAML: its `children`, plus
- * every named fill under `slots` when the node is a `use:` instance. A slot
- * placeholder's `children` are its fallback, so they are included too.
- * Every walker that has to see slot content goes through this one function.
+ * The node arrays below a node in authored YAML, each with the path segments that
+ * lead to it: `children`, plus every named fill under `slots` when the node is a
+ * `use:` instance, as `['slots', name]`. A slot placeholder's `children` are its
+ * fallback, so they are included too. Walkers that report where a finding is
+ * written use the segments; the rest use `childNodeLists`.
  */
-function childNodeLists(node) {
+function childNodeEntries(node) {
   if (!isObject(node)) return [];
-  const lists = [];
-  if (Array.isArray(node.children)) lists.push(node.children);
+  const entries = [];
+  if (Array.isArray(node.children)) entries.push({ segments: ['children'], nodes: node.children });
   if (node.use != null && isObject(node.slots)) {
-    for (const fill of Object.values(node.slots)) {
-      if (Array.isArray(fill)) lists.push(fill);
+    for (const [name, fill] of Object.entries(node.slots)) {
+      if (Array.isArray(fill)) entries.push({ segments: ['slots', name], nodes: fill });
     }
   }
-  return lists;
+  return entries;
 }
 
-module.exports = { childNodeLists };
+/** The same arrays without their paths. Every walker that has to see slot content goes through these. */
+function childNodeLists(node) {
+  return childNodeEntries(node).map((entry) => entry.nodes);
+}
+
+module.exports = { childNodeEntries, childNodeLists };

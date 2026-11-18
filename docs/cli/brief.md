@@ -166,6 +166,9 @@ Checks naming conventions:
   surfaces, and a single-choice `value` that matches several items
   (`AMBIGUOUS_VALUE`) (`info`, never strict-fatal)
 
+An editor gets the same findings from YAML text, each with the range it is
+about, from `engine/lint/source`. See [source-lint.md](source-lint.md).
+
 ---
 
 ## Pages

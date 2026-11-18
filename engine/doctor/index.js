@@ -8,32 +8,12 @@ const { validateIconReferences } = require('../icons/validate');
 const {
   SUPPORTED_SPEC_VERSION,
 } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
-const { compareVersions } = require(path.resolve(__dirname, '..', 'schema'));
 const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 const {
   loadComponentRegistryForDocuments,
   loadProjectComponentRegistry,
 } = require(path.resolve(__dirname, '..', 'component-registry'));
-const { runSemanticValidation } = require(path.resolve(__dirname, 'semantic-validator'));
-const { checkComponentSlots } = require(path.resolve(__dirname, 'component-slots'));
-const { checkStdAlias } = require(path.resolve(__dirname, 'std-alias'));
-const {
-  collectComponentUseGraph,
-  collectUsedComponents,
-  detectCircularUse,
-} = require(path.resolve(__dirname, 'component-graph'));
-const {
-  collectTemplateReferences,
-  collectPageReferences,
-  collectPageRouteDiagnostics,
-} = require(path.resolve(__dirname, 'reference-checks'));
-
-function addDiagnostic(result, severity, code, message) {
-  result[severity].push({
-    code,
-    message,
-  });
-}
+const { addDiagnostic, checkProject } = require('./project-checks');
 
 function isYamlFile(fileName) {
   return fileName.endsWith('.yaml') || fileName.endsWith('.yml');
@@ -155,7 +135,6 @@ function runDoctor({ projectPath } = {}) {
     }
   }
 
-  const templateMap = new Map();
   const pageMap = new Map();
   const datasetIds = new Set();
 
@@ -205,25 +184,6 @@ function runDoctor({ projectPath } = {}) {
     }
   }
 
-  if (manifest && manifest.document?.manifest?.schemaVersion) {
-    const schemaVersion = manifest.document.manifest.schemaVersion;
-    const supportedSchemaVersion = SUPPORTED_SPEC_VERSION;
-
-    try {
-      if (compareVersions(String(schemaVersion), supportedSchemaVersion, manifest.absolutePath) > 0) {
-        addDiagnostic(
-          result,
-          'errors',
-          'INCOMPATIBLE_SCHEMA_VERSION',
-          `manifest.schemaVersion "${schemaVersion}" exceeds CLI-supported version "${supportedSchemaVersion}".`,
-        );
-      }
-    } catch (error) {
-      addDiagnostic(result, 'errors', 'INVALID_MANIFEST_SCHEMA_VERSION', error.message);
-    }
-  }
-
-  const templateDefinitions = templates?.document?.templates || {};
   const projectComponentRegistry = loadProjectComponentRegistry(root);
   if (!projectComponentRegistry.ok) {
     addDiagnostic(
@@ -233,144 +193,43 @@ function runDoctor({ projectPath } = {}) {
       `Unable to load project component registry: ${projectComponentRegistry.error}`,
     );
   }
-  const componentMap = projectComponentRegistry.ok ? projectComponentRegistry.registry.components : {};
-  const componentUsages = {
-    componentsUsed: new Set(),
-    datasetsUsed: new Set(),
-  };
-
-  for (const [templateId, templateDocument] of Object.entries(templateDefinitions)) {
-    if (!templateMap.has(templateId)) {
-      templateMap.set(templateId, {
-        slotIds: new Set(),
-        injectableIds: new Set(),
-      });
-    }
-    const templateInfo = templateMap.get(templateId);
-    const templateDefinitionsInScope = loadScopedComponentDefinitions(
-      root,
-      result,
-      templates?.absolutePath && templates?.document
-        ? [{ documentPath: templates.absolutePath, document: templates.document }]
-        : [],
-      `template "${templateId}"`,
-      componentMap,
-    );
-    collectTemplateReferences(templateDocument, result, templateDefinitionsInScope, templateInfo.slotIds, templateInfo.injectableIds, componentUsages, addDiagnostic);
-  }
-
-  const routeEntries = sitemap?.document?.routes || sitemap?.document?.sitemap?.routes || [];
-  collectPageRouteDiagnostics(routeEntries, result, pageMap, templateMap, addDiagnostic);
-
-  for (const pageLoaded of pageMap.values()) {
-    const pageDefinitions = loadScopedComponentDefinitions(
-      root,
-      result,
-      pageLoaded?.absolutePath && pageLoaded?.document
-        ? [{ documentPath: pageLoaded.absolutePath, document: pageLoaded.document }]
-        : [],
-      `page "${pageLoaded.id}"`,
-      componentMap,
-    );
-    collectPageReferences(
-      pageLoaded.document?.page ? pageLoaded : { id: pageLoaded.id, document: pageLoaded.document },
-      result,
-      templateMap,
-      pageDefinitions,
-      datasetIds,
-      componentUsages,
-      addDiagnostic,
-    );
-  }
-
-  const componentGraph = collectComponentUseGraph(componentMap, result, addDiagnostic);
-  const usedComponents = collectUsedComponents(componentGraph, componentUsages.componentsUsed);
-
-  for (const componentId of Object.keys(componentMap)) {
-    if (!usedComponents.has(componentId)) {
-      addDiagnostic(
-        result,
-        'warnings',
-        'UNUSED_COMPONENT',
-        `Component "${componentId}" is not referenced by any page or template.`,
-      );
-    }
-  }
-
-  for (const datasetId of datasetIds) {
-    if (!componentUsages.datasetsUsed.has(datasetId)) {
-      addDiagnostic(
-        result,
-        'warnings',
-        'UNUSED_DATASET',
-        `Dataset "${datasetId}" is not referenced by any page.`,
-      );
-    }
-  }
-
-  detectCircularUse(componentGraph, result, addDiagnostic);
-
-  const templateEntries = templates?.absolutePath && templates?.document
+  const templatesEntry = templates?.absolutePath && templates?.document
     ? [{ documentPath: templates.absolutePath, document: templates.document }]
     : [];
-  function resolveComponentsForPage(pageLoaded) {
-    const entries = [...templateEntries];
-    if (pageLoaded?.absolutePath && pageLoaded?.document) {
-      entries.push({
-        documentPath: pageLoaded.absolutePath,
-        document: pageLoaded.document,
-      });
-    }
+  const pageEntry = (pageLoaded) => (pageLoaded?.absolutePath && pageLoaded?.document
+    ? [{ documentPath: pageLoaded.absolutePath, document: pageLoaded.document }]
+    : []);
 
-    const registryResult = loadComponentRegistryForDocuments(root, entries);
-    if (!registryResult.ok) {
-      return {
-        ok: false,
-        error: `Unable to load component imports for page "${pageLoaded?.id || '<unknown>'}": ${registryResult.error}`,
-      };
-    }
-
-    return {
-      ok: true,
-      components: registryResult.registry.components,
-    };
-  }
-
-  runSemanticValidation({
+  checkProject({
     result,
-    manifest: manifest?.document?.manifest || {},
-    sitemap: sitemap?.document?.sitemap || sitemap?.document || {},
-    templates: templates?.document?.templates || {},
-    components: componentMap,
-    pages: Array.from(pageMap.values()),
-    resolveComponentsForPage,
-  });
+    manifest,
+    sitemap,
+    templates,
+    components,
+    pages: pageMap,
+    datasetIds,
+    componentMap: projectComponentRegistry.ok ? projectComponentRegistry.registry.components : {},
+    // A document on disk can import components from other files by path.
+    componentsFor(scope) {
+      return scope.kind === 'template'
+        ? loadScopedComponentDefinitions(root, result, templatesEntry, `template "${scope.id}"`, scope.components)
+        : loadScopedComponentDefinitions(root, result, pageEntry(scope.page), `page "${scope.page.id}"`, scope.components);
+    },
+    resolveComponentsForPage(pageLoaded) {
+      const registryResult = loadComponentRegistryForDocuments(root, [...templatesEntry, ...pageEntry(pageLoaded)]);
+      if (!registryResult.ok) {
+        return {
+          ok: false,
+          error: `Unable to load component imports for page "${pageLoaded?.id || '<unknown>'}": ${registryResult.error}`,
+        };
+      }
 
-  const templateRegistry = loadComponentRegistryForDocuments(root, templateEntries);
-  const pageScopes = Array.from(pageMap.values()).map((pageLoaded) => {
-    const scoped = resolveComponentsForPage(pageLoaded);
-    return {
-      id: pageLoaded.id,
-      document: pageLoaded.document,
-      page: pageLoaded.document?.page,
-      definitions: scoped.ok ? scoped.components : componentMap,
-    };
+      return {
+        ok: true,
+        components: registryResult.registry.components,
+      };
+    },
   });
-  const templateScope = templateRegistry.ok ? templateRegistry.registry.components : componentMap;
-  const slotDiagnostics = checkComponentSlots({
-    definitions: componentMap,
-    templates: templateDefinitions,
-    templateDefinitions: templateScope,
-    pages: pageScopes,
-  });
-  const stdAliasDiagnostics = checkStdAlias([
-    { label: 'components.yaml', document: components?.document, definitions: componentMap },
-    { label: 'templates.yaml', document: templates?.document, definitions: templateScope },
-    ...pageScopes.map((scope) => ({ label: `page "${scope.id}"`, document: scope.document, definitions: scope.definitions })),
-  ]);
-  for (const diagnostic of [...slotDiagnostics, ...stdAliasDiagnostics]) {
-    addDiagnostic(result, diagnostic.severity, diagnostic.code, diagnostic.message);
-  }
 
   result.ok = result.errors.length === 0;
 

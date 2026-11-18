@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('node:fs');
+const path = require('node:path');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
@@ -7,6 +9,7 @@ const { runValidate } = require('../../engine/validate/cli-adapter');
 const { validateProject } = require('../../engine/validate');
 const { checkComponentSlots } = require('../../engine/doctor/component-slots');
 const { runLint } = require('../../engine/lint');
+const { lintSources } = require('../../engine/lint/source');
 const { createSlotsProject } = require('./fixtures/slots-project');
 
 const codes = (entries) => entries.map((entry) => entry.code);
@@ -14,6 +17,36 @@ const codes = (entries) => entries.map((entry) => entry.code);
 function validateWith(mutate) {
   return runValidate({ projectPath: createSlotsProject(mutate) });
 }
+
+/** A project folder as the sources the in-memory linter takes: every YAML document but `.wfrc.yaml`. */
+function readSources(root, folder = '') {
+  return fs.readdirSync(path.join(root, folder), { withFileTypes: true })
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .flatMap((entry) => {
+      const name = folder ? `${folder}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) return readSources(root, name);
+      if (!/\.ya?ml$/.test(entry.name) || entry.name === '.wfrc.yaml') return [];
+      return [{ name, text: fs.readFileSync(path.join(root, name), 'utf8') }];
+    });
+}
+
+/** Disk and memory agree on every slot finding; memory also says where each is. */
+test('the source linter reports the same slot findings as wf validate, each with a range', () => {
+  const projectPath = createSlotsProject((docs) => {
+    docs.page.page.slots[0].content[2].slots = { header: [{ id: 'oops', component: 'text' }] };
+    docs.page.page.slots[0].content.push({ id: 'loose', component: 'stack', slots: { footer: [] } });
+  });
+  const slotCodes = /SLOT|SLOTS_WITHOUT_USE/;
+  const disk = runValidate({ projectPath });
+  const memory = lintSources(readSources(projectPath));
+  const tally = (entries) => entries.map((entry) => entry.code).filter((code) => slotCodes.test(code)).sort();
+  assert.deepEqual(tally(memory.diagnostics), tally([...disk.errors, ...disk.info]));
+  assert.ok(tally(memory.diagnostics).length >= 3);
+  for (const diagnostic of memory.diagnostics.filter((entry) => slotCodes.test(entry.code))) {
+    assert.equal(diagnostic.source, 'pages/home.yaml', `${diagnostic.code} ${diagnostic.message}`);
+    assert.ok(diagnostic.range.start.offset < diagnostic.range.end.offset);
+  }
+});
 
 test('a fill for a slot the component lacks lists the valid slots', () => {
   const result = validateWith((docs) => {
@@ -199,9 +232,15 @@ test('a component may reuse an id that a nested component also uses', () => {
     );
   };
   const duplicates = (result) => result.errors.filter((error) => error.code === 'DUPLICATE_NODE_ID');
+  const inMemory = (projectPath) => lintSources(readSources(projectPath)).diagnostics
+    .filter((diagnostic) => diagnostic.code === 'DUPLICATE_NODE_ID');
 
-  assert.deepEqual(duplicates(validateWith(withLayout([]))), []);
+  const reused = createSlotsProject(withLayout([]));
+  assert.deepEqual(duplicates(runValidate({ projectPath: reused })), []);
+  assert.deepEqual(inMemory(reused), [], 'the source linter walks nested definitions in their own id scope too');
 
-  const real = duplicates(validateWith(withLayout([{ id: 'body', component: 'text' }])));
+  const repeated = createSlotsProject(withLayout([{ id: 'body', component: 'text' }]));
+  const real = duplicates(runValidate({ projectPath: repeated }));
   assert.ok(real.some((error) => /"layout".*"body"/.test(error.message)), JSON.stringify(real));
+  assert.ok(inMemory(repeated).some((diagnostic) => /"layout".*"body"/.test(diagnostic.message)), 'the source linter reports the real duplicate');
 });

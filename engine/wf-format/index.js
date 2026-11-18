@@ -94,23 +94,32 @@ function slug(value, fallback) {
   return safe || fallback;
 }
 
-/** Where a document lands when unpacked back into a folder. */
+/**
+ * Where a document lands when unpacked back into a folder. `seen` carries the names
+ * already given out, so two documents never land on one file.
+ */
 function fileNameFor(document, seen = new Map()) {
   const type = document?.documentType;
   const id = slug(document?.id, type);
-  const count = (seen.get(`${type}:${id}`) || 0) + 1;
-  seen.set(`${type}:${id}`, count);
-  const suffix = count > 1 ? `_${count}` : '';
-
-  if (type === 'manifest') return 'manifest.yaml';
-  if (type === 'config') return '.wfrc.yaml';
-  if (type === 'sitemap') return 'sitemap.yaml';
-  if (type === 'templates') return 'templates.yaml';
-  if (type === 'components') return count > 1 ? `components_${count}.yaml` : 'components.yaml';
-  if (type === 'page') return `pages/${id}${suffix}.yaml`;
-  if (type === 'dataset') return `data/${id}${suffix}.yaml`;
-  if (type === 'asset') return `assets/${id}${suffix}.yaml`;
-  return null;
+  for (let count = (seen.get(`${type}:${id}`) || 0) + 1; ; count += 1) {
+    const suffix = count > 1 ? `_${count}` : '';
+    let name = null;
+    if (type === 'manifest') name = 'manifest.yaml';
+    else if (type === 'config') name = '.wfrc.yaml';
+    else if (type === 'sitemap') name = 'sitemap.yaml';
+    else if (type === 'templates') name = 'templates.yaml';
+    else if (type === 'components') name = count > 1 ? `components_${count}.yaml` : 'components.yaml';
+    else if (type === 'page') name = `pages/${id}${suffix}.yaml`;
+    else if (type === 'dataset') name = `data/${id}${suffix}.yaml`;
+    else if (type === 'asset') name = `assets/${id}${suffix}.yaml`;
+    seen.set(`${type}:${id}`, count);
+    // Only a type that numbers its files can step past a name another id already took.
+    const numbered = type === 'components' || type === 'page' || type === 'dataset' || type === 'asset';
+    if (name === null || !numbered || !seen.has(`file:${name}`)) {
+      if (name !== null) seen.set(`file:${name}`, true);
+      return name;
+    }
+  }
 }
 
 /** True when a text blob looks like a `.wf` stream rather than a single document. */

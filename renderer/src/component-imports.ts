@@ -1,5 +1,13 @@
 // @ts-expect-error Shared CJS engine module has no TypeScript declarations.
 import { createComponentRegistryResolver } from '../../engine/component-registry/core.js';
+// @ts-expect-error Shared CJS engine module has no TypeScript declarations.
+import * as virtual from '../../engine/component-registry/virtual.js';
+
+/** Import paths are relative to their source document and stay inside the virtual project. */
+export const normalizeVirtualImport = (virtual as {
+  normalizeVirtualImport: (source: string, imported: string) => string;
+}).normalizeVirtualImport;
+const { rootComponentsPath } = virtual as { rootComponentsPath: (paths: string[]) => string | null };
 
 type Document = Record<string, unknown>;
 type Definitions = Record<string, unknown>;
@@ -23,22 +31,6 @@ function sourceSize(value: unknown, ancestors = new Set<object>(), depth = 0): n
   }
   ancestors.delete(value);
   return size;
-}
-
-/** Import paths are relative to their source document and stay inside the virtual project. */
-export function normalizeVirtualImport(source: string, imported: string): string {
-  if (!imported || imported.startsWith('/') || /[\\\u0000:?#]/u.test(imported)) {
-    throw new Error(`Component import must be a relative project path: ${imported}`);
-  }
-  const parts = source.split('/').slice(0, -1);
-  for (const part of imported.split('/')) {
-    if (part === '.' || part === '') continue;
-    if (part === '..') {
-      if (!parts.length) throw new Error(`Component import escapes the project: ${imported}`);
-      parts.pop();
-    } else parts.push(part);
-  }
-  return parts.join('/');
 }
 
 /** The filesystem and virtual adapters share traversal, qualification, conflicts and cycles. */
@@ -87,9 +79,8 @@ export function resolveVirtualComponentImports(documents: Map<string, Document>)
   };
   const project = resolver.createEmptyRegistry();
   const modules = [...documents].filter(([, doc]) => doc.documentType === 'components');
-  const rootCandidates = modules.filter(([path]) => !/^components\//iu.test(path));
-  const rootEntry = modules.find(([path]) => path === 'components.yaml')
-    ?? (rootCandidates.length === 1 ? rootCandidates[0] : modules.length === 1 ? modules[0] : undefined);
+  const rootPath = rootComponentsPath(modules.map(([path]) => path));
+  const rootEntry = modules.find(([path]) => path === rootPath);
   const root = rootEntry?.[1];
   if (rootEntry) merge(project, resolver.loadComponentsDocumentRegistry(rootEntry[0], ''));
   const templates = [...documents].find(([, doc]) => doc.documentType === 'templates');

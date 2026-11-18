@@ -1,8 +1,17 @@
 'use strict';
 
-const OVERLAYS_REQUIRING_TRIGGER = new Set(['dropdown', 'popover', 'menu', 'tooltip']);
+// What nodes do across a project: each template's overlays, each component's
+// own tree, and each page with its template and components folded in. The walk
+// itself is in `node-walker.js`; what one node refers to is checked in
+// `semantic-interactions.js`.
+
 const { resolveTemplatePage } = require('../resolver');
-const { addDiagnostic, hasOwn, isObject } = require('./node-rules');
+const {
+  isObject,
+  addDiagnostic,
+  atNode,
+  validateOverlayDefinition,
+} = require('./semantic-interactions');
 const { createNodeContext, reportPageIdChecks, validateNode } = require('./node-walker');
 
 function defaultGridColumnsFromManifest(manifest) {
@@ -26,45 +35,6 @@ function collectRouteIds(routes) {
   return routeIds;
 }
 
-function validateOverlayDefinition(overlay, context, overlaySource) {
-  const { result, overlayIds, overlayTriggerRefs } = context;
-  if (!isObject(overlay)) {
-    return;
-  }
-
-  if (typeof overlay.id !== 'string') {
-    return;
-  }
-
-  if (overlayIds.has(overlay.id)) {
-    addDiagnostic(result, 'DUPLICATE_OVERLAY_ID', `Duplicate overlay id "${overlay.id}" in ${overlaySource}.`);
-    return;
-  }
-
-  overlayIds.add(overlay.id);
-
-  if (OVERLAYS_REQUIRING_TRIGGER.has(overlay.type)) {
-    if (!hasOwn(overlay, 'trigger')) {
-      addDiagnostic(
-        result,
-        'OVERLAY_MISSING_TRIGGER',
-        `Overlay "${overlay.id}" of type "${overlay.type}" requires trigger.`,
-      );
-    }
-    if (!hasOwn(overlay, 'placement')) {
-      addDiagnostic(
-        result,
-        'OVERLAY_MISSING_PLACEMENT',
-        `Overlay "${overlay.id}" of type "${overlay.type}" requires placement.`,
-      );
-    }
-
-    if (hasOwn(overlay, 'trigger')) {
-      overlayTriggerRefs.push({ overlayId: overlay.id, trigger: overlay.trigger });
-    }
-  }
-}
-
 function collectTemplateOverlays(templates, result) {
   const templateMap = new Map();
 
@@ -81,6 +51,7 @@ function collectTemplateOverlays(templates, result) {
         overlay,
         {
           result,
+          document: 'templates',
           overlayIds,
           overlayTriggerRefs,
         },
@@ -105,6 +76,7 @@ function collectComponentRoots(componentMap, result, routeIds, defaultGridColumn
 
     const context = createNodeContext({
       result,
+      document: 'components',
       pageId: `component "${componentId}"`,
       routeIds,
       appState: {},
@@ -119,7 +91,7 @@ function collectComponentRoots(componentMap, result, routeIds, defaultGridColumn
     validateNode(component.root, context, 1);
 
     for (const duplicate of context.duplicateNodeIds) {
-      addDiagnostic(result, 'DUPLICATE_NODE_ID', `Component "${componentId}" defines duplicate node id "${duplicate}".`);
+      addDiagnostic(result, 'DUPLICATE_NODE_ID', `Component "${componentId}" defines duplicate node id "${duplicate}".`, atNode(context, duplicate));
     }
   }
 }
@@ -153,6 +125,7 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
   }
 
   const pageId = pageLoaded.id || pageDoc.id || '<unknown>';
+  const document = `page:${pageId}`;
   const template = isObject(templates[pageDoc.template]) ? templates[pageDoc.template] : null;
 
   const templateOverlayInfo = isObject(template) && templateOverlayMap.get(pageDoc.template);
@@ -168,6 +141,7 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
       overlay,
       {
         result,
+        document,
         overlayIds: overlayValidationIds,
         overlayTriggerRefs,
       },
@@ -176,7 +150,7 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
 
     if (isObject(overlay) && typeof overlay.id === 'string') {
       if (overlayIds.has(overlay.id) || pageOverlayIds.has(overlay.id)) {
-        addDiagnostic(result, 'DUPLICATE_OVERLAY_ID', `Duplicate overlay id "${overlay.id}" on page "${pageId}".`);
+        addDiagnostic(result, 'DUPLICATE_OVERLAY_ID', `Duplicate overlay id "${overlay.id}" on page "${pageId}".`, { document, node: overlay.id });
       }
       pageOverlayIds.add(overlay.id);
       overlayIds.add(overlay.id);
@@ -185,6 +159,7 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
 
   const context = createNodeContext({
     result,
+    document,
     pageId,
     routeIds,
     appState,
@@ -231,6 +206,7 @@ function runSemanticValidation({
           result,
           'COMPONENT_IMPORT_ERROR',
           resolvedComponents.error || `Unable to resolve component imports for page "${pageLoaded?.id || '<unknown>'}".`,
+          { document: `page:${pageLoaded?.id}`, path: '$.imports', key: true },
         );
         continue;
       }
