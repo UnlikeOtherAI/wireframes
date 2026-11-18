@@ -20,7 +20,17 @@ function nextLineStart(text, offset) {
   return newline === -1 ? text.length : newline + 1;
 }
 
-const isFlow = (text, node) => text[node.start] === '{';
+/** Where a node's content starts: its span begins with any anchor (`&a`) or tag (`!!map`) it has. */
+function contentStart(text, node) {
+  let at = node.start;
+  while (text[at] === '&' || text[at] === '!') {
+    while (at < node.end && !/\s/u.test(text[at])) at += 1;
+    while (at < node.end && /\s/u.test(text[at])) at += 1;
+  }
+  return at;
+}
+
+const isFlow = (text, node) => text[contentStart(text, node)] === '{';
 
 /** `key: value` in block style, every line indented by `indent`. */
 function blockEntry(key, value, indent, step, eol) {
@@ -39,7 +49,7 @@ function blockAfterLine(text, offset, block, eol) {
 }
 
 /** Whether an empty flow mapping holds comments: they are all that can be between its braces. */
-const hasInnerComments = (text, mapping) => text.slice(mapping.start + 1, mapping.end - 1).trim() !== '';
+const hasInnerComments = (text, mapping) => text.slice(contentStart(text, mapping) + 1, mapping.end - 1).trim() !== '';
 
 /**
  * The only entry of an empty flow mapping. Its comments stay where they are: a
@@ -47,7 +57,10 @@ const hasInnerComments = (text, mapping) => text.slice(mapping.start + 1, mappin
  * goes on a line of its own just before it.
  */
 function fillEmptyFlow(text, mapping, key, value, eol) {
-  if (!hasInnerComments(text, mapping)) return { start: mapping.start + 1, end: mapping.start + 1, text: ` ${flowEntry(key, value)} ` };
+  if (!hasInnerComments(text, mapping)) {
+    const open = contentStart(text, mapping) + 1;
+    return { start: open, end: open, text: ` ${flowEntry(key, value)} ` };
+  }
   const close = mapping.end - 1;
   const at = text.lastIndexOf('\n', close - 1) + 1;
   return { start: at, end: at, text: `${' '.repeat(columnOf(text, close) + DEFAULT_STEP)}${flowEntry(key, value)}${eol}` };

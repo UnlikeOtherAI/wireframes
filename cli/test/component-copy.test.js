@@ -154,6 +154,8 @@ test('N4 copy into an empty flow map keeps the comments inside its braces', () =
     'comments before the closing brace': commented,
     'indented closing brace': `${head}components: {\n    # empty on purpose\n  }\n`,
     crlf: commented.replace(/\n/g, '\r\n'),
+    'anchored, with a comment': `${head}components: &defs { # inner mapping note\n}\n`,
+    'tagged, with a comment': `${head}components: !!map { # inner mapping note\n}\n`,
   };
   for (const [name, source] of Object.entries(cases)) {
     const output = insertComponentDefinition(source, 'extra', definition);
@@ -161,6 +163,7 @@ test('N4 copy into an empty flow map keeps the comments inside its braces', () =
     expected.components.extra = definition;
     assert.deepEqual(yaml.load(output), expected, name);
     for (const comment of source.match(/# [a-z ]+/g)) assert.ok(output.includes(comment), `${name}: "${comment}" kept`);
+    for (const property of source.match(/&defs|!!map/g) || []) assert.ok(output.includes(property), `${name}: ${property} kept`);
     let prefix = 0;
     while (prefix < source.length && source[prefix] === output[prefix]) prefix += 1;
     const suffix = source.length - prefix;
@@ -176,6 +179,12 @@ test('N4 copy into an empty flow map keeps the comments inside its braces', () =
   const text = fs.readFileSync(filePath, 'utf8');
   for (const comment of ['# inner mapping note', '# empty on purpose', '# outside note']) assert.ok(text.includes(comment), comment);
   assert.equal(readYaml(filePath).components.hero.root.id, 'hero');
+
+  // An anchored empty map with nothing between its braces still becomes a block mapping.
+  const anchored = `${head}components: &defs {} # keep\n`;
+  const filled = insertComponentDefinition(anchored, 'extra', definition);
+  assert.deepEqual(yaml.load(filled).components, { extra: definition });
+  assert.match(filled, /components: +# keep\n {2}extra:\n/);
 });
 
 test('N5 a project folder whose name starts with two dots is inside the project', () => {
