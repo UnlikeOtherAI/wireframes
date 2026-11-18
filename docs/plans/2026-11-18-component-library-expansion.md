@@ -129,8 +129,9 @@ stays valid.
   `page_header.tabs`
 - `select.options`, `segmented.options`, `choice_group.options`, `picker.options`
 - `list.items`, `tree.items`, `accordion.items`, `carousel.items`
-- Actions through `actionButtons` on `card`, `alert`, `empty_state` and `page_header`,
-  plus overlay `actions`
+- Actions through `actionButtons`: `card` (it already renders `actions`; the registry
+  prop is added), `alert` (a new `actions` prop), `page_header`, and overlay `actions`.
+  `empty_state` keeps its single `action` string.
 - The new `command.items`, `menubar.items` and `toolbar.items`
 
 These stay element-specific data: table `columns` and `rows`, chart `data` and `series`,
@@ -153,7 +154,8 @@ labels. `list` `selected: false` keeps drawing an unchecked control when `select
 **Routes.** An item `route` renders a link only in consumers that already navigate:
 `nav`, `breadcrumb`, `tab_bar`, `bottom_tab_bar`, `menu`, `list`, `command` and actions.
 A `disabled` item never navigates and renders without `href`, with `aria-disabled`. An
-unknown route id renders as plain text; lint already reports it. An item route is ignored
+unknown route id renders as plain text. Lint checks only interaction `targetRoute` today;
+a lint for unknown item routes is a follow-up. An item route is ignored
 when the element itself carries an interaction, so anchors never nest.
 
 **Actions.** `lib.actionButtons` reads through the model and supports `disabled`,

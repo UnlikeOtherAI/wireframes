@@ -2,5 +2,6 @@
 # output (see AGENTS.md "Generated and committed on purpose"). Keep them LF in
 # every checkout so the drift tests also pass on Windows with core.autocrlf.
 engine/schema/schema.json text eol=lf
-docs/catalogue/** text eol=lf
+docs/catalogue/**/*.html text eol=lf
+docs/catalogue/**/*.css text eol=lf
 docs/cli/agent-guide.md text eol=lf

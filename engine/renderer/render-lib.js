@@ -14,7 +14,15 @@ const {
   renderImageElement,
   renderSelectOptions,
   navigationAttrs,
+  stateAttrs,
+  STATE_OWNERS,
 } = require('./render-attrs');
+const {
+  normalizeItems,
+  resolveSelection,
+  itemProfiles,
+  legacyItems,
+} = require('./items');
 const { scale, token } = require('./sizing-tokens');
 
 /** Text from `text`, falling back to the `label` alias. */
@@ -70,39 +78,41 @@ function iconSpan(name, options) {
   return markup ? `<span class="wf-ico">${markup}</span>` : '';
 }
 
-/** A list prop whose entries may be strings or objects. */
+/** A list prop whose entries may be strings or objects. Data arrays keep using it. */
 function items(value, key = 'label') {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((entry) => {
-      if (entry == null) return null;
-      if (typeof entry === 'string' || typeof entry === 'number') return { [key]: String(entry) };
-      if (!isObject(entry)) return null;
-      // List rows call their heading title; nav/menu rows call it label.
-      // Preserve explicit labels (including blank ones), and all other fields.
-      return key === 'label' && entry.label === undefined && typeof entry.title === 'string'
-        ? { ...entry, label: entry.title } : entry;
-    })
-    .filter(Boolean);
+  return legacyItems(value, key);
 }
 
-/** Inline button markup for `actions: []` props on headers, cards and alerts. */
+const ACTION_TONES = new Set(['info', 'success', 'warning', 'danger']);
+// Actions keep their button markup when disabled, so they announce it with ARIA.
+const ACTION_OWNER = { aria: { disabled: 'aria-disabled' } };
+const TOGGLE_ACTION_OWNER = { aria: { disabled: 'aria-disabled', pressed: 'aria-pressed' } };
+
+/**
+ * Inline button markup for `actions: []` props on headers, cards and alerts.
+ * A routed action is a link unless it is disabled; a disabled action never
+ * navigates. `pressed` makes it a toggle button, and `tone` colours it.
+ */
 function actionButtons(value, ctx) {
-  const list = items(value);
+  const list = normalizeItems(value, itemProfiles.basic);
   if (list.length === 0) return '';
   const buttons = list.map((action) => {
     const variant = str(action.variant) || 'secondary';
     const label = str(action.label);
     const glyph = iconSpan(action.icon);
     const inner = label ? `${glyph}${escapeHtml(label)}` : glyph || renderSkeleton(5);
+    const disabled = action.disabled === true;
     const route = str(action.route);
-    const href = route && isObject(ctx.routeTable) && typeof ctx.routeTable[route] === 'string'
+    const href = !disabled && route && isObject(ctx.routeTable) && typeof ctx.routeTable[route] === 'string'
       ? ctx.routeTable[route]
       : '';
-    const cls = `wf-act wf-button-${toSafeClass(variant)}${label ? '' : ' wf-act-icon'}`;
+    const tone = ACTION_TONES.has(action.tone) ? ` wf-tone-${action.tone}` : '';
+    const cls = `wf-act wf-button-${toSafeClass(variant)}${label ? '' : ' wf-act-icon'}${tone}`;
+    const toggle = typeof action.pressed === 'boolean' || action.pressed === 'mixed';
+    const state = { disabled, pressed: action.pressed };
     return href
-      ? `<a class="${cls}" ${navigationAttrs({ href, routeId: route }).join(' ')}>${inner}</a>`
-      : `<button class="${cls}">${inner}</button>`;
+      ? `<a class="${cls}" ${navigationAttrs({ href, routeId: route }).join(' ')}${stateAttrs(state)}>${inner}</a>`
+      : `<button class="${cls}"${stateAttrs(state, { owner: toggle ? TOGGLE_ACTION_OWNER : ACTION_OWNER })}>${inner}</button>`;
   });
   return `<div class="wf-actions">${buttons.join('')}</div>`;
 }
@@ -157,6 +167,11 @@ const lib = {
   renderImageElement,
   renderSelectOptions,
   navigationAttrs,
+  stateAttrs,
+  STATE_OWNERS,
+  normalizeItems,
+  resolveSelection,
+  itemProfiles,
   textProp,
   str,
   num,

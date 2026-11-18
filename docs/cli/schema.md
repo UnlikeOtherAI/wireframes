@@ -549,7 +549,9 @@ box. `engine/schema/schema.json` is generated from it by
 fails if the two disagree. The table below is generated the same way.
 
 Unknown primitive props are lint warnings rather than schema errors, so custom
-component parameters can keep flowing through `props`.
+component parameters can keep flowing through `props`. List props marked
+`(items)` share one item shape, and form controls share the field props: see
+[schema-systems.md §15.4–15.5](schema-systems.md).
 
 Box column: **always** draws a frame at any depth; **never** is a layout group
 or a control with its own chrome; **edge only** draws one divider edge;

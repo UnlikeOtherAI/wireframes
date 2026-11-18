@@ -162,8 +162,9 @@ Checks naming conventions:
 * No ambiguous names
 * No reserved keywords
 * Unknown props on primitive components (`UNKNOWN_PROP`, warning)
-* Missing text, unlabeled fields, label-alias usage, and demoted nested
-  surfaces (`info`, never strict-fatal)
+* Missing text, unlabeled fields, label-alias usage, demoted nested
+  surfaces, and a single-choice `value` that matches several items
+  (`AMBIGUOUS_VALUE`) (`info`, never strict-fatal)
 
 ---
 

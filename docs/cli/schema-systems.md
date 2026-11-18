@@ -377,6 +377,126 @@ rules, not a line of boxes.
 A `role` drives size: see [schema.md §4.3](schema.md) for the token table and
 the three override levels, and §4.4 for `viewport.platform`.
 
+## 15.4 Items
+
+Collection elements share one item shape. A registry prop marked
+`{ type: 'array', items: true }` takes it, and `wf llm` lists that prop as
+`name (items)`. The generated schema keeps item arrays open, so YAML that is
+valid today stays valid; the model is applied at render time by
+`normalizeItems(value, profile)` in `engine/renderer/items.js`.
+
+**Canonical keys:**
+
+| Key | Meaning |
+|---|---|
+| `label` | Primary text. |
+| `description` | Secondary line. |
+| `value` | Identity. |
+| `icon`, `iconStyle`, `avatar`, `badge`, `meta`, `shortcut`, `route` | Decorations and navigation. |
+| `tone` | `neutral`, `info`, `success`, `warning` or `danger`. |
+| `selected`, `current`, `checked`, `disabled`, `expanded` | State. `checked` may also be `mixed`. |
+| `items` | Nested items. |
+| `type` | `item` (default), `separator`, `heading` or `group` (a label plus nested `items`). |
+
+A string or number entry is `{ label: String(v) }`; choice elements also set
+`value`. Booleans, `null`, arrays and other non-objects are dropped, except in
+`select`, which keeps rendering boolean options literally. Keys outside the
+model pass through untouched, so element data such as a list row's `side` stays
+available. A state the author leaves out stays absent: each element applies its
+own default.
+
+```yaml
+items:
+  - Inbox
+  - { label: Drafts, value: drafts, icon: file, badge: 3 }
+  - { type: separator }
+  - { type: heading, label: Labels }
+  - { type: group, label: Team, items: [Ada, Grace] }
+  - { label: Archive, route: archive, disabled: true }
+```
+
+**Legacy keys.** Each element keeps reading the keys it read before the model,
+with the same precedence, so older YAML renders exactly as it did. Canonical
+keys work everywhere. When an entry has both, the older precedence below wins.
+
+| Profile | Used by | Legacy keys |
+|---|---|---|
+| `basic` | `breadcrumb`, `stepper`, `page_header.breadcrumb`, actions | `title` fills an absent `label`; an explicit `label` is kept even when blank. |
+| `list` | `list`, `carousel` | A nonblank `title` before `label`; `text` before `description`. |
+| `accordion` | `accordion` | As `list`, plus `open` → `expanded` (closed unless `true`). |
+| `tree` | `tree` | A nonblank `label` before `title`; `children` → `items`; `open` → `expanded` (open unless `false`). |
+| `nav` | `nav` | As `basic`; `active` → `selected`; `children` → `items`; a top-level `{group}` or `{heading}` entry is a heading. |
+| `menu` | `menu`, `action_sheet` | As `basic`; `{divider: true}` is a separator; `danger: true` is `tone: danger`. |
+| `tabs` | `tab_bar`, `bottom_tab_bar`, `page_header.tabs` | As `basic`; `active` → `selected`. |
+| `choice` | `segmented`, `choice_group`, `picker` | As `basic`; a scalar also sets `value`. |
+| `select` | `select` | No legacy keys; scalars, booleans included, set `label` and `value`. |
+
+These stay element-specific data and do not take the model: table `columns` and
+`rows`, chart `data` and `series`, calendar `events`, kanban `columns` and
+`cards`, `tags_input.tags`, `upload.files`, `avatar.group`, and app-bar
+`actions` (glyphs).
+
+**Selection.** An item's identity is its `value`, else its `label`, compared as
+trimmed strings; a blank identity never matches. Precedence, highest first:
+
+1. Items marked `selected: true` are exactly the selection.
+2. Otherwise the element `value` (a list when `multiple: true`) selects the
+   matching items, skipping any marked `selected: false`. A single-choice
+   element selects only the first match, and `wf lint` reports
+   `AMBIGUOUS_VALUE` (info).
+3. Otherwise the element's own rule applies: nav route inference, stepper
+   `current`, pagination `page`, or picker row zero. It never selects an item
+   marked `selected: false`.
+4. Otherwise nothing is selected.
+
+Runtime binding payloads are unchanged: tab and segmented changes still send
+labels.
+
+**Routes.** An item `route` renders a link only in elements that already
+navigate: `nav`, `breadcrumb`, `tab_bar`, `bottom_tab_bar`, `menu`, `list`,
+`command` and actions. A `disabled` item never navigates: it renders without
+`href` and with `aria-disabled`. An unknown route id renders as plain text
+(an action renders as a plain button). An item route is ignored when the
+element itself carries an interaction, so anchors never nest.
+
+**Actions.** Action rows (`page_header.actions`, and the `actions` drawn in
+the head of `card`, `section` and `form`) take
+`{ label, icon, variant, route, disabled, pressed, tone }`. A disabled action
+is a button with `aria-disabled="true"` and no link; `pressed` (true or false)
+makes it a toggle button with `aria-pressed`; `tone` adds the shared
+`wf-tone-*` class. Rendering details are in
+[rendering-states.md](rendering-states.md).
+
+## 15.5 Fields and states
+
+Form controls share the field props in
+`engine/schema/primitive-registry/shared.js` (`FIELD_PROPS`): `label`, `help`,
+`error`, `required`, `disabled` and `readonly`.
+
+- `error` replaces `help` and marks the field invalid.
+- Help and error get ids and are linked to the focusable control with
+  `aria-describedby`.
+- `required` adds a marker to the visible label.
+- `disabled` keeps the native attribute where one exists, so disabled values
+  are not submitted. `readonly` values stay bound and are submitted.
+- With both `readonly` and `disabled`, `disabled` wins visually and both are
+  written.
+
+| Widget | Field label | Help and error | `readonly` |
+|---|---|---|---|
+| `input`, `textarea` | Above | Below | Native `readonly`. |
+| `select`, `picker`, `segmented`, `choice_group` | Above | Below | `aria-readonly` and `data-wf-readonly`; the runtime ignores changes. |
+| `checkbox`, `radio`, `toggle` | Inline; `help` is an alias of the inline `description` | Error below the row | `aria-readonly`; the runtime ignores toggles. |
+| `tags_input`, `editor` | Above | Below | Drawn without input affordances. |
+| `upload` | `label` stays the action copy; `fieldLabel` goes above | Below | Dropzone drawn without its action. |
+
+**States.** The element that owns a state carries it as a presence-only data
+attribute, next to the native or ARIA attribute its role supports:
+`data-wf-disabled`, `-readonly`, `-required`, `-invalid`, `-loading`,
+`-pressed`, `-checked` (`="mixed"` when indeterminate), `-selected`, `-current`
+and `-expanded`. One serializer writes them all; the conventions are in
+[rendering-states.md](rendering-states.md).
+
 ---
 
 # 16. Validation Requirements

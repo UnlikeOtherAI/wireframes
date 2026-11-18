@@ -149,5 +149,6 @@ you can see what the engine decided without guessing. Turn on
 | `UNKNOWN_ROLE` | a role that drives no proportions |
 | `MISSING_TEXT` | an element rendering a skeleton you may not have intended |
 | `UNLABELED_FIELD` | a field with no label |
+| `AMBIGUOUS_VALUE` | a single-choice `value` that matches several items, so only the first is selected |
 | `ORPHAN_LAYOUT`, `EMPTY_CONTAINER`, `DEEP_NESTING` | structure that will not render as intended |
 

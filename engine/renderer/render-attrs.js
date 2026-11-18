@@ -193,6 +193,85 @@ function navigationAttrs(navTarget) {
   ];
 }
 
+// Every state an element can show, in the order its attributes are written.
+const STATES = ['disabled', 'readonly', 'required', 'invalid', 'loading', 'pressed', 'checked', 'selected', 'current', 'expanded'];
+// A widget that supports one of these is toggleable, so its ARIA says "false" when off.
+const TOGGLE_STATES = new Set(['pressed', 'checked', 'selected', 'expanded']);
+const MIXED_STATES = new Set(['pressed', 'checked']);
+const NATIVE_STATES = new Set(['disabled', 'readonly', 'required']);
+
+/**
+ * Who owns a state decides how it is announced. `native` lists states written
+ * as bare HTML attributes; `aria` maps a state to the ARIA attribute the
+ * owner's role supports; `current` is the `aria-current` token.
+ */
+const STATE_OWNERS = Object.freeze({
+  // A <button> that does not toggle.
+  button: { native: ['disabled'], aria: { loading: 'aria-busy' } },
+  // A <button> that toggles: pressed buttons, toolbar toggles.
+  toggle: { native: ['disabled'], aria: { pressed: 'aria-pressed', loading: 'aria-busy' } },
+  // Existing tab and segment buttons announce selection as aria-pressed.
+  tab: { native: ['disabled'], aria: { selected: 'aria-pressed' } },
+  // <input> and <textarea>.
+  field: { native: ['disabled', 'readonly', 'required'], aria: { invalid: 'aria-invalid' } },
+  // <select> has no native readonly.
+  select: { native: ['disabled', 'required'], aria: { readonly: 'aria-readonly', invalid: 'aria-invalid' } },
+  // An element with role checkbox, radio or switch.
+  check: {
+    aria: {
+      checked: 'aria-checked',
+      disabled: 'aria-disabled',
+      readonly: 'aria-readonly',
+      required: 'aria-required',
+      invalid: 'aria-invalid',
+    },
+  },
+  // A navigation link.
+  link: { aria: { current: 'aria-current', disabled: 'aria-disabled' }, current: 'page' },
+  // A display-only list row: menu, command and menubar entries.
+  item: { aria: { current: 'aria-current', disabled: 'aria-disabled' }, current: 'true' },
+  // A tree row or accordion head that opens and closes.
+  disclosure: { aria: { expanded: 'aria-expanded', disabled: 'aria-disabled' } },
+});
+
+function stateValue(name, raw) {
+  if (raw === true) return 'true';
+  if (raw === 'mixed' && MIXED_STATES.has(name)) return 'mixed';
+  return null;
+}
+
+/**
+ * State attributes for the element that owns the state. Every state that is
+ * on gets a presence-only `data-wf-<state>` (`="mixed"` when mixed); the
+ * owner decides which native and ARIA attributes go with it.
+ */
+function stateAttrs(state, { owner = {} } = {}) {
+  const values = isObject(state) ? state : {};
+  const native = new Set(Array.isArray(owner.native) ? owner.native : []);
+  const aria = isObject(owner.aria) ? owner.aria : {};
+  const nativeAttrs = [];
+  const ariaAttrs = [];
+  const dataAttrs = [];
+  const written = new Set();
+  for (const name of STATES) {
+    const on = stateValue(name, values[name]);
+    if (on) dataAttrs.push(on === 'mixed' ? `data-wf-${name}="mixed"` : `data-wf-${name}`);
+    if (native.has(name) && NATIVE_STATES.has(name)) {
+      if (on) nativeAttrs.push(name);
+      continue;
+    }
+    const attr = aria[name];
+    if (typeof attr !== 'string' || written.has(attr)) continue;
+    const token = name === 'current' && on === 'true' && typeof owner.current === 'string' ? owner.current : on;
+    if (on) ariaAttrs.push(`${attr}="${escapeAttr(token)}"`);
+    else if (TOGGLE_STATES.has(name)) ariaAttrs.push(`${attr}="false"`);
+    else continue;
+    written.add(attr);
+  }
+  const attrs = [...nativeAttrs, ...ariaAttrs, ...dataAttrs];
+  return attrs.length > 0 ? ` ${attrs.join(' ')}` : '';
+}
+
 function renderImageElement(projectPath, props, options = {}) {
   const rawSource = resolveAttributeValue(typeof props.src === 'string' ? props.src.trim() : '', options);
   const alt = resolveAttributeValue(
@@ -264,6 +343,8 @@ module.exports = {
   sourceAttrs,
   primaryNavigationTarget,
   navigationAttrs,
+  stateAttrs,
+  STATE_OWNERS,
   renderImageElement,
   renderSectionTitle,
   renderSelectOptions,
