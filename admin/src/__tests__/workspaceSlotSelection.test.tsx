@@ -73,6 +73,7 @@ function clickInPreview(nodeId: string) {
   act(() => {
     window.dispatchEvent(new MessageEvent('message', {
       source: iframe.contentWindow,
+      origin: window.location.origin,
       data: { type: 'wf:nodeClick', nodeId, address: `wf://page/home#${nodeId}` },
     }))
   })

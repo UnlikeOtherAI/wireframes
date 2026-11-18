@@ -6,6 +6,7 @@
 // `semantic-interactions.js`.
 
 const { resolveTemplatePage } = require('../resolver');
+const { resolveNodes } = require('../resolver/nodes');
 const { appendPath } = require('../schema/validator');
 const {
   isObject,
@@ -98,6 +99,14 @@ function collectComponentRoots(componentMap, result, routeIds, defaultGridColumn
   }
 }
 
+/**
+ * The page as it renders: its template's regions with the page's slot content,
+ * then the template's overlays and the page's own, every component expanded as
+ * the build expands it (`build/page-tree.js`). Ids and form references are
+ * checked on that tree, so a submit inside a slotted overlay sees the ids its
+ * component renders. Content that cannot resolve is reported by the reference
+ * checks and is not walked.
+ */
 function collectRootsFromPage(pageDoc, templateDoc, componentRoots) {
   const roots = [];
 
@@ -109,12 +118,14 @@ function collectRootsFromPage(pageDoc, templateDoc, componentRoots) {
     roots.push(...templatePage.roots);
   }
 
-  if (Array.isArray(pageDoc.overlays)) {
-    for (const overlay of pageDoc.overlays) {
-      if (isObject(overlay) && Array.isArray(overlay.content)) {
-        roots.push(...overlay.content);
-      }
-    }
+  const overlays = [
+    ...(isObject(templateDoc) && Array.isArray(templateDoc.overlays) ? templateDoc.overlays : []),
+    ...(Array.isArray(pageDoc.overlays) ? pageDoc.overlays : []),
+  ];
+  for (const overlay of overlays) {
+    if (!isObject(overlay) || !Array.isArray(overlay.content)) continue;
+    const resolved = resolveNodes(overlay.content, componentRoots);
+    if (resolved.ok) roots.push(...resolved.nodes);
   }
 
   return roots;

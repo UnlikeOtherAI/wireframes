@@ -9,7 +9,7 @@ const {
   namespaceDescendants,
   resolveComponentPropTemplates,
 } = require('./component-prep');
-const { prepareSlottedInstance } = require('./slotted-instance');
+const { placeFills, prepareSlottedInstance } = require('./slotted-instance');
 
 function buildContentMap(list, idField) {
   const map = new Map();
@@ -99,7 +99,12 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
     resolvedNode[key] = value;
   }
 
-  namespaceDescendants(resolvedNode, id);
+  namespaceDescendants(resolvedNode, id, componentDoc.root.id);
+  // Interactions written on the instance are the caller's, in the caller's
+  // scope: only the definition's own references follow its renamed ids.
+  if (Object.hasOwn(instanceOverrides, 'interaction')) {
+    resolvedNode.interaction = resolveComponentPropTemplates(instanceOverrides.interaction, mergedProps);
+  }
 
   return expandDefinitionTree(resolvedNode, node.use, components, componentStack, injectableMap);
 }
@@ -132,8 +137,13 @@ function resolveSlottedInstance(node, componentDoc, components, componentStack, 
     fills.set(name, expanded.nodes);
   }
 
-  const prepared = prepareSlottedInstance(node, componentDoc, fills);
-  return expandDefinitionTree(prepared, node.use, components, componentStack, injectableMap);
+  const token = Symbol('slot fills');
+  const prepared = prepareSlottedInstance(node, componentDoc, fills, token);
+  const expanded = expandDefinitionTree(prepared, node.use, components, componentStack, injectableMap);
+  if (!expanded.ok) {
+    return expanded;
+  }
+  return { ok: true, nodes: placeFills(expanded.nodes, fills, token) };
 }
 
 /** Expand the nested instances a prepared definition tree contains, with the definition on the stack. */
