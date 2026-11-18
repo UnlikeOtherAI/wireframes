@@ -101,3 +101,62 @@ page:
                     children:
                       - label: index.js
                       - label: render.js
+
+        # --- Line mode: gantt, item states and routes ---
+        - id: line_gantt
+          component: chart
+          props:
+            chartType: gantt
+            title: Release plan
+            ticks: [W1, W2, W3, W4]
+            data:
+              - { label: Design, start: 0, end: 8 }
+              - { label: Build, start: 6, end: 20, tone: info }
+              - { label: Launch, start: 19, end: 20, tone: success }
+        - id: line_items_grid
+          component: grid
+          props:
+            columns: 2
+          children:
+            - id: line_gantt_placeholders
+              component: card
+              props:
+                title: Gantt placeholders
+              children:
+                - id: line_gantt_seeded
+                  component: chart
+                  props:
+                    chartType: gantt
+                - id: line_gantt_empty
+                  component: chart
+                  props:
+                    chartType: gantt
+                    data: []
+            - id: line_list_states_card
+              component: card
+              props:
+                title: Selected, disabled and routed rows
+              children:
+                - id: line_list_states
+                  component: list
+                  props:
+                    items:
+                      - { label: Weekly digest, description: Every Monday, selected: true }
+                      - { label: Mentions, selected: false }
+                      - { label: Billing alerts, description: Owners only, selected: true, disabled: true }
+                      - { label: Charts, description: Opens the charts page, route: charts }
+            - id: line_tree_states
+              component: tree
+              props:
+                items:
+                  - label: src
+                    items:
+                      - { label: index.js, selected: true }
+                      - { label: render.js }
+                  - { label: test, expanded: false, items: [render.test.js] }
+            - id: line_accordion_states
+              component: accordion
+              props:
+                items:
+                  - { label: Who can see this?, description: Everyone with a seat., expanded: true }
+                  - { label: Can I export it? }

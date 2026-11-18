@@ -207,3 +207,41 @@ page:
                       - title: Integrations
                         text: Slack, GitHub, Linear
                         icon: plug
+
+        # --- Item states and routes ---
+        - id: list_states_grid
+          component: grid
+          props:
+            columns: 2
+          children:
+            - id: list_selectable_card
+              component: card
+              props:
+                title: Selectable list
+              children:
+                - id: list_selectable
+                  component: list
+                  props:
+                    selectable: true
+                    items:
+                      - { label: Weekly digest, description: Every Monday at 9:00, selected: true }
+                      - { label: Mentions, description: When someone mentions you, selected: false }
+                      - { label: Billing alerts, description: Only owners can change this, selected: true, disabled: true }
+            - id: list_routed_card
+              component: card
+              props:
+                title: Routed list
+              children:
+                - id: list_routed
+                  component: list
+                  props:
+                    items:
+                      - { label: Charts, description: Opens the charts page, icon: chart-line, route: charts }
+                      - { label: Containers, description: "Disabled, so it never navigates", icon: box, route: containers, disabled: true }
+                      - { label: Archive, description: "Unknown route, drawn as plain text", icon: box-archive, route: archive }
+                - id: list_routed_actions
+                  component: list
+                  props:
+                    kind: action
+                    items:
+                      - { label: Content, description: The body is the link beside its button, route: content }
