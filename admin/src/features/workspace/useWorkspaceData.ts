@@ -199,8 +199,14 @@ function resolveComponents(
       const childArr = Array.isArray(node.children) ? node.children
         : Array.isArray(node.body) ? node.body
         : null
-      if (childArr) {
-        merged.children = resolveComponents(childArr as unknown[], componentDefs, componentStack, scope)
+      // An instance whose definition this tree cannot see (imported, or a
+      // built-in std pattern) still lists what its author wrote on it: the
+      // default fill and every named fill, addressed under the instance.
+      const namedFills = useRef && isObject(node.slots)
+        ? Object.values(node.slots).filter((fill): fill is unknown[] => Array.isArray(fill)).flat()
+        : []
+      if (childArr || namedFills.length > 0) {
+        merged.children = resolveComponents([...(childArr ?? []), ...namedFills], componentDefs, componentStack, scope)
       }
       resolved.push(merged)
     }
@@ -327,9 +333,12 @@ export function useResolvedNodes(
         bodyNodes = getRawBody(page, componentDefs)
       }
 
+      // An overlay is a root of the page document, so its content is addressed under it.
       if (Array.isArray(page.overlays)) {
         for (const overlay of page.overlays) {
-          if (isObject(overlay)) bodyNodes.push(overlay)
+          if (!isObject(overlay)) continue
+          const content = Array.isArray(overlay.content) ? overlay.content : []
+          bodyNodes.push({ ...overlay, children: resolveComponents(content, componentDefs, new Set()) })
         }
       }
 

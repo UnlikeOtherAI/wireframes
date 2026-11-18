@@ -57,11 +57,9 @@ export function WorkspacePreview({
       if (event.data?.type === 'wf:navigate' && typeof event.data.routeId === 'string') {
         onNavigate?.(event.data.routeId)
       }
-      if (event.data?.type === 'wf:nodeClick' && !measureRef.current && typeof event.data.nodeId === 'string') {
-        const resolvedAddress = nodeIdToAddress?.get(event.data.nodeId)
-          ?? event.data.address
-          ?? `wf://page/${activePage}#${event.data.nodeId}`
-        onNodeSelect?.(resolvedAddress)
+      if (event.data?.type === 'wf:nodeClick' && !measureRef.current) {
+        const address = clickedNodeAddress(event.data, nodeIdToAddress, activePage)
+        if (address) onNodeSelect?.(address)
       }
     }
     window.addEventListener('message', handleMessage)
@@ -127,12 +125,12 @@ export function WorkspacePreview({
       setSrcdoc(buildErrorHtml(t('workspace.renderError'), error))
     } else if (html) {
       let processed = fixPreviewAssetPaths(html)
-      processed = injectNodeClickBridge(processed, activePage, interactive)
+      processed = injectNodeClickBridge(processed, interactive)
       setSrcdoc(processed)
     } else {
       setSrcdoc('')
     }
-  }, [html, error, t, activePage, interactive])
+  }, [html, error, t, interactive])
 
   // Highlight node in iframe — uses HTML id attr (engine renders node IDs as id attrs)
   const prevHighlightRef = useRef<string | null>(null)
@@ -236,28 +234,44 @@ function extractNodeIdFromAddress(address: string): string | null {
   return address || null
 }
 
-function injectNodeClickBridge(html: string, activePage: string, interactive: boolean): string {
+/**
+ * What a click in the preview selects. The page reports the clicked node and
+ * the rendered nodes around it, innermost first; the first one the node tree
+ * knows wins. A node rendered inside an imported or built-in component is not
+ * in the tree, so its click lands on the closest page-authored instance.
+ */
+function clickedNodeAddress(
+  data: { nodeId?: unknown; ancestorIds?: unknown; address?: unknown },
+  nodeIdToAddress: Map<string, string> | undefined,
+  activePage: string,
+): string | null {
+  if (typeof data.nodeId !== 'string') return null
+  const around = Array.isArray(data.ancestorIds) ? data.ancestorIds : []
+  for (const id of [data.nodeId, ...around]) {
+    const address = typeof id === 'string' ? nodeIdToAddress?.get(id) : undefined
+    if (address) return address
+  }
+  return typeof data.address === 'string' ? data.address : `wf://page/${activePage}#${data.nodeId}`
+}
+
+function injectNodeClickBridge(html: string, interactive: boolean): string {
   if (!interactive) {
     return html.replace(/<script[\s\S]*?<\/script>/gi, '')
   }
 
   const bridge = `<script>
 (function(){
-  var PAGE_ID = ${JSON.stringify(activePage)};
   document.addEventListener('click', function(e) {
-    var el = e.target;
-    while (el && el !== document.body) {
-      if (el.id && el.classList && el.classList.contains('wf-node')) {
-        var address = 'wf://page/' + PAGE_ID + '#' + el.id;
-        try {
-          if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'wf:nodeClick', address: address, nodeId: el.id }, '*');
-          }
-        } catch(_e){}
-        break;
-      }
-      el = el.parentElement;
+    var ids = [];
+    for (var el = e.target; el && el !== document.body; el = el.parentElement) {
+      if (el.id && el.classList && el.classList.contains('wf-node')) ids.push(el.id);
     }
+    if (ids.length === 0) return;
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'wf:nodeClick', nodeId: ids[0], ancestorIds: ids.slice(1) }, '*');
+      }
+    } catch(_e){}
   });
 })();
 </script>`
