@@ -285,7 +285,7 @@ stateBindings:
 primitives:
   containers:
     - section         # title, description
-    - card            # title, description, media, footer
+    - card            # title, description, actions, media, footer
     - stack           # gap, padding, align
     - row             # gap, padding, align, justify, wrap, nowrap
     - grid            # columns, gap, minItemWidth
@@ -336,13 +336,14 @@ primitives:
   data:
     - table           # columns, rows, caption, selectable, state (default|loading|empty), emptyText, dense, pagination
     - list            # items, kind (plain|avatar|action|file|chat|timeline|settings), divided, selectable, refreshable
-    - chart           # chartType (bar|vertical|horizontal|line|area|pie|donut|gauge|sparkline|heatmap), title, label, data, series, legend, axes, height
+    - chart           # chartType (bar|vertical|horizontal|line|area|pie|donut|gauge|sparkline|heatmap|gantt), title, label, data, ticks, series, legend, axes, height
+                      # gantt: data [{ label, start, end, tone }], ticks [labels spaced evenly across the domain]
     - calendar        # view (month|week|day|picker), date, events
     - kanban          # columns
-    - tree            # items, expanded
-    - accordion       # items
+    - tree            # items (open unless expanded: false), expanded
+    - accordion       # items (closed unless expanded: true)
   feedback:
-    - alert           # text, title, variant (info|success|warning|error|neutral), icon, dismissible, inline
+    - alert           # text, title, variant (info|success|warning|error|neutral), icon, dismissible, inline, actions
 
 # Frame class per element: S always, C decided by the frame rules,
 # N never, E one divider edge. See docs/cli/schema.md section 4.2.
@@ -609,6 +610,9 @@ overlay:
     - placement
     - dismissOn
     - wireframeStyle
+    - props:
+        - title
+        - actions        # [{ label, variant (primary|secondary|ghost|danger|link), route, disabled, tone (neutral|info|success|warning|danger) }]; other keys rejected
 
   triggerRequires:
     appliesTo: [dropdown, popover, menu, tooltip]
