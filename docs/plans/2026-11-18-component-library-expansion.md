@@ -109,7 +109,8 @@ read it now:
 | `list` rows | Nonblank `title` before `label`; `text` → `description`. |
 | `nav` | Explicit `label` kept even when blank; `{group}`/`{heading}` → `{type: heading}`. |
 | `menu`, `action_sheet` | `{divider: true}` → `{type: separator}`; `danger: true` → `tone: danger`. |
-| `tab_bar`, `bottom_tab_bar`, `nav` | `active` → `selected`. |
+| `tab_bar`, `bottom_tab_bar` | `active` → `selected`. |
+| `nav` (decided in T4) | `active` stays part of nav's legacy rule, next to route inference, not an alias of `selected`. `active: true` lights a row in addition to the route match, and `active: false` never hides the current route, exactly as before. Canonical `selected` beats both. |
 | `tree`, `accordion` | `open` → `expanded`. Each keeps its own default: tree open unless `false`, accordion closed unless `true`. |
 
 Canonical keys work in every opted-in consumer. Tests cover conflicting keys, blank
