@@ -2,7 +2,8 @@
 
 // Adds one component definition to the text of a components document, leaving
 // every byte the author wrote in place: comments, quoting, flow or block style
-// and line endings. The new definition is the only text that changes.
+// and line endings. The new definition is the only text that changes. A line ends
+// at LF, CRLF or a lone CR, as YAML reads it.
 
 const yaml = require('js-yaml');
 const { parseDocument } = require('../lint/source/positions');
@@ -10,14 +11,31 @@ const { parseDocument } = require('../lint/source/positions');
 const DEFAULT_STEP = 2;
 const BOM = String.fromCharCode(0xfeff);
 
+const isBreak = (char) => char === '\n' || char === '\r';
+
+/** The offset where the line holding `offset` starts. */
+function lineStart(text, offset) {
+  let at = offset;
+  while (at > 0 && !isBreak(text[at - 1])) at -= 1;
+  return at;
+}
+
 function columnOf(text, offset) {
-  return offset - (text.lastIndexOf('\n', offset - 1) + 1);
+  return offset - lineStart(text, offset);
 }
 
 /** The offset where the line after the one holding `offset` starts, or the end of the text. */
 function nextLineStart(text, offset) {
-  const newline = text.indexOf('\n', offset);
-  return newline === -1 ? text.length : newline + 1;
+  let at = offset;
+  while (at < text.length && !isBreak(text[at])) at += 1;
+  if (at === text.length) return at;
+  return text.startsWith('\r\n', at) ? at + 2 : at + 1;
+}
+
+/** The line separator the document uses: CRLF, else CR, else LF. */
+function lineSeparator(text) {
+  if (text.includes('\r\n')) return '\r\n';
+  return text.includes('\r') ? '\r' : '\n';
 }
 
 /** Where a node's content starts: its span begins with any anchor (`&a`) or tag (`!!map`) it has. */
@@ -44,7 +62,7 @@ const flowEntry = (key, value) => `${JSON.stringify(key)}: ${JSON.stringify(valu
 /** Block text inserted on the line after `offset`, starting a line of its own. */
 function blockAfterLine(text, offset, block, eol) {
   const at = nextLineStart(text, offset);
-  const lead = at === text.length && at > 0 && !text.endsWith('\n') ? eol : '';
+  const lead = at === text.length && at > 0 && !isBreak(text[at - 1]) ? eol : '';
   return { start: at, end: at, text: `${lead}${block}` };
 }
 
@@ -62,7 +80,7 @@ function fillEmptyFlow(text, mapping, key, value, eol) {
     return { start: open, end: open, text: ` ${flowEntry(key, value)} ` };
   }
   const close = mapping.end - 1;
-  const at = text.lastIndexOf('\n', close - 1) + 1;
+  const at = lineStart(text, close);
   return { start: at, end: at, text: `${' '.repeat(columnOf(text, close) + DEFAULT_STEP)}${flowEntry(key, value)}${eol}` };
 }
 
@@ -108,7 +126,7 @@ function insertComponentDefinition(source, id, definition) {
   const text = source.slice(bom.length);
   const parsed = parseDocument(text);
   if (!parsed.ok || !parsed.root || parsed.root.kind !== 'mapping') return null;
-  const eol = text.includes('\r\n') ? '\r\n' : '\n';
+  const eol = lineSeparator(text);
   const edits = editsFor(text, parsed.root, id, definition, eol);
   if (!edits) return null;
   let next = text;

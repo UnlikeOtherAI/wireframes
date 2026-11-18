@@ -205,3 +205,38 @@ test('N5 a project folder whose name starts with two dots is inside the project'
   if (path.sep === '\\') assert.equal(projectFileTarget(projectPath, '..\\kit.yaml').inside, false, 'either separator on Windows');
   assert.equal(projectFileTarget(projectPath, path.join(path.dirname(projectPath), 'kit.yaml')).inside, false, 'an absolute path outside');
 });
+
+test('R4 copy keeps CR-only line separators wherever it inserts', () => {
+  const definition = { root: { id: 'extra', component: 'section' } };
+  const cr = (text) => text.replace(/\n/g, '\r');
+  const head = 'documentType: components\nspecVersion: "1.1"\nid: c\n';
+  const cases = {
+    'commented flow map in a flow document': '{documentType: components, specVersion: "1.1", id: kit, components: { # keep CR\r # another\r}}\r',
+    'commented flow map in a block document': cr(`${head}components: { # inner mapping note\n  # empty on purpose\n} # outside note\n`),
+    'block map, keys after it': cr('documentType: components\ncomponents:\n  a:\n    root: {id: a, component: section}\n# about imports\nimports: {}\nid: c\nspecVersion: "1.1"\n'),
+    'block map, no final separator': cr(`${head}components:\n  a:\n    root: { id: a, component: section }  # keep me`),
+    'empty map, keys after it': cr('documentType: components\ncomponents: {} # none yet\nid: c\nspecVersion: "1.1"\n'),
+    'flow map with an entry': cr(`${head}components: { a: { root: { id: a, component: section } } }\n`),
+  };
+  for (const [name, source] of Object.entries(cases)) {
+    const output = insertComponentDefinition(source, 'extra', definition);
+    assert.ok(output != null, name);
+    const expected = yaml.load(source);
+    expected.components.extra = definition;
+    assert.deepEqual(yaml.load(output), expected, name);
+    for (const comment of source.match(/# [a-zA-Z ]+/g) || []) assert.ok(output.includes(comment), `${name}: "${comment}" kept`);
+    // The same edit, at the same place, as the LF document gets; only the separator differs.
+    const lf = insertComponentDefinition(source.replace(/\r/g, '\n'), 'extra', definition);
+    assert.equal(output, lf.replace(/\n/g, '\r'), `${name}: the LF edit with CR separators`);
+  }
+
+  const projectPath = createStdProject([]);
+  const filePath = path.join(projectPath, 'components.yaml');
+  fs.writeFileSync(filePath, cases['commented flow map in a flow document'], 'utf8');
+  const copied = wf(projectPath, 'component', 'copy', 'std.hero');
+  assert.equal(copied.status, 0, copied.stderr);
+  const text = fs.readFileSync(filePath, 'utf8');
+  for (const comment of ['# keep CR', '# another']) assert.ok(text.includes(comment), comment);
+  assert.doesNotMatch(text, /\n/);
+  assert.equal(readYaml(filePath).components.hero.root.id, 'hero');
+});
