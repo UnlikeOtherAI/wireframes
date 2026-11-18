@@ -323,7 +323,24 @@ function renderSectionTitle(props, options = {}) {
  * resolved once across the options of every group, so a single select marks
  * only the first match. A `group` is an `<optgroup>` and a `separator` an `<hr>`.
  */
-function renderSelectOptions(options, { value, multiple = false } = {}) {
+function choiceIdentity(raw) {
+  return ['string', 'number', 'boolean'].includes(typeof raw) ? String(raw).trim() : '';
+}
+
+/**
+ * What the runtime needs to re-select a bound select from state with the
+ * precedence it rendered with (items.js resolveSelection): an authored
+ * `selected` as `data-wf-item-selected`, and the option's identity when its
+ * trimmed `value` attribute is not it.
+ */
+function boundOptionAttrs(item, optionValue) {
+  const id = choiceIdentity(item.value) || choiceIdentity(item.label);
+  return `${typeof item.selected === 'boolean' ? ` data-wf-item-selected="${item.selected}"` : ''}${
+    id !== String(optionValue).trim() ? ` data-wf-identity="${escapeAttr(id)}"` : ''}`;
+}
+
+/** `bound`: the select's value comes from state, so the runtime re-selects its options. */
+function renderSelectOptions(options, { value, multiple = false, bound = false } = {}) {
   const rows = selectOptionRows(options);
   if (rows.length === 0) return '';
   const leaves = optionLeaves(rows);
@@ -338,7 +355,8 @@ function renderSelectOptions(options, { value, multiple = false } = {}) {
     }
     const label = scalar ? item.label : String(item.label || item.value || '').trim();
     const optionValue = scalar ? item.value : String(item.value ?? item.label ?? '').trim();
-    const attrs = `${chosen.has(row) ? ' selected' : ''}${item.disabled === true ? ' disabled' : ''}`;
+    const attrs = `${chosen.has(row) ? ' selected' : ''}${item.disabled === true ? ' disabled' : ''}${
+      bound ? boundOptionAttrs(item, optionValue) : ''}`;
     return `<option value="${escapeAttr(optionValue)}"${attrs}>${escapeHtml(scalar ? label : label || optionValue || 'Option')}</option>`;
   }).join('');
   return write(rows);

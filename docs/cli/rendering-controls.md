@@ -87,7 +87,10 @@ node id, read from the state they show:
 | multiple `select` | the list of selected option values |
 
 Read-only values are submitted. A disabled field or control is skipped, as
-in HTML; an option's own `disabled` only stops it being chosen. A drawn
+in HTML. An option's own `disabled` stops it being chosen, and, as in HTML,
+an option that is itself disabled is not submitted even when it shows as
+selected: a radio group or single select whose choice is disabled submits
+`""`, and a list leaves it out. A drawn
 option whose `value` differs from its label carries it as `data-wf-value`.
 
 #### Options and selection
@@ -189,12 +192,17 @@ together:
   the value it mounted with, or the user activates it (which checks it).
 - `choice_group` rows select (radio) or toggle (checkbox).
 - A bound value refreshes with the field semantics it rendered with. A
-  multiple select selects every option in the bound list (one value
-  selects one option). A number field and a stepper clamp to their bounds
+  select keeps the render's precedence: item `selected: true` wins over
+  the value, `selected: false` skips a match, and a multiple select
+  selects every remaining option in the bound list (one value selects one
+  option). A bound select's options carry `data-wf-item-selected` and,
+  when their `value` attribute is not their identity, `data-wf-identity`
+  for this. A number field and a stepper clamp to their bounds
   and show `step` decimals, exactly as at render time; a stepper carries
   `data-wf-min`, `data-wf-max` and `data-wf-step` for this and disables
-  its button at a bound. What the user types into a number field is left
-  as typed.
+  its button at a bound. A bound `disabled` on a stepper goes on the
+  `.wf-numstepper` and disables both buttons through any value change.
+  What the user types into a number field is left as typed.
 - Read-only and disabled marks, groups and segments ignore clicks; a
   read-only select puts back its selection; a read-only colour field puts
   back its picker.

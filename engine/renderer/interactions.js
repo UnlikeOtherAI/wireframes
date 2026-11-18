@@ -283,7 +283,7 @@ function formValues(formId) {
     }
     if (!key) continue;
     if (field.type === 'checkbox') output[key] = !!field.checked;
-    else if (field.tagName === 'SELECT' && field.multiple) output[key] = Array.prototype.map.call(field.selectedOptions, function (option) { return option.value; });
+    else if (field.tagName === 'SELECT') output[key] = selectFieldValue(field);
     else output[key] = field.value;
   }
   return output;

@@ -368,17 +368,23 @@ function boundedNumber(text, limits) {
     : value.toFixed(Math.min(20, Math.max(numberDecimals(limits.step), numberDecimals(value))));
   return { text: shown, value: value };
 }
-function refreshStepper(stepper, value) {
+// The wrapper owns the stepper's disabled state; each button is disabled
+// with it, or at the end the shown value sits at.
+function stepperButtons(stepper) {
   var limits = numberLimits(stepper, 'data-wf-');
-  var shown = boundedNumber(value == null ? '' : String(value), limits);
   var label = stepper.querySelector('.wf-numstepper-value');
-  if (label) label.textContent = shown.text;
+  var shown = boundedNumber(label ? label.textContent : '', limits);
   var ends = [shown.value != null && limits.bounded && shown.value <= limits.min, shown.value != null && limits.bounded && shown.value >= limits.max];
   var off = stepper.hasAttribute('data-wf-disabled');
   Array.prototype.forEach.call(stepper.querySelectorAll('.wf-numstepper-btn'), function (button, i) {
     button.disabled = off || ends[i] === true;
     setDataState(button, 'disabled', button.disabled);
   });
+}
+function refreshStepper(stepper, value) {
+  var label = stepper.querySelector('.wf-numstepper-value');
+  if (label) label.textContent = boundedNumber(value == null ? '' : String(value), numberLimits(stepper, 'data-wf-')).text;
+  stepperButtons(stepper);
 }
 function optionIdentity(value) {
   return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value).trim() : '';
@@ -387,12 +393,22 @@ function optionIdentity(value) {
 function keepSelection(select) {
   select._wfKeep = Array.prototype.map.call(select.options, function (option) { return option.selected; });
 }
-// A multiple select selects every option whose value is in the list (or is the one value), as at render time.
+// A select re-selected from state with the precedence it rendered with:
+// options authored selected: true win outright; otherwise options whose
+// identity is in the value (a list for a multiple select), skipping those
+// authored selected: false, and only the first for a single select.
 function selectOptions(select, value) {
+  var options = Array.prototype.slice.call(select.options);
+  var pinned = options.some(function (option) { return option.getAttribute('data-wf-item-selected') === 'true'; });
   var wanted = (Array.isArray(value) ? value : [value]).map(optionIdentity).filter(Boolean);
-  Array.prototype.forEach.call(select.options, function (option) {
-    var id = option.value.trim();
-    option.selected = id !== '' && wanted.indexOf(id) >= 0;
+  var found = false;
+  options.forEach(function (option) {
+    var authored = option.getAttribute('data-wf-item-selected');
+    var id = option.hasAttribute('data-wf-identity') ? option.getAttribute('data-wf-identity') : option.value.trim();
+    var on = pinned ? authored === 'true'
+      : authored !== 'false' && (select.multiple || !found) && id !== '' && wanted.indexOf(id) >= 0;
+    found = found || on;
+    option.selected = on;
   });
 }
 function refreshFieldValue(node, value) {
@@ -405,8 +421,7 @@ function refreshFieldValue(node, value) {
   if (colour && field._wfInvalidDraft && node._wfLastBoundValue === value) return;
   node._wfLastBoundValue = value;
   if (field.tagName === 'SELECT') {
-    if (field.multiple) selectOptions(field, value);
-    else field.value = value == null ? '' : String(value);
+    selectOptions(field, value);
     if (field.hasAttribute('data-wf-readonly')) keepSelection(field);
     return;
   }
@@ -547,6 +562,13 @@ function initToggles() {
     });
   });
 }
+// What a select submits: its selected options' values, a list when it is
+// multiple. As in HTML, a disabled option is not submitted, even when selected.
+function selectFieldValue(select) {
+  var chosen = Array.prototype.filter.call(select.selectedOptions, function (option) { return !option.disabled; })
+    .map(function (option) { return option.value; });
+  return select.multiple ? chosen : (chosen.length > 0 ? chosen[0] : '');
+}
 var WF_DRAWN_FIELDS = '.wf-node.wf-checkbox,.wf-node.wf-radio,.wf-node.wf-toggle,.wf-node.wf-segmented,.wf-node.wf-choice_group,.wf-node.wf-picker';
 function submittedOption(el, label) { return el.hasAttribute('data-wf-value') ? el.getAttribute('data-wf-value') : label; }
 // What a drawn control submits, read from the state it shows: a boolean (or
@@ -567,8 +589,9 @@ function drawnFieldValue(node) {
   if (node.classList.contains('wf-choice_group')) {
     var list = node.querySelector('.wf-choice-list');
     if (!list || list.hasAttribute('data-wf-disabled')) return undefined;
+    // As in HTML, an option that is itself disabled is not submitted, even when it shows as selected.
     var picked = Array.prototype.filter.call(list.querySelectorAll('[role=radio],[role=checkbox]'), function (option) {
-      return option.getAttribute('aria-checked') === 'true';
+      return option.getAttribute('aria-checked') === 'true' && !option.hasAttribute('data-wf-disabled');
     }).map(function (option) {
       var label = option.closest('.wf-choice').querySelector('.wf-choice-label');
       return submittedOption(option, label ? label.textContent : '');
@@ -606,6 +629,8 @@ function refresh() {
           else if (!node._wfMixedAt || node._wfMixedAt.value !== value) { node._wfMixedAt = null; setChoiceChecked(mark, bool); }
           continue;
         }
+        var stepper = name === 'disabled' ? node.querySelector('.wf-numstepper') : null;
+        if (stepper) { setDataState(stepper, 'disabled', bool); stepperButtons(stepper); continue; }
         var input = node.querySelector(name === 'disabled' ? 'button,input,select,textarea' : 'input') || node;
         if (bool) input.setAttribute(name, '');
         else input.removeAttribute(name);
@@ -1237,7 +1262,7 @@ function formValues(formId) {
     }
     if (!key) continue;
     if (field.type === 'checkbox') output[key] = !!field.checked;
-    else if (field.tagName === 'SELECT' && field.multiple) output[key] = Array.prototype.map.call(field.selectedOptions, function (option) { return option.value; });
+    else if (field.tagName === 'SELECT') output[key] = selectFieldValue(field);
     else output[key] = field.value;
   }
   return output;

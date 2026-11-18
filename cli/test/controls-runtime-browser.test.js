@@ -129,6 +129,45 @@ test('help plus error and readonly plus disabled render and submit through the r
   });
 });
 
+test('a selected option that is itself disabled is not submitted, as in HTML', async () => {
+  const html = pageFor([
+    { id: 'opts', component: 'card', props: { title: 'Options' }, children: [
+      { id: 'boxes', component: 'choice_group', props: { kind: 'checkbox', options: [
+        { label: 'Never', value: 'never', selected: true, disabled: true }, { label: 'Yes', value: 'yes', selected: true }, 'No',
+      ] } },
+      { id: 'radios', component: 'choice_group', props: { kind: 'radio', options: [
+        { label: 'Locked', value: 'locked', selected: true, disabled: true }, 'Open',
+      ] } },
+      { id: 'many', component: 'select', props: { multiple: true, options: [
+        { label: 'Gone', value: 'gone', selected: true, disabled: true }, { label: 'Kept', value: 'kept', selected: true },
+      ] } },
+      { id: 'one', component: 'select', props: { options: [{ label: 'Gone', value: 'gone', selected: true, disabled: true }, 'Other'] } },
+    ] },
+    { id: 'send', component: 'button', props: { label: 'Send' }, interaction: [{ type: 'submit', formId: 'opts' }] },
+  ]);
+  await withPage(html, async (page) => {
+    const checked = (id) => page.locator(`#${id} [role]`).evaluateAll((els) => els
+      .filter((el) => el.matches('[role=checkbox],[role=radio]'))
+      .map((el) => [el.getAttribute('aria-checked'), el.hasAttribute('data-wf-disabled')]));
+    assert.deepEqual(await checked('boxes'), [['true', true], ['true', false], ['false', false]], 'the disabled option shows as selected');
+    assert.deepEqual(await checked('radios'), [['true', true], ['false', false]]);
+
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
+    const payload = await payloadOf(page);
+    assert.deepEqual(payload.boxes, ['yes']);
+    assert.equal(payload.radios, '', 'a radio group whose choice is disabled submits no choice');
+    assert.deepEqual(payload.many, ['kept']);
+    assert.equal(payload.one, '');
+
+    // An enabled choice the user makes goes as usual.
+    await page.locator('#boxes').getByText('No', { exact: true }).click();
+    await page.locator('#radios').getByText('Open', { exact: true }).click();
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
+    const changed = await payloadOf(page);
+    assert.deepEqual([changed.boxes, changed.radios], [['yes', 'No'], 'Open']);
+  });
+});
+
 test('pressed buttons and toolbar items toggle with their ARIA and data attributes', async () => {
   const html = pageFor([
     { id: 'bold', component: 'button', props: { label: 'Bold', pressed: false } },
