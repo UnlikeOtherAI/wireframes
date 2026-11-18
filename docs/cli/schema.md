@@ -542,6 +542,10 @@ or a control with its own chrome; **edge only** draws one divider edge;
 | `nav` | never | items, collapsed, groups |
 | `menu` | never | items |
 | `app_bar` | edge only | title, subtitle, leading, actions |
+
+`app_bar.leading` is an icon name, or the id of one of the bar's children. A named child
+is drawn before the title in place of a glyph, so a menu or back button there can carry
+an interaction. The bar's other children are drawn after its actions.
 | `action_sheet` | never | items, title, cancel |
 | `page_header` | never | title, subtitle, breadcrumb, actions, tabs |
 

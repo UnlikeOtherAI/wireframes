@@ -170,12 +170,23 @@ function renderMenu(node, ctx, lib) {
   return { inner: markup };
 }
 
+/**
+ * The child an app bar names as its leading control. `leading` is an icon name, or the id
+ * of one of the bar's children, which is then drawn before the title in place of a glyph:
+ * a glyph cannot be pressed, and a menu or back button has to be.
+ */
+function leadingChild(node) {
+  const name = node && node.props ? node.props.leading : null;
+  if (typeof name !== 'string' || name === '' || !Array.isArray(node.children)) return null;
+  return node.children.find((child) => child && child.id === name) || null;
+}
+
 function renderAppBar(node, ctx, lib) {
   const props = node.props || {};
   if (Array.isArray(node.children) && node.children.length && !props.title && !props.leading && !props.actions?.length) {
     return { tag: 'header', inner: '', useChildren: true, style: 'justify-content:space-between' };
   }
-  const leading = lib.str(props.leading)
+  const leading = lib.str(props.leading) && !leadingChild(node)
     ? `<span class="wf-appbar-leading">${lib.icon(props.leading, { size: 'lg' })}</span>`
     : '';
   const title = lib.str(props.title);
@@ -239,6 +250,7 @@ function renderActionSheet(node, ctx, lib) {
 }
 
 module.exports = {
+  leadingChild,
   navigationRenderers: {
     action_sheet: renderActionSheet,
     tab_bar: renderTabBar,
