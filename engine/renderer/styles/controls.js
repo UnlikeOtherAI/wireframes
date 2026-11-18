@@ -73,7 +73,7 @@ const controlStyles = [
   '.wf-segment-track{display:inline-flex;align-items:stretch;width:fit-content;border-radius:var(--wf-corner-radius,6px);overflow:hidden}',
   '.wf-mode-line .wf-segment-track{border:1px solid var(--wf-line-strong);border-radius:0}',
   '.wf-mode-card .wf-segment-track{border:1px solid var(--wf-line);background:var(--wf-fill-2)}',
-  '.wf-segment-track[data-wf-invalid]{border-color:var(--wf-danger);border-width:2px}',
+  '.wf-field-invalid .wf-segment-track{border-color:var(--wf-tone);border-width:2px}',
   '.wf-segment-track[data-wf-readonly] .wf-segment{cursor:default}',
   '.wf-segment-track[data-wf-disabled]{opacity:.5}',
 
@@ -153,8 +153,7 @@ const controlStyles = [
   // Indeterminate: a bar instead of the tick.
   '.wf-check-mark[data-wf-checked="mixed"]:after{content:"";position:absolute;left:3px;top:6px;width:8px;height:2px;background:#ffffff}',
   '.wf-choice-on .wf-radio-mark:after,.wf-radio-mark[data-wf-checked]:after{content:"";position:absolute;left:3px;top:3px;width:8px;height:8px;border-radius:50%;background:var(--wf-ink)}',
-  '.wf-check-mark[data-wf-invalid],.wf-radio-mark[data-wf-invalid],.wf-toggle-track[data-wf-invalid],'
-    + '.wf-choice-list[data-wf-invalid] .wf-check-mark,.wf-choice-list[data-wf-invalid] .wf-radio-mark{border-color:var(--wf-danger)}',
+  '.wf-field-invalid .wf-check-mark,.wf-field-invalid .wf-radio-mark,.wf-field-invalid .wf-toggle-track{border-color:var(--wf-tone)}',
   '.wf-choice-list .wf-choice:has([data-wf-disabled]){opacity:.5}',
   '.wf-checkbox>.wf-field-error,.wf-radio>.wf-field-error{margin-left:25px}',
   '.wf-toggle>.wf-field-error{margin-left:45px}',
@@ -192,7 +191,7 @@ const controlStyles = [
   '.wf-upload-zone{display:flex;flex-direction:column;align-items:center;gap:6px;padding:24px;text-align:center}',
   '.wf-mode-line .wf-upload-zone{outline:1px dashed var(--wf-line-strong);outline-offset:-1px}',
   '.wf-mode-card .wf-upload-zone{border:1px dashed var(--wf-line);background:var(--wf-fill-2);border-radius:var(--wf-surface-radius,6px)}',
-  '.wf-upload-field.wf-field-invalid .wf-upload-zone{border-color:var(--wf-danger);outline-color:var(--wf-danger)}',
+  '.wf-upload-field.wf-field-invalid .wf-upload-zone{border-color:var(--wf-tone);outline-color:var(--wf-tone)}',
   '.wf-upload-row{display:flex;align-items:center;gap:8px}',
   '.wf-upload-zone[data-wf-disabled],.wf-upload-row[data-wf-disabled]{opacity:.5}',
 
