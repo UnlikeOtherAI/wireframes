@@ -184,7 +184,7 @@ the right.
   children:                                # fills default
     - id: plan
       component: card
-      props: { title: Plan, description: Pro, billed yearly }
+      props: { title: Plan, description: "Pro, billed yearly" }
 ```
 
 ## std.data_page

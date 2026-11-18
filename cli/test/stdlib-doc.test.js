@@ -38,7 +38,14 @@ test('stdlib.md documents every prop and slot of every pattern', () => {
 test('every YAML example in stdlib.md validates and renders', () => {
   const examples = [...DOC.matchAll(/```yaml\n([\s\S]*?)```/g)].map((match) => yaml.load(match[1]));
   assert.ok(examples.length >= 9);
+  // A comma inside an unquoted flow-mapping value splits it into a stray key
+  // with a null value, which validation does not catch.
+  const nullProps = (value) => (Array.isArray(value) ? value.flatMap(nullProps)
+    : value && typeof value === 'object'
+      ? Object.entries(value).flatMap(([key, entry]) => (entry === null ? [key] : nullProps(entry)))
+      : []);
   for (const content of examples) {
+    assert.deepEqual(nullProps(content), [], `an example value was split by a comma: ${JSON.stringify(content)}`);
     const documentMap = memoryProject(content);
     const validation = validateProject(documentMap);
     assert.deepEqual(validation.errors, [], JSON.stringify(content));

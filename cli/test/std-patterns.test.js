@@ -69,6 +69,13 @@ test('every pattern is a valid, self-contained component with documented props',
     validateDocument({ documentType: 'components', specVersion: '1.1', id: 'components', components: { [local]: structuredClone(definition) } },
       id, SUPPORTED_SPEC_VERSION);
 
+    // A comma in an unquoted flow-mapping value would leave a stray key with a null value.
+    const nulls = (value) => (Array.isArray(value) ? value.flatMap(nulls)
+      : value && typeof value === 'object'
+        ? Object.entries(value).flatMap(([key, entry]) => (entry === null ? [key] : nulls(entry)))
+        : []);
+    assert.deepEqual(nulls(definition), [], `${id} has a value split by a comma`);
+
     const ids = new Set();
     walk(definition.root, (node) => {
       assert.equal(node.use, undefined, `${id} uses "${node.use}": a pattern may use no other component`);
