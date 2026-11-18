@@ -541,6 +541,22 @@
                       "danger",
                       "link"
                     ]
+                  },
+                  "route": {
+                    "type": "string"
+                  },
+                  "disabled": {
+                    "type": "boolean"
+                  },
+                  "tone": {
+                    "type": "string",
+                    "enum": [
+                      "neutral",
+                      "info",
+                      "success",
+                      "warning",
+                      "danger"
+                    ]
                   }
                 }
               }
@@ -2862,6 +2878,9 @@
         "description": {
           "type": "string"
         },
+        "actions": {
+          "type": "array"
+        },
         "media": {
           "type": "string"
         },
@@ -4046,6 +4065,9 @@
         },
         "inline": {
           "type": "boolean"
+        },
+        "actions": {
+          "type": "array"
         }
       }
     }

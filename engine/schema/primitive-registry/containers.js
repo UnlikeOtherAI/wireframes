@@ -23,6 +23,7 @@ const containerPrimitives = [
     props: {
       title: { type: 'string', primary: true },
       description: { type: 'string' },
+      actions: { type: 'array', items: true },
       media: { type: 'string' },
       footer: { type: 'boolean' },
     },

@@ -70,7 +70,9 @@ function renderAlert(node, ctx, lib) {
   const text = lib.str(props.text);
   const body = `<div class="wf-alert-body">${
     title ? `<div class="wf-alert-title">${lib.bound(title, ctx)}</div>` : ''
-  }${text ? `<div class="wf-alert-text">${lib.bound(text, ctx)}</div>` : (title ? '' : lib.renderSkeleton('70%'))}</div>`;
+  }${text ? `<div class="wf-alert-text">${lib.bound(text, ctx)}</div>` : (title ? '' : lib.renderSkeleton('70%'))}${
+    lib.actionButtons(props.actions, ctx)
+  }</div>`;
   const close = props.dismissible === true ? '<button class="wf-alert-close">×</button>' : '';
   return {
     inner: `<span class="wf-alert-glyph">${glyph}</span>${body}${close}`,
