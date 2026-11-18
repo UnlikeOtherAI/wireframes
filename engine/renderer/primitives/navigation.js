@@ -1,81 +1,95 @@
 'use strict';
 
-function hrefFor(route, ctx, lib) {
-  const routeId = lib.str(route);
-  if (!routeId || !lib.isObject(ctx.routeTable)) return null;
-  const href = ctx.routeTable[routeId];
-  return typeof href === 'string' && href.trim() !== '' ? { href: href.trim(), routeId } : null;
+const { hasInteraction, itemLink, itemsOn, expandGroups } = require('./navigation-items');
+
+// A tab, crumb or step list has no headings or separators.
+function entries(value, profile, lib) {
+  return lib.normalizeItems(value, profile).filter((item) => item.type !== 'separator' && item.type !== 'heading');
 }
 
-function linkOrSpan(target, className, inner, ctx, lib) {
-  const nav = hrefFor(target, ctx, lib);
-  return nav
-    ? `<a class="${className}" ${lib.navigationAttrs(nav).join(' ')}>${inner}</a>`
-    : `<span class="${className}">${inner}</span>`;
+function crumbOwner(lib) {
+  return { ...lib.STATE_OWNERS.link, current: 'location' };
 }
 
-function tabItems(node, ctx, lib) {
-  return lib.items(node.props?.tabs);
+// The last crumb is current unless an item says otherwise; the current crumb never links.
+function crumbTrail(value, separator, ctx, lib, inert) {
+  const crumbs = entries(value, lib.itemProfiles.basic, lib);
+  const on = itemsOn(crumbs, lib, (_, index) => index === crumbs.length - 1);
+  const owner = crumbOwner(lib);
+  return crumbs.map((crumb, index) => {
+    const label = lib.str(crumb.label);
+    const last = index === crumbs.length - 1;
+    const body = label ? lib.escapeHtml(label) : lib.renderSkeleton(6);
+    const state = { current: on[index], disabled: crumb.disabled === true };
+    const item = on[index]
+      ? `<span class="wf-crumb wf-crumb-current"${lib.stateAttrs(state, { owner })}>${body}</span>`
+      : itemLink(crumb, 'wf-crumb', body, ctx, lib, { inert, state, owner });
+    const sep = last ? '' : `<span class="wf-crumb-sep">${lib.escapeHtml(separator)}</span>`;
+    return `${item}${sep}`;
+  }).join('');
 }
 
 function renderTabBar(node, ctx, lib) {
-  const tabs = tabItems(node, ctx, lib);
+  const tabs = entries(node.props?.tabs, lib.itemProfiles.tabs, lib);
   if (tabs.length === 0) {
     // No tabs[] — the author supplied children; the shell renders them.
     return { inner: '', useChildren: true, className: `wf-tabs-${lib.toSafeClass(lib.str(node.props?.variant) || 'underline')}` };
   }
   const variant = lib.str(node.props?.variant) || 'underline';
-  const markup = tabs.map((tab) => {
+  const inert = hasInteraction(node);
+  const on = itemsOn(tabs, lib);
+  const markup = tabs.map((tab, index) => {
     const glyph = lib.iconSpan(tab.icon);
     const label = lib.str(tab.label);
     const body = `${glyph}${label ? lib.escapeHtml(label) : lib.renderSkeleton(6)}`;
-    const active = tab.active === true ? ' wf-tab-on' : '';
+    const active = on[index] ? ' wf-tab-on' : '';
     const badge = tab.badge != null ? `<span class="wf-tab-badge">${lib.escapeHtml(String(tab.badge))}</span>` : '';
-    if (lib.str(tab.route)) return linkOrSpan(tab.route, `wf-tab${active}`, `${body}${badge}`, ctx, lib);
-    return `<button type="button" class="wf-tab${active}" data-wf-choice-value="${lib.escapeAttr(JSON.stringify(label))}" aria-pressed="${!!active}"${!label || node.selection?.selectable === false ? ' disabled' : ''}${!label ? ' aria-label="Empty tab"' : ''}>${body}${badge}</button>`;
+    const disabled = tab.disabled === true;
+    if (lib.str(tab.route)) {
+      const state = { current: on[index], disabled };
+      return itemLink(tab, `wf-tab${active}`, `${body}${badge}`, ctx, lib, { inert, state, owner: lib.STATE_OWNERS.link });
+    }
+    // Tabs are buttons that announce selection with aria-pressed. A blank or
+    // unselectable tab has always been disabled; that stays a bare attribute.
+    const state = lib.stateAttrs({ selected: on[index], disabled }, { owner: lib.STATE_OWNERS.tab });
+    const off = !disabled && (!label || node.selection?.selectable === false) ? ' disabled' : '';
+    return `<button type="button" class="wf-tab${active}" data-wf-choice-value="${lib.escapeAttr(JSON.stringify(label))}"${state}${off}${!label ? ' aria-label="Empty tab"' : ''}>${body}${badge}</button>`;
   }).join('');
   return { inner: markup, className: `wf-tabs-${lib.toSafeClass(variant)}` };
 }
 
 function renderBottomTabBar(node, ctx, lib) {
-  const tabs = tabItems(node, ctx, lib);
+  const tabs = entries(node.props?.tabs, lib.itemProfiles.tabs, lib);
   if (tabs.length === 0) return { inner: '', useChildren: true };
-  const markup = tabs.map((tab) => {
+  const inert = hasInteraction(node);
+  const on = itemsOn(tabs, lib);
+  const markup = tabs.map((tab, index) => {
     const glyph = lib.icon(lib.str(tab.icon) || 'circle', { size: 'lg' });
     const label = lib.str(tab.label);
-    const active = tab.active === true ? ' wf-tab-on' : '';
+    const active = on[index] ? ' wf-tab-on' : '';
     const body = `<span class="wf-btab-glyph">${glyph}</span><span class="wf-btab-label">${
       label ? lib.escapeHtml(label) : lib.renderSkeleton(4)
     }</span>`;
-    return linkOrSpan(tab.route, `wf-btab${active}`, body, ctx, lib);
+    const state = { current: on[index], disabled: tab.disabled === true };
+    return itemLink(tab, `wf-btab${active}`, body, ctx, lib, { inert, state, owner: lib.STATE_OWNERS.link });
   }).join('');
   return { inner: markup };
 }
 
 function renderBreadcrumb(node, ctx, lib) {
-  const crumbs = lib.items(node.props?.items);
   const separator = lib.str(node.props?.separator) || '/';
-  const markup = crumbs.map((crumb, index) => {
-    const label = lib.str(crumb.label);
-    const last = index === crumbs.length - 1;
-    const body = label ? lib.escapeHtml(label) : lib.renderSkeleton(6);
-    const item = last
-      ? `<span class="wf-crumb wf-crumb-current">${body}</span>`
-      : linkOrSpan(crumb.route, 'wf-crumb', body, ctx, lib);
-    const sep = last ? '' : `<span class="wf-crumb-sep">${lib.escapeHtml(separator)}</span>`;
-    return `${item}${sep}`;
-  }).join('');
-  return { tag: 'nav', inner: markup };
+  return { tag: 'nav', inner: crumbTrail(node.props?.items, separator, ctx, lib, hasInteraction(node)) };
 }
 
 function renderPagination(node, ctx, lib) {
   const variant = lib.str(node.props?.variant) || 'numbers';
   const pages = Math.max(1, lib.num(node.props?.pages, 5));
   const page = Math.max(1, Math.min(pages, lib.num(node.props?.page, 1)));
+  const current = lib.stateAttrs({ current: true }, { owner: lib.STATE_OWNERS.link });
 
   if (variant === 'dots') {
     const dots = Array.from({ length: pages }, (_, i) => (
-      `<span class="wf-dot${i + 1 === page ? ' wf-dot-on' : ''}"></span>`
+      i + 1 === page ? `<span class="wf-dot wf-dot-on"${current}></span>` : '<span class="wf-dot"></span>'
     )).join('');
     return { tag: 'nav', inner: dots, className: 'wf-pagination-dots' };
   }
@@ -93,81 +107,35 @@ function renderPagination(node, ctx, lib) {
     if (i === 1 || i === pages || Math.abs(i - page) <= 1) window.push(i);
     else if (window[window.length - 1] !== '…') window.push('…');
   }
-  const numbers = window.map((entry) => (
-    entry === '…'
-      ? '<span class="wf-page-gap">…</span>'
-      : `<button class="wf-pagenum${entry === page ? ' wf-pagenum-on' : ''}">${entry}</button>`
-  )).join('');
+  const numbers = window.map((entry) => {
+    if (entry === '…') return '<span class="wf-page-gap">…</span>';
+    return entry === page
+      ? `<button class="wf-pagenum wf-pagenum-on"${current}>${entry}</button>`
+      : `<button class="wf-pagenum">${entry}</button>`;
+  }).join('');
   return { tag: 'nav', inner: `${prev}${numbers}${next}`, className: 'wf-pagination-numbers' };
 }
 
 function renderStepper(node, ctx, lib) {
-  const steps = lib.items(node.props?.steps);
-  const current = Math.max(1, lib.num(node.props?.current, 1));
+  const steps = entries(node.props?.steps, lib.itemProfiles.basic, lib);
+  const legacyCurrent = Math.max(1, lib.num(node.props?.current, 1));
+  const on = itemsOn(steps, lib, (_, index) => index + 1 === legacyCurrent);
+  // Steps before the first current one are done.
+  const current = on.includes(true) ? on.indexOf(true) + 1 : legacyCurrent;
   const vertical = lib.str(node.props?.orientation) === 'stack';
+  const owner = { ...lib.STATE_OWNERS.item, current: 'step' };
   const markup = steps.map((step, index) => {
     const n = index + 1;
-    const state = n < current ? 'done' : n === current ? 'on' : 'next';
+    const state = n < current ? 'done' : on[index] ? 'on' : 'next';
     const marker = state === 'done' ? '✓' : String(n);
     const label = lib.str(step.label);
     const connector = index < steps.length - 1 ? '<span class="wf-step-line"></span>' : '';
-    return `<span class="wf-step wf-step-${state}"><span class="wf-step-marker">${marker}</span><span class="wf-step-label">${
+    const attrs = lib.stateAttrs({ current: on[index], disabled: step.disabled === true }, { owner });
+    return `<span class="wf-step wf-step-${state}"${attrs}><span class="wf-step-marker">${marker}</span><span class="wf-step-label">${
       label ? lib.escapeHtml(label) : lib.renderSkeleton(7)
     }</span>${connector}</span>`;
   }).join('');
   return { inner: markup, className: vertical ? 'wf-stepper-stack' : 'wf-stepper-row' };
-}
-
-function navItem(item, ctx, lib, depth = 0) {
-  const label = lib.str(item.label);
-  const glyph = lib.iconSpan(item.icon, { style: item.iconStyle });
-  const badge = item.badge != null ? `<span class="wf-nav-badge">${lib.escapeHtml(String(item.badge))}</span>` : '';
-  const body = `${glyph}<span class="wf-nav-label">${label ? lib.escapeHtml(label) : lib.renderSkeleton(8)}</span>${badge}`;
-  // A shared sidebar cannot know which page it is on, so the renderer marks
-  // the item pointing at the current route. `active: true` still wins.
-  const onCurrentRoute = item.route != null && String(item.route) === ctx.currentRoute;
-  const active = item.active === true || onCurrentRoute ? ' wf-nav-on' : '';
-  const row = linkOrSpan(item.route, `wf-nav-item${active}${depth > 0 ? ' wf-nav-child' : ''}`, body, ctx, lib);
-  const children = Array.isArray(item.children) && item.children.length > 0
-    ? `<span class="wf-nav-children">${lib.items(item.children).map((child) => navItem(child, ctx, lib, depth + 1)).join('')}</span>`
-    : '';
-  return `${row}${children}`;
-}
-
-function renderNav(node, ctx, lib) {
-  const entries = lib.items(node.props?.items);
-  const collapsed = node.props?.collapsed === true;
-  const markup = entries.map((entry) => {
-    if (entry.group != null || entry.heading != null) {
-      const heading = lib.str(entry.group || entry.heading);
-      return `<span class="wf-nav-group">${lib.escapeHtml(heading)}</span>`;
-    }
-    return navItem(entry, ctx, lib);
-  }).join('');
-  const variant = ['rail', 'sidebar'].includes(node.props?.variant) ? node.props.variant : '';
-  const classes = [collapsed ? 'wf-nav-collapsed' : '', variant ? 'wf-nav-' + variant : ''].filter(Boolean).join(' ');
-  let style = '';
-  if (variant === 'rail') {
-    const size = node.size || {};
-    const width = size.width == null ? lib.token('sidebar.collapsedWidth', ctx.viewport, ctx.sizing) : null;
-    style = [width ? 'width:' + width + 'px' : '', size.minWidth == null ? 'min-width:0' : '', 'flex:0 0 auto'].filter(Boolean).join(';');
-  }
-  return { tag: 'nav', inner: markup, className: classes, style };
-}
-
-function renderMenu(node, ctx, lib) {
-  const entries = lib.items(node.props?.items);
-  const markup = entries.map((entry) => {
-    if (entry.divider === true) return '<span class="wf-menu-sep"></span>';
-    const glyph = lib.iconSpan(entry.icon);
-    const label = lib.str(entry.label);
-    const shortcut = lib.str(entry.shortcut);
-    const body = `${glyph}<span class="wf-menu-label">${label ? lib.escapeHtml(label) : lib.renderSkeleton(8)}</span>${
-      shortcut ? `<span class="wf-menu-shortcut">${lib.escapeHtml(shortcut)}</span>` : ''
-    }`;
-    return linkOrSpan(entry.route, `wf-menu-item${entry.danger === true ? ' wf-menu-danger' : ''}`, body, ctx, lib);
-  }).join('');
-  return { inner: markup };
 }
 
 function renderAppBar(node, ctx, lib) {
@@ -183,6 +151,7 @@ function renderAppBar(node, ctx, lib) {
   const centre = `<span class="wf-appbar-title">${
     title ? lib.bound(title, ctx) : lib.renderSkeleton(10)
   }${subtitle ? `<span class="wf-appbar-sub">${lib.bound(subtitle, ctx)}</span>` : ''}</span>`;
+  // App-bar actions are glyph data, not items.
   const actions = lib.items(props.actions).map((action) => (
     `<span class="wf-appbar-action">${lib.icon(lib.str(action.icon) || lib.str(action.label) || 'ellipsis', { size: 'lg' })}</span>`
   )).join('');
@@ -191,29 +160,24 @@ function renderAppBar(node, ctx, lib) {
 
 function renderPageHeader(node, ctx, lib) {
   const props = node.props || {};
-  const crumbs = lib.items(props.breadcrumb);
-  const crumbMarkup = crumbs.length > 0
-    ? `<nav class="wf-breadcrumb wf-ph-crumbs">${crumbs.map((crumb, index) => {
-      const label = lib.str(crumb.label);
-      const last = index === crumbs.length - 1;
-      const body = label ? lib.escapeHtml(label) : lib.renderSkeleton(6);
-      return `${last ? `<span class="wf-crumb wf-crumb-current">${body}</span>` : linkOrSpan(crumb.route, 'wf-crumb', body, ctx, lib)}${
-        last ? '' : '<span class="wf-crumb-sep">/</span>'
-      }`;
-    }).join('')}</nav>`
-    : '';
+  const inert = hasInteraction(node);
+  const crumbs = crumbTrail(props.breadcrumb, '/', ctx, lib, inert);
+  const crumbMarkup = crumbs ? `<nav class="wf-breadcrumb wf-ph-crumbs">${crumbs}</nav>` : '';
   const title = lib.str(props.title);
   const subtitle = lib.str(props.subtitle);
   const heading = `<div class="wf-ph-text"><h1 class="wf-ph-title">${
     title ? lib.bound(title, ctx) : lib.renderSkeleton(14)
   }</h1>${subtitle ? `<p class="wf-ph-sub">${lib.bound(subtitle, ctx)}</p>` : ''}</div>`;
-  const actions = lib.actionButtons(props.actions, ctx);
-  const tabs = lib.items(props.tabs);
+  // An empty route table turns every routed action into a plain button.
+  const actions = lib.actionButtons(props.actions, inert ? { ...ctx, routeTable: {} } : ctx);
+  const tabs = entries(props.tabs, lib.itemProfiles.tabs, lib);
+  const on = itemsOn(tabs, lib);
   const tabMarkup = tabs.length > 0
-    ? `<div class="wf-tab-bar wf-ph-tabs" data-wf-frame="edge">${tabs.map((tab) => {
+    ? `<div class="wf-tab-bar wf-ph-tabs" data-wf-frame="edge">${tabs.map((tab, index) => {
       const label = lib.str(tab.label);
       const body = label ? lib.escapeHtml(label) : lib.renderSkeleton(6);
-      return linkOrSpan(tab.route, `wf-tab${tab.active === true ? ' wf-tab-on' : ''}`, body, ctx, lib);
+      const state = { current: on[index], disabled: tab.disabled === true };
+      return itemLink(tab, `wf-tab${on[index] ? ' wf-tab-on' : ''}`, body, ctx, lib, { inert, state, owner: lib.STATE_OWNERS.link });
     }).join('')}</div>`
     : '';
   return {
@@ -226,11 +190,14 @@ function renderActionSheet(node, ctx, lib) {
   const props = node.props || {};
   const title = lib.str(props.title);
   const head = title ? `<div class="wf-sheet-title">${lib.bound(title, ctx)}</div>` : '';
-  const rows = lib.items(props.items).map((item) => {
+  const rows = expandGroups(lib.normalizeItems(props.items, lib.itemProfiles.menu)).map((item) => {
+    if (item.type === 'separator') return '<span class="wf-sheet-sep"></span>';
+    if (item.type === 'heading') return `<div class="wf-sheet-heading">${lib.escapeHtml(lib.str(item.label))}</div>`;
     const label = lib.str(item.label);
     const glyph = lib.iconSpan(item.icon, { style: item.iconStyle });
-    const danger = item.danger === true ? ' wf-sheet-danger' : '';
-    return `<button class="wf-sheet-row${danger}">${glyph}${label ? lib.escapeHtml(label) : lib.renderSkeleton(8)}</button>`;
+    const danger = item.tone === 'danger' ? ' wf-sheet-danger' : '';
+    const state = lib.stateAttrs({ disabled: item.disabled === true }, { owner: lib.STATE_OWNERS.button });
+    return `<button class="wf-sheet-row${danger}"${state}>${glyph}${label ? lib.escapeHtml(label) : lib.renderSkeleton(8)}</button>`;
   }).join('');
   const cancel = props.cancel === false
     ? ''
@@ -246,8 +213,6 @@ module.exports = {
     breadcrumb: renderBreadcrumb,
     pagination: renderPagination,
     stepper: renderStepper,
-    nav: renderNav,
-    menu: renderMenu,
     app_bar: renderAppBar,
     page_header: renderPageHeader,
   },

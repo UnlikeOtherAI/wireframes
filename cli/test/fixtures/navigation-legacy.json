@@ -1,0 +1,512 @@
+{
+  "routeTable": {
+    "home": "home.html",
+    "settings": "settings.html",
+    "reports": "reports.html"
+  },
+  "routeId": "settings",
+  "cases": [
+    {
+      "name": "tab_bar: scalars, title, blank label, dropped entries",
+      "node": {
+        "id": "t1",
+        "component": "tab_bar",
+        "props": {
+          "tabs": [
+            "One",
+            2,
+            {
+              "title": "Three"
+            },
+            {
+              "label": "",
+              "title": "Hidden"
+            },
+            null,
+            true,
+            [
+              "x"
+            ]
+          ]
+        }
+      },
+      "html": "<div id=\"t1\" class=\"wf-node wf-tab_bar wf-tabs-underline\" data-wf-frame=\"edge\" data-wf-state-bindings=\"{}\"><button type=\"button\" class=\"wf-tab\" data-wf-choice-value=\"&quot;One&quot;\" aria-pressed=\"false\">One</button><button type=\"button\" class=\"wf-tab\" data-wf-choice-value=\"&quot;2&quot;\" aria-pressed=\"false\">2</button><button type=\"button\" class=\"wf-tab\" data-wf-choice-value=\"&quot;Three&quot;\" aria-pressed=\"false\">Three</button><button type=\"button\" class=\"wf-tab\" data-wf-choice-value=\"&quot;&quot;\" aria-pressed=\"false\" disabled aria-label=\"Empty tab\"><span class=\"wf-bar\" style=\"width:6ch\"></span></button></div>"
+    },
+    {
+      "name": "tab_bar: active, icon, badge, routes known and unknown",
+      "node": {
+        "id": "t2",
+        "component": "tab_bar",
+        "props": {
+          "variant": "pill",
+          "tabs": [
+            {
+              "label": "Overview",
+              "icon": "gauge",
+              "active": true
+            },
+            {
+              "label": "Members",
+              "badge": 12
+            },
+            {
+              "label": "Home",
+              "route": "home",
+              "active": true
+            },
+            {
+              "label": "Lost",
+              "route": "nowhere"
+            }
+          ]
+        }
+      },
+      "html": "<div id=\"t2\" class=\"wf-node wf-tab_bar wf-tabs-pill\" data-wf-frame=\"edge\" data-wf-state-bindings=\"{}\"><button type=\"button\" class=\"wf-tab wf-tab-on\" data-wf-choice-value=\"&quot;Overview&quot;\" aria-pressed=\"true\"><span class=\"wf-ico\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-gauge\" data-wf-glyph=\"G\"></i></span>Overview</button><button type=\"button\" class=\"wf-tab\" data-wf-choice-value=\"&quot;Members&quot;\" aria-pressed=\"false\">Members<span class=\"wf-tab-badge\">12</span></button><a class=\"wf-tab wf-tab-on\" href=\"home.html\" data-wf-route-target=\"home\">Home</a><span class=\"wf-tab\">Lost</span></div>"
+    },
+    {
+      "name": "tab_bar: unselectable",
+      "node": {
+        "id": "t3",
+        "component": "tab_bar",
+        "selection": {
+          "selectable": false
+        },
+        "props": {
+          "tabs": [
+            {
+              "label": "A",
+              "active": true
+            },
+            "B"
+          ]
+        }
+      },
+      "html": "<div id=\"t3\" class=\"wf-node wf-tab_bar wf-selectable wf-tabs-underline\" data-wf-frame=\"edge\" data-wf-state-bindings=\"{}\" data-selection-selectable=\"false\"><button type=\"button\" class=\"wf-tab wf-tab-on\" data-wf-choice-value=\"&quot;A&quot;\" aria-pressed=\"true\" disabled>A</button><button type=\"button\" class=\"wf-tab\" data-wf-choice-value=\"&quot;B&quot;\" aria-pressed=\"false\" disabled>B</button></div>"
+    },
+    {
+      "name": "tab_bar: children instead of tabs",
+      "node": {
+        "id": "t4",
+        "component": "tab_bar",
+        "props": {
+          "variant": "enclosed"
+        },
+        "children": [
+          {
+            "id": "t4a",
+            "component": "text",
+            "props": {
+              "text": "Child"
+            }
+          }
+        ]
+      },
+      "html": "<div id=\"t4\" class=\"wf-node wf-tab_bar wf-tabs-enclosed\" style=\"display:flex;flex-direction:column\" data-wf-frame=\"edge\" data-wf-state-bindings=\"{}\"><div class=\"wf-node-children\"><span id=\"t4a\" class=\"wf-node wf-text wf-text-body\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\">Child</span></div></div>"
+    },
+    {
+      "name": "bottom_tab_bar: icons, active, routes",
+      "node": {
+        "id": "b1",
+        "component": "bottom_tab_bar",
+        "props": {
+          "tabs": [
+            {
+              "icon": "house",
+              "label": "Home",
+              "route": "home",
+              "active": true
+            },
+            {
+              "label": "Search"
+            },
+            "Plain",
+            {
+              "title": "Titled",
+              "route": "nowhere"
+            },
+            {
+              "icon": "bell",
+              "label": ""
+            }
+          ]
+        }
+      },
+      "html": "<div id=\"b1\" class=\"wf-node wf-bottom_tab_bar\" data-wf-frame=\"edge\" data-wf-state-bindings=\"{}\"><a class=\"wf-btab wf-tab-on\" href=\"home.html\" data-wf-route-target=\"home\"><span class=\"wf-btab-glyph\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-house fa-lg\" data-wf-glyph=\"H\" style=\"font-size:20px;width:20px\"></i></span><span class=\"wf-btab-label\">Home</span></a><span class=\"wf-btab\"><span class=\"wf-btab-glyph\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-circle fa-lg\" data-wf-glyph=\"C\" style=\"font-size:20px;width:20px\"></i></span><span class=\"wf-btab-label\">Search</span></span><span class=\"wf-btab\"><span class=\"wf-btab-glyph\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-circle fa-lg\" data-wf-glyph=\"C\" style=\"font-size:20px;width:20px\"></i></span><span class=\"wf-btab-label\">Plain</span></span><span class=\"wf-btab\"><span class=\"wf-btab-glyph\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-circle fa-lg\" data-wf-glyph=\"C\" style=\"font-size:20px;width:20px\"></i></span><span class=\"wf-btab-label\">Titled</span></span><span class=\"wf-btab\"><span class=\"wf-btab-glyph\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-bell fa-lg\" data-wf-glyph=\"B\" style=\"font-size:20px;width:20px\"></i></span><span class=\"wf-btab-label\"><span class=\"wf-bar\" style=\"width:4ch\"></span></span></span></div>"
+    },
+    {
+      "name": "breadcrumb: scalars, routes, title, separator",
+      "node": {
+        "id": "c1",
+        "component": "breadcrumb",
+        "props": {
+          "separator": ">",
+          "items": [
+            "Root",
+            {
+              "label": "Home",
+              "route": "home"
+            },
+            {
+              "title": "Titled",
+              "route": "nowhere"
+            },
+            {
+              "label": "Last",
+              "route": "home"
+            }
+          ]
+        }
+      },
+      "html": "<nav id=\"c1\" class=\"wf-node wf-breadcrumb\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><span class=\"wf-crumb\">Root</span><span class=\"wf-crumb-sep\">&gt;</span><a class=\"wf-crumb\" href=\"home.html\" data-wf-route-target=\"home\">Home</a><span class=\"wf-crumb-sep\">&gt;</span><span class=\"wf-crumb\">Titled</span><span class=\"wf-crumb-sep\">&gt;</span><span class=\"wf-crumb wf-crumb-current\">Last</span></nav>"
+    },
+    {
+      "name": "breadcrumb: single crumb and blank",
+      "node": {
+        "id": "c2",
+        "component": "breadcrumb",
+        "props": {
+          "items": [
+            {
+              "label": ""
+            }
+          ]
+        }
+      },
+      "html": "<nav id=\"c2\" class=\"wf-node wf-breadcrumb\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><span class=\"wf-crumb wf-crumb-current\"><span class=\"wf-bar\" style=\"width:6ch\"></span></span></nav>"
+    },
+    {
+      "name": "pagination: numbers",
+      "node": {
+        "id": "p1",
+        "component": "pagination",
+        "props": {
+          "page": 4,
+          "pages": 12
+        }
+      },
+      "html": "<nav id=\"p1\" class=\"wf-node wf-pagination wf-pagination-numbers\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><button class=\"wf-page-step\">‹</button><button class=\"wf-pagenum\">1</button><span class=\"wf-page-gap\">…</span><button class=\"wf-pagenum\">3</button><button class=\"wf-pagenum wf-pagenum-on\">4</button><button class=\"wf-pagenum\">5</button><span class=\"wf-page-gap\">…</span><button class=\"wf-pagenum\">12</button><button class=\"wf-page-step\">›</button></nav>"
+    },
+    {
+      "name": "pagination: simple and dots",
+      "node": {
+        "id": "p2",
+        "component": "stack",
+        "children": [
+          {
+            "id": "p2a",
+            "component": "pagination",
+            "props": {
+              "variant": "simple",
+              "page": 2,
+              "pages": 9
+            }
+          },
+          {
+            "id": "p2b",
+            "component": "pagination",
+            "props": {
+              "variant": "dots",
+              "page": 2,
+              "pages": 5
+            }
+          }
+        ]
+      },
+      "html": "<div id=\"p2\" class=\"wf-node wf-stack wf-group\" style=\"display:flex;flex-direction:column;gap:16px\" data-wf-frame=\"group\" data-wf-state-bindings=\"{}\"><div class=\"wf-node-children\"><nav id=\"p2a\" class=\"wf-node wf-pagination wf-pagination-simple\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><button class=\"wf-page-step\">‹</button><span class=\"wf-page-label\">2 of 9</span><button class=\"wf-page-step\">›</button></nav>\n<nav id=\"p2b\" class=\"wf-node wf-pagination wf-pagination-dots\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><span class=\"wf-dot\"></span><span class=\"wf-dot wf-dot-on\"></span><span class=\"wf-dot\"></span><span class=\"wf-dot\"></span><span class=\"wf-dot\"></span></nav></div></div>"
+    },
+    {
+      "name": "stepper: current and titles",
+      "node": {
+        "id": "s1",
+        "component": "stepper",
+        "props": {
+          "current": 2,
+          "steps": [
+            "Account",
+            {
+              "title": "Plan"
+            },
+            {
+              "label": ""
+            },
+            "Done"
+          ]
+        }
+      },
+      "html": "<div id=\"s1\" class=\"wf-node wf-stepper wf-stepper-row\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><span class=\"wf-step wf-step-done\"><span class=\"wf-step-marker\">✓</span><span class=\"wf-step-label\">Account</span><span class=\"wf-step-line\"></span></span><span class=\"wf-step wf-step-on\"><span class=\"wf-step-marker\">2</span><span class=\"wf-step-label\">Plan</span><span class=\"wf-step-line\"></span></span><span class=\"wf-step wf-step-next\"><span class=\"wf-step-marker\">3</span><span class=\"wf-step-label\"><span class=\"wf-bar\" style=\"width:7ch\"></span></span><span class=\"wf-step-line\"></span></span><span class=\"wf-step wf-step-next\"><span class=\"wf-step-marker\">4</span><span class=\"wf-step-label\">Done</span></span></div>"
+    },
+    {
+      "name": "stepper: stack, current past the end",
+      "node": {
+        "id": "s2",
+        "component": "stepper",
+        "props": {
+          "orientation": "stack",
+          "current": 9,
+          "steps": [
+            "A",
+            "B"
+          ]
+        }
+      },
+      "html": "<div id=\"s2\" class=\"wf-node wf-stepper wf-stepper-stack\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><span class=\"wf-step wf-step-done\"><span class=\"wf-step-marker\">✓</span><span class=\"wf-step-label\">A</span><span class=\"wf-step-line\"></span></span><span class=\"wf-step wf-step-done\"><span class=\"wf-step-marker\">✓</span><span class=\"wf-step-label\">B</span></span></div>"
+    },
+    {
+      "name": "nav: groups, headings, active, route inference, children",
+      "node": {
+        "id": "n1",
+        "component": "nav",
+        "props": {
+          "items": [
+            {
+              "group": "Workspace"
+            },
+            {
+              "label": "Home",
+              "icon": "house",
+              "route": "home",
+              "active": true
+            },
+            {
+              "label": "Settings",
+              "route": "settings",
+              "badge": 3
+            },
+            {
+              "heading": "More"
+            },
+            {
+              "title": "Reports",
+              "icon": "chart-simple",
+              "iconStyle": "regular",
+              "children": [
+                {
+                  "label": "Weekly",
+                  "route": "settings"
+                },
+                "Monthly",
+                {
+                  "group": "Nested group"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "html": "<nav id=\"n1\" class=\"wf-node wf-nav\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><span class=\"wf-nav-group\">Workspace</span><a class=\"wf-nav-item wf-nav-on\" href=\"home.html\" data-wf-route-target=\"home\"><span class=\"wf-ico\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-house\" data-wf-glyph=\"H\"></i></span><span class=\"wf-nav-label\">Home</span></a><a class=\"wf-nav-item wf-nav-on\" href=\"settings.html\" data-wf-route-target=\"settings\"><span class=\"wf-nav-label\">Settings</span><span class=\"wf-nav-badge\">3</span></a><span class=\"wf-nav-group\">More</span><span class=\"wf-nav-item\"><span class=\"wf-ico\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-regular fa-chart-simple\" data-wf-glyph=\"C\"></i></span><span class=\"wf-nav-label\">Reports</span></span><span class=\"wf-nav-children\"><a class=\"wf-nav-item wf-nav-on wf-nav-child\" href=\"settings.html\" data-wf-route-target=\"settings\"><span class=\"wf-nav-label\">Weekly</span></a><span class=\"wf-nav-item wf-nav-child\"><span class=\"wf-nav-label\">Monthly</span></span><span class=\"wf-nav-item wf-nav-child\"><span class=\"wf-nav-label\"><span class=\"wf-bar\" style=\"width:8ch\"></span></span></span></span></nav>"
+    },
+    {
+      "name": "nav: route inference only",
+      "node": {
+        "id": "n2",
+        "component": "nav",
+        "props": {
+          "items": [
+            {
+              "label": "Home",
+              "route": "home"
+            },
+            {
+              "label": "Settings",
+              "route": "settings"
+            },
+            {
+              "label": "Lost",
+              "route": "nowhere"
+            },
+            "Plain"
+          ]
+        }
+      },
+      "html": "<nav id=\"n2\" class=\"wf-node wf-nav\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><a class=\"wf-nav-item\" href=\"home.html\" data-wf-route-target=\"home\"><span class=\"wf-nav-label\">Home</span></a><a class=\"wf-nav-item wf-nav-on\" href=\"settings.html\" data-wf-route-target=\"settings\"><span class=\"wf-nav-label\">Settings</span></a><span class=\"wf-nav-item\"><span class=\"wf-nav-label\">Lost</span></span><span class=\"wf-nav-item\"><span class=\"wf-nav-label\">Plain</span></span></nav>"
+    },
+    {
+      "name": "nav: collapsed rail",
+      "node": {
+        "id": "n3",
+        "component": "nav",
+        "props": {
+          "variant": "rail",
+          "collapsed": true,
+          "items": [
+            {
+              "label": "Home",
+              "icon": "house",
+              "route": "settings"
+            },
+            {
+              "label": "Mail",
+              "icon": "envelope"
+            }
+          ]
+        }
+      },
+      "html": "<nav id=\"n3\" class=\"wf-node wf-nav wf-nav-collapsed wf-nav-rail\" style=\"width:64px;min-width:0;flex:0 0 auto\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><a class=\"wf-nav-item wf-nav-on\" href=\"settings.html\" data-wf-route-target=\"settings\"><span class=\"wf-ico\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-house\" data-wf-glyph=\"H\"></i></span><span class=\"wf-nav-label\">Home</span></a><span class=\"wf-nav-item\"><span class=\"wf-ico\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-envelope\" data-wf-glyph=\"E\"></i></span><span class=\"wf-nav-label\">Mail</span></span></nav>"
+    },
+    {
+      "name": "nav: sidebar variant",
+      "node": {
+        "id": "n4",
+        "component": "nav",
+        "props": {
+          "variant": "sidebar",
+          "items": [
+            {
+              "label": "One",
+              "active": true
+            },
+            {
+              "label": "Two"
+            }
+          ]
+        }
+      },
+      "html": "<nav id=\"n4\" class=\"wf-node wf-nav wf-nav-sidebar\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><span class=\"wf-nav-item wf-nav-on\"><span class=\"wf-nav-label\">One</span></span><span class=\"wf-nav-item\"><span class=\"wf-nav-label\">Two</span></span></nav>"
+    },
+    {
+      "name": "menu: divider, danger, shortcut, routes, title",
+      "node": {
+        "id": "m1",
+        "component": "menu",
+        "props": {
+          "items": [
+            "Rename",
+            {
+              "label": "Copy",
+              "icon": "copy",
+              "shortcut": "⌘C"
+            },
+            {
+              "divider": true
+            },
+            {
+              "title": "Open",
+              "route": "home"
+            },
+            {
+              "label": "Delete",
+              "icon": "trash",
+              "danger": true
+            },
+            {
+              "label": ""
+            }
+          ]
+        }
+      },
+      "html": "<div id=\"m1\" class=\"wf-node wf-menu\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><span class=\"wf-menu-item\"><span class=\"wf-menu-label\">Rename</span></span><span class=\"wf-menu-item\"><span class=\"wf-ico\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-copy\" data-wf-glyph=\"C\"></i></span><span class=\"wf-menu-label\">Copy</span><span class=\"wf-menu-shortcut\">⌘C</span></span><span class=\"wf-menu-sep\"></span><a class=\"wf-menu-item\" href=\"home.html\" data-wf-route-target=\"home\"><span class=\"wf-menu-label\">Open</span></a><span class=\"wf-menu-item wf-menu-danger\"><span class=\"wf-ico\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-trash\" data-wf-glyph=\"T\"></i></span><span class=\"wf-menu-label\">Delete</span></span><span class=\"wf-menu-item\"><span class=\"wf-menu-label\"><span class=\"wf-bar\" style=\"width:8ch\"></span></span></span></div>"
+    },
+    {
+      "name": "action_sheet: danger, icon, iconStyle, cancel",
+      "node": {
+        "id": "a1",
+        "component": "action_sheet",
+        "props": {
+          "title": "Share",
+          "items": [
+            "Copy link",
+            {
+              "label": "Mail",
+              "icon": "envelope",
+              "iconStyle": "regular"
+            },
+            {
+              "label": "Delete",
+              "danger": true
+            }
+          ],
+          "cancel": "Dismiss"
+        }
+      },
+      "html": "<div id=\"a1\" class=\"wf-node wf-action_sheet\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><div class=\"wf-sheet-group\"><div class=\"wf-sheet-title\">Share</div><button class=\"wf-sheet-row\">Copy link</button><button class=\"wf-sheet-row\"><span class=\"wf-ico\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-regular fa-envelope\" data-wf-glyph=\"E\"></i></span>Mail</button><button class=\"wf-sheet-row wf-sheet-danger\">Delete</button></div><button class=\"wf-sheet-row wf-sheet-cancel\">Dismiss</button></div>"
+    },
+    {
+      "name": "action_sheet: no cancel",
+      "node": {
+        "id": "a2",
+        "component": "action_sheet",
+        "props": {
+          "items": [
+            {
+              "title": "Titled"
+            }
+          ],
+          "cancel": false
+        }
+      },
+      "html": "<div id=\"a2\" class=\"wf-node wf-action_sheet\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><div class=\"wf-sheet-group\"><button class=\"wf-sheet-row\">Titled</button></div></div>"
+    },
+    {
+      "name": "page_header: crumbs, actions, tabs",
+      "node": {
+        "id": "h1",
+        "component": "page_header",
+        "props": {
+          "title": "Projects",
+          "subtitle": "All of them",
+          "breadcrumb": [
+            {
+              "label": "Gallery",
+              "route": "home"
+            },
+            "Projects"
+          ],
+          "actions": [
+            {
+              "label": "New",
+              "variant": "primary"
+            },
+            {
+              "label": "Home",
+              "route": "home"
+            }
+          ],
+          "tabs": [
+            {
+              "label": "Overview",
+              "active": true
+            },
+            {
+              "label": "Settings",
+              "route": "settings"
+            },
+            "History"
+          ]
+        }
+      },
+      "html": "<header id=\"h1\" class=\"wf-node wf-page_header\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><nav class=\"wf-breadcrumb wf-ph-crumbs\"><a class=\"wf-crumb\" href=\"home.html\" data-wf-route-target=\"home\">Gallery</a><span class=\"wf-crumb-sep\">/</span><span class=\"wf-crumb wf-crumb-current\">Projects</span></nav><div class=\"wf-ph-main\"><div class=\"wf-ph-text\"><h1 class=\"wf-ph-title\">Projects</h1><p class=\"wf-ph-sub\">All of them</p></div><div class=\"wf-actions\"><button class=\"wf-act wf-button-primary\">New</button><a class=\"wf-act wf-button-secondary\" href=\"home.html\" data-wf-route-target=\"home\">Home</a></div></div><div class=\"wf-tab-bar wf-ph-tabs\" data-wf-frame=\"edge\"><span class=\"wf-tab wf-tab-on\">Overview</span><a class=\"wf-tab\" href=\"settings.html\" data-wf-route-target=\"settings\">Settings</a><span class=\"wf-tab\">History</span></div></header>"
+    },
+    {
+      "name": "page_header: title only",
+      "node": {
+        "id": "h2",
+        "component": "page_header",
+        "props": {
+          "title": "Bare"
+        }
+      },
+      "html": "<header id=\"h2\" class=\"wf-node wf-page_header\" data-wf-frame=\"content\" data-wf-state-bindings=\"{}\"><div class=\"wf-ph-main\"><div class=\"wf-ph-text\"><h1 class=\"wf-ph-title\">Bare</h1></div></div></header>"
+    },
+    {
+      "name": "app_bar: glyph actions",
+      "node": {
+        "id": "ab",
+        "component": "app_bar",
+        "props": {
+          "title": "Inbox",
+          "leading": "bars",
+          "actions": [
+            "magnifying-glass",
+            {
+              "icon": "bell"
+            },
+            {
+              "label": "ellipsis"
+            }
+          ]
+        }
+      },
+      "html": "<header id=\"ab\" class=\"wf-node wf-app_bar\" data-wf-frame=\"edge\" data-wf-state-bindings=\"{}\"><span class=\"wf-appbar-leading\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-bars fa-lg\" data-wf-glyph=\"B\" style=\"font-size:20px;width:20px\"></i></span><span class=\"wf-appbar-title\">Inbox</span><span class=\"wf-appbar-actions\"><span class=\"wf-appbar-action\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-magnifying-glass fa-lg\" data-wf-glyph=\"M\" style=\"font-size:20px;width:20px\"></i></span><span class=\"wf-appbar-action\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-bell fa-lg\" data-wf-glyph=\"B\" style=\"font-size:20px;width:20px\"></i></span><span class=\"wf-appbar-action\"><i aria-hidden=\"true\" class=\"wf-icon-glyph fa-solid fa-ellipsis fa-lg\" data-wf-glyph=\"E\" style=\"font-size:20px;width:20px\"></i></span></span></header>"
+    }
+  ]
+}

@@ -776,6 +776,7 @@
         "checkbox",
         "choice_group",
         "code",
+        "command",
         "divider",
         "editor",
         "empty_state",
@@ -788,6 +789,7 @@
         "kanban",
         "list",
         "menu",
+        "menubar",
         "nav",
         "page_header",
         "pagination",
@@ -1872,6 +1874,44 @@
             "properties": {
               "props": {
                 "$ref": "#/$defs/PrimitiveProps_menu"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "menubar"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_menubar"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "command"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_command"
               }
             }
           }
@@ -3725,7 +3765,7 @@
     },
     "PrimitiveProps_breadcrumb": {
       "type": "object",
-      "description": "Breadcrumb trail.",
+      "description": "Breadcrumb trail; the last crumb is current unless an item says otherwise.",
       "properties": {
         "items": {
           "type": "array"
@@ -3776,13 +3816,14 @@
     },
     "PrimitiveProps_nav": {
       "type": "object",
-      "description": "Side navigation; rail stacks icons above labels; collapsed hides labels.",
+      "description": "Side navigation; rail stacks icons above labels; collapsed hides labels; top is a horizontal site menu whose open item draws its panel.",
       "properties": {
         "variant": {
           "type": "string",
           "enum": [
             "rail",
-            "sidebar"
+            "sidebar",
+            "top"
           ]
         },
         "items": {
@@ -3793,6 +3834,9 @@
         },
         "groups": {
           "type": "boolean"
+        },
+        "open": {
+          "type": "string"
         }
       }
     },
@@ -3802,6 +3846,39 @@
       "properties": {
         "items": {
           "type": "array"
+        }
+      }
+    },
+    "PrimitiveProps_menubar": {
+      "type": "object",
+      "description": "Desktop application menu row; open draws that menu panel under its trigger. Never framed: the bar it sits in owns the frame.",
+      "properties": {
+        "items": {
+          "type": "array"
+        },
+        "open": {
+          "type": "string"
+        }
+      }
+    },
+    "PrimitiveProps_command": {
+      "type": "object",
+      "description": "Command palette: search row, grouped results with icons, descriptions and key-chip shortcuts. Framed on its own; inside a card or modal the container owns the frame.",
+      "properties": {
+        "placeholder": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array"
+        },
+        "empty": {
+          "type": "string"
+        },
+        "footer": {
+          "type": "boolean"
         }
       }
     },

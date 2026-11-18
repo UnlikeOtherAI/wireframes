@@ -34,6 +34,7 @@ function refreshChoices() {
       if (active) matched = true;
       button.classList.toggle(node.classList.contains('wf-segmented') ? 'wf-segment-on' : 'wf-tab-on', active);
       button.setAttribute('aria-pressed', String(active));
+      if (active) button.setAttribute('data-wf-selected', ''); else button.removeAttribute('data-wf-selected');
     });
   });
 }
