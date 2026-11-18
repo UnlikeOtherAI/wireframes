@@ -21,7 +21,8 @@ test('wf llm lists every std pattern with props, defaults, hints and slots from 
   for (const id of builtinComponentIds()) {
     const start = section.indexOf(`### ${id}\n`);
     assert.ok(start >= 0, id);
-    const entry = section.slice(start, section.indexOf('\n### ', start + 1) >>> 0 || undefined);
+    const end = section.indexOf('\n### ', start + 1);
+    const entry = section.slice(start, end < 0 ? undefined : end);
     const definition = builtinComponentDefinition(id);
     for (const [prop, hint] of Object.entries(definition.propHints)) {
       assert.ok(entry.includes(`  - ${prop}`) && entry.includes(hint), `${id} ${prop}`);

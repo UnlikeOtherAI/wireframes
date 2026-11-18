@@ -217,12 +217,17 @@ Template removal:
 wf component add <id>
 wf component remove <id>
 wf component list
+wf component list --std
 wf component show <id>
+wf component copy std.<name> [--as <id>] [--file <path>]
 ```
 
 No mutation logic. Just structure.
 
 `wf component list` prints the project's component ids, sorted, one per line.
+The built-in `std` patterns never appear in it; `wf component list --std`
+prints their ids instead, in the same format. They are described in
+[stdlib.md](stdlib.md).
 
 `wf component remove` refuses a component that any page, template or other
 component still uses, including inside a slot fill.
@@ -254,6 +259,26 @@ it has none, `empty` for `children: []`). The outline shows nested instances
 with the named fills the component writes for them (`slots.footer:`). An unknown
 id exits 1; a missing id exits 2. Slots are described in the schema brief,
 §3.3 "Slots".
+
+`show` takes a built-in id too (`wf component show std.login`). Its second line
+is the pattern's summary, and its source reads
+`built-in, read-only (edit a copy: wf component copy std.login)`.
+
+`wf component copy std.<name>` copies a built-in into the project so it can be
+edited like any local component:
+
+* The definition goes into `components.yaml`, which is created when missing, or
+  into the existing components document given by `--file` (relative to the
+  project).
+* It is stored as `<name>`, or as `--as <id>`, with its root id set to match.
+* An id the target document already has is refused; pick another with `--as`.
+* Nothing is written unless the resulting document validates.
+* It prints the id to use, `use: <id>`, or the alias-qualified id when `--file`
+  names a document the project imports (`use: mk.landing_hero`).
+
+Built-ins are read-only. `wf component remove std.<name>`, and `wf node`
+writes to a `wf://component/std.<name>` address, fail with a message that
+points to `wf component copy`. `wf inspect` and `wf tree component` read them.
 
 ---
 

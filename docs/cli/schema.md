@@ -250,6 +250,38 @@ Scope by author. Every node is prepared by whoever wrote it:
 
 `wf component show <id>` prints a component's props, slots and fallbacks.
 
+### Built-in std patterns
+
+The engine ships screen patterns under the `std.` prefix (`std.login`,
+`std.data_page`, ...; the list and their props are in [stdlib.md](stdlib.md)).
+A page, template, overlay or component uses one like any component, with no
+components document at all:
+
+```yaml
+- id: customers
+  use: std.data_page
+  props: { title: Customers }
+  slots:
+    filters: []
+```
+
+Lookup rule, the same in the CLI, the API and the browser bundle:
+
+* A component id resolves to the project's own definition first. That includes
+  components imported under an alias named `std`: nothing is reserved.
+* Only when the project has no definition with that id does a built-in
+  `std.<name>` answer. Other ids never fall back.
+* Built-ins are looked up on demand and never join the project's registry, so
+  `wf component list`, `wf stats` and `UNUSED_COMPONENT` see only the
+  project's own components.
+* A document that imports components under the alias `std` reports
+  `STD_ALIAS_SHADOWED` (info), naming the built-ins its components hide. Ids the
+  alias does not define still resolve to the built-ins.
+
+Built-in patterns use only primitives and slots, never another component.
+They are read-only: `wf component copy std.<name>` copies one into the project
+to edit (brief, "Components").
+
 ---
 
 ## 3.4 pages/<pageId>.yaml
