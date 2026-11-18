@@ -16,15 +16,18 @@ const { runLint } = require('../../engine/lint');
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 
-// No family marks its props in this tranche, so the tests mark one in-process
-// (each test file runs in its own process) and unmark it afterwards.
+// Mark a prop in-process (each test file runs in its own process) and put
+// back whatever it was, so props a family already marks stay marked.
 function withMarked(component, prop, run) {
   const spec = getPrimitive(component).props[prop];
+  const had = Object.hasOwn(spec, 'items');
+  const before = spec.items;
   spec.items = true;
   try {
     return run();
   } finally {
-    delete spec.items;
+    if (had) spec.items = before;
+    else delete spec.items;
   }
 }
 
@@ -35,16 +38,18 @@ function lint(node) {
 }
 
 test('itemProps lists only array props marked items: true', () => {
-  assert.deepEqual(itemProps('segmented'), []);
-  withMarked('segmented', 'options', () => {
-    assert.deepEqual(itemProps('segmented'), ['options']);
+  // tags_input.tags stays element data, so it is never marked.
+  assert.deepEqual(itemProps('tags_input'), []);
+  withMarked('tags_input', 'tags', () => {
+    assert.deepEqual(itemProps('tags_input'), ['tags']);
   });
-  const value = getPrimitive('segmented').props.value;
-  value.items = true;
+  assert.deepEqual(itemProps('tags_input'), []);
+  const placeholder = getPrimitive('tags_input').props.placeholder;
+  placeholder.items = true;
   try {
-    assert.deepEqual(itemProps('segmented'), [], 'a non-array prop is never an item prop');
+    assert.deepEqual(itemProps('tags_input'), [], 'a non-array prop is never an item prop');
   } finally {
-    delete value.items;
+    delete placeholder.items;
   }
   assert.deepEqual(itemProps('no_such_element'), []);
   assert.deepEqual(itemProps(undefined), []);
@@ -65,12 +70,12 @@ for (const entry of PRIMITIVES) {
   });
 });
 
-test('FIELD_PROPS is the shared field contract and no family spreads it yet', () => {
+test('FIELD_PROPS is the shared field contract, and only controls take readonly', () => {
   assert.deepEqual(Object.keys(FIELD_PROPS), ['label', 'help', 'error', 'required', 'disabled', 'readonly']);
   assert.deepEqual(Object.values(FIELD_PROPS).map((spec) => spec.type), ['string', 'string', 'string', 'boolean', 'boolean', 'boolean']);
   assert.ok(Object.values(FIELD_PROPS).every((spec) => spec.primary !== true), 'label is not primary for every control');
   assert.ok(Object.isFrozen(FIELD_PROPS) && Object.isFrozen(FIELD_PROPS.label));
-  assert.ok(PRIMITIVES.every((entry) => !Object.hasOwn(entry.props || {}, 'readonly')));
+  assert.ok(PRIMITIVES.filter((entry) => entry.family !== 'controls').every((entry) => !Object.hasOwn(entry.props || {}, 'readonly')));
 });
 
 test('AMBIGUOUS_VALUE: a single-choice value matching several items', () => {
@@ -97,7 +102,7 @@ test('AMBIGUOUS_VALUE stays quiet when the selection is not ambiguous', () => {
     assert.deepEqual(lint({ id: 's', component: 'segmented', props: { options: [{ label: 'A', selected: false }, 'A'], value: 'A' } }), []);
   });
   // An unmarked prop is never checked.
-  assert.deepEqual(lint({ id: 's', component: 'segmented', props: { options: ['A', 'A'], value: 'A' } }), []);
+  assert.deepEqual(lint({ id: 't', component: 'tags_input', props: { tags: ['A', 'A'], value: 'A' } }), []);
   assert.deepEqual(lint({ id: 'x', use: 'card_component', props: { options: ['A', 'A'], value: 'A' } }), []);
 });
 
@@ -114,12 +119,10 @@ test('AMBIGUOUS_VALUE reaches wf lint as info, including nested nodes', () => {
   }];
   fs.writeFileSync(homePath, `${yaml.dump(homeDoc)}\n`, 'utf8');
 
-  withMarked('segmented', 'options', () => {
-    const result = runLint({ projectPath });
-    assert.equal(result.ok, true);
-    const found = result.info.filter((entry) => entry.code === 'AMBIGUOUS_VALUE');
-    assert.equal(found.length, 1);
-    assert.match(found[0].message, /wrapper > period/);
-  });
-  assert.equal(runLint({ projectPath }).info.some((entry) => entry.code === 'AMBIGUOUS_VALUE'), false);
+  // segmented.options is a marked item prop.
+  const result = runLint({ projectPath });
+  assert.equal(result.ok, true);
+  const found = result.info.filter((entry) => entry.code === 'AMBIGUOUS_VALUE');
+  assert.equal(found.length, 1);
+  assert.match(found[0].message, /wrapper > period/);
 });

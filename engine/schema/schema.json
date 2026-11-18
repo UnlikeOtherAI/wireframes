@@ -812,6 +812,7 @@
         "text",
         "textarea",
         "toggle",
+        "toolbar",
         "tree",
         "upload"
       ]
@@ -1511,6 +1512,25 @@
             "properties": {
               "props": {
                 "$ref": "#/$defs/PrimitiveProps_button"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "toolbar"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_toolbar"
               }
             }
           }
@@ -3319,7 +3339,7 @@
     },
     "PrimitiveProps_button": {
       "type": "object",
-      "description": "Button in five variants, three sizes; iconOnly and fab for icon buttons.",
+      "description": "Button in five variants, three sizes; iconOnly and fab for icon buttons; pressed makes it a toggle.",
       "properties": {
         "label": {
           "type": "string"
@@ -3378,18 +3398,69 @@
         },
         "fab": {
           "type": "boolean"
+        },
+        "pressed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PrimitiveProps_toolbar": {
+      "type": "object",
+      "description": "Row or column of tool buttons with pressed and checked toggles, separators and groups. Never a box: it draws its own button-group outline.",
+      "properties": {
+        "items": {
+          "type": "array"
+        },
+        "size": {
+          "type": "string",
+          "enum": [
+            "sm",
+            "md",
+            "lg"
+          ]
+        },
+        "orientation": {
+          "type": "string",
+          "enum": [
+            "row",
+            "stack"
+          ]
+        },
+        "labels": {
+          "type": "boolean"
         }
       }
     },
     "PrimitiveProps_segmented": {
       "type": "object",
-      "description": "Segmented control; unique option labels are selection values.",
+      "description": "Segmented control; option values (else labels) select, and a label makes it a field.",
       "properties": {
+        "label": {
+          "type": "string"
+        },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
         "options": {
           "type": "array"
         },
         "value": {
-          "type": "string"
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "size": {
           "type": "string",
@@ -3403,10 +3474,25 @@
     },
     "PrimitiveProps_input": {
       "type": "object",
-      "description": "Single-line field. inputType covers search, date, range, otp, colour and more.",
+      "description": "Single-line field. inputType covers search, date, range, otp, colour and more; min, max and step bound number, range and stepper.",
       "properties": {
         "label": {
           "type": "string"
+        },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
         },
         "variant": {
           "type": "string",
@@ -3440,7 +3526,26 @@
         "value": {
           "type": [
             "string",
-            "number"
+            "number",
+            "array"
+          ]
+        },
+        "min": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "max": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "step": {
+          "type": [
+            "number",
+            "string"
           ]
         },
         "icon": {
@@ -3468,18 +3573,6 @@
         "suffix": {
           "type": "string"
         },
-        "help": {
-          "type": "string"
-        },
-        "error": {
-          "type": "string"
-        },
-        "required": {
-          "type": "boolean"
-        },
-        "disabled": {
-          "type": "boolean"
-        },
         "length": {
           "type": "number"
         }
@@ -3492,12 +3585,6 @@
         "label": {
           "type": "string"
         },
-        "placeholder": {
-          "type": "string"
-        },
-        "rows": {
-          "type": "number"
-        },
         "help": {
           "type": "string"
         },
@@ -3509,6 +3596,15 @@
         },
         "disabled": {
           "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "rows": {
+          "type": "number"
         },
         "maxLength": {
           "type": "number"
@@ -3517,22 +3613,10 @@
     },
     "PrimitiveProps_select": {
       "type": "object",
-      "description": "Dropdown field; searchable turns it into a combobox.",
+      "description": "Dropdown field; searchable turns it into a combobox; value (a list with multiple) is the initial selection.",
       "properties": {
         "label": {
           "type": "string"
-        },
-        "placeholder": {
-          "type": "string"
-        },
-        "options": {
-          "type": "array"
-        },
-        "searchable": {
-          "type": "boolean"
-        },
-        "multiple": {
-          "type": "boolean"
         },
         "help": {
           "type": "string"
@@ -3545,24 +3629,61 @@
         },
         "disabled": {
           "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array"
+        },
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "array"
+          ]
+        },
+        "searchable": {
+          "type": "boolean"
+        },
+        "multiple": {
+          "type": "boolean"
         }
       }
     },
     "PrimitiveProps_checkbox": {
       "type": "object",
-      "description": "Single checkbox with optional description.",
+      "description": "Single checkbox with optional description; indeterminate draws the mixed state.",
       "properties": {
         "label": {
           "type": "string"
         },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
         "checked": {
+          "type": "boolean"
+        },
+        "indeterminate": {
           "type": "boolean"
         },
         "description": {
           "type": "string"
-        },
-        "disabled": {
-          "type": "boolean"
         }
       }
     },
@@ -3573,14 +3694,26 @@
         "label": {
           "type": "string"
         },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
         "checked": {
           "type": "boolean"
         },
         "description": {
           "type": "string"
-        },
-        "disabled": {
-          "type": "boolean"
         }
       }
     },
@@ -3591,23 +3724,50 @@
         "label": {
           "type": "string"
         },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
         "checked": {
           "type": "boolean"
         },
         "description": {
           "type": "string"
-        },
-        "disabled": {
-          "type": "boolean"
         }
       }
     },
     "PrimitiveProps_choice_group": {
       "type": "object",
-      "description": "A labelled set of checkboxes or radios in one node.",
+      "description": "A labelled set of checkboxes or radios in one node; a checkbox group takes a list value.",
       "properties": {
         "label": {
           "type": "string"
+        },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
         },
         "kind": {
           "type": "string",
@@ -3620,7 +3780,11 @@
           "type": "array"
         },
         "value": {
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "array"
+          ]
         },
         "inline": {
           "type": "boolean"
@@ -3634,6 +3798,21 @@
         "label": {
           "type": "string"
         },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
         "tags": {
           "type": "array"
         },
@@ -3644,9 +3823,27 @@
     },
     "PrimitiveProps_upload": {
       "type": "object",
-      "description": "File dropzone, or a plain upload button with variant: button.",
+      "description": "File dropzone, or a plain upload button with variant: button. label is the action copy; fieldLabel goes above.",
       "properties": {
         "label": {
+          "type": "string"
+        },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
+        "fieldLabel": {
           "type": "string"
         },
         "hint": {
@@ -3671,11 +3868,29 @@
         "label": {
           "type": "string"
         },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
         "options": {
           "type": "array"
         },
         "value": {
-          "type": "string"
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "columns": {
           "type": "number"
@@ -3688,6 +3903,21 @@
       "properties": {
         "label": {
           "type": "string"
+        },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
         },
         "toolbar": {
           "type": "boolean"
