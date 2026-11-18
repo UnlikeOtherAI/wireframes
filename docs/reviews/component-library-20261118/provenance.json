@@ -1,0 +1,13 @@
+{
+  "base": "eeebd2b (origin/main, Merge pull request #6)",
+  "captured": "5b4beea (claude/component-library)",
+  "laterCommits": "Only runtime, validation and docs changes; win32 and macOS gallery baselines regenerate byte-identical after 5b4beea.",
+  "host": "Maxis (Windows 11), Playwright Chromium",
+  "viewports": {
+    "gallery": "1280x900, full page",
+    "admin": "1600x1000",
+    "std": "1280x900, full page"
+  },
+  "admin": "Vite dev server of each revision, API mocked in Playwright with the same two-page demo project; no real account or data.",
+  "stdProject": "Scratch Northwind project using std.site_header, std.hero, std.site_footer, std.data_page, std.login and std.signup."
+}
