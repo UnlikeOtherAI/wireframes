@@ -240,3 +240,71 @@ test('an embedded page follows its parent only, and measures in its own pixels u
     await page.waitForFunction(() => window.navigations.includes('next'));
   });
 });
+
+function timedFixture() {
+  return renderWireframeMarkup({
+    roots: [{id: 'main', kind: 'container', nodes: [
+      {id: 'open', component: 'button', props: {label: 'Open notice'}, interaction: [{type: 'open_overlay', targetOverlay: 'notice'}]},
+    ]}, {id: 'notice', kind: 'overlay', type: 'modal', trigger: 'open', props: {title: 'Saved'},
+      dismissOn: ['timeout'], nodes: [{id: 'notice_body', component: 'paragraph', props: {text: 'Closes by itself'}}]}],
+    pageViewport: {device: 'web', width: 1280, height: 800}, pageRouteId: 'home',
+    routeTable: {home: '#home'}, rendering: {mode: 'card'}, deviceChrome: false,
+  });
+}
+
+test('a pending timed dismissal pauses while measuring and resumes with the time it had left', async () => {
+  await withPage(async (page) => {
+    await page.clock.install();
+    await page.setContent(timedFixture());
+    await page.getByRole('button', {name: 'Open notice'}).click();
+    await page.clock.runFor(1000);
+    await page.keyboard.press('m');
+    await page.clock.runFor(10000);
+    assert.equal(await page.locator('#notice').isVisible(), true, 'the timeout does not dismiss while measuring');
+    await hover(page, '#notice .wf-overlay-title');
+    assert.ok((await labels(page)).width, 'the open overlay can still be measured');
+
+    await page.keyboard.press('m');
+    await page.clock.runFor(1900);
+    assert.equal(await page.locator('#notice').isVisible(), true, 'the remaining time restarts, not a dismissal at once');
+    await page.clock.runFor(200);
+    assert.equal(await page.locator('#notice').isVisible(), false, 'it dismisses once its remaining two seconds have run');
+
+    await page.getByRole('button', {name: 'Open notice'}).click();
+    await page.clock.runFor(2900);
+    assert.equal(await page.locator('#notice').isVisible(), true, 'reopening starts a full three seconds');
+    await page.clock.runFor(200);
+    assert.equal(await page.locator('#notice').isVisible(), false);
+  });
+});
+
+test('a press that drags away and back, or is cancelled, does not pin', async () => {
+  await withPage(async (page) => {
+    await page.setContent(fixture());
+    await page.keyboard.press('m');
+    const box = await page.locator('#left_card').boundingBox();
+    const x = box.x + 10, y = box.y + 10;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + 120, y);
+    await page.mouse.move(x, y);
+    await page.mouse.up();
+    assert.equal(await page.locator('[data-wf-measure-box="pin"]').count(), 0, 'a drag back to the start is not a pick');
+
+    await page.mouse.down();
+    await page.mouse.move(x + 4, y + 3);
+    await page.mouse.up();
+    assert.equal(await page.locator('[data-wf-measure-box="pin"]').count(), 1, 'a small wobble still pins');
+    await page.mouse.click(x, y);
+    assert.equal(await page.locator('[data-wf-measure-box="pin"]').count(), 0);
+
+    await page.locator('#left_card').evaluate((node, at) => {
+      const init = {bubbles: true, cancelable: true, composed: true, pointerId: 7, pointerType: 'touch', isPrimary: true, button: 0, clientX: at.x, clientY: at.y};
+      for (const type of ['pointerdown', 'pointercancel', 'pointerup']) node.dispatchEvent(new PointerEvent(type, init));
+    }, {x, y});
+    assert.equal(await page.locator('[data-wf-measure-box="pin"]').count(), 0, 'a cancelled press is not a pick');
+
+    await click(page, '#locked', 10, 10);
+    assert.equal(await page.locator('[data-wf-measure-box="pin"]').count(), 1, 'a disabled control still pins on pointerup');
+  });
+});

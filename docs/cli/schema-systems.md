@@ -427,7 +427,7 @@ keys work everywhere. When an entry has both, the older precedence below wins.
 | `list` | `list`, `carousel` | A nonblank `title` before `label`; `text` before `description`. |
 | `accordion` | `accordion` | As `list`, plus `open` → `expanded` (closed unless `true`). |
 | `tree` | `tree` | A nonblank `label` before `title`; `children` → `items`; `open` → `expanded` (open unless `false`). |
-| `nav` | `nav` | As `basic`; `active` → `selected`; `children` → `items`; a top-level `{group}` or `{heading}` entry is a heading. |
+| `nav` | `nav` | As `basic`; `children` → `items`; a top-level `{group}` or `{heading}` entry is a heading. Legacy `active` is not an alias of `selected`: it stays in nav's own rule (step 3 below), where `active: true` turns a row on next to route inference and `active: false` never turns off the row for the current route. |
 | `menu` | `menu`, `action_sheet` | As `basic`; `{divider: true}` is a separator; `danger: true` is `tone: danger`. |
 | `tabs` | `tab_bar`, `bottom_tab_bar`, `page_header.tabs` | As `basic`; `active` → `selected`. |
 | `choice` | `segmented`, `choice_group`, `picker` | As `basic`; a scalar also sets `value`. |
@@ -447,9 +447,9 @@ trimmed strings; a blank identity never matches. Precedence, highest first:
    matching items, skipping any marked `selected: false`. A single-choice
    element selects only the first match, and `wf lint` reports
    `AMBIGUOUS_VALUE` (info).
-3. Otherwise the element's own rule applies: nav route inference, stepper
-   `current`, pagination `page`, or picker row zero. It never selects an item
-   marked `selected: false`.
+3. Otherwise the element's own rule applies: nav's legacy `active: true`
+   rows plus route inference, stepper `current`, pagination `page`, or picker
+   row zero. It never selects an item marked `selected: false`.
 4. Otherwise nothing is selected.
 
 Runtime binding payloads are unchanged: tab and segmented changes still send

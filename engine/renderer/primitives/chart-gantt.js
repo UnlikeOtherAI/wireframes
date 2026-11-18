@@ -31,14 +31,28 @@ function seededRows(node, lib) {
 
 /** Smallest start to largest end; a zero-width domain is padded by ±1. */
 function domainOf(rows) {
-  const spans = rows.map((row) => row.span).filter(Boolean);
-  let low = spans.length > 0 ? Math.min(...spans.map((span) => span[0])) : 0;
-  let high = spans.length > 0 ? Math.max(...spans.map((span) => span[1])) : 0;
-  if (high === low) {
-    low -= 1;
-    high += 1;
+  let low = Infinity;
+  let high = -Infinity;
+  for (const row of rows) {
+    if (!row.span) continue;
+    if (row.span[0] < low) low = row.span[0];
+    if (row.span[1] > high) high = row.span[1];
   }
-  return [low, high];
+  if (low > high) return [-1, 1];
+  return high === low ? [low - 1, high + 1] : [low, high];
+}
+
+/**
+ * A bar's left edge and width as fractions of the domain. A domain wider than
+ * the largest double is measured in halves, and one that padding could not
+ * widen (huge equal endpoints) puts its bars in the middle.
+ */
+function placeBar([start, end], [low, high]) {
+  const width = high - low;
+  if (!(width > 0)) return { left: 0.5, width: 0 };
+  if (Number.isFinite(width)) return { left: (start - low) / width, width: (end - start) / width };
+  const half = high / 2 - low / 2;
+  return { left: (start / 2 - low / 2) / half, width: (end / 2 - start / 2) / half };
 }
 
 function percent(value) {
@@ -56,13 +70,12 @@ function tickMarks(ticks) {
   }));
 }
 
-function rowMarkup(row, [low, high], ctx, lib) {
+function rowMarkup(row, domain, ctx, lib) {
   const label = lib.str(row.label);
   const tone = TONES.has(row.tone) ? ` wf-tone-${row.tone}` : '';
-  const bar = row.span
-    ? `<span class="wf-gantt-bar${tone}" style="left:${percent((row.span[0] - low) / (high - low))};width:${
-      percent((row.span[1] - row.span[0]) / (high - low))
-    }"></span>`
+  const place = row.span ? placeBar(row.span, domain) : null;
+  const bar = place
+    ? `<span class="wf-gantt-bar${tone}" style="left:${percent(place.left)};width:${percent(place.width)}"></span>`
     : '';
   return `<div class="wf-gantt-row"><span class="wf-gantt-label">${
     label ? lib.bound(label, ctx) : lib.renderSkeleton(8)

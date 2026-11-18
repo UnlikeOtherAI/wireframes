@@ -13,8 +13,12 @@ const { launchChromium } = require('../../engine/screenshots/playwright-launcher
 
 const FIXTURE = path.join(__dirname, '..', '..', 'engine', 'renderer', '__fixtures__', 'gallery');
 const BASELINES = path.join(__dirname, '__screenshots__', 'gallery', ...(process.platform === 'win32' ? ['win32'] : []));
-// One page per family, plus both modes and an auth screen.
-const PAGE_IDS = ['containers', 'content', 'forms', 'data', 'charts', 'navigation_elements', 'line_structure', 'line_forms', 'auth'];
+// One page per family, plus both modes, an auth screen, and the navigation
+// additions (command, menubar, top nav, toolbar, gantt) in view in both modes.
+const PAGE_IDS = [
+  'containers', 'content', 'forms', 'data', 'charts', 'navigation_elements', 'line_structure', 'line_forms', 'auth',
+  'app_navigation', 'line_navigation',
+];
 const MAX_DIFF_PIXEL_RATIO = 0.01;
 
 function diffPixelRatio(actualBuffer, expectedBuffer) {
@@ -64,6 +68,33 @@ test('renderer gallery matches committed Playwright baselines', async () => {
         ratio <= MAX_DIFF_PIXEL_RATIO,
         `${pageId} screenshot diff ${ratio} exceeded ${MAX_DIFF_PIXEL_RATIO}`,
       );
+    }
+  } finally {
+    await browser.close();
+    fs.rmSync(outputDir, { recursive: true, force: true });
+  }
+});
+
+test('the navigation additions sit inside the screenshot in both modes', async () => {
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wireframe-gallery-view-'));
+  const build = runBuild({ projectPath: FIXTURE, output: outputDir, platform: 'web', clean: true });
+  assert.equal(build.ok, true, build.error);
+
+  const playwright = require('playwright');
+  const browser = await launchChromium(playwright, { headless: true });
+  try {
+    for (const [pageId, prefix, mode] of [['app_navigation', 'appnav', 'card'], ['line_navigation', 'lnav', 'line']]) {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      await page.goto(pathToFileURL(path.join(outputDir, 'web', `${pageId}.html`)).href, { waitUntil: 'networkidle' });
+      assert.equal(await page.locator(`.wf.wf-mode-${mode}`).count(), 1, `${pageId} renders in ${mode} mode`);
+      const selectors = [`#${prefix}_top.wf-nav-top .wf-nav-panel`, `#${prefix}_menubar .wf-menubar-panel`,
+        `#${prefix}_command .wf-command-footer`, `#${prefix}_toolbar`, `#${prefix}_gantt .wf-gantt-bar`];
+      for (const selector of selectors) {
+        const box = await page.locator(selector).first().boundingBox();
+        assert.ok(box, `${pageId}: ${selector} renders`);
+        assert.ok(box.y >= 0 && box.y + box.height <= 900 && box.x + box.width <= 1280, `${pageId}: ${selector} is in view`);
+      }
+      await page.close();
     }
   } finally {
     await browser.close();
