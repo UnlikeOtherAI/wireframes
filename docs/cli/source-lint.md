@@ -72,11 +72,13 @@ caller that needs to cut a stream into files without linting it.
 | Container | `INVALID_DOCUMENT`, `UNSUPPORTED_FORMAT`, `MISSING_MANIFEST`, `DUPLICATE_DOCUMENT`, `DUPLICATE_PAGE_ID`, `DUPLICATE_DATASET_ID`, `RECURSIVE_ALIAS`, `DOCUMENT_TOO_LARGE` |
 | Schema, per document | Every `schema.json` error, plus the document type, version and id checks |
 | Presentation, logos, icons | `ICON_AFFIX_CONFLICT`, sticky warnings, `LOGO_SLOT`, `LOGO_SIZE`, `UNKNOWN_ICON`, `ICON_STYLE_UNAVAILABLE` |
-| References | Everything `wf doctor` reports about templates, slots, injectables, components, datasets, routes, overlays, state keys and forms, plus unused and circular components |
-| Naming and elements | Everything `wf lint` adds: id format, unknown props and prop values, missing text or labels, section intent |
+| References | Everything `wf doctor` reports about templates, slots, injectables, components, datasets, routes, overlays, state keys and forms, plus unused and circular components, component slots (`UNKNOWN_COMPONENT_SLOT`, `SLOTS_WITHOUT_USE` and the rest) and `STD_ALIAS_SHADOWED` |
+| Naming and elements | Everything `wf lint` adds: id format, unknown props and prop values, missing text or labels, section intent, `AMBIGUOUS_VALUE`, `HELP_PROP_ALIAS` |
 
 The rules are the ones the disk commands run, not copies: `engine/doctor/project-checks.js` and
-`engine/lint/rules/documents.js` are shared by both. Naming and element rules run on each document
+`engine/lint/rules/documents.js` are shared by both. Every rule walks the named fills of a component
+instance (`slots:`) as well as its `children`, and a `use:` of a built-in `std.*` pattern resolves
+as it does on disk, without the pattern counting as one of the project's components. Naming and element rules run on each document
 the schema accepts, where `wf lint` skips them for the whole project once anything is an error.
 
 YAML is read with js-yaml's core schema, as the apps that render `.wf` files read it. The disk
@@ -101,12 +103,16 @@ that separately before saving.
 ## Where a finding points
 
 - A wrong value: the value. An unknown key or prop: the key.
+- A node inside a component instance's fill: under `slots.<name>[i]` of that instance, in the
+  document that wrote the fill, whether a page or a component.
+- A slot finding: the fill (`slots.aside`), the `slots` or `slot` key, the repeated placeholder's
+  name, or the instance's `id` for a slot left empty. `STD_ALIAS_SHADOWED`: the `std` import key.
 - A missing required property: the mapping that lacks it, on its first line.
 - A rule about a node (an interaction, a duplicate id): the node's `id`. A repeated id is
   underlined where it was repeated.
 - A node inside a shared component or a template, reported for a page that uses it: its `id` in
   the components or templates document, when one node there has that id. Otherwise the top of the
-  page. The rules that find these walk a page with its template and components folded in, and the
+  page. A finding from a component's own walk is looked for in that component's definition first. The rules that find these walk a page with its template and components folded in, and the
   engine does not yet carry where each folded-in node was written.
 - An alias: a finding inside an aliased value points at the alias, not into the anchored value.
 
