@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 const { runValidate } = require('../../engine/validate/cli-adapter');
 const { validateProject } = require('../../engine/validate');
 const { checkComponentSlots } = require('../../engine/doctor/component-slots');
+const { runLint } = require('../../engine/lint');
 const { createSlotsProject } = require('./fixtures/slots-project');
 
 const codes = (entries) => entries.map((entry) => entry.code);
@@ -138,4 +139,30 @@ test('the projects without slots report no slot diagnostics', () => {
   }) });
   const slotCodes = /SLOT|SLOTS_WITHOUT_USE/;
   assert.ok(![...result.errors, ...result.info].some((entry) => slotCodes.test(entry.code)));
+});
+
+test('lint checks ids and props inside named fills, on pages and in components', () => {
+  const projectPath = createSlotsProject((docs) => {
+    docs.page.page.slots[0].content[0].slots.actions.push({ id: 'Bad_Id', component: 'button', props: { lable: 'Oops' } });
+    // Lint reads the project's own components.yaml, not imported files.
+    docs.components.components = {
+      local_card: {
+        root: {
+          id: 'local_card',
+          component: 'stack',
+          children: [{
+            id: 'inner_panel',
+            use: 'kit.panel',
+            slots: { footer: [{ id: 'bad_footer', component: 'button', props: { colour: 'red' } }] },
+          }],
+        },
+      },
+    };
+  });
+  const result = runLint({ projectPath });
+  const messages = [...result.errors, ...result.warnings, ...result.info].map((entry) => `${entry.code} ${entry.message}`);
+  const all = messages.join('\n');
+  assert.ok(messages.some((message) => /UPPERCASE_ID .*"Bad_Id"/.test(message)), all);
+  assert.ok(messages.some((message) => /UNKNOWN_PROP .*Bad_Id.*"lable"/.test(message)), all);
+  assert.ok(messages.some((message) => /UNKNOWN_PROP .*bad_footer.*"colour"/.test(message)), all);
 });
