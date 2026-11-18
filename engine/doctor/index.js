@@ -8,30 +8,12 @@ const { validateIconReferences } = require('../icons/validate');
 const {
   SUPPORTED_SPEC_VERSION,
 } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
-const { compareVersions } = require(path.resolve(__dirname, '..', 'schema'));
 const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 const {
   loadComponentRegistryForDocuments,
   loadProjectComponentRegistry,
 } = require(path.resolve(__dirname, '..', 'component-registry'));
-const { runSemanticValidation } = require(path.resolve(__dirname, 'semantic-validator'));
-const {
-  collectComponentUseGraph,
-  collectUsedComponents,
-  detectCircularUse,
-} = require(path.resolve(__dirname, 'component-graph'));
-const {
-  collectTemplateReferences,
-  collectPageReferences,
-  collectPageRouteDiagnostics,
-} = require(path.resolve(__dirname, 'reference-checks'));
-
-function addDiagnostic(result, severity, code, message) {
-  result[severity].push({
-    code,
-    message,
-  });
-}
+const { addDiagnostic, checkProject } = require('./project-checks');
 
 function isYamlFile(fileName) {
   return fileName.endsWith('.yaml') || fileName.endsWith('.yml');
@@ -153,7 +135,6 @@ function runDoctor({ projectPath } = {}) {
     }
   }
 
-  const templateMap = new Map();
   const pageMap = new Map();
   const datasetIds = new Set();
 
@@ -203,25 +184,6 @@ function runDoctor({ projectPath } = {}) {
     }
   }
 
-  if (manifest && manifest.document?.manifest?.schemaVersion) {
-    const schemaVersion = manifest.document.manifest.schemaVersion;
-    const supportedSchemaVersion = SUPPORTED_SPEC_VERSION;
-
-    try {
-      if (compareVersions(String(schemaVersion), supportedSchemaVersion, manifest.absolutePath) > 0) {
-        addDiagnostic(
-          result,
-          'errors',
-          'INCOMPATIBLE_SCHEMA_VERSION',
-          `manifest.schemaVersion "${schemaVersion}" exceeds CLI-supported version "${supportedSchemaVersion}".`,
-        );
-      }
-    } catch (error) {
-      addDiagnostic(result, 'errors', 'INVALID_MANIFEST_SCHEMA_VERSION', error.message);
-    }
-  }
-
-  const templateDefinitions = templates?.document?.templates || {};
   const projectComponentRegistry = loadProjectComponentRegistry(root);
   if (!projectComponentRegistry.ok) {
     addDiagnostic(
@@ -231,107 +193,29 @@ function runDoctor({ projectPath } = {}) {
       `Unable to load project component registry: ${projectComponentRegistry.error}`,
     );
   }
-  const componentMap = projectComponentRegistry.ok ? projectComponentRegistry.registry.components : {};
-  const componentIds = new Set(Object.keys(componentMap));
-  const componentUsages = {
-    componentsUsed: new Set(),
-    datasetsUsed: new Set(),
-  };
+  const templatesEntry = templates?.absolutePath && templates?.document
+    ? [{ documentPath: templates.absolutePath, document: templates.document }]
+    : [];
+  const pageEntry = (pageLoaded) => (pageLoaded?.absolutePath && pageLoaded?.document
+    ? [{ documentPath: pageLoaded.absolutePath, document: pageLoaded.document }]
+    : []);
 
-  for (const [templateId, templateDocument] of Object.entries(templateDefinitions)) {
-    if (!templateMap.has(templateId)) {
-      templateMap.set(templateId, {
-        slotIds: new Set(),
-        injectableIds: new Set(),
-      });
-    }
-    const templateInfo = templateMap.get(templateId);
-    const templateComponentIds = loadScopedComponentIds(
-      root,
-      result,
-      templates?.absolutePath && templates?.document
-        ? [{ documentPath: templates.absolutePath, document: templates.document }]
-        : [],
-      `template "${templateId}"`,
-      componentIds,
-    );
-    collectTemplateReferences(templateDocument, result, templateComponentIds, templateInfo.slotIds, templateInfo.injectableIds, componentUsages, addDiagnostic);
-  }
-
-  const routeEntries = sitemap?.document?.routes || sitemap?.document?.sitemap?.routes || [];
-  collectPageRouteDiagnostics(routeEntries, result, pageMap, templateMap, addDiagnostic);
-
-  for (const pageLoaded of pageMap.values()) {
-    const pageComponentIds = loadScopedComponentIds(
-      root,
-      result,
-      pageLoaded?.absolutePath && pageLoaded?.document
-        ? [{ documentPath: pageLoaded.absolutePath, document: pageLoaded.document }]
-        : [],
-      `page "${pageLoaded.id}"`,
-      componentIds,
-    );
-    collectPageReferences(
-      pageLoaded.document?.page ? pageLoaded : { id: pageLoaded.id, document: pageLoaded.document },
-      result,
-      templateMap,
-      pageComponentIds,
-      datasetIds,
-      componentUsages,
-      addDiagnostic,
-    );
-  }
-
-  const componentGraph = collectComponentUseGraph(componentMap, result, addDiagnostic);
-  const usedComponents = collectUsedComponents(componentGraph, componentUsages.componentsUsed);
-
-  for (const componentId of Object.keys(componentMap)) {
-    if (!usedComponents.has(componentId)) {
-      addDiagnostic(
-        result,
-        'warnings',
-        'UNUSED_COMPONENT',
-        `Component "${componentId}" is not referenced by any page or template.`,
-      );
-    }
-  }
-
-  for (const datasetId of datasetIds) {
-    if (!componentUsages.datasetsUsed.has(datasetId)) {
-      addDiagnostic(
-        result,
-        'warnings',
-        'UNUSED_DATASET',
-        `Dataset "${datasetId}" is not referenced by any page.`,
-      );
-    }
-  }
-
-  detectCircularUse(componentGraph, result, addDiagnostic);
-
-  runSemanticValidation({
+  checkProject({
     result,
-    manifest: manifest?.document?.manifest || {},
-    sitemap: sitemap?.document?.sitemap || sitemap?.document || {},
-    templates: templates?.document?.templates || {},
-    components: componentMap,
-    pages: Array.from(pageMap.values()),
+    manifest,
+    sitemap,
+    templates,
+    pages: pageMap,
+    datasetIds,
+    componentMap: projectComponentRegistry.ok ? projectComponentRegistry.registry.components : {},
+    // A document on disk can import components from other files by path.
+    componentIdsFor(scope) {
+      return scope.kind === 'template'
+        ? loadScopedComponentIds(root, result, templatesEntry, `template "${scope.id}"`, scope.componentIds)
+        : loadScopedComponentIds(root, result, pageEntry(scope.page), `page "${scope.page.id}"`, scope.componentIds);
+    },
     resolveComponentsForPage(pageLoaded) {
-      const entries = [];
-      if (templates?.absolutePath && templates?.document) {
-        entries.push({
-          documentPath: templates.absolutePath,
-          document: templates.document,
-        });
-      }
-      if (pageLoaded?.absolutePath && pageLoaded?.document) {
-        entries.push({
-          documentPath: pageLoaded.absolutePath,
-          document: pageLoaded.document,
-        });
-      }
-
-      const registryResult = loadComponentRegistryForDocuments(root, entries);
+      const registryResult = loadComponentRegistryForDocuments(root, [...templatesEntry, ...pageEntry(pageLoaded)]);
       if (!registryResult.ok) {
         return {
           ok: false,

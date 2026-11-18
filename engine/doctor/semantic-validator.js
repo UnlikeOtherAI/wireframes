@@ -3,11 +3,20 @@
 const MAX_TREE_DEPTH = 100;
 const MAX_NODES_PER_PAGE = 5000;
 
-const STATE_KEY_PATTERN = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/;
-
-const OVERLAYS_REQUIRING_TRIGGER = new Set(['dropdown', 'popover', 'menu', 'tooltip']);
 const { resolveTemplatePage } = require('../resolver');
 const { resolvePrimitiveName } = require('../schema/primitive-registry');
+const {
+  isObject,
+  hasOwn,
+  addDiagnostic,
+  addWarning,
+  atNode,
+  validateCondition,
+  validateInteraction,
+  validatePane,
+  validateSelection,
+  validateOverlayDefinition,
+} = require('./semantic-interactions');
 
 // Nudges for names that are not primitives. The registry owns the real aliases
 // (which resolve silently); these are only the near-misses worth a warning.
@@ -28,39 +37,6 @@ const COMPONENT_ALIASES = {
   modal: 'overlay (kind: overlay, type: modal)',
   tooltip: 'overlay (kind: overlay, type: tooltip)',
 };
-
-const INTERACTION_REQUIRED_FIELDS = {
-  navigation: ['targetRoute'],
-  open_overlay: ['targetOverlay'],
-  close_overlay: ['targetOverlay'],
-  toggle: ['scope', 'stateKey'],
-  set_state: ['scope', 'stateKey', 'value'],
-  submit: ['formId'],
-  action: ['actionId'],
-  gesture: ['gestureType'],
-};
-
-function isObject(value) {
-  return value != null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function hasOwn(value, key) {
-  return Object.prototype.hasOwnProperty.call(value, key);
-}
-
-function addDiagnostic(result, code, message) {
-  result.errors.push({
-    code,
-    message,
-  });
-}
-
-function addWarning(result, code, message) {
-  if (!result.warnings) {
-    result.warnings = [];
-  }
-  result.warnings.push({ code, message });
-}
 
 function defaultGridColumnsFromManifest(manifest) {
   const value = Number(manifest?.defaultGridColumns ?? manifest?.manifest?.defaultGridColumns);
@@ -83,31 +59,10 @@ function collectRouteIds(routes) {
   return routeIds;
 }
 
-function hasStateKey(state, key) {
-  if (typeof key !== 'string') {
-    return false;
-  }
-
-  if (!STATE_KEY_PATTERN.test(key)) {
-    return false;
-  }
-
-  const parts = key.split('.');
-  let current = state;
-
-  for (const part of parts) {
-    if (!isObject(current) || !hasOwn(current, part)) {
-      return false;
-    }
-    current = current[part];
-  }
-
-  return true;
-}
-
 function createNodeContext(options) {
   const {
     result,
+    document,
     pageId,
     routeIds,
     appState,
@@ -121,6 +76,8 @@ function createNodeContext(options) {
 
   return {
     result,
+    // The document map's label for what is being walked, so a finding can be found in its text.
+    document,
     pageId,
     routeIds,
     appState,
@@ -145,166 +102,6 @@ function createNodeContext(options) {
   };
 }
 
-function validateCondition(condition, context) {
-  if (!isObject(condition)) {
-    return;
-  }
-
-  if (condition.type === 'state_equals') {
-    const scope = condition.scope;
-    const key = condition.key;
-    const stateTree = scope === 'app' ? context.appState : context.pageState;
-    if (!hasStateKey(stateTree, key)) {
-      addDiagnostic(
-        context.result,
-        'MISSING_STATE_KEY',
-        `Condition state_equals references missing ${scope} state key "${key}".`,
-      );
-    }
-    return;
-  }
-
-  if (condition.type === 'route_match') {
-    if (!context.conditionContext.routes.has(condition.routeId)) {
-      addDiagnostic(
-        context.result,
-        'INVALID_ROUTE_REFERENCE',
-        `Condition route_match references unknown route "${condition.routeId}".`,
-      );
-    }
-    return;
-  }
-
-  if (condition.type === 'and' || condition.type === 'or') {
-    if (!Array.isArray(condition.conditions)) {
-      return;
-    }
-    for (const child of condition.conditions) {
-      validateCondition(child, context);
-    }
-    return;
-  }
-
-  if (condition.type === 'not') {
-    validateCondition(condition.condition, context);
-    return;
-  }
-}
-
-function validateInteraction(interaction, context, nodeId) {
-  const { result, routeIds, actionIds, overlayIds, pendingSubmitRefs } = context;
-
-  if (!isObject(interaction)) {
-    return;
-  }
-
-  const requiredFields = INTERACTION_REQUIRED_FIELDS[interaction.type] || [];
-  for (const field of requiredFields) {
-    if (!hasOwn(interaction, field)) {
-      addDiagnostic(
-        result,
-        'INTERACTION_MISSING_REQUIRED_FIELD',
-        `Interaction type "${interaction.type}" on node "${nodeId}" is missing required field "${field}".`,
-      );
-      return;
-    }
-  }
-
-  if (interaction.type === 'navigation') {
-    if (!routeIds.has(interaction.targetRoute)) {
-      addDiagnostic(
-        result,
-        'INVALID_TARGET_ROUTE',
-        `Navigation interaction on node "${nodeId}" references unknown targetRoute "${interaction.targetRoute}".`,
-      );
-    }
-    return;
-  }
-
-  if (interaction.type === 'open_overlay' || interaction.type === 'close_overlay') {
-    if (!overlayIds.has(interaction.targetOverlay)) {
-      addDiagnostic(
-        result,
-        'INVALID_TARGET_OVERLAY',
-        `Interaction "${interaction.type}" on node "${nodeId}" references unknown overlay "${interaction.targetOverlay}".`,
-      );
-    }
-    return;
-  }
-
-  if (interaction.type === 'toggle' || interaction.type === 'set_state') {
-    const scope = interaction.scope;
-    const stateTree = scope === 'app' ? context.appState : context.pageState;
-
-    if (!hasStateKey(stateTree, interaction.stateKey)) {
-      addDiagnostic(
-        result,
-        'MISSING_STATE_KEY',
-        `${interaction.type} interaction on node "${nodeId}" references missing ${scope} state key "${interaction.stateKey}".`,
-      );
-    }
-    return;
-  }
-
-  if (interaction.type === 'action') {
-    if (!actionIds.has(interaction.actionId)) {
-      addDiagnostic(
-        result,
-        'INVALID_ACTION_REFERENCE',
-        `Action interaction on node "${nodeId}" references unknown action "${interaction.actionId}".`,
-      );
-    }
-    return;
-  }
-
-  if (interaction.type === 'submit') {
-    pendingSubmitRefs.push(interaction.formId);
-    return;
-  }
-}
-
-function validatePane(pane, context, nodeId) {
-  if (!isObject(pane.state)) {
-    return;
-  }
-
-  const scope = pane.state.scope;
-  const stateTree = scope === 'app' ? context.appState : context.pageState;
-
-  if (!hasStateKey(stateTree, pane.state.sizeKey)) {
-    addDiagnostic(
-      context.result,
-      'MISSING_STATE_KEY',
-      `Pane on node "${nodeId}" references missing ${scope} sizeKey "${pane.state.sizeKey}".`,
-    );
-  }
-
-  if (!hasStateKey(stateTree, pane.state.collapsedKey)) {
-    addDiagnostic(
-      context.result,
-      'MISSING_STATE_KEY',
-      `Pane on node "${nodeId}" references missing ${scope} collapsedKey "${pane.state.collapsedKey}".`,
-    );
-  }
-}
-
-function validateSelection(selection, context, nodeId) {
-  if (!isObject(selection)) {
-    return;
-  }
-
-  const scope = selection.scope;
-  const stateTree = scope === 'app' ? context.appState : context.pageState;
-
-  if (!hasStateKey(stateTree, selection.stateKey)) {
-    addDiagnostic(
-      context.result,
-      'MISSING_STATE_KEY',
-      `Selection on node "${nodeId}" references missing ${scope} state key "${selection.stateKey}".`,
-    );
-  }
-}
-
 function validateChildrenGrid(node, context) {
   if (!isObject(node.layout) || node.layout.type !== 'grid' || !Array.isArray(node.children)) {
     return;
@@ -323,6 +120,7 @@ function validateChildrenGrid(node, context) {
           context.result,
           'INVALID_GRID_SPAN',
           `Node "${child.id}" in page "${context.pageId}" has span ${child.gridItem.span} greater than grid columns ${columns}.`,
+          atNode(context, child.id),
         );
       }
 
@@ -331,6 +129,7 @@ function validateChildrenGrid(node, context) {
           context.result,
           'INVALID_GRID_SPAN',
           `Node "${child.id}" in page "${context.pageId}" defines both gridItem.span and size.width.`,
+          atNode(context, child.id),
         );
       }
     }
@@ -350,6 +149,7 @@ function validateTableNode(node, context) {
       context.result,
       'TABLE_MISSING_COLUMNS',
       `Table node "${node.id}" in page "${context.pageId}" must define at least one column.`,
+      atNode(context, node.id),
     );
     return;
   }
@@ -371,6 +171,7 @@ function validateTableNode(node, context) {
       context.result,
       'TABLE_INVALID_COLUMN',
       `Table node "${node.id}" in page "${context.pageId}" has a column without a valid key or label. Provide at least one — key will auto-derive from label if omitted.`,
+      atNode(context, node.id),
     );
   }
 }
@@ -402,6 +203,7 @@ function validateNode(node, context, depth = 1) {
       context.result,
       'COMPONENT_ALIAS',
       `Node "${nodeId}" uses component "${node.component}" — did you mean "${COMPONENT_ALIASES[node.component]}"?`,
+      atNode(context, nodeId),
     );
   }
 
@@ -420,17 +222,17 @@ function validateNode(node, context, depth = 1) {
   }
 
   if (isObject(node.visibility)) {
-    validateCondition(node.visibility.condition, context);
+    validateCondition(node.visibility.condition, context, nodeId);
   }
 
   if (isObject(node.condition)) {
-    validateCondition(node.condition, context);
+    validateCondition(node.condition, context, nodeId);
   }
 
   if (Array.isArray(node.interaction)) {
     for (const interaction of node.interaction) {
       if (isObject(interaction?.condition)) {
-        validateCondition(interaction.condition, context);
+        validateCondition(interaction.condition, context, nodeId);
       }
     }
   }
@@ -456,45 +258,6 @@ function validateNode(node, context, depth = 1) {
   validateTableNode(node, context);
 }
 
-function validateOverlayDefinition(overlay, context, overlaySource) {
-  const { result, overlayIds, overlayTriggerRefs } = context;
-  if (!isObject(overlay)) {
-    return;
-  }
-
-  if (typeof overlay.id !== 'string') {
-    return;
-  }
-
-  if (overlayIds.has(overlay.id)) {
-    addDiagnostic(result, 'DUPLICATE_OVERLAY_ID', `Duplicate overlay id "${overlay.id}" in ${overlaySource}.`);
-    return;
-  }
-
-  overlayIds.add(overlay.id);
-
-  if (OVERLAYS_REQUIRING_TRIGGER.has(overlay.type)) {
-    if (!hasOwn(overlay, 'trigger')) {
-      addDiagnostic(
-        result,
-        'OVERLAY_MISSING_TRIGGER',
-        `Overlay "${overlay.id}" of type "${overlay.type}" requires trigger.`,
-      );
-    }
-    if (!hasOwn(overlay, 'placement')) {
-      addDiagnostic(
-        result,
-        'OVERLAY_MISSING_PLACEMENT',
-        `Overlay "${overlay.id}" of type "${overlay.type}" requires placement.`,
-      );
-    }
-
-    if (hasOwn(overlay, 'trigger')) {
-      overlayTriggerRefs.push({ overlayId: overlay.id, trigger: overlay.trigger });
-    }
-  }
-}
-
 function collectTemplateOverlays(templates, result) {
   const templateMap = new Map();
 
@@ -511,6 +274,7 @@ function collectTemplateOverlays(templates, result) {
         overlay,
         {
           result,
+          document: 'templates',
           overlayIds,
           overlayTriggerRefs,
         },
@@ -535,6 +299,7 @@ function collectComponentRoots(componentMap, result, routeIds, defaultGridColumn
 
     const context = createNodeContext({
       result,
+      document: 'components',
       pageId: `component "${componentId}"`,
       routeIds,
       appState: {},
@@ -549,7 +314,7 @@ function collectComponentRoots(componentMap, result, routeIds, defaultGridColumn
     validateNode(component.root, context, 1);
 
     for (const duplicate of context.duplicateNodeIds) {
-      addDiagnostic(result, 'DUPLICATE_NODE_ID', `Component "${componentId}" defines duplicate node id "${duplicate}".`);
+      addDiagnostic(result, 'DUPLICATE_NODE_ID', `Component "${componentId}" defines duplicate node id "${duplicate}".`, atNode(context, duplicate));
     }
   }
 }
@@ -583,6 +348,7 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
   }
 
   const pageId = pageLoaded.id || pageDoc.id || '<unknown>';
+  const document = `page:${pageId}`;
   const template = isObject(templates[pageDoc.template]) ? templates[pageDoc.template] : null;
 
   const templateOverlayInfo = isObject(template) && templateOverlayMap.get(pageDoc.template);
@@ -598,6 +364,7 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
       overlay,
       {
         result,
+        document,
         overlayIds: overlayValidationIds,
         overlayTriggerRefs,
       },
@@ -606,7 +373,7 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
 
     if (isObject(overlay) && typeof overlay.id === 'string') {
       if (overlayIds.has(overlay.id) || pageOverlayIds.has(overlay.id)) {
-        addDiagnostic(result, 'DUPLICATE_OVERLAY_ID', `Duplicate overlay id "${overlay.id}" on page "${pageId}".`);
+        addDiagnostic(result, 'DUPLICATE_OVERLAY_ID', `Duplicate overlay id "${overlay.id}" on page "${pageId}".`, { document, node: overlay.id });
       }
       pageOverlayIds.add(overlay.id);
       overlayIds.add(overlay.id);
@@ -615,6 +382,7 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
 
   const context = createNodeContext({
     result,
+    document,
     pageId,
     routeIds,
     appState,
@@ -631,12 +399,13 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
     validateNode(root, context, 1);
   }
 
-  for (const formId of context.pendingSubmitRefs) {
+  for (const { formId, nodeId } of context.pendingSubmitRefs) {
     if (!context.nodeIds.has(formId)) {
       addDiagnostic(
         result,
         'INVALID_FORM_REFERENCE',
         `Submit interaction on page "${pageId}" references missing formId "${formId}".`,
+        atNode(context, nodeId),
       );
     }
   }
@@ -647,6 +416,7 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
         result,
         'INVALID_OVERLAY_TRIGGER',
         `Overlay "${overlayRef.overlayId}" references missing trigger node "${overlayRef.trigger}".`,
+        overlayRef.at,
       );
     }
   }
@@ -656,6 +426,7 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
       result,
       'MAX_NODES_PER_PAGE_EXCEEDED',
       `Page "${pageId}" has ${context.nodeCount} nodes, exceeding maxNodesPerPage ${MAX_NODES_PER_PAGE}.`,
+      { document, path: '$.page' },
     );
   }
 
@@ -664,11 +435,12 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
       result,
       'MAX_TREE_DEPTH_EXCEEDED',
       `Page "${pageId}" exceeds maxTreeDepth ${MAX_TREE_DEPTH} (found ${context.maxDepth}).`,
+      { document, path: '$.page' },
     );
   }
 
   for (const duplicate of context.duplicateNodeIds) {
-    addDiagnostic(result, 'DUPLICATE_NODE_ID', `Page "${pageId}" has duplicate node id "${duplicate}".`);
+    addDiagnostic(result, 'DUPLICATE_NODE_ID', `Page "${pageId}" has duplicate node id "${duplicate}".`, atNode(context, duplicate));
   }
 }
 
@@ -699,6 +471,7 @@ function runSemanticValidation({
           result,
           'COMPONENT_IMPORT_ERROR',
           resolvedComponents.error || `Unable to resolve component imports for page "${pageLoaded?.id || '<unknown>'}".`,
+          { document: `page:${pageLoaded?.id}`, path: '$.imports', key: true },
         );
         continue;
       }
