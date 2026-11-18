@@ -42,8 +42,11 @@ await build({
 });
 
 // The bundle has to stay small enough to ship with an app, so the budget is
-// enforced here rather than noticed later.
-const BUDGET_BYTES = 420 * 1024;
+// enforced here rather than noticed later. Raised from 420 KB on 18 November
+// 2026: the component library expansion (five elements, the measurement
+// runtime, slots, the item model and the std patterns) took the bundle from
+// 329 KB (90 KB gzip) to 426 KB (114 KB gzip).
+const BUDGET_BYTES = 460 * 1024;
 const size = statSync('bundle/wireframe-renderer.min.js').size;
 if (size > BUDGET_BYTES) {
   console.error(`Bundle is ${(size / 1024).toFixed(0)} KB, over the ${BUDGET_BYTES / 1024} KB budget.`);
