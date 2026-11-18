@@ -280,7 +280,11 @@ function measurePick(x, y) {
   try { if (!document.hasFocus()) window.focus(); } catch (_err) {}
 }
 // A press picks on pointerup rather than click: disabled controls receive
-// pointer events but no click. Drags and scrolls are not picks.
+// pointer events but no click. Drags and scrolls are not picks: moving more
+// than 8px from the press, or a pointercancel, drops it even if it comes back.
+function measureNear(press, event) {
+  return Math.abs(event.clientX - press.x) <= 8 && Math.abs(event.clientY - press.y) <= 8;
+}
 function measurePress(event) {
   if (event.type === 'pointerdown') {
     WF_MEASURE.touch = event.pointerType === 'touch';
@@ -289,9 +293,10 @@ function measurePress(event) {
   }
   var press = WF_MEASURE.press;
   WF_MEASURE.press = null;
-  if (press && press.id === event.pointerId && Math.abs(event.clientX - press.x) <= 8 && Math.abs(event.clientY - press.y) <= 8) {
-    measurePick(event.clientX, event.clientY);
-  }
+  if (press && press.id === event.pointerId && measureNear(press, event)) measurePick(event.clientX, event.clientY);
+}
+function measureCancel(event) {
+  if (WF_MEASURE.press && WF_MEASURE.press.id === event.pointerId) WF_MEASURE.press = null;
 }
 function measureCapture(event) {
   if (!WF_MEASURE.on) return;
@@ -301,6 +306,8 @@ function measureCapture(event) {
   else if (event.type === 'mousedown' || event.type === 'click') event.preventDefault();
 }
 function measureMove(event) {
+  var press = WF_MEASURE.press;
+  if (press && press.id === event.pointerId && !measureNear(press, event)) WF_MEASURE.press = null;
   if (event.pointerType === 'touch') return;
   WF_MEASURE.touch = false;
   WF_MEASURE.x = event.clientX;
@@ -320,6 +327,7 @@ function measureListeners(add) {
     window[method](WF_MEASURE_STOPPED[i], measureCapture, { capture: true, passive: WF_MEASURE_STOPPED[i].indexOf('touch') === 0 });
   }
   window[method]('pointermove', measureMove, { capture: true, passive: true });
+  window[method]('pointercancel', measureCancel, true);
   window[method]('mouseout', measureLeave, true);
   window[method]('scroll', measureRefresh, { capture: true, passive: true });
   window[method]('resize', measureRefresh);

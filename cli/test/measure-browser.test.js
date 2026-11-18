@@ -277,3 +277,34 @@ test('a pending timed dismissal pauses while measuring and resumes with the time
     assert.equal(await page.locator('#notice').isVisible(), false);
   });
 });
+
+test('a press that drags away and back, or is cancelled, does not pin', async () => {
+  await withPage(async (page) => {
+    await page.setContent(fixture());
+    await page.keyboard.press('m');
+    const box = await page.locator('#left_card').boundingBox();
+    const x = box.x + 10, y = box.y + 10;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + 120, y);
+    await page.mouse.move(x, y);
+    await page.mouse.up();
+    assert.equal(await page.locator('[data-wf-measure-box="pin"]').count(), 0, 'a drag back to the start is not a pick');
+
+    await page.mouse.down();
+    await page.mouse.move(x + 4, y + 3);
+    await page.mouse.up();
+    assert.equal(await page.locator('[data-wf-measure-box="pin"]').count(), 1, 'a small wobble still pins');
+    await page.mouse.click(x, y);
+    assert.equal(await page.locator('[data-wf-measure-box="pin"]').count(), 0);
+
+    await page.locator('#left_card').evaluate((node, at) => {
+      const init = {bubbles: true, cancelable: true, composed: true, pointerId: 7, pointerType: 'touch', isPrimary: true, button: 0, clientX: at.x, clientY: at.y};
+      for (const type of ['pointerdown', 'pointercancel', 'pointerup']) node.dispatchEvent(new PointerEvent(type, init));
+    }, {x, y});
+    assert.equal(await page.locator('[data-wf-measure-box="pin"]').count(), 0, 'a cancelled press is not a pick');
+
+    await click(page, '#locked', 10, 10);
+    assert.equal(await page.locator('[data-wf-measure-box="pin"]').count(), 1, 'a disabled control still pins on pointerup');
+  });
+});
