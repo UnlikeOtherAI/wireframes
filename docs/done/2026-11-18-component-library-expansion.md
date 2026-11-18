@@ -681,10 +681,37 @@ These changed or sharpened the design while it was built. The code and the docs 
   rule: the first option whose label is the `value` text, so with no `value` the
   first blank option, else the first option. Options marked `selected: false` are
   skipped.
-- **Measurement (T3).** Labels show one decimal. Pins happen on `pointerup`, because
-  disabled controls get no `click`. Pane sizes are not saved while measuring.
-- **Bundle budget (integration).** The renderer budget rose from 420 KB to 460 KB. The
-  bundle went from 329 KB (90 KB gzip) to 426 KB (114 KB gzip).
+- **Measurement (T3, review).** Labels show one decimal. Pins happen on `pointerup`,
+  because disabled controls get no `click`. A press that drags past 8 px, or is
+  cancelled, does not pin. Pane sizes are not saved while measuring, and timed overlay
+  dismissals pause and resume with their remaining time.
+- **Bundle budget (integration).** The renderer budget rose from 420 KB to 460 KB, with
+  the user's approval. The bundle went from 329 KB (90 KB gzip) on `main` to 436 KB.
+- **Slot resolution (review).** A filled placeholder becomes a marker while the callee
+  expands, and the caller's prepared fill replaces it afterwards, so no callee rewrites
+  page content, including through slotless components. A component's authored root id
+  maps to the instance id for form references on both paths. Slot checks run for
+  definitions imported only by a page or template. Ids and form references are checked
+  on resolved page and template overlays.
+- **Admin selection (review).** The admin tree lists fills of any instance, including
+  imported and built-in ones, plus page overlay content. A click selects the first
+  rendered ancestor the tree knows. Preview messages are accepted only from the preview
+  window and the page's own origin.
+- **`std` scoping (review).** A module's own `std` alias shadows only the ids it
+  defines; other `std.*` ids reach the built-ins. Component addresses resolve through
+  the project registry, so `inspect`, `wf node` writes and `remove` act on the
+  definition's real source file. A component is read-only only when lookup fell back
+  to a built-in.
+- **`wf component copy` (review).** The target must resolve inside the project. The
+  definition's text is inserted into the existing document, so comments and formatting
+  survive. The result is validated, then written atomically.
+- **Gallery pages (review).** Two pages were added despite §4.7: `app_navigation` (card)
+  and `line_navigation` (line). They keep the new navigation elements, toolbar and
+  gantt inside the 1280×900 screenshot. Both baseline sets include them; the macOS set
+  was regenerated on the Mac.
+- **Native form submission (integration).** A `form` renders a real `<form>`, so its
+  untyped buttons submitted it natively and reloaded the page. The runtime now blocks
+  native submission, and prototypes submit through their submit interactions.
 - **Generated artefacts (T0, integration).** `.gitattributes` keeps `schema.json`, the
   catalogue's HTML and CSS, and the agent guide LF. Windows checkouts otherwise failed
   the byte-for-byte drift tests.
