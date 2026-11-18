@@ -62,6 +62,10 @@ use that alias keep working. `wf validate` reports `STD_ALIAS_SHADOWED` (info)
 for such an import and names the built-ins it hides; other `std.<name>` ids
 still resolve to the built-ins. Rename the alias to use both.
 
+The same holds inside an imported components document. When `kit.yaml`
+imports its own `std` alias, a `std.<name>` in its definitions is that alias's
+component if it defines one, and the built-in otherwise.
+
 Built-ins are looked up when a page uses them and never join the project's
 registry: `wf component list`, `wf stats` and `UNUSED_COMPONENT` only see your
 own components.
@@ -79,15 +83,19 @@ wf component copy std.login --file components/auth.yaml
 
 The copy is the pattern's full definition (props, hints, slots and root) under
 the new id. `components.yaml` is created when missing; `--file` takes an
-existing components document. An id the document already has is refused, and
-nothing is written unless the result validates. The command prints the id to
-use (`use: landing_hero`, or `use: auth.login` when `components.yaml` imports
-that file as `auth`). From then on it is an ordinary local component: edit it,
-build it, `wf component remove` it.
+existing components document inside the project (a path or link that leads
+outside it is refused). An existing document keeps its comments and
+formatting: the copy is added after its last component. An id the document
+already has is refused, and nothing is written unless the result validates.
+The command prints the id to use (`use: landing_hero`, or `use: auth.login`
+when `components.yaml` imports that file as `auth`). From then on it is an
+ordinary local component: edit it, build it, `wf component remove` it.
 
-`wf component remove std.<name>` and `wf node` writes to a
-`wf://component/std.<name>` address fail with the same pointer to
-`wf component copy`. `wf inspect` and `wf tree component std.<name>` read them.
+While the project has no component of that id, `wf component remove
+std.<name>` and `wf node` writes to a `wf://component/std.<name>` address fail
+with the same pointer to `wf component copy`. `wf inspect` and
+`wf tree component std.<name>` read them. A `std.<name>` your `std` alias
+defines is yours: those commands read and edit it in its own file.
 
 ---
 
