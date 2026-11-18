@@ -3,7 +3,7 @@
 /**
  * Returns the overlay-related runtime code string for the interaction runtime.
  * This is a fragment of the client-side JS IIFE — it relies on variables
- * and helpers (isObj, overlayType, etc.) declared in the surrounding scope.
+ * and helpers (isObj, overlayType, isMeasuring, etc.) declared in the surrounding scope.
  */
 function buildOverlayRuntimeCode() {
   return `function overlayDismissList(node) {
@@ -112,12 +112,13 @@ function bindOverlayDismiss(node, overlayId, list) {
   }
   if (list.indexOf('escape') >= 0 && !node._wfEscHandler) {
     node._wfEscHandler = function (event) {
-      if (event.key === 'Escape') closeOverlay(overlayId);
+      if (event.key === 'Escape' && !isMeasuring()) closeOverlay(overlayId);
     };
     document.addEventListener('keydown', node._wfEscHandler);
   }
   if (list.indexOf('outside') >= 0 && !node._wfOutsideHandler) {
     node._wfOutsideHandler = function (event) {
+      if (isMeasuring()) return;
       var trigger = overlayTriggerNode(node);
       var target = event && event.target ? event.target : null;
       if (!target) return;
