@@ -1,7 +1,7 @@
 # Component library expansion: shared items and fields, component slots, std patterns, new elements, measurement overlay
 
-Status: designed and reviewed (§9). Implementation is on branch
-`claude/component-library`.
+Status: implemented on 18 November 2026 (branch `claude/component-library`). §9 records
+the review, and §10 records the decisions made during implementation.
 
 Source inspected on 18 November 2026: `UnlikeOtherAI/wireframes` `origin/main` at
 `b3dfb81`, plus the docs shipped inside `@ui-sdk/react@0.1.0-beta.10` (Vercel Labs,
@@ -9,7 +9,7 @@ Apache-2.0, <https://ui-sdk.dev>). UI SDK is a source of ideas only. Nothing her
 it as a dependency or copies its code.
 
 This plan finishes the `std` library (tranche T13) of
-[2026-11-02-element-library-overhaul.md](2026-11-02-element-library-overhaul.md) and
+[2026-11-02-element-library-overhaul.md](../plans/2026-11-02-element-library-overhaul.md) and
 leaves that plan's other open tranches (T4, T12, T14, T17) open.
 
 ## 1. Problem Statement
@@ -620,3 +620,44 @@ incorporate every adopted change.
 Nothing was rejected outright. Two items were narrowed to keep this plan bounded: #2
 defers moving admin onto the engine tree, and #3 leaves global generated-id collisions
 alone. Both are recorded in §7.
+
+## 10. Implementation Decisions
+
+These changed or sharpened the design while it was built. The code and the docs under
+`docs/cli/` are authoritative.
+
+- **Nav `active` (T4).** It stays part of nav's legacy rule, next to route inference,
+  rather than becoming an alias of `selected`. Mapping it changed existing output. Tab
+  bars still map `active` to `selected`.
+- **Slot grammar (T2).** The schema accepts a placeholder and `slots` wherever a node may
+  appear, and the validator enforces positions. Otherwise schema errors would hide
+  `SLOT_OUTSIDE_COMPONENT` and `SLOTS_WITHOUT_USE`.
+- **Prop default fix (T2).** A root prop written as a bare `{{props.x}}` token now takes
+  `propDefaults`. Previously it printed the raw token. This also fixes components without
+  placeholders.
+- **Source path attribute (T2).** Source stamps keep `data-wf-source="doc#id"`. The
+  authored path goes in a separate `data-wf-source-path`.
+- **Nested definitions in validation (integration).** A component's nested definitions
+  are checked in their own id scope, so reusing an id that a nested component also uses
+  is no longer a false `DUPLICATE_NODE_ID`.
+- **`std` alias (T7).** A project alias `std` shadows only the ids it defines. Other
+  `std.*` ids still reach the built-ins, and `STD_ALIAS_SHADOWED` says so. Built-ins
+  never join a registry, so listings and unused-component reports are unchanged.
+- **Read-only ARIA (T5).** Segmented, picker and standalone radio get `data-wf-readonly`
+  without `aria-readonly`, because their roles don't support it.
+- **Number clamping (T5).** `number` and `stepper` clamp only when `min` or `max` is
+  set, so values above 100 in existing projects stay put.
+- **Control runtime (T5).** Checkbox, radio and toggle now toggle on click, read-only
+  controls ignore changes, and disabled fields are not submitted. A multiple select
+  submits a list.
+- **`choice_group` fix (T5).** A row selected by `value` now draws its dot. It was
+  selected but never drawn.
+- **Measurement (T3).** Labels show one decimal. Pins happen on `pointerup`, because
+  disabled controls get no `click`. Pane sizes are not saved while measuring.
+- **Bundle budget (integration).** The renderer budget rose from 420 KB to 460 KB. The
+  bundle went from 329 KB (90 KB gzip) to 426 KB (114 KB gzip).
+- **Generated artefacts (T0, integration).** `.gitattributes` keeps `schema.json`, the
+  catalogue's HTML and CSS, and the agent guide LF. Windows checkouts otherwise failed
+  the byte-for-byte drift tests.
+- **Canonical YAML (integration).** `schema-canonical.yaml` parses again, and a test
+  keeps it loadable.

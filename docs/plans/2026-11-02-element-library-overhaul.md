@@ -2,6 +2,8 @@
 
 Design document. Status: **designed, not implemented**. Supersedes the open items in `docs/plans/2026-07-05-wireframe-rendering-quality.md` (most of which is implemented as the WIP carried in on this branch — the plan below treats that working tree, not the previous `main`, as the baseline).
 
+T13 (the `std` library) is delivered by [2026-11-18-component-library-expansion.md](../done/2026-11-18-component-library-expansion.md).
+
 ## 1. Problem Statement
 
 - The engine has 19 primitives (`engine/schema/primitives.js`). Everything else must be hand-built from `section` + children. Agents therefore write 5-10 nodes for what should be one line (a stat tile, a nav item with icon, a breadcrumb), and the output is visually thin.
