@@ -9,6 +9,7 @@
  */
 
 const { childNodeLists } = require('../component-registry/child-nodes');
+const { resolveComponentDefinition } = require('../component-registry/definition-lookup');
 const {
   collectSlotPlaceholders,
   componentSlotNames,
@@ -32,7 +33,7 @@ function slotList(names) {
 }
 
 function checkInstance(node, definitions, where, report) {
-  const definition = typeof node.use === 'string' && isObject(definitions) ? definitions[node.use] : null;
+  const definition = resolveComponentDefinition(node.use, definitions);
   if (!isObject(definition) || !isObject(definition.root)) return;
 
   const instance = `Instance "${node.id}" of component "${node.use}" in ${where}`;

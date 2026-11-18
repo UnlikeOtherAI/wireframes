@@ -16,6 +16,7 @@ const {
 
 const { PRIMITIVE_COMPONENTS } = require(path.resolve(__dirname, '..', 'schema', 'primitives'));
 const { childNodeLists } = require(path.resolve(__dirname, '..', 'component-registry', 'child-nodes'));
+const { resolveComponentDefinition } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
 
 const WF_ID_REGEX = /^[a-z][a-z0-9_]*$/;
 
@@ -104,15 +105,18 @@ function resolveComponentBinding(projectPath, componentRef) {
     return { ok: true, node: { component: componentRef } };
   }
 
-  if (buildComponentIds(projectPath).has(componentRef)) {
+  if (resolveComponentDefinition(componentRef, null) || buildComponentIds(projectPath).has(componentRef)) {
     return { ok: true, node: { use: componentRef } };
   }
 
   return { ok: false, error: `Unknown component reference "${componentRef}".` };
 }
 
+// Every caller of this one writes the document it resolves, so a read-only
+// target (a built-in std pattern) stops here with the way to make it editable.
 function resolveTarget(projectPath, address) {
-  return resolveTargetWithMetadata(projectPath, address);
+  const target = resolveTargetWithMetadata(projectPath, address);
+  return target.ok && target.readOnly ? { ok: false, error: target.readOnly } : target;
 }
 
 module.exports = {

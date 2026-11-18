@@ -557,6 +557,9 @@ Info diagnostics:
 * Demoted nested section with explicit width or height (`NESTED_SURFACE`)
 * A component slot that gets neither content nor a fallback
   (`EMPTY_COMPONENT_SLOT`). An explicit `[]` fill is intentional and reports nothing.
+* A document that imports components under the alias `std`, whose components
+  win over the built-in std patterns of the same id (`STD_ALIAS_SHADOWED`;
+  see [stdlib.md](stdlib.md)).
 
 The slot checks run in `wf validate` and in the in-memory `validateProject`
 entry point the browser and API use; `validateProject` returns its info

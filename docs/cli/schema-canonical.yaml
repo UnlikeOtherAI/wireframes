@@ -827,6 +827,12 @@ component:
     - a root prop written as its own token takes the instance value, else propDefaults
     - component documents may import other component documents from arbitrary project paths
 
+  builtins:
+    - std.<name> resolves to a built-in pattern (docs/cli/stdlib.md) when the project defines no component with that id
+    - the project's own definitions win, including components imported under a std alias (STD_ALIAS_SHADOWED, info)
+    - built-ins never join the project registry, so component listings and UNUSED_COMPONENT ignore them
+    - built-ins are read-only; wf component copy std.<name> copies one into the project
+
   slots:
     fillRules:
       - instance children fill the default slot
@@ -974,6 +980,7 @@ validation:
     - text primitives using the label alias instead of canonical text
     - demoted nested surfaces with explicit width or height
     - component slot with neither content nor fallback (EMPTY_COMPONENT_SLOT)
+    - a std import alias shadowing built-in std patterns (STD_ALIAS_SHADOWED)
 
   safetyLimits:
     maxTreeDepth: 100

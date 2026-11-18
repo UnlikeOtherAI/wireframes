@@ -1,5 +1,7 @@
 'use strict';
 
+const { resolveComponentDefinition } = require('./definition-lookup');
+
 /** Bound reusable component expansion before materializing a rendered tree. */
 function assertComponentExpansion(roots, definitions, maxNodes = 50000) {
   const memo = new Map();
@@ -12,9 +14,10 @@ function assertComponentExpansion(roots, definitions, maxNodes = 50000) {
       const id = value.use.trim();
       if (visiting.has(id)) throw new Error('Circular wireframe component reference');
       if (!memo.has(id)) {
-        if (!Object.hasOwn(definitions, id)) throw new Error(`Unknown component: ${id}`);
+        const definition = resolveComponentDefinition(id, definitions);
+        if (definition == null) throw new Error(`Unknown component: ${id}`);
         visiting.add(id);
-        memo.set(id, cost(definitions[id], depth + 1));
+        memo.set(id, cost(definition, depth + 1));
         visiting.delete(id);
       }
       size += memo.get(id);

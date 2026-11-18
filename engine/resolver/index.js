@@ -1,6 +1,7 @@
 'use strict';
 
 const { collectSlotPlaceholders } = require('../component-registry/slot-placeholders');
+const { resolveComponentDefinition } = require('../component-registry/definition-lookup');
 const {
   cloneDeep,
   isObject,
@@ -57,14 +58,7 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
     };
   }
 
-  if (!isObject(components)) {
-    return {
-      ok: false,
-      error: `Component resolution requires components data for "${node.use}".`,
-    };
-  }
-
-  const componentDoc = components[node.use];
+  const componentDoc = resolveComponentDefinition(node.use, components);
   if (!isObject(componentDoc) || !isObject(componentDoc.root)) {
     return {
       ok: false,

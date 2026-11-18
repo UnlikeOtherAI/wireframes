@@ -7,6 +7,7 @@ const { SUPPORTED_SPEC_VERSION, DEFAULT_SPEC_VERSION } = require('./constants');
 const schemaPath = path.resolve(__dirname, 'schema.json');
 
 const { elementCatalogue, elementCheatSheet } = require('./element-reference');
+const { componentSlotsSection, stdPatternsSection } = require('./llm-components');
 
 function loadSchema() {
   return JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
@@ -242,6 +243,10 @@ ${itemsSection()}
 
 ${fieldsSection()}
 
+${componentSlotsSection()}
+
+${stdPatternsSection()}
+
 ## Interactions
 
 Field name is "interaction" (array), not "interactions".
@@ -363,6 +368,9 @@ wf page remove <id>
 wf page list
 wf node add <pageId> --parent <parentId> --id <nodeId> --component <type> [--props '<json>']
 wf component add <id> --root '<yaml>'
+wf component show <id>             — props, slots and fallbacks of a component or std pattern
+wf component list --std            — the built-in std patterns
+wf component copy std.<name> [--as <id>] [--file <path>] — copy a std pattern into the project to edit
 wf overlay add <pageId> --id <overlayId> --type <type> --content '<yaml>'
 wf validate [--strict] [--json]    — validate schema + semantic checks
 wf lint                            — check naming conventions and primitive prop diagnostics

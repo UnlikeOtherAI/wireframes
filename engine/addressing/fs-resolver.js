@@ -1,6 +1,9 @@
 'use strict';
 
+const fs = require('node:fs');
 const path = require('node:path');
+const { resolveComponentDefinition } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
+const { builtinCopyHint } = require(path.resolve(__dirname, '..', 'stdlib'));
 const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
 const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 
@@ -75,10 +78,30 @@ function resolveAddress(projectPath, address) {
   }
 
   const cPath = componentsFilePath(projectPath);
-  const loaded = loadDocumentFromFile(cPath, {
-    supportedSpecVersion: SUPPORTED_SPEC_VERSION,
-  });
-  const componentsResult = buildComponentRootsFromMap(loaded.document?.components, parsed.documentId);
+  const loaded = fs.existsSync(cPath) || !resolveComponentDefinition(parsed.documentId, null)
+    ? loadDocumentFromFile(cPath, { supportedSpecVersion: SUPPORTED_SPEC_VERSION })
+    : null;
+  const own = isObject(loaded?.document?.components) ? loaded.document.components : {};
+  if (!Object.hasOwn(own, parsed.documentId)) {
+    // A built-in std pattern is read-only: it can be inspected, never written.
+    const builtin = resolveComponentDefinition(parsed.documentId, own);
+    if (builtin) {
+      const builtinResult = buildComponentRootsFromMap({ [parsed.documentId]: structuredClone(builtin) }, parsed.documentId);
+      if (!builtinResult.ok) return builtinResult;
+      return {
+        ok: true,
+        documentPath: null,
+        document: null,
+        readOnly: builtinCopyHint(parsed.documentId),
+        roots: builtinResult.roots,
+        segments: parsed.pathSegments,
+        rawAddress: parsed.raw,
+        documentType: 'component',
+        documentId: parsed.documentId,
+      };
+    }
+  }
+  const componentsResult = buildComponentRootsFromMap(own, parsed.documentId);
   if (!componentsResult.ok) return componentsResult;
 
   return {

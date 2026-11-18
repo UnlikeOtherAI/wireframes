@@ -1,10 +1,17 @@
 import { build } from 'esbuild';
 import { readFileSync, statSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 
 const isDev = process.argv.includes('--dev');
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
+// The engine's CJS `require('js-yaml')` (std patterns) and the renderer's ESM
+// import must share one copy of the parser, or the bundle ships it twice.
+const jsYamlEsm = join(dirname(createRequire(import.meta.url).resolve('js-yaml/package.json')), 'dist', 'js-yaml.mjs');
+
 const shared = {
+  alias: { 'js-yaml': jsYamlEsm },
   entryPoints: ['src/index.ts'],
   bundle: true,
   target: 'es2020',
