@@ -1,8 +1,6 @@
 'use strict';
 
 const path = require('node:path');
-const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
-const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 const {
   parseAddress,
   resolveAddressInRoots,
@@ -17,6 +15,7 @@ const {
 const { PRIMITIVE_COMPONENTS } = require(path.resolve(__dirname, '..', 'schema', 'primitives'));
 const { childNodeLists } = require(path.resolve(__dirname, '..', 'component-registry', 'child-nodes'));
 const { resolveComponentDefinition } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
+const { loadProjectComponentRegistry } = require(path.resolve(__dirname, '..', 'component-registry'));
 
 const WF_ID_REGEX = /^[a-z][a-z0-9_]*$/;
 
@@ -89,13 +88,6 @@ function parseNodeId(nodeId) {
   return { ok: true, value: nodeId };
 }
 
-function buildComponentIds(projectPath) {
-  const components = loadDocumentFromFile(componentsFilePath(projectPath), {
-    supportedSpecVersion: SUPPORTED_SPEC_VERSION,
-  }).document?.components;
-  return isObject(components) ? new Set(Object.keys(components)) : new Set();
-}
-
 function resolveComponentBinding(projectPath, componentRef) {
   if (typeof componentRef !== 'string' || componentRef.trim() === '') {
     return { ok: false, error: 'Component is required.' };
@@ -105,7 +97,12 @@ function resolveComponentBinding(projectPath, componentRef) {
     return { ok: true, node: { component: componentRef } };
   }
 
-  if (resolveComponentDefinition(componentRef, null) || buildComponentIds(projectPath).has(componentRef)) {
+  // The same lookup a `use:` gets: the project's own components first, then the built-ins.
+  const loaded = loadProjectComponentRegistry(projectPath);
+  if (!loaded.ok) {
+    return { ok: false, error: `Unable to load project components: ${loaded.error}` };
+  }
+  if (resolveComponentDefinition(componentRef, loaded.registry.components)) {
     return { ok: true, node: { use: componentRef } };
   }
 
@@ -113,7 +110,8 @@ function resolveComponentBinding(projectPath, componentRef) {
 }
 
 // Every caller of this one writes the document it resolves, so a read-only
-// target (a built-in std pattern) stops here with the way to make it editable.
+// target stops here with the way to make it editable: a built-in std pattern
+// the project does not define, or a component defined outside the project.
 function resolveTarget(projectPath, address) {
   const target = resolveTargetWithMetadata(projectPath, address);
   return target.ok && target.readOnly ? { ok: false, error: target.readOnly } : target;
