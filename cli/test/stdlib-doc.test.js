@@ -12,7 +12,8 @@ const { componentSlotNames } = require('../../engine/component-registry/slot-pla
 const { builtinComponentDefinition, builtinComponentIds } = require('../../engine/stdlib');
 const { memoryProject } = require('./fixtures/std-project');
 
-const DOC = fs.readFileSync(path.join(__dirname, '..', '..', 'docs', 'cli', 'stdlib.md'), 'utf8');
+// Checkouts with core.autocrlf have CRLF line endings.
+const DOC = fs.readFileSync(path.join(__dirname, '..', '..', 'docs', 'cli', 'stdlib.md'), 'utf8').replaceAll('\r\n', '\n');
 
 function section(id) {
   const start = DOC.indexOf(`\n## ${id}\n`);
