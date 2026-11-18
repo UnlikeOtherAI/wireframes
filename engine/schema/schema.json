@@ -3945,7 +3945,7 @@
     },
     "PrimitiveProps_chart": {
       "type": "object",
-      "description": "Greeked chart placeholder in nine shapes. Deterministic, never random.",
+      "description": "Greeked chart placeholder in ten shapes. Deterministic, never random. gantt draws data [{ label, start, end, tone }] as bars on one axis labelled by ticks.",
       "properties": {
         "chartType": {
           "type": "string",
@@ -3959,7 +3959,8 @@
             "donut",
             "gauge",
             "sparkline",
-            "heatmap"
+            "heatmap",
+            "gantt"
           ]
         },
         "title": {
@@ -3970,6 +3971,9 @@
           "description": "Accepted alias for title; title wins when both are set."
         },
         "data": {
+          "type": "array"
+        },
+        "ticks": {
           "type": "array"
         },
         "series": {

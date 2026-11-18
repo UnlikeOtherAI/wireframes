@@ -38,18 +38,20 @@ const dataPrimitives = [
     name: 'chart',
     family: 'data',
     frame: 'C',
-    summary: 'Greeked chart placeholder in nine shapes. Deterministic, never random.',
+    summary: 'Greeked chart placeholder in ten shapes. Deterministic, never random. '
+      + 'gantt draws data [{ label, start, end, tone }] as bars on one axis labelled by ticks.',
     props: {
       chartType: {
         enum: [
           'bar', 'vertical', 'horizontal', 'line', 'area',
-          'pie', 'donut', 'gauge', 'sparkline', 'heatmap',
+          'pie', 'donut', 'gauge', 'sparkline', 'heatmap', 'gantt',
         ],
         primary: true,
       },
       title: { type: 'string' },
       label: { type: 'string', aliasOf: 'title' },
       data: { type: 'array' },
+      ticks: { type: 'array' },
       series: { type: 'number' },
       legend: { type: 'boolean' },
       axes: { type: 'boolean' },

@@ -91,6 +91,29 @@ const dataStyles = [
   '.wf-chart-sparkline{height:34px}',
   '.wf-chart-sparkline-wrap .wf-chart-svg{height:34px}',
 
+  // --- Gantt: fixed-height rows on one axis; a narrow chart ellipsizes its labels ---
+  '.wf-gantt{--wf-gantt-label-w:min(140px,35%);display:flex;flex-direction:column;gap:4px;min-width:0}',
+  '.wf-gantt-plot{min-width:0;overflow-y:auto}',
+  '.wf-gantt-rows{position:relative;display:flex;flex-direction:column;min-width:0}',
+  '.wf-gantt-grid{position:absolute;top:0;bottom:0;left:var(--wf-gantt-label-w);right:0;pointer-events:none}',
+  '.wf-gantt-gridline{position:absolute;top:0;bottom:0;border-left:1px dashed var(--wf-line-2)}',
+  '.wf-gantt-row{display:grid;grid-template-columns:var(--wf-gantt-label-w) minmax(0,1fr);align-items:center;'
+    + 'height:28px;flex:0 0 auto;min-width:0}',
+  '.wf-gantt-label{padding-right:10px;font-size:12px;color:var(--wf-ink-2);min-width:0;'
+    + 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+  '.wf-gantt-track{position:relative;align-self:stretch;min-width:0}',
+  '.wf-gantt-bar{position:absolute;top:7px;bottom:7px;min-width:2px;box-sizing:border-box;'
+    + 'background:var(--wf-line);border:1px solid var(--wf-ink-4);border-radius:3px}',
+  '.wf-gantt-bar[class*="wf-tone-"]{background:var(--wf-tone);border-color:var(--wf-tone)}',
+  '.wf-mode-line .wf-gantt-bar{background:transparent;border-color:var(--wf-line-strong);border-radius:0}',
+  '.wf-mode-line .wf-gantt-bar[class*="wf-tone-"]{border:2px solid var(--wf-tone)}',
+  '.wf-gantt-empty{display:flex;align-items:center;justify-content:center;min-height:84px;'
+    + 'font-size:12px;font-style:italic;color:var(--wf-ink-4)}',
+  '.wf-gantt-axis{position:relative;height:16px;margin-left:var(--wf-gantt-label-w);font-size:10px;color:var(--wf-ink-4)}',
+  '.wf-gantt-tick{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}',
+  '.wf-gantt-tick-start{transform:none}',
+  '.wf-gantt-tick-end{transform:translateX(-100%)}',
+
   // --- Calendar ---
   '.wf-calendar{padding:0;min-width:0}',
   '.wf-cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;'
