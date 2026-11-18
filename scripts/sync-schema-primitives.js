@@ -26,6 +26,8 @@ function propSchema(name, spec) {
   } else if (spec.type === 'boolean') {
     out.type = 'boolean';
   } else if (spec.type === 'array') {
+    // Item arrays (`items: true`) stay open too: the shared item model is
+    // enforced at render time, so YAML that validates today keeps validating.
     out.type = 'array';
   } else if (Array.isArray(spec.type)) {
     out.type = spec.type;
