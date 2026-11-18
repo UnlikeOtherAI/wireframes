@@ -781,8 +781,8 @@ template:
       The browser window is the scroll container — never an inner div.
       align-items: stretch on the body row ensures sidebars fill full height.
     stickyRule:
-      - sticky: top renders as position: sticky; top: 0; z-index: 10
-      - sticky: bottom renders as position: sticky; bottom: 0; z-index: 10
+      - "sticky: top renders as position: sticky; top: 0; z-index: 10"
+      - "sticky: bottom renders as position: sticky; bottom: 0; z-index: 10"
       - only valid on top-level template regions (direct children of template root)
 
   injectable:
@@ -823,7 +823,7 @@ component:
     - all node IDs unique within component
     - no direct pageState references inside component
     - props referenced via {{props.key}}
-    - {{props.key}} resolves during component expansion, including nested imported components
+    - '{{props.key}} resolves during component expansion, including nested imported components'
     - a root prop written as its own token takes the instance value, else propDefaults
     - component documents may import other component documents from arbitrary project paths
 

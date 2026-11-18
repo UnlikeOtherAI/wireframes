@@ -47,3 +47,13 @@ test('generateLlmReference produces comprehensive output', () => {
   assert.ok(output.includes('wf page add'), 'Should show CLI commands');
   assert.ok(output.length > 2000, 'Should be comprehensive');
 });
+
+// AGENTS.md keeps schema-canonical.yaml in sync with schema.json, so it has to
+// stay loadable YAML; unquoted `key: value` prose once broke it silently.
+test('schema-canonical.yaml parses as YAML', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const yaml = require('js-yaml');
+  const file = path.join(__dirname, '..', '..', 'docs', 'cli', 'schema-canonical.yaml');
+  assert.doesNotThrow(() => yaml.load(fs.readFileSync(file, 'utf8')));
+});
