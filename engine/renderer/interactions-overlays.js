@@ -161,10 +161,33 @@ function unbindOverlayDismiss(node, overlayId) {
     window.removeEventListener('scroll', node._wfPositionHandler, true);
     node._wfPositionHandler = null;
   }
-  if (node._wfDismissTimer) {
-    clearTimeout(node._wfDismissTimer);
-    node._wfDismissTimer = null;
-  }
+  clearOverlayTimeout(overlayId);
+}
+// Timed dismissals by overlay id. Measuring pauses them, and they resume with
+// the time they had left when it ends.
+var WF_OVERLAY_TIMEOUTS = {};
+function startOverlayTimeout(id) {
+  var pending = WF_OVERLAY_TIMEOUTS[id];
+  pending.due = Date.now() + pending.left;
+  pending.handle = setTimeout(function () { closeOverlay(id); }, pending.left);
+}
+function clearOverlayTimeout(id) {
+  var pending = WF_OVERLAY_TIMEOUTS[id];
+  if (!pending) return;
+  clearTimeout(pending.handle);
+  delete WF_OVERLAY_TIMEOUTS[id];
+}
+function pauseOverlayTimeouts(paused) {
+  Object.keys(WF_OVERLAY_TIMEOUTS).forEach(function (id) {
+    var pending = WF_OVERLAY_TIMEOUTS[id];
+    if (paused && pending.handle) {
+      clearTimeout(pending.handle);
+      pending.handle = null;
+      pending.left = Math.max(0, pending.due - Date.now());
+    } else if (!paused && !pending.handle) {
+      startOverlayTimeout(id);
+    }
+  });
 }
 function openOverlay(id) {
   var node = document.getElementById(id);
@@ -172,8 +195,10 @@ function openOverlay(id) {
   var dismiss = overlayDismissList(node);
   setOverlayVisible(node, true);
   positionAnchoredOverlay(node);
+  clearOverlayTimeout(id);
   if (dismiss.indexOf('timeout') >= 0) {
-    node._wfDismissTimer = setTimeout(function () { closeOverlay(id); }, 3000);
+    WF_OVERLAY_TIMEOUTS[id] = { left: 3000, due: 0, handle: null };
+    if (!isMeasuring()) startOverlayTimeout(id);
   }
   bindOverlayDismiss(node, id, dismiss);
 }

@@ -2,16 +2,17 @@
 
 /**
  * Returns the measurement-mode runtime code string for the interaction runtime.
- * This is a fragment of the client-side JS IIFE. It relies on `clamp` from the
- * overlay fragment, declared in the surrounding scope.
+ * This is a fragment of the client-side JS IIFE. It relies on `clamp` and
+ * `pauseOverlayTimeouts` from the overlay fragment, declared in the surrounding
+ * scope.
  *
  * Measurement is inert until it is switched on by a `wf:measure` message from
  * the embedding window, `setMeasure()` in the browser library, or the `m` key on
  * a standalone page. Before that it adds no DOM, attributes or styles, and
  * switching it off removes everything it added. While on, capture-phase window
  * listeners stop pointer, click, key and touch events before the page's own
- * handlers, and `isMeasuring()` gates the runtime paths that do not start from
- * those events.
+ * handlers, `isMeasuring()` gates the runtime paths that do not start from
+ * those events, and timed overlay dismissals pause until it is switched off.
  */
 function buildMeasureRuntimeCode() {
   return `var WF_MEASURE = { on: false, layer: null, marks: null, hover: null, pin: null, press: null, x: 0, y: 0, hasPoint: false, touch: false };
@@ -326,6 +327,7 @@ function measureListeners(add) {
 function setMeasure(on) {
   if (on === WF_MEASURE.on || !document.body) return;
   WF_MEASURE.on = on;
+  pauseOverlayTimeouts(on);
   if (!on) {
     measureListeners(false);
     if (WF_MEASURE.layer && WF_MEASURE.layer.parentNode) WF_MEASURE.layer.parentNode.removeChild(WF_MEASURE.layer);

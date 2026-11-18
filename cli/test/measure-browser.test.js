@@ -240,3 +240,40 @@ test('an embedded page follows its parent only, and measures in its own pixels u
     await page.waitForFunction(() => window.navigations.includes('next'));
   });
 });
+
+function timedFixture() {
+  return renderWireframeMarkup({
+    roots: [{id: 'main', kind: 'container', nodes: [
+      {id: 'open', component: 'button', props: {label: 'Open notice'}, interaction: [{type: 'open_overlay', targetOverlay: 'notice'}]},
+    ]}, {id: 'notice', kind: 'overlay', type: 'modal', trigger: 'open', props: {title: 'Saved'},
+      dismissOn: ['timeout'], nodes: [{id: 'notice_body', component: 'paragraph', props: {text: 'Closes by itself'}}]}],
+    pageViewport: {device: 'web', width: 1280, height: 800}, pageRouteId: 'home',
+    routeTable: {home: '#home'}, rendering: {mode: 'card'}, deviceChrome: false,
+  });
+}
+
+test('a pending timed dismissal pauses while measuring and resumes with the time it had left', async () => {
+  await withPage(async (page) => {
+    await page.clock.install();
+    await page.setContent(timedFixture());
+    await page.getByRole('button', {name: 'Open notice'}).click();
+    await page.clock.runFor(1000);
+    await page.keyboard.press('m');
+    await page.clock.runFor(10000);
+    assert.equal(await page.locator('#notice').isVisible(), true, 'the timeout does not dismiss while measuring');
+    await hover(page, '#notice .wf-overlay-title');
+    assert.ok((await labels(page)).width, 'the open overlay can still be measured');
+
+    await page.keyboard.press('m');
+    await page.clock.runFor(1900);
+    assert.equal(await page.locator('#notice').isVisible(), true, 'the remaining time restarts, not a dismissal at once');
+    await page.clock.runFor(200);
+    assert.equal(await page.locator('#notice').isVisible(), false, 'it dismisses once its remaining two seconds have run');
+
+    await page.getByRole('button', {name: 'Open notice'}).click();
+    await page.clock.runFor(2900);
+    assert.equal(await page.locator('#notice').isVisible(), true, 'reopening starts a full three seconds');
+    await page.clock.runFor(200);
+    assert.equal(await page.locator('#notice').isVisible(), false);
+  });
+});
