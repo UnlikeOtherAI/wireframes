@@ -2,6 +2,7 @@
 
 const { PRIMITIVES, FAMILY_ORDER, ALIASES } = require('./primitive-registry');
 const { ROLES, tokenNames } = require('../renderer/sizing-tokens');
+const { stdPatternsCheatSheet } = require('./llm-components');
 
 const FAMILY_TITLE = {
   containers: 'Containers — layout and framing',
@@ -69,6 +70,8 @@ ${byFamily}
 
 Pick the element that *is* the thing. Do not build a card out of a section and a
 border; use \`card\`. Do not build a nav out of buttons; use \`nav\`.
+
+${stdPatternsCheatSheet()}
 
 ## Boxes: the one rule that matters
 

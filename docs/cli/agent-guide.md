@@ -12,6 +12,13 @@
 Pick the element that *is* the thing. Do not build a card out of a section and a
 border; use `card`. Do not build a nav out of buttons; use `nav`.
 
+## Screen patterns
+
+Whole screens ship built in. Use one before building it by hand: `use: std.login`.
+`std.data_page`, `std.hero`, `std.login`, `std.not_found`, `std.settings_page`, `std.signup`, `std.site_footer`, `std.site_header`.
+`wf component show std.<name>` lists its props and slots; `wf component copy
+std.<name>` makes an editable copy in components.yaml.
+
 ## Boxes: the one rule that matters
 
 Only some elements draw a visible box. The engine decides, in this order:
