@@ -21,6 +21,50 @@ function extractEnumValues(schema, defPath) {
   return Array.isArray(current) ? current : [];
 }
 
+/** The shared item model, taught once for every list prop that takes it. */
+function itemsSection() {
+  return `## Items
+
+Nav and menu entries, tabs, breadcrumbs, steps, list rows, tree and accordion
+entries, carousel slides and choice options share one item shape. Props shown
+as \`name (items)\` in the element list take it.
+
+\`\`\`yaml
+items:
+  - Inbox                                     # a string is { label: Inbox }
+  - { label: Drafts, value: drafts, icon: file, badge: 3 }
+  - { type: separator }
+  - { type: heading, label: Labels }
+  - { type: group, label: Team, items: [Ada, Grace] }
+  - { label: Archive, route: archive, disabled: true }
+\`\`\`
+
+- Text and decoration: label, description, value, icon, iconStyle, avatar, badge, meta, shortcut, route, tone (neutral | info | success | warning | danger).
+- State: selected, current, checked (true | false | mixed), disabled, expanded. Leave a state out unless you mean it.
+- type: item (default), separator, heading, or group (a label plus nested items).
+- Selection: identity is value, else label. An item's own selected wins. Otherwise the element's value (a list when multiple: true) selects the matching items; a single-choice element selects only the first match, and wf lint reports AMBIGUOUS_VALUE.
+- route links only in elements that navigate: nav, breadcrumb, tab bars, menu, list, command and actions. A disabled item never links.
+- Older keys keep working where they always did (title, text, active, open, children, divider, danger, and group/heading entries in nav), but write the keys above.
+
+Actions (actions on card, alert, empty_state and page_header): { label, icon, variant, route, disabled, pressed, tone }.
+A disabled action renders as a disabled button with no link; pressed makes it a toggle.`;
+}
+
+/** The shared field contract and how state shows in the markup. */
+function fieldsSection() {
+  return `## Fields and states
+
+Form controls share: label, help, error, required, disabled, readonly.
+- error replaces help and marks the field invalid; required marks the label.
+- disabled values are not submitted. readonly values stay bound and are submitted.
+- checkbox, radio and toggle keep their label inline; help is their description.
+
+Built markup shows state on the element that owns it, as presence-only attributes:
+data-wf-disabled, -readonly, -required, -invalid, -loading, -pressed,
+-checked (="mixed" when indeterminate), -selected, -current and -expanded, next to
+the matching native or ARIA attribute (disabled, aria-pressed="false", aria-current="page").`;
+}
+
 function generateLlmReference() {
   const schema = loadSchema();
   const primitives = extractEnumValues(schema, 'PrimitiveComponent.enum');
@@ -193,6 +237,10 @@ visibility:
 \`\`\`
 
 ${elementCatalogue()}
+
+${itemsSection()}
+
+${fieldsSection()}
 
 ## Interactions
 
