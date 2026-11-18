@@ -1,6 +1,6 @@
 'use strict';
 
-const { partId, fieldState, fieldLabel, fieldHelp, describedBy } = require('./controls-field');
+const { partId, fieldState, fieldLabel, fieldHelp, describedBy, optionValueAttr } = require('./controls-field');
 
 const BUTTON_VARIANTS = new Set(['primary', 'secondary', 'ghost', 'danger', 'link']);
 const TOOLBAR_SIZES = new Set(['sm', 'md', 'lg']);
@@ -55,7 +55,7 @@ function segmentButtons(node, lib, state) {
     const glyph = lib.iconSpan(option.icon);
     const disabled = !label || node.selection?.selectable === false || state.disabled || option.disabled === true;
     const attrs = lib.stateAttrs({ selected: on, disabled }, { owner: lib.STATE_OWNERS.tab });
-    return `<button type="button" class="wf-segment${on ? ' wf-segment-on' : ''}" data-wf-choice-value="${lib.escapeAttr(JSON.stringify(label))}"${attrs}${!label ? ' aria-label="Empty option"' : ''}>${glyph}${label ? lib.escapeHtml(label) : lib.renderSkeleton(5)}</button>`;
+    return `<button type="button" class="wf-segment${on ? ' wf-segment-on' : ''}" data-wf-choice-value="${lib.escapeAttr(JSON.stringify(label))}"${optionValueAttr(option, lib)}${attrs}${!label ? ' aria-label="Empty option"' : ''}>${glyph}${label ? lib.escapeHtml(label) : lib.renderSkeleton(5)}</button>`;
   }).join('');
 }
 

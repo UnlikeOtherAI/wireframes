@@ -652,6 +652,35 @@ These changed or sharpened the design while it was built. The code and the docs 
   submits a list.
 - **`choice_group` fix (T5).** A row selected by `value` now draws its dot. It was
   selected but never drawn.
+- **Stepper help (T5).** A stepper shows `help`, and `error` replaces it. Authored
+  help used to be dropped silently. With the `choice_group` dot, these are the only
+  visible changes for legacy-only YAML; a browser test compares every other legacy
+  control pixel by pixel against the legacy markup and stylesheet.
+- **Disabled look (T5, review).** Native fields (text types, number, colour,
+  `textarea`, `select`) keep the browser's disabled look; the wrapper fade was
+  removed. Drawn controls fade one layer to 0.5, as the legacy disabled checkbox and
+  button do. That covers range, otp and stepper, which ignored `disabled` before. A
+  disabled `choice_group` no longer fades its rows a second time, and toolbar items
+  moved from 0.45 to 0.5.
+- **Runtime refresh (T5, review).** A bound value refreshes with the semantics it
+  rendered with: a multiple select keeps its list, number fields and steppers clamp
+  to `min`/`max` and show `step` decimals (a bound stepper refreshes at all now), and
+  a bound mixed checkbox stays mixed until its `checked` state changes or the user
+  activates it. A browser test checks a grid of literal and bound values for parity.
+- **Segment identity (T5, review).** Labels stay the binding payload; the runtime keeps
+  the chosen segment as the choice, so one of several segments sharing a label stays
+  selected through refreshes.
+- **Drawn-control submission (T5, review).** Checkbox, radio, toggle, segmented,
+  choice group and picker submit under their node id, from the state they show:
+  booleans (or `"mixed"`), the chosen option's `value` else its label, or a list for a
+  checkbox group. Read-only values go, disabled controls do not. On `main` the
+  checkbox was a drawn mark and submitted nothing; before 2 November 2026
+  (`7e1b19e`) it was a native checkbox that submitted `true`/`false` under the node
+  id, which is the key and shape it has again. Native field keys are unchanged.
+- **Picker centring (T5, review).** With nothing selected, the wheel keeps its legacy
+  rule: the first option whose label is the `value` text, so with no `value` the
+  first blank option, else the first option. Options marked `selected: false` are
+  skipped.
 - **Measurement (T3).** Labels show one decimal. Pins happen on `pointerup`, because
   disabled controls get no `click`. Pane sizes are not saved while measuring.
 - **Bundle budget (integration).** The renderer budget rose from 420 KB to 460 KB. The

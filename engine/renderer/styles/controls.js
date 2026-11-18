@@ -49,7 +49,7 @@ const controlStyles = [
   '.wf-mode-card .wf-toolbar-item[data-wf-pressed],.wf-mode-card .wf-toolbar-item[data-wf-checked]{background:var(--wf-line);color:var(--wf-ink);box-shadow:inset 0 1px 2px rgba(17,24,39,.15)}',
   '.wf-mode-line .wf-toolbar-item[data-wf-pressed],.wf-mode-line .wf-toolbar-item[data-wf-checked]{background:var(--wf-fill);border-color:var(--wf-line-strong)}',
   '.wf-toolbar-item[data-wf-pressed="mixed"],.wf-toolbar-item[data-wf-checked="mixed"]{border-style:dashed}',
-  '.wf-toolbar-item[data-wf-disabled]{opacity:.45;cursor:not-allowed}',
+  '.wf-toolbar-item[data-wf-disabled]{opacity:.5;cursor:not-allowed}',
   '.wf-toolbar-sep{align-self:stretch;width:1px;margin:4px 3px;background:var(--wf-line)}',
   '.wf-toolbar-stack .wf-toolbar-sep{width:auto;height:1px;margin:3px 4px}',
   '.wf-mode-line .wf-toolbar-sep{background:var(--wf-line-strong)}',
@@ -98,8 +98,6 @@ const controlStyles = [
   '.wf-field-invalid{--wf-tone:var(--wf-danger)}',
   '.wf-field-invalid .wf-control,.wf-field-invalid textarea{border-color:var(--wf-tone);border-width:2px}',
   '.wf-select-searchable .wf-control select{padding-left:0}',
-  // Disabled fields fade: the inherited ink colour hides the native disabled look.
-  '.wf-control:has(>[data-wf-disabled]),.wf-color:has(>[data-wf-disabled]),.wf-textarea textarea[data-wf-disabled]{opacity:.55;cursor:not-allowed}',
   // Read-only keeps the value but drops the editable look; disabled wins when both are set.
   '.wf-mode-card .wf-control:has(>[data-wf-readonly]:not([data-wf-disabled])),.wf-mode-card .wf-textarea textarea[data-wf-readonly]:not([data-wf-disabled])'
     + '{background:var(--wf-fill-2)}',
@@ -122,7 +120,9 @@ const controlStyles = [
   '.wf-range-track{display:block;height:4px;border-radius:2px;background:var(--wf-line-2)}',
   '.wf-range-fill{display:block;height:100%;border-radius:2px;background:var(--wf-ink-3)}',
   '.wf-range-thumb{position:absolute;top:9px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#ffffff;border:1px solid var(--wf-ink-3)}',
-  // Drawn controls have no native disabled look, so they fade instead.
+  // Disabled: native fields keep the native look they always had. Drawn
+  // controls fade one layer to half opacity, as disabled buttons and
+  // checkboxes always did.
   '.wf-range[data-wf-disabled],.wf-otp[data-wf-disabled],.wf-numstepper[data-wf-disabled],.wf-picker-wheel[data-wf-disabled],'
     + '.wf-editor-body[data-wf-disabled],.wf-choice-list[data-wf-disabled]{opacity:.5}',
   '.wf-numstepper[data-wf-readonly] .wf-numstepper-btn{color:var(--wf-ink-4);cursor:default}',
@@ -154,7 +154,7 @@ const controlStyles = [
   '.wf-check-mark[data-wf-checked="mixed"]:after{content:"";position:absolute;left:3px;top:6px;width:8px;height:2px;background:#ffffff}',
   '.wf-choice-on .wf-radio-mark:after,.wf-radio-mark[data-wf-checked]:after{content:"";position:absolute;left:3px;top:3px;width:8px;height:8px;border-radius:50%;background:var(--wf-ink)}',
   '.wf-field-invalid .wf-check-mark,.wf-field-invalid .wf-radio-mark,.wf-field-invalid .wf-toggle-track{border-color:var(--wf-tone)}',
-  '.wf-choice-list .wf-choice:has([data-wf-disabled]){opacity:.5}',
+  '.wf-choice-list:not([data-wf-disabled]) .wf-choice:has([data-wf-disabled]){opacity:.5}',
   '.wf-checkbox>.wf-field-error,.wf-radio>.wf-field-error{margin-left:25px}',
   '.wf-toggle>.wf-field-error{margin-left:45px}',
   '.wf-toggle-track{display:inline-block;width:36px;height:20px;flex:0 0 auto;margin-top:1px;position:relative;'

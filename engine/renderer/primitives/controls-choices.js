@@ -1,6 +1,6 @@
 'use strict';
 
-const { partId, fieldState, fieldLabel, fieldHelp, describedBy } = require('./controls-field');
+const { partId, fieldState, fieldLabel, fieldHelp, describedBy, optionValueAttr } = require('./controls-field');
 
 const MARK_ROLE = { checkbox: 'checkbox', radio: 'radio', toggle: 'switch' };
 // A radio announces checked and disabled; read-only belongs to its group.
@@ -109,7 +109,7 @@ function renderChoiceGroup(node, ctx, lib) {
       disabled: state.disabled || option.disabled === true,
       readonly: kind === 'checkbox' && state.readonly,
     };
-    const mark = choiceMark(kind, ` role="${kind}"${lib.stateAttrs(rowState, { owner: markOwner(kind, lib) })}`);
+    const mark = choiceMark(kind, ` role="${kind}"${optionValueAttr(option, lib)}${lib.stateAttrs(rowState, { owner: markOwner(kind, lib) })}`);
     return `<label class="wf-choice${on ? ` wf-${kind}-on` : ''}">${mark}<span class="wf-choice-text"><span class="wf-choice-label">${
       label ? lib.escapeHtml(label) : lib.renderSkeleton(8)
     }</span>${option.description ? `<span class="wf-choice-desc">${lib.escapeHtml(option.description)}</span>` : ''}</span></label>`;
@@ -124,11 +124,19 @@ function renderChoiceGroup(node, ctx, lib) {
   };
 }
 
-/** The wheel centres the selected option; with nothing selected, the first one it may show. */
+/**
+ * The wheel centres the selected option. With nothing selected it keeps its
+ * legacy rule: the first row whose label is the value's text, which for an
+ * absent value is the first blank row, otherwise the first row. A row
+ * marked `selected: false` is skipped by that rule.
+ */
 function pickerCentre(options, lib, value) {
   const { selected, source } = lib.resolveSelection(options, { value });
   if (source) return selected.indexOf(true);
-  return Math.max(0, options.findIndex((option) => option.selected !== false));
+  const text = lib.str(value);
+  const eligible = (option) => option.selected !== false;
+  const match = options.findIndex((option) => eligible(option) && lib.str(option.label) === text);
+  return match >= 0 ? match : Math.max(0, options.findIndex(eligible));
 }
 
 function renderPicker(node, ctx, lib) {
@@ -140,7 +148,7 @@ function renderPicker(node, ctx, lib) {
     const label = option ? lib.str(option.label) : '';
     const on = i === 2 ? ' wf-picker-on' : '';
     const current = i === 2 && option ? lib.stateAttrs({ selected: true }) : '';
-    return `<span class="wf-picker-row${on}"${current}>${label ? lib.escapeHtml(label) : ''}</span>`;
+    return `<span class="wf-picker-row${on}"${option ? optionValueAttr(option, lib) : ''}${current}>${label ? lib.escapeHtml(label) : ''}</span>`;
   }).join('');
   const state = lib.stateAttrs(fieldState(props, lib));
   return {

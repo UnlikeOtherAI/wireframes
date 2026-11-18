@@ -1,7 +1,8 @@
 'use strict';
 
 const { resolvePrimitiveName, itemProps } = require('../../schema/primitive-registry');
-const { normalizeItems, resolveSelection } = require('../../renderer/items');
+const { resolveSelection } = require('../../renderer/items');
+const { choiceOptions } = require('../../renderer/choice-options');
 const { appendPath } = require('../../schema/validator');
 
 function isObject(value) {
@@ -15,7 +16,8 @@ function isMultiple(component, props) {
 
 /**
  * A single-choice element (no `multiple: true`) whose `value` matches more
- * than one item in an item prop selects only the first match.
+ * than one item in an item prop selects only the first match. The items are
+ * read as the renderer reads them: a select's options across all its groups.
  *
  * `at` is where the node is written; only a result that sets `locations` keeps
  * the finding's place, which is the node's `props.value`.
@@ -27,7 +29,7 @@ function validateAmbiguousValue(result, node, context, at) {
   if (!component || props.value == null || isMultiple(component, props)) return;
 
   for (const prop of itemProps(component)) {
-    const { ambiguous } = resolveSelection(normalizeItems(props[prop]), { value: props.value });
+    const { ambiguous } = resolveSelection(choiceOptions(component, props[prop]), { value: props.value });
     if (!ambiguous) continue;
     if (!Array.isArray(result.info)) result.info = [];
     const code = 'AMBIGUOUS_VALUE';

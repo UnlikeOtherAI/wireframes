@@ -41,8 +41,10 @@ conventions are in [rendering-states.md](rendering-states.md).
 
 A control that uses only the props it had before the field contract renders
 the markup it always did, plus state and ARIA attributes and the ids they
-point at. One visible change: a `choice_group` row selected by `value` now
-draws its checked mark (it never did).
+point at. Two visible changes: a `choice_group` row selected by `value` now
+draws its checked mark (it never did), and a stepper shows its `help` (it
+was dropped). `cli/test/controls-legacy-visual-browser.test.js` compares the
+rest pixel by pixel against the legacy markup and stylesheet.
 
 #### Field contract per widget
 
@@ -63,15 +65,30 @@ Every control except `button` and `toolbar` spreads `FIELD_PROPS`: `label`,
 | `upload` | `label` stays the action copy; `fieldLabel` goes above | below | with any field prop, an inner `.wf-upload-zone` (or `.wf-upload-row` for `variant: button`) carries the state and the dashed box | drawn without its action: the files only, or "No files" |
 
 `error` replaces `help` and adds `wf-field-invalid` to the node, which
-paints the invalid edge through `--wf-tone`. With both `readonly` and
-`disabled`, both are written and disabled wins: disabled fields fade,
-read-only ones get a flat fill (card mode) or a dashed edge (line mode).
-Drawn controls (range, otp, stepper, picker, editor, upload zone, choice
-lists) fade when disabled.
+paints the invalid edge through `--wf-tone`. Read-only native fields get a
+flat fill (card mode) or a dashed edge (line mode). Disabled native fields
+(text types, number, colour, `textarea`, `select`) keep the browser's
+disabled look, as they always did. Drawn controls fade one layer to half
+opacity, as disabled buttons and checkboxes always have: range, otp,
+stepper, picker, editor, tags, the upload zone, the segment track, a choice
+list (or one disabled row in it) and a toolbar item. With both `readonly`
+and `disabled`, both are written and disabled wins.
 
-In the runtime, read-only values stay bound and are submitted; disabled
-fields are skipped by a `submit` interaction, as in HTML. A multiple select
-submits a list of option values.
+A `submit` interaction collects the fields inside its form in document
+order. Native fields keep their keys: `<id>__input` for an input, the node
+id for a textarea, select or colour field. Drawn controls submit under their
+node id, read from the state they show:
+
+| Control | Submits |
+|---|---|
+| `checkbox`, `radio`, `toggle` | `true` or `false`; a mixed checkbox `"mixed"` |
+| `segmented`, radio `choice_group`, `picker` | the chosen option's `value`, else its label; `""` with nothing chosen |
+| checkbox `choice_group` | the list of checked options' values |
+| multiple `select` | the list of selected option values |
+
+Read-only values are submitted. A disabled field or control is skipped, as
+in HTML; an option's own `disabled` only stops it being chosen. A drawn
+option whose `value` differs from its label carries it as `data-wf-value`.
 
 #### Options and selection
 
@@ -83,12 +100,17 @@ submits a list of option values.
 - `select.value` is the initial selection; with `multiple: true` it is a
   list. Item `selected` wins; `selected: false` beats a matching value. A
   `group` item is an `<optgroup>`, a `separator` an `<hr>`, and a
-  `disabled` item a disabled option. A `{{state.x}}` value binds the select
-  like an input value.
+  `disabled` item a disabled option. The selection is resolved once across
+  the options of every group, so a single select marks only the first
+  match, and `AMBIGUOUS_VALUE` reads the options the same way
+  (`engine/renderer/choice-options.js`). A `{{state.x}}` value binds the
+  select like an input value.
 - A checkbox `choice_group` is multiple choice: its `value` may be a list,
   and an option's `checked: mixed` draws it indeterminate.
-- `picker` centres the selected option; with nothing selected, the first
-  option not marked `selected: false`.
+- `picker` centres the selected option. With nothing selected it keeps its
+  legacy rule: the first option whose label is the `value` text (with no
+  `value`, the first blank option), else the first option. Options marked
+  `selected: false` are skipped.
 - Segments and choices still send their labels as binding payloads.
 
 #### New props
@@ -114,8 +136,9 @@ submits a list of option values.
     bound.
   - `step` sets how many decimals the number and stepper show (step 0.5
     shows 2.0) and is written on a number field. Nothing snaps.
-  - `{{props.x}}` values resolve through the binding helpers; state
-    templates resolve to nothing and do not move the thumb.
+  - `{{props.x}}` values resolve through the binding helpers. A
+    `{{state.x}}` value binds a number field or stepper (see Runtime); on
+    a range it resolves to nothing and does not move the thumb.
 
 #### `toolbar`
 
@@ -150,7 +173,10 @@ outline, `role="toolbar"`. It never draws a frame of its own (frame class
 together:
 
 - Segments: `aria-pressed` and `data-wf-selected` move with the choice; a
-  read-only track ignores clicks.
+  read-only track ignores clicks. The label stays the binding payload, but
+  the segment chosen is the choice: of several segments sharing a label,
+  the one clicked (or selected by `value`) stays lit. State set elsewhere
+  lights the first segment with that label.
 - Pressed buttons and toolbar items flip `aria-pressed`/`aria-checked` and
   `data-wf-pressed`/`data-wf-checked`; disabled ones do not.
 - Checkbox, toggle and radio marks toggle `aria-checked` and
@@ -159,7 +185,16 @@ together:
   `{{state.key}}` binding instead and is redrawn from state; with an
   authored interaction, that interaction owns the state. A bound `checked`
   or `disabled` updates the mark, not the node shell.
+- A bound mixed checkbox stays mixed until its `checked` state moves off
+  the value it mounted with, or the user activates it (which checks it).
 - `choice_group` rows select (radio) or toggle (checkbox).
+- A bound value refreshes with the field semantics it rendered with. A
+  multiple select selects every option in the bound list (one value
+  selects one option). A number field and a stepper clamp to their bounds
+  and show `step` decimals, exactly as at render time; a stepper carries
+  `data-wf-min`, `data-wf-max` and `data-wf-step` for this and disables
+  its button at a bound. What the user types into a number field is left
+  as typed.
 - Read-only and disabled marks, groups and segments ignore clicks; a
   read-only select puts back its selection; a read-only colour field puts
   back its picker.

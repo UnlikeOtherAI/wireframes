@@ -264,9 +264,15 @@ function formValues(formId) {
   var root = document.getElementById(formId);
   if (!root) return null;
   var output = {};
-  var fields = root.querySelectorAll('input,textarea,select');
+  var fields = root.querySelectorAll('input,textarea,select,' + WF_DRAWN_FIELDS);
   for (var i = 0; i < fields.length; i++) {
     var field = fields[i];
+    // Drawn controls go under their node id, in document order with native fields.
+    if (field.matches(WF_DRAWN_FIELDS)) {
+      var drawn = drawnFieldValue(field);
+      if (drawn !== undefined && field.id) output[field.id] = drawn;
+      continue;
+    }
     // As in HTML: a disabled field is not submitted; a read-only one is.
     if (field.hasAttribute('data-wf-color-picker') || field.disabled) continue;
     var cursor = field;
