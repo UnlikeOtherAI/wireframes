@@ -490,8 +490,8 @@ Form controls share the field props in
 | Widget | Field label | Help and error | `readonly` |
 |---|---|---|---|
 | `input`, `textarea` | Above | Below | Native `readonly`. |
-| `select`, `picker`, `segmented`, `choice_group` | Above | Below | `aria-readonly` and `data-wf-readonly`; the runtime ignores changes. |
-| `checkbox`, `radio`, `toggle` | Inline; `help` is an alias of the inline `description` | Error below the row | `aria-readonly`; the runtime ignores toggles. |
+| `select`, `picker`, `segmented`, `choice_group` | Above; `segmented` gains it | Below | `data-wf-readonly`, plus `aria-readonly` where the role supports it (`select`, a radio group, each checkbox in a checkbox group); the runtime ignores changes. |
+| `checkbox`, `radio`, `toggle` | Inline; `help` is an alias of the inline `description` | Error below the row | `aria-readonly` (a radio, which has none, gets `data-wf-readonly` only); the runtime ignores toggles. |
 | `tags_input`, `editor` | Above | Below | Drawn without input affordances. |
 | `upload` | `label` stays the action copy; `fieldLabel` goes above | Below | Dropzone drawn without its action. |
 

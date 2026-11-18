@@ -7,6 +7,11 @@ function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
 }
 
+/** A checkbox choice_group selects several options, like `multiple: true`. */
+function isMultiple(component, props) {
+  return props.multiple === true || (component === 'choice_group' && props.kind !== 'radio');
+}
+
 /**
  * A single-choice element (no `multiple: true`) whose `value` matches more
  * than one item in an item prop selects only the first match.
@@ -15,7 +20,7 @@ function validateAmbiguousValue(result, node, context) {
   if (!isObject(node) || typeof node.component !== 'string') return;
   const component = resolvePrimitiveName(node.component);
   const props = isObject(node.props) ? node.props : {};
-  if (!component || props.value == null || props.multiple === true) return;
+  if (!component || props.value == null || isMultiple(component, props)) return;
 
   for (const prop of itemProps(component)) {
     const { ambiguous } = resolveSelection(normalizeItems(props[prop]), { value: props.value });

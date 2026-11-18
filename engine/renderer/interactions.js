@@ -267,14 +267,18 @@ function formValues(formId) {
   var fields = root.querySelectorAll('input,textarea,select');
   for (var i = 0; i < fields.length; i++) {
     var field = fields[i];
-    if (field.hasAttribute('data-wf-color-picker')) continue;
+    // As in HTML: a disabled field is not submitted; a read-only one is.
+    if (field.hasAttribute('data-wf-color-picker') || field.disabled) continue;
     var cursor = field;
     var key = field.getAttribute('data-wf-form-key');
     while (!key && cursor && cursor !== root) {
       if (cursor.getAttribute && cursor.getAttribute('id')) { key = cursor.getAttribute('id'); break; }
       cursor = cursor.parentNode;
     }
-    if (key) output[key] = field.type === 'checkbox' ? !!field.checked : field.value;
+    if (!key) continue;
+    if (field.type === 'checkbox') output[key] = !!field.checked;
+    else if (field.tagName === 'SELECT' && field.multiple) output[key] = Array.prototype.map.call(field.selectedOptions, function (option) { return option.value; });
+    else output[key] = field.value;
   }
   return output;
 }
