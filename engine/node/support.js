@@ -14,7 +14,7 @@ const {
 
 const { PRIMITIVE_COMPONENTS } = require(path.resolve(__dirname, '..', 'schema', 'primitives'));
 const { childNodeLists } = require(path.resolve(__dirname, '..', 'component-registry', 'child-nodes'));
-const { resolveComponentDefinition } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
+const { resolveAuthoredComponent } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
 const { loadProjectComponentRegistry } = require(path.resolve(__dirname, '..', 'component-registry'));
 
 const WF_ID_REGEX = /^[a-z][a-z0-9_]*$/;
@@ -102,7 +102,7 @@ function resolveComponentBinding(projectPath, componentRef) {
   if (!loaded.ok) {
     return { ok: false, error: `Unable to load project components: ${loaded.error}` };
   }
-  if (resolveComponentDefinition(componentRef, loaded.registry.components)) {
+  if (resolveAuthoredComponent(componentRef, loaded.registry.components)) {
     return { ok: true, node: { use: componentRef } };
   }
 

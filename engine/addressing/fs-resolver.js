@@ -2,7 +2,7 @@
 
 const path = require('node:path');
 const { loadProjectComponentRegistry } = require(path.resolve(__dirname, '..', 'component-registry'));
-const { resolveComponentDefinition } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
+const { resolveAuthoredComponent } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
 const { projectFileTarget } = require(path.resolve(__dirname, '..', 'component-registry', 'project-file'));
 const { builtinCopyHint } = require(path.resolve(__dirname, '..', 'stdlib'));
 const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
@@ -108,7 +108,7 @@ function resolveComponentAddress(projectPath, parsed) {
   const { components, sources } = loadedRegistry.registry;
 
   if (!Object.hasOwn(components, componentId)) {
-    const builtin = resolveComponentDefinition(componentId, components);
+    const builtin = resolveAuthoredComponent(componentId, components);
     if (!builtin) return { ok: false, error: `Component "${componentId}" does not exist.` };
     const builtinResult = buildComponentRootsFromMap({ [componentId]: structuredClone(builtin) }, componentId);
     if (!builtinResult.ok) return builtinResult;

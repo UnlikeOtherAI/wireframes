@@ -13,7 +13,7 @@
 
 const { appendPath } = require('../schema/validator');
 const { childNodeEntries } = require('../component-registry/child-nodes');
-const { resolveComponentDefinition } = require('../component-registry/definition-lookup');
+const { authoredReference, resolveComponentDefinition } = require('../component-registry/definition-lookup');
 const {
   collectSlotPlaceholders,
   componentSlotNames,
@@ -58,7 +58,9 @@ function checkInstance(node, at, definitions, where, report) {
   const definition = resolveComponentDefinition(node.use, definitions);
   if (!isObject(definition) || !isObject(definition.root)) return;
 
-  const instance = `Instance "${node.id}" of component "${node.use}" in ${where}`;
+  // Named as written: a module's built-in-only `std.<name>` reads as `std.<name>`.
+  const use = authoredReference(node.use);
+  const instance = `Instance "${node.id}" of component "${use}" in ${where}`;
   const declared = componentSlotNames(definition);
   const slots = isObject(node.slots) ? node.slots : {};
   const fillAt = (name) => under(at, ['slots', name], true);
@@ -66,7 +68,7 @@ function checkInstance(node, at, definitions, where, report) {
   if (declared.length === 0) {
     for (const name of Object.keys(slots)) {
       report('errors', 'UNKNOWN_COMPONENT_SLOT',
-        `${instance} fills slot "${name}", but "${node.use}" declares no slots. Valid slots: none.`, fillAt(name));
+        `${instance} fills slot "${name}", but "${use}" declares no slots. Valid slots: none.`, fillAt(name));
     }
     return;
   }
@@ -82,14 +84,14 @@ function checkInstance(node, at, definitions, where, report) {
   for (const [name, fill] of Object.entries(slots)) {
     if (!declared.includes(name)) {
       report('errors', 'UNKNOWN_COMPONENT_SLOT',
-        `${instance} fills slot "${name}", which "${node.use}" does not declare. Valid slots: ${slotList(declared)}.`, fillAt(name));
+        `${instance} fills slot "${name}", which "${use}" does not declare. Valid slots: ${slotList(declared)}.`, fillAt(name));
     } else if (Array.isArray(fill)) {
       filled.add(name);
     }
   }
   if (hasChildren && !declared.includes('default')) {
     report('errors', 'UNKNOWN_COMPONENT_SLOT',
-      `${instance} passes children, which fill slot "default", but "${node.use}" does not declare it. Valid slots: ${slotList(declared)}.`,
+      `${instance} passes children, which fill slot "default", but "${use}" does not declare it. Valid slots: ${slotList(declared)}.`,
       under(at, ['children'], true));
   }
 

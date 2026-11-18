@@ -238,3 +238,59 @@ test('#7 an imported component is edited in the file that defines it, unless tha
   assert.match(refused.stderr, /defined in \.\.\/shared\/ext\.yaml, outside the project/);
   assert.equal(fs.readFileSync(extPath, 'utf8'), before);
 });
+
+/** N3's collision: kit's own `std` alias lacks hero, and the project's `std` alias has one. */
+function collisionProject() {
+  const projectPath = nestedStdProject([{ id: 'promo', use: 'kit.landing' }, { id: 'own', use: 'std.hero' }]);
+  writeYaml(path.join(projectPath, 'components', 'global.yaml'), componentsDoc('global', { hero: label('hero', 'Root shadow') }));
+  importFromRoot(projectPath, { kit: './components/kit.yaml', std: './components/global.yaml' });
+  return projectPath;
+}
+
+test('R3 a module std id that means the built-in is shown as written', () => {
+  const projectPath = collisionProject();
+  const shown = wf(projectPath, 'component', 'show', 'kit.landing');
+  assert.equal(shown.status, 0, shown.stderr);
+  assert.match(shown.stdout, /\n {4}- banner \(use:std\.hero, built-in\)\n/);
+  assert.match(shown.stdout, /\n {4}- tag \(use:kit\.std\.badge\)\n/);
+  assert.doesNotMatch(shown.stdout, /builtin:/);
+
+  // Every id it shows can be shown in turn.
+  const hero = wf(projectPath, 'component', 'show', 'std.hero');
+  assert.equal(hero.status, 0, hero.stderr);
+  assert.match(hero.stdout, /Source: components\/global\.yaml \(hero\)/);
+  const builtin = wf(projectPath, 'component', 'show', 'std.login');
+  assert.match(builtin.stdout, /Source: built-in, read-only \(edit a copy: wf component copy std\.login\)/);
+  assert.equal(wf(projectPath, 'component', 'copy', 'std.login').status, 0, 'the command it suggests works');
+});
+
+test('R3 the internal built-in id is not an id a person can name', () => {
+  const projectPath = collisionProject();
+  const before = fs.readFileSync(path.join(projectPath, 'pages', 'home.yaml'), 'utf8');
+  for (const args of [
+    ['component', 'show', 'builtin:std.hero'],
+    ['component', 'remove', 'builtin:std.hero'],
+    ['component', 'copy', 'builtin:std.hero'],
+    ['inspect', 'wf://component/builtin:std.hero#hero.copy.title'],
+    ['node', 'update', 'wf://component/builtin:std.hero#hero.copy.title', '--props', '{"text":"x"}'],
+    ['node', 'add', 'builtin:std.hero', '--below', 'wf://page/home#main.promo', '--id', 'flag'],
+    ['tree', 'component', 'builtin:std.hero'],
+  ]) {
+    const result = wf(projectPath, ...args);
+    assert.notEqual(result.status, 0, `wf ${args.join(' ')}: ${result.stdout}`);
+    assert.doesNotMatch(`${result.stdout}${result.stderr}`, /null|wf component copy builtin:/, `wf ${args.join(' ')}`);
+  }
+  assert.equal(fs.readFileSync(path.join(projectPath, 'pages', 'home.yaml'), 'utf8'), before);
+});
+
+test('R3 slot findings name a module std id as written', () => {
+  const projectPath = collisionProject();
+  const kitPath = path.join(projectPath, 'components', 'kit.yaml');
+  const kit = readYaml(kitPath);
+  kit.components.landing.root.children[1].slots = { nope: [label('stray', 'Stray').root] };
+  writeYaml(kitPath, kit);
+  const errors = runValidate({ projectPath }).errors;
+  assert.deepEqual(errors.map((entry) => entry.code), ['UNKNOWN_COMPONENT_SLOT'], JSON.stringify(errors));
+  assert.match(errors[0].message, /^Instance "banner" of component "std\.hero" in component "kit\.landing" fills slot "nope"/);
+  assert.doesNotMatch(errors[0].message, /builtin:/);
+});
