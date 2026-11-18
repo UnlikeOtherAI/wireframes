@@ -54,3 +54,20 @@ test('the form footer button and Enter in a field never submit the page natively
     assert.equal(await page.evaluate(() => window.__wfStay), 'kept', 'the page must not reload');
   });
 });
+
+test('a form the host page owns still submits natively', async () => {
+  await withPage(async (page) => {
+    await page.evaluate(() => {
+      const host = document.createElement('form');
+      host.id = 'host_form';
+      host.action = 'about:blank#saved';
+      host.innerHTML = '<button id="host_save">Save</button>';
+      document.body.appendChild(host);
+    });
+    await Promise.all([
+      page.waitForURL(/saved/, { timeout: 5000 }),
+      page.locator('#host_save').click(),
+    ]);
+    assert.match(page.url(), /saved/);
+  });
+});

@@ -1414,12 +1414,15 @@ function bindRouteLinks() {
     }
   });
 }
-// A form element renders a real <form>, so its buttons and Enter in a field
-// submit it natively and reload the page. A prototype submits through its own
-// submit interactions only.
+// The form element renders a real HTML form, so its buttons and Enter in a
+// field submit it natively and reload the page. A prototype submits through its
+// own submit interactions only. Forms the host page owns are left alone.
 function blockNativeSubmit() {
   if (!document || typeof document.addEventListener !== 'function') return;
-  document.addEventListener('submit', function (event) { event.preventDefault(); }, true);
+  document.addEventListener('submit', function (event) {
+    var form = event.target;
+    if (form && form.classList && form.classList.contains('wf-form')) event.preventDefault();
+  }, true);
 }
 function init() {
   initMeasure();
