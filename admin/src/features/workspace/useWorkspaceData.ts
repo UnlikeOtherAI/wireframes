@@ -11,6 +11,36 @@ function buildAddress(docType: string, docId: string, pathParts: string[]): stri
   return `wf://${docType}/${docId}#${fragment}`
 }
 
+// Who wrote a node in the tree. Page nodes are edited in the page document; a
+// fill sits inside its component's content in the tree but is still written on
+// its instance. Component-internal nodes are edited in the component document,
+// so selecting one selects the closest page-authored instance.
+type Authorship =
+  | { kind: 'page'; authorParent?: object }
+  | { kind: 'internal'; owner: object; renderedId: string }
+
+const AUTHOR = Symbol('wfAuthor')
+
+type Authored = Record<string, unknown> & { [AUTHOR]?: Authorship }
+
+/** A tree node that renders inside a component instance it was not written on. */
+type TreeNode = ResolvedNode & { owner?: string; renderedId?: string }
+
+interface Extraction {
+  authorPaths: Map<object, string[]>
+  addresses: Map<object, string>
+}
+
+// Mirrors the engine resolver's scopes: definition content is namespaced under
+// the rendered instance id, and an instance's fills replace its placeholders.
+interface Scope {
+  owner: object | null
+  namespace: string | null
+  fills: Map<string, unknown[]> | null
+}
+
+const PAGE_SCOPE: Scope = { owner: null, namespace: null, fills: null }
+
 function extractNodeTree(
   node: unknown,
   parentId: string,
@@ -18,7 +48,8 @@ function extractNodeTree(
   docType: string,
   docId: string,
   pathParts: string[],
-): ResolvedNode | null {
+  extraction: Extraction,
+): TreeNode | null {
   if (!isObject(node)) return null
 
   const id = typeof node.id === 'string' ? node.id : `${parentId}_${index}`
@@ -30,8 +61,13 @@ function extractNodeTree(
       ? node.layout
       : undefined
 
-  const currentPath = [...pathParts, id]
+  const authorship = (node as Authored)[AUTHOR]
+  const authorParent = authorship?.kind === 'page' ? authorship.authorParent : undefined
+  const basePath = authorParent ? extraction.authorPaths.get(authorParent) ?? pathParts : pathParts
+  const currentPath = [...basePath, id]
   const address = buildAddress(docType, docId, currentPath)
+  extraction.authorPaths.set(node, currentPath)
+  extraction.addresses.set(node, address)
 
   const rawChildren = Array.isArray(node.children) ? node.children
     : Array.isArray(node.body) ? node.body
@@ -39,11 +75,16 @@ function extractNodeTree(
 
   const children: ResolvedNode[] = []
   for (let i = 0; i < rawChildren.length; i++) {
-    const child = extractNodeTree(rawChildren[i], id, i, docType, docId, currentPath)
+    const child = extractNodeTree(rawChildren[i], id, i, docType, docId, currentPath, extraction)
     if (child) children.push(child)
   }
 
-  return { id, address, type, component, layout, children }
+  const result: TreeNode = { id, address, type, component, layout, children }
+  if (authorship?.kind === 'internal') {
+    result.owner = extraction.addresses.get(authorship.owner)
+    result.renderedId = authorship.renderedId
+  }
+  return result
 }
 
 function extractComponentDefs(parsed: unknown): Record<string, unknown> {
@@ -57,45 +98,111 @@ function extractComponentDefs(parsed: unknown): Record<string, unknown> {
   return result
 }
 
+const isPlaceholder = (node: Record<string, unknown>) => Object.prototype.hasOwnProperty.call(node, 'slot')
+
+/** Whether a definition root declares slots anywhere below it. */
+function hasPlaceholders(root: Record<string, unknown>): boolean {
+  const visit = (node: unknown): boolean => {
+    if (!isObject(node)) return false
+    if (isPlaceholder(node)) return true
+    const lists = [node.children, ...(node.use != null && isObject(node.slots) ? Object.values(node.slots) : [])]
+    return lists.some((list) => Array.isArray(list) && list.some(visit))
+  }
+  const lists = [root.children, ...(root.use != null && isObject(root.slots) ? Object.values(root.slots) : [])]
+  return lists.some((list) => Array.isArray(list) && list.some(visit))
+}
+
+function authorIn(node: Record<string, unknown>, scope: Scope): Authored {
+  const copy: Authored = { ...node }
+  const id = typeof node.id === 'string' ? node.id : ''
+  copy[AUTHOR] = scope.owner && scope.namespace
+    ? { kind: 'internal', owner: scope.owner, renderedId: `${scope.namespace}__${id}` }
+    : { kind: 'page' }
+  return copy
+}
+
+/** An instance's fills, resolved in the scope that wrote them. Children fill `default`. */
+function resolveFills(
+  node: Record<string, unknown>,
+  instance: Authored,
+  componentDefs: Record<string, unknown>,
+  componentStack: Set<string>,
+  scope: Scope,
+): Map<string, unknown[]> {
+  const authored: Array<[string, unknown[]]> = []
+  if (Array.isArray(node.children)) authored.push(['default', node.children])
+  if (isObject(node.slots)) {
+    for (const [name, fill] of Object.entries(node.slots)) {
+      if (Array.isArray(fill) && !(name === 'default' && Array.isArray(node.children))) authored.push([name, fill])
+    }
+  }
+  const fills = new Map<string, unknown[]>()
+  for (const [name, fill] of authored) {
+    const entries = resolveComponents(fill, componentDefs, componentStack, scope)
+    for (const entry of entries) {
+      // A page fill is written on its instance, wherever it renders. Forwarded
+      // page content already names the page instance it was written on.
+      const authorship = (entry as Authored)[AUTHOR]
+      if (authorship?.kind === 'page' && !authorship.authorParent) {
+        (entry as Authored)[AUTHOR] = { kind: 'page', authorParent: instance }
+      }
+    }
+    fills.set(name, entries)
+  }
+  return fills
+}
+
 function resolveComponents(
   nodes: unknown[],
   componentDefs: Record<string, unknown>,
   componentStack: Set<string>,
+  scope: Scope = PAGE_SCOPE,
 ): unknown[] {
   const resolved: unknown[] = []
   for (const node of nodes) {
     if (!isObject(node)) continue
 
+    if (scope.fills && isPlaceholder(node)) {
+      const fill = scope.fills.get(typeof node.slot === 'string' ? node.slot : '')
+      if (fill) resolved.push(...fill)
+      else if (Array.isArray(node.children)) resolved.push(...resolveComponents(node.children, componentDefs, componentStack, scope))
+      continue
+    }
+
     const useRef = typeof node.use === 'string' ? node.use.trim() : ''
     const compRef = typeof node.component === 'string' ? node.component.trim() : ''
     const lookupKey = useRef || compRef
+    const merged = authorIn(node, scope)
 
     if (lookupKey && isObject(componentDefs[lookupKey]) && !componentStack.has(lookupKey)) {
       const def = componentDefs[lookupKey] as Record<string, unknown>
       const root = isObject(def.root) ? def.root : def
-      const merged: Record<string, unknown> = { ...root }
+      for (const key of Object.keys(merged)) delete merged[key]
+      Object.assign(merged, root)
       if (typeof node.id === 'string') merged.id = node.id
       if (isObject(node.props) && isObject(root.props)) {
         merged.props = { ...(root.props as Record<string, unknown>), ...(node.props as Record<string, unknown>) }
       }
+      const fills = hasPlaceholders(root) ? resolveFills(node, merged, componentDefs, componentStack, scope) : null
+      const authorship = merged[AUTHOR]
+      const renderedId = authorship?.kind === 'internal' ? authorship.renderedId : String(merged.id ?? '')
       const newStack = new Set(componentStack)
       newStack.add(lookupKey)
-      const inner = resolveComponents(
-        Array.isArray(merged.children) ? merged.children as unknown[] : [],
+      merged.children = resolveComponents(
+        Array.isArray(root.children) ? root.children as unknown[] : [],
         componentDefs,
         newStack,
+        { owner: scope.owner ?? merged, namespace: renderedId, fills },
       )
-      merged.children = inner
       resolved.push(merged)
     } else {
-      const clone: Record<string, unknown> = { ...node }
       const childArr = Array.isArray(node.children) ? node.children
         : Array.isArray(node.body) ? node.body
         : null
       if (childArr) {
-        clone.children = resolveComponents(childArr as unknown[], componentDefs, componentStack)
+        merged.children = resolveComponents(childArr as unknown[], componentDefs, componentStack, scope)
       }
-      resolved.push(clone)
+      resolved.push(merged)
     }
   }
   return resolved
@@ -226,9 +333,10 @@ export function useResolvedNodes(
         }
       }
 
+      const extraction: Extraction = { authorPaths: new Map(), addresses: new Map() }
       const result: ResolvedNode[] = []
       for (let i = 0; i < bodyNodes.length; i++) {
-        const node = extractNodeTree(bodyNodes[i], 'root', i, 'page', activePage, [])
+        const node = extractNodeTree(bodyNodes[i], 'root', i, 'page', activePage, [], extraction)
         if (node) result.push(node)
       }
       return result
@@ -238,10 +346,15 @@ export function useResolvedNodes(
   }, [yamlFiles, activePage])
 }
 
+/**
+ * Rendered node id to the address a click on it selects. Component-internal
+ * nodes render with namespaced ids and select their page-authored instance.
+ */
 export function buildNodeIdToAddressMap(nodes: ResolvedNode[]): Map<string, string> {
   const map = new Map<string, string>()
-  function walk(node: ResolvedNode) {
-    map.set(node.id, node.address)
+  function walk(node: TreeNode) {
+    if (node.renderedId && node.owner) map.set(node.renderedId, node.owner)
+    else map.set(node.id, node.address)
     for (const child of node.children) walk(child)
   }
   for (const node of nodes) walk(node)

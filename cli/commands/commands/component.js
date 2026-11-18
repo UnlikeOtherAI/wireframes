@@ -6,8 +6,9 @@ const {
   listComponents,
   removeComponent,
 } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'component'));
+const { describeComponent } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'component', 'describe'));
 
-const SUBCOMMAND_USAGE = 'Usage: wf component <add|remove|list> [id]';
+const SUBCOMMAND_USAGE = 'Usage: wf component <add|remove|list|show> [id]';
 
 function runComponent(args, context = {}) {
   const cwd = context.cwd || process.cwd();
@@ -59,6 +60,26 @@ function runComponent(args, context = {}) {
       }
     }
     process.exitCode = 1;
+    return;
+  }
+
+  if (subcommand === 'show') {
+    if (!targetId || targetId.trim() === '') {
+      console.error('wf component show requires a component id.');
+      console.log(SUBCOMMAND_USAGE);
+      process.exitCode = 2;
+      return;
+    }
+
+    const result = describeComponent({ projectPath: cwd, componentId: targetId });
+    if (!result.ok) {
+      console.error(`wf component show failed: ${result.error}`);
+      process.exitCode = 1;
+      return;
+    }
+    for (const line of result.lines) {
+      console.log(line);
+    }
     return;
   }
 

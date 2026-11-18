@@ -2,6 +2,7 @@
 
 const path = require('node:path');
 const { PRIMITIVE_COMPONENTS } = require(path.resolve(__dirname, '..', 'schema', 'primitives'));
+const { childNodeLists } = require(path.resolve(__dirname, '..', 'component-registry', 'child-nodes'));
 
 /**
  * Reference-checking functions: component refs in nodes, template regions,
@@ -39,8 +40,8 @@ function collectReferencedComponents(node, result, context, componentIds, usage,
     }
   }
 
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
+  for (const list of childNodeLists(node)) {
+    for (const child of list) {
       collectReferencedComponents(child, result, context, componentIds, usage, addDiagnostic);
     }
   }
@@ -69,8 +70,8 @@ function collectTemplateReferences(templateContent, result, componentIds, seenSl
           if (child.injectable === true && typeof child.id === 'string') {
             seenInjectableIds.add(child.id);
           }
-          if (Array.isArray(child.children)) {
-            queue.push(...child.children);
+          for (const list of childNodeLists(child)) {
+            queue.push(...list);
           }
         }
       }

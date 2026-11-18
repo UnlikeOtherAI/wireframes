@@ -212,9 +212,26 @@ node:
     - stateBindings
     - surface
     - elevation
-    - children
+    - children        # on a use: node, fills the component's default slot
+    - slots           # use: nodes only; slot name -> node array (SLOTS_WITHOUT_USE otherwise)
     - pane
     - wireframeStyle
+
+# 7.0 SLOT PLACEHOLDER (fourth node-array entry kind; any object with a slot key)
+slotPlaceholder:
+  required:
+    - id
+    - slot            # slot name, Id pattern
+  optional:
+    - children        # fallback content
+  additionalProperties: false
+  allowedIn:
+    - children below a component definition's root
+    - another placeholder's fallback children
+    - fills a component writes for its own nested instances (slots.<name>)
+  notAllowed:
+    - as a component root
+    - in pages, templates or overlays
 
 # 7.x POSITION (for absolute layout children)
 position:
@@ -796,7 +813,76 @@ component:
     - no direct pageState references inside component
     - props referenced via {{props.key}}
     - {{props.key}} resolves during component expansion, including nested imported components
+    - a root prop written as its own token takes the instance value, else propDefaults
     - component documents may import other component documents from arbitrary project paths
+
+  slots:
+    fillRules:
+      - instance children fill the default slot
+      - slots.<name> fills a named slot
+      - children plus slots.default is an error (DUPLICATE_DEFAULT_SLOT_FILL)
+      - an omitted fill uses the placeholder's fallback children
+      - an explicit [] leaves the slot empty, with no fallback and no diagnostic
+      - neither content nor fallback reports EMPTY_COMPONENT_SLOT (info)
+      - a component with no placeholders keeps the override path (instance children replace root children)
+    scopeByAuthor:
+      - the definition's own tree (root, internals, fallbacks, fills for its nested instances) is prepared in its scope
+      - preparation is props substitution, import qualification, and ids and formIds namespaced under the instance
+      - fill content is prepared by its caller; page fills keep page ids and get no substitution
+      - prepared fills are spliced in place of the placeholder untouched; nested use expands after splicing
+      - a caller-authored instance of the same component inside a fill is finite nesting
+      - only definition cycles are errors; ids must be unique in the final resolved tree
+
+  example:
+    components:
+      panel:
+        propDefaults: { title: Details }
+        root:
+          id: panel
+          component: card
+          props: { title: "{{props.title}}" }
+          children:
+            - { id: body, slot: default }
+            - id: footer
+              slot: footer
+              children:
+                - { id: close, component: button, props: { label: Close } }
+      checkout:                                  # forwards its own slots into panel
+        root:
+          id: checkout
+          component: stack
+          children:
+            - id: pay_form
+              component: stack
+              children:
+                - { id: card_number, component: input, props: { label: Card number } }
+            - id: pay_panel
+              use: panel
+              props: { title: Checkout }
+              children:
+                - { id: checkout_body, slot: default }
+              slots:
+                footer:
+                  - id: pay
+                    component: button
+                    props: { label: Pay }
+                    interaction: [{ type: submit, formId: pay_form }]   # becomes <instance>__pay_form
+                  - { id: checkout_actions, slot: actions }
+    instance:
+      - id: billing_panel
+        use: panel
+        props: { title: Billing }
+        children:                                # fills default
+          - { id: plan_name, component: heading, props: { text: Pro plan } }
+        slots:
+          footer:
+            - { id: upgrade, component: button, props: { label: Upgrade, variant: primary } }
+      - id: order
+        use: checkout
+        children:
+          - { id: order_summary, component: text, props: { text: Two items } }
+        slots:
+          actions: []                            # intentionally empty
 
 # ============================================================
 # 16.1 PAGE MODEL
@@ -855,6 +941,11 @@ validation:
     - invalid targetOverlay reference (checks page + template overlays)
     - invalid actionId reference
     - invalid formId reference
+    - unknown component slot (UNKNOWN_COMPONENT_SLOT, lists valid slots)
+    - duplicate component slot (DUPLICATE_COMPONENT_SLOT)
+    - children plus slots.default (DUPLICATE_DEFAULT_SLOT_FILL)
+    - slot placeholder as a component root or outside a component (SLOT_OUTSIDE_COMPONENT)
+    - slots on a node without use (SLOTS_WITHOUT_USE)
 
   warnings:
     - unused components
@@ -871,6 +962,7 @@ validation:
     - unlabeled input/select/textarea
     - text primitives using the label alias instead of canonical text
     - demoted nested surfaces with explicit width or height
+    - component slot with neither content nor fallback (EMPTY_COMPONENT_SLOT)
 
   safetyLimits:
     maxTreeDepth: 100

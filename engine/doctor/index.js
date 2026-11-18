@@ -15,6 +15,7 @@ const {
   loadProjectComponentRegistry,
 } = require(path.resolve(__dirname, '..', 'component-registry'));
 const { runSemanticValidation } = require(path.resolve(__dirname, 'semantic-validator'));
+const { checkComponentSlots } = require(path.resolve(__dirname, 'component-slots'));
 const {
   collectComponentUseGraph,
   collectUsedComponents,
@@ -309,6 +310,32 @@ function runDoctor({ projectPath } = {}) {
 
   detectCircularUse(componentGraph, result, addDiagnostic);
 
+  const templateEntries = templates?.absolutePath && templates?.document
+    ? [{ documentPath: templates.absolutePath, document: templates.document }]
+    : [];
+  function resolveComponentsForPage(pageLoaded) {
+    const entries = [...templateEntries];
+    if (pageLoaded?.absolutePath && pageLoaded?.document) {
+      entries.push({
+        documentPath: pageLoaded.absolutePath,
+        document: pageLoaded.document,
+      });
+    }
+
+    const registryResult = loadComponentRegistryForDocuments(root, entries);
+    if (!registryResult.ok) {
+      return {
+        ok: false,
+        error: `Unable to load component imports for page "${pageLoaded?.id || '<unknown>'}": ${registryResult.error}`,
+      };
+    }
+
+    return {
+      ok: true,
+      components: registryResult.registry.components,
+    };
+  }
+
   runSemanticValidation({
     result,
     manifest: manifest?.document?.manifest || {},
@@ -316,35 +343,26 @@ function runDoctor({ projectPath } = {}) {
     templates: templates?.document?.templates || {},
     components: componentMap,
     pages: Array.from(pageMap.values()),
-    resolveComponentsForPage(pageLoaded) {
-      const entries = [];
-      if (templates?.absolutePath && templates?.document) {
-        entries.push({
-          documentPath: templates.absolutePath,
-          document: templates.document,
-        });
-      }
-      if (pageLoaded?.absolutePath && pageLoaded?.document) {
-        entries.push({
-          documentPath: pageLoaded.absolutePath,
-          document: pageLoaded.document,
-        });
-      }
-
-      const registryResult = loadComponentRegistryForDocuments(root, entries);
-      if (!registryResult.ok) {
-        return {
-          ok: false,
-          error: `Unable to load component imports for page "${pageLoaded?.id || '<unknown>'}": ${registryResult.error}`,
-        };
-      }
-
-      return {
-        ok: true,
-        components: registryResult.registry.components,
-      };
-    },
+    resolveComponentsForPage,
   });
+
+  const templateRegistry = loadComponentRegistryForDocuments(root, templateEntries);
+  const slotDiagnostics = checkComponentSlots({
+    definitions: componentMap,
+    templates: templateDefinitions,
+    templateDefinitions: templateRegistry.ok ? templateRegistry.registry.components : componentMap,
+    pages: Array.from(pageMap.values()).map((pageLoaded) => {
+      const scoped = resolveComponentsForPage(pageLoaded);
+      return {
+        id: pageLoaded.id,
+        page: pageLoaded.document?.page,
+        definitions: scoped.ok ? scoped.components : componentMap,
+      };
+    }),
+  });
+  for (const diagnostic of slotDiagnostics) {
+    addDiagnostic(result, diagnostic.severity, diagnostic.code, diagnostic.message);
+  }
 
   result.ok = result.errors.length === 0;
 

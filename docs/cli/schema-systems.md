@@ -154,6 +154,17 @@ wf://data/products#items:sku=ABC123
 
 No index-based addressing.
 
+A path descends through a node's `children` and through the named slot fills of
+a `use:` node, matching by id, so a page fill is addressed on its instance:
+`wf://page/billing#main.billing_panel.upgrade`. `wf node` and `wf inspect` use
+the same rule; `wf node add --inside` a `use:` node fills its `default` slot.
+
+Annotated renders (`annotateSource: true`) stamp each node with
+`data-wf-source="<doctype>:<docid>#<node id>"` (the document that wrote it) and
+`data-wf-source-path` (where it is written in that document, relative to the
+page document, the template or the component definition, for example
+`page.slots[0].content[1].slots.footer[0]` or `root.children[1].children[0]`).
+
 Resolved nodes must track:
 
 * origin (page/template/component)
@@ -512,6 +523,15 @@ Blocking errors:
 * Invalid targetOverlay reference (overlay does not exist in page or inherited template overlays)
 * Invalid actionId reference (action not defined in page)
 * Invalid formId reference (node does not exist)
+* Component slots (§3.3 of the schema brief):
+  * `UNKNOWN_COMPONENT_SLOT`: a fill names a slot the component does not declare,
+    or an instance passes `children` and the component has no `default` slot.
+    The message lists the valid slot names.
+  * `DUPLICATE_COMPONENT_SLOT`: two placeholders in one component share a name.
+  * `DUPLICATE_DEFAULT_SLOT_FILL`: an instance gives both `children` and `slots.default`.
+  * `SLOT_OUTSIDE_COMPONENT`: a placeholder is a component root, or sits in a
+    page, a template or an overlay.
+  * `SLOTS_WITHOUT_USE`: a node has `slots` but no `use:`.
 
 Warnings:
 
@@ -530,6 +550,12 @@ Info diagnostics:
 * Input/select/textarea without `label` (`UNLABELED_FIELD`)
 * Text primitive using `label` alias instead of canonical `text` (`TEXT_PROP_ALIAS`)
 * Demoted nested section with explicit width or height (`NESTED_SURFACE`)
+* A component slot that gets neither content nor a fallback
+  (`EMPTY_COMPONENT_SLOT`). An explicit `[]` fill is intentional and reports nothing.
+
+The slot checks run in `wf validate` and in the in-memory `validateProject`
+entry point the browser and API use; `validateProject` returns its info
+diagnostics in `info`.
 
 Safety limits:
 

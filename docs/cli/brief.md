@@ -217,9 +217,43 @@ Template removal:
 wf component add <id>
 wf component remove <id>
 wf component list
+wf component show <id>
 ```
 
 No mutation logic. Just structure.
+
+`wf component list` prints the project's component ids, sorted, one per line.
+
+`wf component remove` refuses a component that any page, template or other
+component still uses, including inside a slot fill.
+
+`wf component show <id>` describes one component, by its registry id
+(imported components read `kit.panel`):
+
+```
+Component: kit.panel
+Source: components/kit.yaml (panel)
+
+Props:
+  title  default: "Details"  hint: Card heading
+
+Slots:
+  default  fallback: none
+  footer   fallback: close (component:button)
+
+Outline:
+  - panel (component:card)
+    - body (slot:default)
+    - footer (slot:footer)
+      - close (component:button)
+```
+
+Props come from `propDefaults`, `propHints` and the `{{props.x}}` tokens the
+component uses. Slots list each placeholder once with its fallback (`none` when
+it has none, `empty` for `children: []`). The outline shows nested instances
+with the named fills the component writes for them (`slots.footer:`). An unknown
+id exits 1; a missing id exits 2. Slots are described in the schema brief,
+§3.3 "Slots".
 
 ---
 
@@ -248,6 +282,11 @@ Works with both page and template addresses:
 * `--props` — optional JSON props for the new node
 
 Use `--below` to insert after a sibling. Use `--inside` to add the first child to an empty container (section, slot, etc.). Exactly one of `--below` or `--inside` is required.
+
+Addresses reach nodes in a component instance's slot fills by id, so
+`wf://page/billing#main.billing_panel.upgrade` names a node in `slots.footer` of
+`billing_panel`. `--below` such a node inserts into the same fill, and `--inside`
+a `use:` node adds to its `default` fill (its `children`).
 
 Rules:
 

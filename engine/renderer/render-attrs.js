@@ -133,6 +133,7 @@ function sourceAttrs(node, options) {
   if (role.component) entries.push('data-wf-component="' + escapeAttr(role.component) + '"');
   if (role.variant) entries.push('data-wf-variant="' + escapeAttr(role.variant) + '"');
   if (typeof node.__source === 'string') entries.push(`data-wf-source="${escapeAttr(node.__source)}"`);
+  if (typeof node.__sourcePath === 'string') entries.push(`data-wf-source-path="${escapeAttr(node.__sourcePath)}"`);
   if (typeof node.__definition === 'string') entries.push(`data-wf-definition="${escapeAttr(node.__definition)}"`);
   if (Number.isInteger(options.rowIndex)) entries.push(`data-wf-row="${options.rowIndex}"`);
   return entries.length > 0 ? ` ${entries.join(' ')}` : '';

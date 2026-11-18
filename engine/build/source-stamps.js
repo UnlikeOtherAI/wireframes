@@ -10,18 +10,24 @@ function isNodeLike(value) {
     && (value.component != null || value.use != null || value.kind != null || Array.isArray(value.children));
 }
 
+function childPath(path, key) {
+  if (typeof key === 'number') return `${path}[${key}]`;
+  return path ? `${path}.${key}` : key;
+}
+
 // Props hold element data such as tree items, which can carry ids of their own
-// but are never rendered as nodes.
-function stampNodes(value, documentAddress) {
+// but are never rendered as nodes. The path is where the node is written in
+// its document, so a slot fill reads `...slots.footer[0]`.
+function stampNodes(value, documentAddress, path = '') {
   if (Array.isArray(value)) {
-    return value.map((entry) => stampNodes(entry, documentAddress));
+    return value.map((entry, index) => stampNodes(entry, documentAddress, childPath(path, index)));
   }
   if (!isObject(value)) {
     return value;
   }
   const stamped = {};
   for (const [key, entry] of Object.entries(value)) {
-    stamped[key] = key === 'props' ? entry : stampNodes(entry, documentAddress);
+    stamped[key] = key === 'props' ? entry : stampNodes(entry, documentAddress, childPath(path, key));
     if (key === 'overlays' && Array.isArray(stamped[key])) {
       stamped[key] = stamped[key].map(overlay => isObject(overlay) && typeof overlay.id === 'string'
         ? { ...overlay, __source: `${documentAddress}#${overlay.id}` } : overlay);
@@ -29,6 +35,7 @@ function stampNodes(value, documentAddress) {
   }
   if (isNodeLike(value)) {
     stamped.__source = `${documentAddress}#${value.id}`;
+    stamped.__sourcePath = path;
   }
   return stamped;
 }
@@ -59,7 +66,10 @@ function stampWrappedCollection(document, wrapperKey, kind) {
 }
 
 /**
- * A copy of the document map where every node records the document that owns it.
+ * A copy of the document map where every node records the document that owns
+ * it (`__source`, `<kind>:<id>#<node id>`) and where it is written in that
+ * document (`__sourcePath`, relative to the page document, the template or the
+ * component definition).
  * Stamps survive component expansion and collection cloning because both copy a
  * node's fields, so a rendered id never has to be reversed. The input is untouched.
  */

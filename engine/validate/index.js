@@ -5,6 +5,7 @@ const { validatePresentation } = require('./presentation');
 const { validateLogoReferences } = require('../design-system/logo-references');
 const { validateIconReferences } = require('../icons/validate');
 const { SUPPORTED_SPEC_VERSION } = require('../schema/constants');
+const { checkComponentSlots } = require('../doctor/component-slots');
 
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
@@ -42,6 +43,7 @@ function validateProject(documentMap, options = {}) {
   const { strict = false } = options;
   const errors = [];
   const warnings = [];
+  const info = [];
 
   if (!isObject(documentMap)) {
     return { ok: false, errors: [{ code: 'INVALID_INPUT', message: 'documentMap must be an object.' }], warnings: [] };
@@ -96,6 +98,22 @@ function validateProject(documentMap, options = {}) {
     }
   }
 
+  const registriesByPage = documentMap.componentRegistriesByPage instanceof Map
+    ? documentMap.componentRegistriesByPage
+    : null;
+  const slotDiagnostics = checkComponentSlots({
+    definitions: isObject(documentMap.components?.components) ? documentMap.components.components : {},
+    templates: templatesDef,
+    pages: [...pages].map(([pageId, pageDoc]) => ({
+      id: pageId,
+      page: pageDoc?.page,
+      definitions: registriesByPage?.get(pageId),
+    })),
+  });
+  for (const diagnostic of slotDiagnostics) {
+    (diagnostic.severity === 'errors' ? errors : info).push({ code: diagnostic.code, message: diagnostic.message });
+  }
+
   errors.push(...validateLogoReferences(documentMap));
   const presentation = validatePresentation(documentMap);
   errors.push(...presentation.errors);
@@ -118,6 +136,7 @@ function validateProject(documentMap, options = {}) {
     ok: errors.length === 0,
     errors,
     warnings,
+    info,
   };
 }
 

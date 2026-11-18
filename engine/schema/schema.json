@@ -510,7 +510,7 @@
         "content": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/Node"
+            "$ref": "#/$defs/NodeOrSlot"
           }
         },
         "wireframeStyle": {
@@ -1022,7 +1022,17 @@
         "children": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/Node"
+            "$ref": "#/$defs/NodeOrSlot"
+          }
+        },
+        "slots": {
+          "type": "object",
+          "description": "Named slot fills, only on a use: node. Each key is a slot the component declares; the value is the nodes that fill it. [] leaves a slot empty on purpose. Instance children fill the \"default\" slot.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/NodeOrSlot"
+            }
           }
         },
         "sticky": {
@@ -2087,6 +2097,45 @@
         }
       ]
     },
+    "NodeOrSlot": {
+      "description": "A node, or a slot placeholder: any object with a slot key is read as a placeholder.",
+      "if": {
+        "required": [
+          "slot"
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/SlotPlaceholder"
+      },
+      "else": {
+        "$ref": "#/$defs/Node"
+      }
+    },
+    "SlotPlaceholder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "slot"
+      ],
+      "description": "Marks where an instance's content goes inside a reusable component. Valid only inside a component definition, never as its root (SLOT_OUTSIDE_COMPONENT).",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "slot": {
+          "$ref": "#/$defs/Id",
+          "description": "Slot name. Instance children fill \"default\"; slots.<name> fills the others."
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NodeOrSlot"
+          },
+          "description": "Fallback content, used when the instance gives no fill for this slot."
+        }
+      }
+    },
     "ManifestDocument": {
       "type": "object",
       "additionalProperties": false,
@@ -2295,7 +2344,7 @@
                     "children": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/$defs/Node"
+                        "$ref": "#/$defs/NodeOrSlot"
                       }
                     },
                     "role": {
@@ -2358,7 +2407,7 @@
             ],
             "properties": {
               "root": {
-                "$ref": "#/$defs/Node"
+                "$ref": "#/$defs/NodeOrSlot"
               },
               "propDefaults": {
                 "type": "object"
@@ -2464,7 +2513,7 @@
                   "content": {
                     "type": "array",
                     "items": {
-                      "$ref": "#/$defs/Node"
+                      "$ref": "#/$defs/NodeOrSlot"
                     }
                   }
                 }
@@ -2485,7 +2534,7 @@
                   "content": {
                     "type": "array",
                     "items": {
-                      "$ref": "#/$defs/Node"
+                      "$ref": "#/$defs/NodeOrSlot"
                     }
                   }
                 }
