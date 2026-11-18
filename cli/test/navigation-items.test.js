@@ -118,6 +118,10 @@ test('selection: an explicit item state beats the element rule', () => {
   const current = render({ id: 'n3', component: 'nav', props: { items: [{ label: 'A', current: true }, { label: 'B', current: true, selected: false }, { label: 'C', route: 'settings' }] } });
   assert.equal((current.match(/wf-nav-on/g) || []).length, 1);
   assert.match(current, /<span class="wf-nav-item wf-nav-on" aria-current="page" data-wf-current><span class="wf-nav-label">A/);
+  // Route inference skips disabled rows; an explicit state does not.
+  const disabled = render({ id: 'n4', component: 'nav', props: { items: [{ label: 'Off', route: 'settings', disabled: true }, { label: 'Held', route: 'settings', disabled: true, active: true }] } });
+  assert.match(disabled, /<span class="wf-nav-item" aria-disabled="true" data-wf-disabled><span class="wf-nav-label">Off/);
+  assert.match(disabled, /<span class="wf-nav-item wf-nav-on" aria-disabled="true" aria-current="page" data-wf-disabled data-wf-current><span class="wf-nav-label">Held/);
 
   // Stepper: an explicit step moves `current`; earlier steps are done.
   const steps = render({ id: 's', component: 'stepper', props: { current: 1, steps: ['A', 'B', { label: 'C', selected: true }] } });

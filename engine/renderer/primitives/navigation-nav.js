@@ -112,9 +112,9 @@ function renderNav(node, ctx, lib) {
   // A shared sidebar cannot know which page it is on, so when no item says
   // which one is current, the renderer marks the items pointing at the current route.
   const flat = flattenItems(entries);
-  const onList = itemsOn(flat, lib, (item) => (
-    item.legacyActive === true || (item.route != null && String(item.route) === ctx.currentRoute)
-  ));
+  // A disabled row is never inferred current.
+  const onList = itemsOn(flat, lib, (item) => item.legacyActive === true
+    || (item.disabled !== true && item.route != null && String(item.route) === ctx.currentRoute));
   const view = { ctx, lib, on: new Map(flat.map((item, index) => [item, onList[index]])), inert: hasInteraction(node) };
   const variant = VARIANTS.includes(props.variant) ? props.variant : '';
   const opened = variant === 'top' ? openIndex(entries, props.open) : -1;

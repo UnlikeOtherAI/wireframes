@@ -47,7 +47,10 @@ this order:
 1. An item's own `selected`, or its `current` when `selected` is absent. Items
    marked `true` are exactly the ones on.
 2. Otherwise the element's own rule:
-   - `nav`: every row whose `route` is the page being rendered.
+   - `nav`: every row marked with the legacy `active: true`, and every
+     enabled row whose `route` is the page being rendered. Legacy `active`
+     adds to route inference, as it always did, and `active: false` never
+     hides the current route.
    - `breadcrumb` and `page_header.breadcrumb`: the last crumb.
    - `stepper`: step number `current` (default 1).
    - Tabs have no rule: nothing is on.
