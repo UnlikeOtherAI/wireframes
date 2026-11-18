@@ -48,6 +48,16 @@ function fieldHelp(props, ctx, lib, node) {
   return `<span class="wf-field-${kind}"${idAttr}>${lib.bound(text, ctx)}</span>`;
 }
 
+/**
+ * ` data-wf-value` with the value a drawn option submits, when it has a
+ * `value` that differs from its label; otherwise the label is submitted.
+ */
+function optionValueAttr(option, lib) {
+  const raw = option?.value;
+  const value = ['string', 'number', 'boolean'].includes(typeof raw) ? String(raw).trim() : '';
+  return value && value !== lib.str(option.label) ? ` data-wf-value="${lib.escapeAttr(value)}"` : '';
+}
+
 /** ` aria-describedby` naming `ids` and the help or error shown, or ''. */
 function describedBy(props, lib, node, ids = []) {
   const all = [...ids];
@@ -62,4 +72,5 @@ module.exports = {
   fieldLabel,
   fieldHelp,
   describedBy,
+  optionValueAttr,
 };

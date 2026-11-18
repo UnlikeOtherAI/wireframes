@@ -33,6 +33,11 @@ const state = (page, selector) => page.locator(selector).evaluate((el) => ({
   dataChecked: el.getAttribute('data-wf-checked'),
 }));
 
+const payloadOf = async (page) => {
+  const toast = await page.locator('.wf-runtime-toast').last().textContent();
+  return JSON.parse(toast.replace(/^Form submitted: /, ''));
+};
+
 test('help plus error and readonly plus disabled render and submit through the runtime', async () => {
   const html = pageFor([
     { id: 'profile', component: 'card', props: { title: 'Profile' }, children: [
@@ -43,6 +48,23 @@ test('help plus error and readonly plus disabled render and submit through the r
       { id: 'status', component: 'select', props: { label: 'Status', options: ['Draft', 'Live'], value: 'Live', readonly: true } },
       { id: 'tags', component: 'select', props: { label: 'Tags', options: ['A', 'B', 'C'], value: ['A', 'C'], multiple: true } },
       { id: 'notes', component: 'textarea', props: { label: 'Notes', readonly: true, help: 'Set by the system' } },
+      // Drawn controls submit under their node id, from the state they show.
+      { id: 'agree', component: 'checkbox', props: { label: 'Agree', checked: true } },
+      { id: 'kept', component: 'checkbox', props: { label: 'Kept', checked: true, readonly: true } },
+      { id: 'gone', component: 'checkbox', props: { label: 'Gone', checked: true, disabled: true } },
+      { id: 'partly', component: 'checkbox', props: { label: 'Partly', indeterminate: true } },
+      { id: 'annual', component: 'radio', props: { label: 'Annual', checked: true } },
+      { id: 'monthly', component: 'radio', props: { label: 'Monthly', disabled: true } },
+      { id: 'sync', component: 'toggle', props: { label: 'Sync' } },
+      { id: 'period', component: 'segmented', props: { options: ['Day', 'Week'], value: 'Week' } },
+      { id: 'billing', component: 'segmented', props: { label: 'Billing', options: [{ label: 'Monthly', value: 'm' }, { label: 'Yearly', value: 'y' }], value: 'y', readonly: true } },
+      { id: 'layout', component: 'segmented', props: { options: ['Grid', 'List'], value: 'List', disabled: true } },
+      { id: 'plan', component: 'choice_group', props: { label: 'Plan', kind: 'radio', options: ['Free', { label: 'Pro', value: 'pro' }], value: 'pro' } },
+      { id: 'alerts', component: 'choice_group', props: { label: 'Alerts', options: ['Mail', 'SMS', 'Push'], value: ['Mail', 'Push'], readonly: true } },
+      { id: 'quiet', component: 'choice_group', props: { label: 'Quiet', options: ['Night'], value: 'Night', disabled: true } },
+      { id: 'repeat', component: 'picker', props: { options: ['Never', { label: 'Daily', value: 'd' }, 'Weekly'], value: 'd' } },
+      { id: 'blank', component: 'picker', props: { options: ['One', 'Two'] } },
+      { id: 'frozen', component: 'picker', props: { options: ['X', 'Y'], value: 'Y', disabled: true } },
     ] },
     { id: 'send', component: 'button', props: { label: 'Send' }, interaction: [{ type: 'submit', formId: 'profile' }] },
   ]);
@@ -64,8 +86,7 @@ test('help plus error and readonly plus disabled render and submit through the r
     assert.equal(await page.locator('#status select').inputValue(), 'Live');
 
     await page.getByRole('button', { name: 'Send', exact: true }).click();
-    const toast = await page.locator('.wf-runtime-toast').last().textContent();
-    const payload = JSON.parse(toast.replace(/^Form submitted: /, ''));
+    const payload = await payloadOf(page);
     assert.equal(payload.ref__input, 'INV-1');
     assert.equal(payload.code__input, 'ABC', 'read-only values are submitted');
     assert.equal(Object.hasOwn(payload, 'locked__input'), false, 'disabled values are not');
@@ -73,6 +94,38 @@ test('help plus error and readonly plus disabled render and submit through the r
     assert.equal(payload.status, 'Live');
     assert.deepEqual(payload.tags, ['A', 'C']);
     assert.equal(payload.notes, '');
+
+    const drawn = ['agree', 'kept', 'partly', 'annual', 'sync', 'period', 'billing', 'plan', 'alerts', 'repeat', 'blank'];
+    assert.deepEqual(Object.fromEntries(drawn.map((key) => [key, payload[key]])), {
+      agree: true,
+      kept: true,
+      partly: 'mixed',
+      annual: true,
+      sync: false,
+      period: 'Week',
+      billing: 'y',
+      plan: 'pro',
+      alerts: ['Mail', 'Push'],
+      repeat: 'd',
+      blank: 'One',
+    });
+    for (const key of ['gone', 'monthly', 'layout', 'quiet', 'frozen']) {
+      assert.equal(Object.hasOwn(payload, key), false, `disabled ${key} is not submitted`);
+    }
+    const order = Object.keys(payload);
+    assert.ok(order.indexOf('notes') < order.indexOf('agree') && order.indexOf('agree') < order.indexOf('repeat'), 'fields go in document order');
+
+    // What the user changes is what goes.
+    await page.getByText('Sync', { exact: true }).click();
+    await page.getByText('Agree', { exact: true }).click();
+    await page.getByText('Partly', { exact: true }).click();
+    await page.locator('#period').getByRole('button', { name: 'Day', exact: true }).click();
+    await page.locator('#plan').getByText('Free', { exact: true }).click();
+    await page.locator('#alerts').getByText('SMS', { exact: true }).click();
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
+    const changed = await payloadOf(page);
+    assert.deepEqual([changed.sync, changed.agree, changed.partly, changed.period, changed.plan, changed.alerts],
+      [true, false, true, 'Day', 'Free', ['Mail', 'Push']]);
   });
 });
 

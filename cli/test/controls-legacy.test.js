@@ -2,7 +2,8 @@
 
 // YAML that uses only the props controls had before the field contract must
 // render what it always did. The only additions allowed are state and ARIA
-// attributes, and the ids those attributes point at.
+// attributes, the ids those attributes point at, and the `data-wf-value` an
+// option with its own `value` submits.
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -20,6 +21,7 @@ const STATE_ATTRIBUTES = [
   / role="[^"]*"/g,
   / (?:disabled|required|readonly|selected)(?=[ />])/g,
   / id="[^"]*__(?:label|help|error)"/g,
+  / data-wf-value="[^"]*"/g,
 ];
 
 function strip(html) {

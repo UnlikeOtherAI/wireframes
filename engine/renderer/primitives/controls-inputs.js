@@ -42,7 +42,10 @@ function renderStepperField(node, ctx, lib, state) {
   const atMax = shown.bounds.authored && shown.value != null && shown.value >= shown.bounds.max;
   const button = (glyph, end) => `<button class="wf-numstepper-btn"${
     lib.stateAttrs({ disabled: state.disabled || end }, { owner: lib.STATE_OWNERS.button })}>${glyph}</button>`;
-  return `${fieldLabel(props, ctx, lib)}<span class="wf-numstepper"${lib.stateAttrs(state)}>${button('−', atMin)}`
+  // The runtime redraws a bound stepper from state with the same limits.
+  const limits = `${shown.bounds.authored ? ` data-wf-min="${shown.bounds.min}" data-wf-max="${shown.bounds.max}"` : ''}${
+    shown.step != null ? ` data-wf-step="${shown.step}"` : ''}`;
+  return `${fieldLabel(props, ctx, lib)}<span class="wf-numstepper"${lib.stateAttrs(state)}${limits}>${button('−', atMin)}`
     + `<span class="wf-numstepper-value">${lib.escapeHtml(shown.text)}</span>`
     + `${button('+', atMax)}</span>${fieldHelp(props, ctx, lib)}`;
 }
