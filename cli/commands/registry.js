@@ -48,10 +48,12 @@ const COMMANDS = [
   },
   {
     name: 'component',
-    args: '<add|remove|list|show>',
-    summary: 'Manage reusable components and show their props and slots',
+    args: '<add|remove|list|show|copy>',
+    summary: 'Manage reusable components, show their props and slots, and copy built-in std patterns',
     usage: 'wf component <add|remove|list> [id]\n'
-      + 'wf component show <id>',
+      + 'wf component list --std\n'
+      + 'wf component show <id>\n'
+      + 'wf component copy std.<name> [--as <id>] [--file <path>]',
   },
   {
     name: 'node',

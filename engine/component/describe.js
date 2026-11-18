@@ -2,6 +2,8 @@
 
 const path = require('node:path');
 const { loadProjectComponentRegistry } = require(path.resolve(__dirname, '..', 'component-registry'));
+const { resolveComponentDefinition } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
+const { builtinComponentSummary } = require(path.resolve(__dirname, '..', 'stdlib'));
 const {
   collectSlotPlaceholders,
   isSlotPlaceholder,
@@ -96,17 +98,21 @@ function describeComponent({ projectPath, componentId }) {
 
   const loaded = loadProjectComponentRegistry(projectPath);
   if (!loaded.ok) return { ok: false, error: loaded.error };
-  const definition = loaded.registry.components[id];
+  const definition = resolveComponentDefinition(id, loaded.registry.components);
   if (!isObject(definition) || !isObject(definition.root)) {
     return { ok: false, error: `Component "${id}" does not exist.` };
   }
 
   const source = loaded.registry.sources[id];
-  const sourceLine = source
-    ? `${path.relative(projectPath, source.sourcePath).split(path.sep).join('/')} (${source.localId})`
-    : 'components.yaml';
+  const builtin = !Object.hasOwn(loaded.registry.components, id);
+  const sourceLine = builtin
+    ? `built-in, read-only (edit a copy: wf component copy ${id})`
+    : source
+      ? `${path.relative(projectPath, source.sourcePath).split(path.sep).join('/')} (${source.localId})`
+      : 'components.yaml';
   const lines = [
     `Component: ${id}`,
+    ...(builtin ? [builtinComponentSummary(id)] : []),
     `Source: ${sourceLine}`,
     '',
     'Props:',

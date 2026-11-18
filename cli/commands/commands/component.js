@@ -7,8 +7,51 @@ const {
   removeComponent,
 } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'component'));
 const { describeComponent } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'component', 'describe'));
+const { copyComponent } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'component', 'copy'));
+const {
+  builtinComponentDefinition,
+  builtinComponentIds,
+  builtinCopyHint,
+} = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'stdlib'));
 
-const SUBCOMMAND_USAGE = 'Usage: wf component <add|remove|list|show> [id]';
+const SUBCOMMAND_USAGE = 'Usage: wf component <add|remove|list|show|copy> [id]';
+
+function flagValue(args, name) {
+  const index = args.indexOf(name);
+  return index >= 0 ? args[index + 1] : undefined;
+}
+
+function runCopy(args, cwd) {
+  const [, sourceId] = args;
+  if (!sourceId || sourceId.startsWith('--')) {
+    console.error('wf component copy requires a built-in id, for example std.login.');
+    console.log('Usage: wf component copy std.<name> [--as <id>] [--file <path>]');
+    process.exitCode = 2;
+    return;
+  }
+  for (const flag of ['--as', '--file']) {
+    if (args.includes(flag) && !flagValue(args, flag)) {
+      console.error(`wf component copy: ${flag} needs a value.`);
+      process.exitCode = 2;
+      return;
+    }
+  }
+  const result = copyComponent({
+    projectPath: cwd,
+    componentId: sourceId,
+    as: flagValue(args, '--as'),
+    file: flagValue(args, '--file'),
+  });
+  if (!result.ok) {
+    console.error(`wf component copy failed: ${result.error}`);
+    process.exitCode = 1;
+    return;
+  }
+  console.log(`Copied ${result.source} to ${result.filePath}${result.created ? ' (created)' : ''} as "${result.componentId}".`);
+  console.log(result.useId
+    ? `Use it with: use: ${result.useId}`
+    : `Import ${result.filePath} from a page, template or components.yaml to use it.`);
+}
 
 function runComponent(args, context = {}) {
   const cwd = context.cwd || process.cwd();
@@ -47,6 +90,11 @@ function runComponent(args, context = {}) {
       return;
     }
 
+    if (builtinComponentDefinition(targetId.trim())) {
+      console.error(`wf component remove failed: ${builtinCopyHint(targetId.trim())}`);
+      process.exitCode = 1;
+      return;
+    }
     const result = removeComponent({ projectPath: cwd, componentId: targetId.trim() });
     if (result.ok) {
       console.log(`Removed component: ${result.componentId}`);
@@ -83,8 +131,13 @@ function runComponent(args, context = {}) {
     return;
   }
 
+  if (subcommand === 'copy') {
+    runCopy(args, cwd);
+    return;
+  }
+
   if (subcommand === 'list') {
-    const ids = listComponents(cwd);
+    const ids = args.includes('--std') ? builtinComponentIds() : listComponents(cwd);
     for (const id of ids) {
       console.log(id);
     }
