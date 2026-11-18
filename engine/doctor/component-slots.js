@@ -161,11 +161,23 @@ function checkComponentSlots({ definitions = {}, templates = {}, templateDefinit
   const diagnostics = [];
   const report = (severity, code, message, at) => diagnostics.push({ severity, code, message, at });
 
-  for (const [componentId, definition] of Object.entries(isObject(definitions) ? definitions : {})) {
-    checkDefinition(componentId, definition, definitions, report);
+  const templateScope = isObject(templateDefinitions) ? templateDefinitions : definitions;
+  const scopes = [definitions, templateScope, ...pages.map((entry) => entry?.definitions)];
+  // A definition a template or page imports is checked in the registry that
+  // imported it, so its nested instances resolve as they render. Registries share
+  // what they import: a definition with the same qualified id and the same
+  // authored body is the same source, checked once.
+  const checked = new Set();
+  for (const scope of scopes) {
+    if (!isObject(scope)) continue;
+    for (const [componentId, definition] of Object.entries(scope)) {
+      const key = `${componentId}\u0000${JSON.stringify(definition)}`;
+      if (checked.has(key)) continue;
+      checked.add(key);
+      checkDefinition(componentId, definition, scope, report);
+    }
   }
 
-  const templateScope = isObject(templateDefinitions) ? templateDefinitions : definitions;
   for (const [templateId, template] of Object.entries(isObject(templates) ? templates : {})) {
     if (!isObject(template)) continue;
     const where = `template "${templateId}"`;
