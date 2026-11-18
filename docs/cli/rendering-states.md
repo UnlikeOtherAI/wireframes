@@ -94,8 +94,8 @@ Spread a preset to change its token, for example
 
 ## Actions
 
-`lib.actionButtons` renders `actions` on cards, alerts, empty states and page
-headers:
+`lib.actionButtons` renders every action row: `page_header.actions`, and the
+`actions` in the head block of `card`, `section` and `form`:
 
 | Action | Markup |
 |---|---|

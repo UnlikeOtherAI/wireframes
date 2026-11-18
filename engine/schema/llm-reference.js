@@ -46,7 +46,7 @@ items:
 - route links only in elements that navigate: nav, breadcrumb, tab bars, menu, list, command and actions. A disabled item never links.
 - Older keys keep working where they always did (title, text, active, open, children, divider, danger, and group/heading entries in nav), but write the keys above.
 
-Actions (actions on card, alert, empty_state and page_header): { label, icon, variant, route, disabled, pressed, tone }.
+Action rows (page_header actions, and the actions in a card, section or form head): { label, icon, variant, route, disabled, pressed, tone }.
 A disabled action renders as a disabled button with no link; pressed makes it a toggle.`;
 }
 

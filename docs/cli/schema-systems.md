@@ -448,10 +448,11 @@ navigate: `nav`, `breadcrumb`, `tab_bar`, `bottom_tab_bar`, `menu`, `list`,
 (an action renders as a plain button). An item route is ignored when the
 element itself carries an interaction, so anchors never nest.
 
-**Actions.** `actions` on `card`, `alert`, `empty_state` and `page_header`
-take `{ label, icon, variant, route, disabled, pressed, tone }`. A disabled
-action is a button with `aria-disabled="true"` and no link; `pressed` (true or
-false) makes it a toggle button with `aria-pressed`; `tone` adds the shared
+**Actions.** Action rows (`page_header.actions`, and the `actions` drawn in
+the head of `card`, `section` and `form`) take
+`{ label, icon, variant, route, disabled, pressed, tone }`. A disabled action
+is a button with `aria-disabled="true"` and no link; `pressed` (true or false)
+makes it a toggle button with `aria-pressed`; `tone` adds the shared
 `wf-tone-*` class. Rendering details are in
 [rendering-states.md](rendering-states.md).
 
