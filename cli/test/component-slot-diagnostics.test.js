@@ -166,3 +166,42 @@ test('lint checks ids and props inside named fills, on pages and in components',
   assert.ok(messages.some((message) => /UNKNOWN_PROP .*Bad_Id.*"lable"/.test(message)), all);
   assert.ok(messages.some((message) => /UNKNOWN_PROP .*bad_footer.*"colour"/.test(message)), all);
 });
+
+// A nested instance's ids are namespaced under it when it renders, so a
+// component may reuse an id that a component it nests also uses. Only a real
+// duplicate inside one definition is an error.
+test('a component may reuse an id that a nested component also uses', () => {
+  const withLayout = (extra) => (docs) => {
+    docs.components.components = {
+      ...docs.components.components,
+      panel: {
+        root: {
+          id: 'panel',
+          component: 'card',
+          children: [{ id: 'body', slot: 'default' }, { id: 'close', component: 'button', props: { label: 'Close' } }],
+        },
+      },
+      layout: {
+        root: {
+          id: 'layout',
+          component: 'stack',
+          children: [
+            { id: 'body', component: 'heading', props: { text: 'Settings' } },
+            { id: 'profile', use: 'panel', slots: { default: [{ id: 'content', slot: 'default' }] } },
+            ...extra,
+          ],
+        },
+      },
+    };
+    docs.page.page.slots[0].content.push(
+      { id: 'settings', use: 'layout', children: [{ id: 'name', component: 'input' }] },
+      { id: 'second', use: 'layout' },
+    );
+  };
+  const duplicates = (result) => result.errors.filter((error) => error.code === 'DUPLICATE_NODE_ID');
+
+  assert.deepEqual(duplicates(validateWith(withLayout([]))), []);
+
+  const real = duplicates(validateWith(withLayout([{ id: 'body', component: 'text' }])));
+  assert.ok(real.some((error) => /"layout".*"body"/.test(error.message)), JSON.stringify(real));
+});

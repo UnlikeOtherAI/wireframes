@@ -83,9 +83,18 @@ function validateNode(node, context, depth = 1) {
     const componentEntry = context.componentRoots && context.componentRoots[node.use];
     if (isObject(componentEntry) && isObject(componentEntry.root)) {
       if (!context.useStack.has(node.use)) {
+        // A nested definition's ids are namespaced under this instance when it
+        // renders, so they never collide with the caller's ids. Walk it in its
+        // own id scope; its own duplicates are reported by its own pass.
+        const callerIds = context.nodeIds;
+        const callerDuplicates = context.duplicateNodeIds;
+        context.nodeIds = new Set();
+        context.duplicateNodeIds = new Set();
         context.useStack.add(node.use);
         validateNode(componentEntry.root, context, depth + 1);
         context.useStack.delete(node.use);
+        context.nodeIds = callerIds;
+        context.duplicateNodeIds = callerDuplicates;
       }
     }
   }
