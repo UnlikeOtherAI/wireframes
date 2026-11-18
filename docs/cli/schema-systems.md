@@ -448,8 +448,9 @@ trimmed strings; a blank identity never matches. Precedence, highest first:
    element selects only the first match, and `wf lint` reports
    `AMBIGUOUS_VALUE` (info).
 3. Otherwise the element's own rule applies: nav route inference, stepper
-   `current`, pagination `page`, or picker row zero. It never selects an item
-   marked `selected: false`.
+   `current`, pagination `page`, or the picker's first option whose label is
+   the `value` text (with no `value`, the first blank option), else its first
+   option. It never selects an item marked `selected: false`.
 4. Otherwise nothing is selected.
 
 Runtime binding payloads are unchanged: tab and segmented changes still send

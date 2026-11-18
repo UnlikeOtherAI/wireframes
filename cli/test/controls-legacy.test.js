@@ -97,6 +97,9 @@ const CORPUS = [
   { component: 'picker', props: { options: CHOICE_OPTIONS, value: 'Titled' } },
   { component: 'picker', props: { options: ['A', { label: 'B', description: 'b' }, 'C'] } },
   { component: 'picker', props: { options: ['A', 'B'], value: 'missing' } },
+  { component: 'picker', props: { options: ['A', '', 'B'] } },
+  { component: 'picker', props: { options: ['A', { label: '' }, 'B'], value: '  ' } },
+  { component: 'picker', props: { options: [{ label: 'Daily', value: 'd' }, 'Weekly'], value: 'Weekly' } },
   { component: 'editor', props: { label: 'Body', toolbar: false, rows: 3 } },
   { component: 'editor', props: {} },
 ];
@@ -137,13 +140,20 @@ test('the only additions on legacy controls are the expected state attributes', 
   assert.match(html('input', { label: 'Name', required: true }), /<input id="x__input"[^>]* required data-wf-required \/>/);
 });
 
-test('changes legacy YAML does see: stepper help, a numeric choice value, a blank picker option', () => {
+test('changes legacy YAML does see: stepper help and a numeric choice value', () => {
   const stepper = render(controlRenderers, lib, { id: 's', component: 'input', props: { inputType: 'stepper', help: 'Per room', error: '' } });
   assert.match(stepper.inner, /<span class="wf-field-help">Per room<\/span>/);
   const segmented = render(controlRenderers, lib, { id: 'g', component: 'segmented', props: { options: [1, 2, 3], value: 2 } });
   assert.equal((segmented.inner.match(/aria-pressed="true"/g) || []).length, 1);
   assert.match(segmented.inner, /&quot;2&quot;" aria-pressed="true"/);
-  // With no value the wheel centres row zero; it used to centre the first blank option.
+});
+
+test('with no value a picker still centres its first blank row, as it always did', () => {
   const picker = render(controlRenderers, lib, { id: 'p', component: 'picker', props: { options: ['A', '', 'B'] } });
-  assert.match(picker.inner, /<span class="wf-picker-row wf-picker-on" data-wf-selected>A<\/span>/);
+  assert.match(picker.inner, /<span class="wf-picker-row">A<\/span><span class="wf-picker-row wf-picker-on" data-wf-selected><\/span><span class="wf-picker-row">B<\/span>/);
+  // `selected: false` keeps the rule off that row; canonical selection still wins.
+  const skipped = render(controlRenderers, lib, { id: 'q', component: 'picker', props: { options: ['A', { label: '', selected: false }, 'B'] } });
+  assert.match(skipped.inner, /<span class="wf-picker-row wf-picker-on" data-wf-selected>A<\/span>/);
+  const chosen = render(controlRenderers, lib, { id: 'r', component: 'picker', props: { options: ['A', '', { label: 'B', selected: true }] } });
+  assert.match(chosen.inner, /<span class="wf-picker-row wf-picker-on" data-wf-selected>B<\/span>/);
 });

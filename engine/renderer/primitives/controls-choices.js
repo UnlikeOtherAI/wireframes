@@ -124,11 +124,19 @@ function renderChoiceGroup(node, ctx, lib) {
   };
 }
 
-/** The wheel centres the selected option; with nothing selected, the first one it may show. */
+/**
+ * The wheel centres the selected option. With nothing selected it keeps its
+ * legacy rule: the first row whose label is the value's text, which for an
+ * absent value is the first blank row, otherwise the first row. A row
+ * marked `selected: false` is skipped by that rule.
+ */
 function pickerCentre(options, lib, value) {
   const { selected, source } = lib.resolveSelection(options, { value });
   if (source) return selected.indexOf(true);
-  return Math.max(0, options.findIndex((option) => option.selected !== false));
+  const text = lib.str(value);
+  const eligible = (option) => option.selected !== false;
+  const match = options.findIndex((option) => eligible(option) && lib.str(option.label) === text);
+  return match >= 0 ? match : Math.max(0, options.findIndex(eligible));
 }
 
 function renderPicker(node, ctx, lib) {

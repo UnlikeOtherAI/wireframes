@@ -652,6 +652,20 @@ These changed or sharpened the design while it was built. The code and the docs 
   submits a list.
 - **`choice_group` fix (T5).** A row selected by `value` now draws its dot. It was
   selected but never drawn.
+- **Stepper help (T5).** A stepper shows `help`, and `error` replaces it. Authored
+  help used to be dropped silently. With the `choice_group` dot, these are the only
+  visible changes for legacy-only YAML; a browser test compares every other legacy
+  control pixel by pixel against the legacy markup and stylesheet.
+- **Disabled look (T5, review).** Native fields (text types, number, colour,
+  `textarea`, `select`) keep the browser's disabled look; the wrapper fade was
+  removed. Drawn controls fade one layer to 0.5, as the legacy disabled checkbox and
+  button do. That covers range, otp and stepper, which ignored `disabled` before. A
+  disabled `choice_group` no longer fades its rows a second time, and toolbar items
+  moved from 0.45 to 0.5.
+- **Picker centring (T5, review).** With nothing selected, the wheel keeps its legacy
+  rule: the first option whose label is the `value` text, so with no `value` the
+  first blank option, else the first option. Options marked `selected: false` are
+  skipped.
 - **Measurement (T3).** Labels show one decimal. Pins happen on `pointerup`, because
   disabled controls get no `click`. Pane sizes are not saved while measuring.
 - **Bundle budget (integration).** The renderer budget rose from 420 KB to 460 KB. The
