@@ -141,9 +141,13 @@ test('#6 an id neither the module alias nor the built-ins define is still unknow
   const tree = buildTreeTargets({ projectPath, targetType: 'page', targetId: 'home' });
   assert.equal(tree.ok, false);
   assert.match(tree.error, /Unknown component reference "kit\.std\.nope"/);
+  // Validation names it where the page uses the module, so the build stops there.
+  const errors = runValidate({ projectPath }).errors;
+  assert.deepEqual(errors.map((entry) => entry.code), ['BROKEN_COMPONENT_REFERENCE'], JSON.stringify(errors));
+  assert.match(errors[0].message, /"promo" in page "home" slot "main" cannot be expanded: Unknown component reference "kit\.std\.nope"/);
   const build = wf(projectPath, 'build');
   assert.notEqual(build.status, 0);
-  assert.match(`${build.stdout}${build.stderr}`, /kit\.std\.nope/);
+  assert.match(`${build.stdout}${build.stderr}`, /Project validation failed/);
 });
 
 /** The root `components.yaml` imports `components/auth.yaml` as `std`; its login has its own root id. */
