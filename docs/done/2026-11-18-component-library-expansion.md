@@ -666,14 +666,18 @@ These changed or sharpened the design while it was built. The code and the docs 
   rendered with: a multiple select keeps its list, number fields and steppers clamp
   to `min`/`max` and show `step` decimals (a bound stepper refreshes at all now), and
   a bound mixed checkbox stays mixed until its `checked` state changes or the user
-  activates it. A browser test checks a grid of literal and bound values for parity.
+  activates it. A bound select keeps explicit option `selected: true`/`false` over a
+  matching value, and a stepper's bound `disabled` survives value changes. A browser
+  test checks a grid of literal and bound values for parity.
 - **Segment identity (T5, review).** Labels stay the binding payload; the runtime keeps
   the chosen segment as the choice, so one of several segments sharing a label stays
   selected through refreshes.
 - **Drawn-control submission (T5, review).** Checkbox, radio, toggle, segmented,
   choice group and picker submit under their node id, from the state they show:
   booleans (or `"mixed"`), the chosen option's `value` else its label, or a list for a
-  checkbox group. Read-only values go, disabled controls do not. On `main` the
+  checkbox group. Read-only values go; disabled controls and individually disabled
+  options do not, in drawn groups and native selects alike, as in HTML. (A selected,
+  individually disabled `segmented` option still submits; that is a follow-up.) On `main` the
   checkbox was a drawn mark and submitted nothing; before 2 November 2026
   (`7e1b19e`) it was a native checkbox that submitted `true`/`false` under the node
   id, which is the key and shape it has again. Native field keys are unchanged.
