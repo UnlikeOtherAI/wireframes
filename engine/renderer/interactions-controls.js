@@ -280,6 +280,13 @@ function initToggles() {
     });
   });
 }
+// What a select submits: its selected options' values, a list when it is
+// multiple. As in HTML, a disabled option is not submitted, even when selected.
+function selectFieldValue(select) {
+  var chosen = Array.prototype.filter.call(select.selectedOptions, function (option) { return !option.disabled; })
+    .map(function (option) { return option.value; });
+  return select.multiple ? chosen : (chosen.length > 0 ? chosen[0] : '');
+}
 var WF_DRAWN_FIELDS = '.wf-node.wf-checkbox,.wf-node.wf-radio,.wf-node.wf-toggle,.wf-node.wf-segmented,.wf-node.wf-choice_group,.wf-node.wf-picker';
 function submittedOption(el, label) { return el.hasAttribute('data-wf-value') ? el.getAttribute('data-wf-value') : label; }
 // What a drawn control submits, read from the state it shows: a boolean (or
@@ -300,8 +307,9 @@ function drawnFieldValue(node) {
   if (node.classList.contains('wf-choice_group')) {
     var list = node.querySelector('.wf-choice-list');
     if (!list || list.hasAttribute('data-wf-disabled')) return undefined;
+    // As in HTML, an option that is itself disabled is not submitted, even when it shows as selected.
     var picked = Array.prototype.filter.call(list.querySelectorAll('[role=radio],[role=checkbox]'), function (option) {
-      return option.getAttribute('aria-checked') === 'true';
+      return option.getAttribute('aria-checked') === 'true' && !option.hasAttribute('data-wf-disabled');
     }).map(function (option) {
       var label = option.closest('.wf-choice').querySelector('.wf-choice-label');
       return submittedOption(option, label ? label.textContent : '');

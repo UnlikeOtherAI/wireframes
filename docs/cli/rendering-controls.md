@@ -87,7 +87,10 @@ node id, read from the state they show:
 | multiple `select` | the list of selected option values |
 
 Read-only values are submitted. A disabled field or control is skipped, as
-in HTML; an option's own `disabled` only stops it being chosen. A drawn
+in HTML. An option's own `disabled` stops it being chosen, and, as in HTML,
+an option that is itself disabled is not submitted even when it shows as
+selected: a radio group or single select whose choice is disabled submits
+`""`, and a list leaves it out. A drawn
 option whose `value` differs from its label carries it as `data-wf-value`.
 
 #### Options and selection
