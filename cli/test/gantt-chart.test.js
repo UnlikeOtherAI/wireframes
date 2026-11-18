@@ -139,3 +139,27 @@ test('other chart types ignore ticks and keep their SVG output', () => {
   assert.equal(withTicks, plain);
   assert.match(plain, /^<svg class="wf-chart-svg"/);
 });
+
+test('huge finite endpoints keep finite coordinates', () => {
+  // 1e30 ± 1 is 1e30, so padding cannot widen this domain: the bar sits in the middle, as a small milestone does.
+  assert.deepEqual(bars(gantt({ data: [{ label: 'Far', start: 1e30, end: 1e30 }] }).inner), [{ tone: '', left: 50, width: 0 }]);
+  // A domain wider than the largest double still places bars proportionally.
+  assert.deepEqual(bars(gantt({ data: [
+    { label: 'Low', start: -Number.MAX_VALUE, end: 0 },
+    { label: 'High', start: 0, end: Number.MAX_VALUE },
+  ] }).inner), [{ tone: '', left: 0, width: 50 }, { tone: '', left: 50, width: 50 }]);
+  assert.deepEqual(bars(gantt({ data: [{ label: 'Wide', start: -1e308, end: 1e308 }, { label: 'Mid', start: 0, end: 5e307 }] }).inner), [
+    { tone: '', left: 0, width: 100 },
+    { tone: '', left: 50, width: 25 },
+  ]);
+  assert.doesNotMatch(gantt({ data: [{ label: 'Far', start: 1e30, end: 1e30 }, { label: 'Wide', start: -1e308, end: 1e308 }] }).inner, /NaN|Infinity/);
+});
+
+test('a large data set finds its domain without spreading arguments', () => {
+  const data = Array.from({ length: 200000 }, (_, i) => ({ label: 'T', start: i, end: i + 1 }));
+  const markup = gantt({ data }).inner;
+  const placed = bars(markup);
+  assert.equal(placed.length, 200000);
+  assert.deepEqual(placed[0], { tone: '', left: 0, width: 0 });
+  assert.ok(placed[placed.length - 1].left > 99.9, 'the last bar ends the domain');
+});
