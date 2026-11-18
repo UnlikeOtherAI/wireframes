@@ -58,6 +58,46 @@ test('a bound multiple select keeps its list after mount and on later changes', 
   });
 });
 
+test('a bound select keeps an explicit item selected over its value, across groups, after mount and on later changes', async () => {
+  const optedOut = [
+    { type: 'group', label: 'First', items: [{ label: 'Opted out', value: 'off', selected: false }, 'state'] },
+    { type: 'group', label: 'Second', items: [{ label: 'Other', value: 'other' }, { label: 'Off again', value: 'off' }] },
+  ];
+  const pinned = [
+    { type: 'group', label: 'First', items: [{ label: 'Explicit', value: 'explicit', selected: true }] },
+    { type: 'group', label: 'Second', items: [{ label: 'Opted out', value: 'off', selected: false }, 'state'] },
+  ];
+  const single = [{ label: 'A out', value: 'a', selected: false }, { label: 'A', value: 'a' }, { label: 'Blank value', value: '' }];
+  const html = pageFor([
+    { id: 'literal_out', component: 'select', props: { options: optedOut, multiple: true, value: ['off', 'state'] } },
+    { id: 'bound_out', component: 'select', props: { options: optedOut, multiple: true, value: '{{state.values}}' } },
+    { id: 'literal_pin', component: 'select', props: { options: pinned, multiple: true, value: ['off', 'state'] } },
+    { id: 'bound_pin', component: 'select', props: { options: pinned, multiple: true, value: '{{state.values}}' } },
+    { id: 'literal_one', component: 'select', props: { options: single, value: 'a' } },
+    { id: 'bound_one', component: 'select', props: { options: single, value: '{{state.one}}' } },
+    { id: 'bound_one_pin', component: 'select', props: { options: ['x', { label: 'Pinned', value: 'p', selected: true }], value: '{{state.one}}' } },
+    setter('values_later', 'values', ['off', 'other']),
+    setter('one_blank', 'one', 'Blank value'),
+  ], { values: ['off', 'state'], one: 'a' });
+  await withPage(html, async (page) => {
+    const labels = (id) => page.locator(`#${id} select`).evaluate((el) => Array.from(el.selectedOptions, (option) => option.textContent));
+    assert.deepEqual(await labels('literal_out'), ['state', 'Off again']);
+    assert.deepEqual(await labels('bound_out'), ['state', 'Off again'], 'selected: false skips that match after mount');
+    assert.deepEqual(await labels('literal_pin'), ['Explicit']);
+    assert.deepEqual(await labels('bound_pin'), ['Explicit'], 'selected: true beats the value after mount');
+    assert.deepEqual(await labels('literal_one'), ['A']);
+    assert.deepEqual(await labels('bound_one'), ['A'], 'a single select skips an opted-out first match');
+    assert.deepEqual(await labels('bound_one_pin'), ['Pinned']);
+
+    await click(page, 'values_later');
+    assert.deepEqual(await labels('bound_out'), ['Other', 'Off again']);
+    assert.deepEqual(await labels('bound_pin'), ['Explicit'], 'a later value still loses to selected: true');
+    await click(page, 'one_blank');
+    assert.deepEqual(await labels('bound_one'), ['Blank value'], 'an option with a blank value is identified by its label');
+    assert.deepEqual(await labels('bound_one_pin'), ['Pinned']);
+  });
+});
+
 test('bound number fields and steppers respect min, max and step after mount and on later changes', async () => {
   const html = pageFor([
     { id: 'qty', component: 'input', props: { label: 'Qty', inputType: 'number', max: 100, value: '{{state.qty}}' } },

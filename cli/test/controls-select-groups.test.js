@@ -59,3 +59,15 @@ test('AMBIGUOUS_VALUE reads select options through every group, with the select 
   assert.equal(ambiguous('segmented', { options: [{ title: 'A' }, 'A'], value: 'A' }).length, 1);
   assert.deepEqual(ambiguous('select', { options: [{ title: 'A' }, 'A'], value: 'A' }), []);
 });
+
+test('a bound select marks authored selection and an identity its value attribute lacks; an unbound one does not', () => {
+  const options = [
+    { type: 'group', label: 'G', items: [{ label: 'On', value: 'on', selected: true }, { label: 'Off', value: 'off', selected: false }] },
+    { label: 'Blank', value: '' }, ' padded ', 'Plain',
+  ];
+  assert.equal(renderSelectOptions(options, { bound: true }),
+    '<optgroup label="G"><option value="on" selected data-wf-item-selected="true">On</option>'
+    + '<option value="off" data-wf-item-selected="false">Off</option></optgroup>'
+    + '<option value="" data-wf-identity="Blank">Blank</option><option value=" padded "> padded </option><option value="Plain">Plain</option>');
+  assert.doesNotMatch(renderSelectOptions(options), /data-wf-(?:item-selected|identity)/);
+});

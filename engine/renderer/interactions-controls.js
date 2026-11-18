@@ -120,12 +120,22 @@ function optionIdentity(value) {
 function keepSelection(select) {
   select._wfKeep = Array.prototype.map.call(select.options, function (option) { return option.selected; });
 }
-// A multiple select selects every option whose value is in the list (or is the one value), as at render time.
+// A select re-selected from state with the precedence it rendered with:
+// options authored selected: true win outright; otherwise options whose
+// identity is in the value (a list for a multiple select), skipping those
+// authored selected: false, and only the first for a single select.
 function selectOptions(select, value) {
+  var options = Array.prototype.slice.call(select.options);
+  var pinned = options.some(function (option) { return option.getAttribute('data-wf-item-selected') === 'true'; });
   var wanted = (Array.isArray(value) ? value : [value]).map(optionIdentity).filter(Boolean);
-  Array.prototype.forEach.call(select.options, function (option) {
-    var id = option.value.trim();
-    option.selected = id !== '' && wanted.indexOf(id) >= 0;
+  var found = false;
+  options.forEach(function (option) {
+    var authored = option.getAttribute('data-wf-item-selected');
+    var id = option.hasAttribute('data-wf-identity') ? option.getAttribute('data-wf-identity') : option.value.trim();
+    var on = pinned ? authored === 'true'
+      : authored !== 'false' && (select.multiple || !found) && id !== '' && wanted.indexOf(id) >= 0;
+    found = found || on;
+    option.selected = on;
   });
 }
 function refreshFieldValue(node, value) {
@@ -138,8 +148,7 @@ function refreshFieldValue(node, value) {
   if (colour && field._wfInvalidDraft && node._wfLastBoundValue === value) return;
   node._wfLastBoundValue = value;
   if (field.tagName === 'SELECT') {
-    if (field.multiple) selectOptions(field, value);
-    else field.value = value == null ? '' : String(value);
+    selectOptions(field, value);
     if (field.hasAttribute('data-wf-readonly')) keepSelection(field);
     return;
   }

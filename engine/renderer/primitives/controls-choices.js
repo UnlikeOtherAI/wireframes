@@ -32,9 +32,11 @@ function renderSelect(node, ctx, lib) {
   const placeholder = lib.resolveAttributeValue(
     lib.str(props.placeholder) || 'Select', ctx.bindingContext || {}, ctx.stateBindings, 'placeholder',
   );
+  const value = selectValue(props.value, ctx, lib);
   const options = lib.renderSelectOptions(Array.isArray(props.options) ? props.options : [], {
-    value: selectValue(props.value, ctx, lib),
+    value,
     multiple: props.multiple === true,
+    bound: typeof ctx.stateBindings?.value === 'string',
   });
   const invalid = lib.str(props.error) ? ' wf-field-invalid' : '';
   const searchGlyph = props.searchable === true
