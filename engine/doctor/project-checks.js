@@ -42,11 +42,13 @@ function nameOf(loaded, label) {
  * @param {Map<string, object>} input.pages   page id to `{ id, document, absolutePath? }`
  * @param {Set<string>} input.datasetIds
  * @param {object} input.componentMap         component id to its definition
+ * @param {object} [input.componentSources]   component id to where it is written, `{ sourcePath, localId }`
  * @param {(scope: object) => object} [input.componentsFor]
- *   The component definitions one template or page may use. A project can import more
- *   by path; without imports every document sees the project's components. Built-in
- *   `std.*` patterns are never in it: lookups fall back to them.
+ *   The components one template or page may use, `{ components, sources }`. A project
+ *   can import more by path; without imports every document sees the project's
+ *   components. Built-in `std.*` patterns are never in it: lookups fall back to them.
  * @param {(page: object) => object} [input.resolveComponentsForPage]
+ *   `{ ok, components, sources }` for a page with its template's imports, or `{ ok: false, error }`
  */
 function checkProject({
   result,
@@ -57,6 +59,7 @@ function checkProject({
   pages,
   datasetIds,
   componentMap,
+  componentSources = {},
   componentsFor,
   resolveComponentsForPage,
 }) {
@@ -81,8 +84,9 @@ function checkProject({
 
   const templateMap = new Map();
   const templateDefinitions = templates?.document?.templates || {};
-  const definitionsFor = typeof componentsFor === 'function' ? componentsFor : () => componentMap;
-  let templateScope = componentMap;
+  const projectScope = { components: componentMap, sources: componentSources };
+  const definitionsFor = typeof componentsFor === 'function' ? componentsFor : () => projectScope;
+  let templateScope = projectScope;
   const componentUsages = {
     componentsUsed: new Set(),
     datasetsUsed: new Set(),
@@ -96,11 +100,11 @@ function checkProject({
       });
     }
     const templateInfo = templateMap.get(templateId);
-    templateScope = definitionsFor({ kind: 'template', id: templateId, components: componentMap });
+    templateScope = definitionsFor({ kind: 'template', id: templateId, ...projectScope });
     collectTemplateReferences(
       templateDocument,
       result,
-      templateScope,
+      templateScope.components,
       templateInfo.slotIds,
       templateInfo.injectableIds,
       componentUsages,
@@ -117,7 +121,7 @@ function checkProject({
   });
 
   for (const pageLoaded of pages.values()) {
-    const pageDefinitions = definitionsFor({ kind: 'page', page: pageLoaded, components: componentMap });
+    const pageDefinitions = definitionsFor({ kind: 'page', page: pageLoaded, ...projectScope }).components;
     collectPageReferences(
       pageLoaded.document?.page ? pageLoaded : { id: pageLoaded.id, document: pageLoaded.document },
       result,
@@ -134,12 +138,16 @@ function checkProject({
 
   for (const componentId of Object.keys(componentMap)) {
     if (!usedComponents.has(componentId)) {
+      // An imported definition is written in its own file, under the id it has there.
+      const source = componentSources[componentId];
       addDiagnostic(
         result,
         'warnings',
         'UNUSED_COMPONENT',
         `Component "${componentId}" is not referenced by any page or template.`,
-        { document: 'components', path: appendPath('$.components', componentId) },
+        source
+          ? { document: 'components', file: source.sourcePath, path: appendPath('$.components', source.localId) }
+          : { document: 'components', path: appendPath('$.components', componentId) },
       );
     }
   }
@@ -184,17 +192,20 @@ function checkProject({
       document: pageLoaded.document,
       page: pageLoaded.document?.page,
       definitions: scoped?.ok ? scoped.components : componentMap,
+      sources: scoped?.ok ? scoped.sources : componentSources,
     };
   });
   const slotDiagnostics = checkComponentSlots({
     definitions: componentMap,
+    sources: componentSources,
     templates: templateDefinitions,
-    templateDefinitions: templateScope,
+    templateDefinitions: templateScope.components,
+    templateSources: templateScope.sources,
     pages: pageEntries,
   });
   const stdAliasDiagnostics = checkStdAlias([
     { label: nameOf(components, 'components'), document: components?.document, definitions: componentMap, documentLabel: 'components' },
-    { label: nameOf(templates, 'templates'), document: templates?.document, definitions: templateScope, documentLabel: 'templates' },
+    { label: nameOf(templates, 'templates'), document: templates?.document, definitions: templateScope.components, documentLabel: 'templates' },
     ...pageEntries.map((entry) => ({
       label: `page "${entry.id}"`, document: entry.document, definitions: entry.definitions, documentLabel: `page:${entry.id}`,
     })),

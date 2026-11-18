@@ -104,7 +104,9 @@ function createLocator(sources, documents) {
     }
     const at = where.at;
     if (!at || typeof at.document !== 'string') return null;
-    const candidates = documents.filter((entry) => entry.label === at.document && entry.value !== null);
+    // Every components document has one label; `file` says which one a rule means.
+    const candidates = documents.filter((entry) => entry.label === at.document && entry.value !== null
+      && (typeof at.file !== 'string' || entry.path === at.file));
     if (typeof at.node === 'string') return atNode(candidates, at.node, where.last === true, at.within);
     if (candidates.length === 0) return null;
     if (typeof at.path !== 'string') return documentStart(candidates[0]);

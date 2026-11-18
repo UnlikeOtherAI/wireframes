@@ -71,6 +71,7 @@ function loadDocument(filePath, result, expectedType) {
   }
 }
 
+/** `{ components, sources }` for what these documents import, or `fallback` when that fails. */
 function loadScopedComponentDefinitions(root, result, entries, contextLabel, fallback) {
   const registryResult = loadComponentRegistryForDocuments(root, entries);
   if (!registryResult.ok) {
@@ -83,7 +84,7 @@ function loadScopedComponentDefinitions(root, result, entries, contextLabel, fal
     return fallback;
   }
 
-  return registryResult.registry.components;
+  return registryResult.registry;
 }
 
 function runDoctor({ projectPath } = {}) {
@@ -209,11 +210,13 @@ function runDoctor({ projectPath } = {}) {
     pages: pageMap,
     datasetIds,
     componentMap: projectComponentRegistry.ok ? projectComponentRegistry.registry.components : {},
+    componentSources: projectComponentRegistry.ok ? projectComponentRegistry.registry.sources : {},
     // A document on disk can import components from other files by path.
     componentsFor(scope) {
+      const fallback = { components: scope.components, sources: scope.sources };
       return scope.kind === 'template'
-        ? loadScopedComponentDefinitions(root, result, templatesEntry, `template "${scope.id}"`, scope.components)
-        : loadScopedComponentDefinitions(root, result, pageEntry(scope.page), `page "${scope.page.id}"`, scope.components);
+        ? loadScopedComponentDefinitions(root, result, templatesEntry, `template "${scope.id}"`, fallback)
+        : loadScopedComponentDefinitions(root, result, pageEntry(scope.page), `page "${scope.page.id}"`, fallback);
     },
     resolveComponentsForPage(pageLoaded) {
       const registryResult = loadComponentRegistryForDocuments(root, [...templatesEntry, ...pageEntry(pageLoaded)]);
@@ -227,6 +230,7 @@ function runDoctor({ projectPath } = {}) {
       return {
         ok: true,
         components: registryResult.registry.components,
+        sources: registryResult.registry.sources,
       };
     },
   });
