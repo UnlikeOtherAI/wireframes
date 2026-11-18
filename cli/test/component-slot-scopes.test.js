@@ -1,7 +1,8 @@
 'use strict';
 
 // Validation scopes for component slots: definitions only a page or a template
-// imports are checked where they were imported.
+// imports are checked where they were imported, and slotted content inside
+// overlays is checked as it renders.
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -12,7 +13,7 @@ const assert = require('node:assert/strict');
 const { runValidate } = require('../../engine/validate/cli-adapter');
 const { validateProject } = require('../../engine/validate');
 const { loadComponentRegistryForDocuments } = require('../../engine/component-registry');
-const { createSlotsProject, readYaml, writeYaml } = require('./fixtures/slots-project');
+const { createSlotsProject, pageContent, readYaml, writeYaml } = require('./fixtures/slots-project');
 
 const slotCodes = (entries) => entries.map((entry) => entry.code).filter((code) => /SLOT/.test(code)).sort();
 
@@ -94,4 +95,54 @@ test('the in-memory validateProject checks page-imported definitions too', () =>
     componentRegistriesByPage: new Map([['home', registry.registry.components]]),
   });
   assert.deepEqual(slotCodes(result.errors), ['SLOT_OUTSIDE_COMPONENT', 'UNKNOWN_COMPONENT_SLOT'], JSON.stringify(result.errors));
+});
+
+test('the checkout fixture validates inside a page modal', () => {
+  const projectPath = createSlotsProject((docs) => {
+    const [first, second] = pageContent();
+    docs.page.page.slots[0].content = [{ id: 'open_pay', component: 'button', props: { label: 'Pay' } }, second];
+    docs.page.page.overlays = [{ id: 'pay_modal', type: 'modal', trigger: 'open_pay', content: [first] }];
+  });
+  const result = runValidate({ projectPath });
+  assert.deepEqual(result.errors, []);
+});
+
+test('a broken submit inside a slotted page modal is still reported', () => {
+  const projectPath = createSlotsProject((docs) => {
+    const [first] = pageContent();
+    first.slots.actions[0].interaction = [{ type: 'submit', formId: 'nowhere' }];
+    docs.page.page.slots[0].content = [{ id: 'open_pay', component: 'button' }];
+    docs.page.page.overlays = [{ id: 'pay_modal', type: 'modal', trigger: 'open_pay', content: [first] }];
+  });
+  const errors = runValidate({ projectPath }).errors;
+  assert.deepEqual(errors.map((entry) => entry.code), ['INVALID_FORM_REFERENCE']);
+  assert.match(errors[0].message, /"nowhere"/);
+});
+
+test('ids are unique across regions, page overlays and template overlays', () => {
+  const projectPath = createSlotsProject((docs) => {
+    docs.page.page.slots[0].content = [
+      { id: 'dup', component: 'text' },
+      { id: 'dup_tpl', component: 'text' },
+      { id: 'open_dup', component: 'button' },
+    ];
+    docs.page.page.overlays = [{ id: 'dup_modal', type: 'modal', trigger: 'open_dup', content: [{ id: 'dup', component: 'text' }] }];
+  });
+  const templates = readYaml(path.join(projectPath, 'templates.yaml'));
+  templates.templates.public_template.overlays = [{
+    id: 'help_modal',
+    type: 'modal',
+    trigger: 'app_logo',
+    content: [{ id: 'dup_tpl', use: 'kit.panel' }, { id: 'help_form', component: 'form' }, {
+      id: 'help_send', component: 'button', interaction: [{ type: 'submit', formId: 'help_form' }],
+    }],
+  }];
+  writeYaml(path.join(projectPath, 'templates.yaml'), templates);
+
+  const errors = runValidate({ projectPath }).errors;
+  const duplicates = errors.filter((entry) => entry.code === 'DUPLICATE_NODE_ID').map((entry) => entry.message).sort();
+  assert.equal(duplicates.length, 2, JSON.stringify(errors));
+  assert.match(duplicates[0], /"dup"/);
+  assert.match(duplicates[1], /"dup_tpl"/);
+  assert.ok(!errors.some((entry) => entry.code === 'INVALID_FORM_REFERENCE'), 'a submit in template overlay content finds its form');
 });
