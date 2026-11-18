@@ -48,9 +48,10 @@ const COMMANDS = [
   },
   {
     name: 'component',
-    args: '<add|remove|list>',
-    summary: 'Manage reusable components',
-    usage: 'wf component <add|remove|list> [id]',
+    args: '<add|remove|list|show>',
+    summary: 'Manage reusable components and show their props and slots',
+    usage: 'wf component <add|remove|list> [id]\n'
+      + 'wf component show <id>',
   },
   {
     name: 'node',
