@@ -516,21 +516,24 @@ or a control with its own chrome; **edge only** draws one divider edge;
 
 **controls**
 
+"+ field" is the shared field contract: label, help, error, required, disabled and readonly ([schema-systems.md §15.5](schema-systems.md)). Rendering: [rendering-controls.md](rendering-controls.md).
+
 | Element | Box | Props |
 |---|---|---|
-| `button` | never | label, icon, iconStyle: solid\|regular\|brands, iconSize, variant: primary\|secondary\|ghost\|danger\|link, size: sm\|md\|lg, iconOnly, loading, disabled, fab |
-| `segmented` | never | options, value, size: sm\|md\|lg |
-| `input` | never | label, placeholder, inputType: text\|password\|email\|number\|search\|tel\|url\|date\|time\|datetime\|color\|range\|otp\|stepper, value, prefix, suffix, help, error, required, disabled, length |
-| `textarea` | never | label, placeholder, rows, help, error, required, disabled, maxLength |
-| `select` | never | label, placeholder, options, searchable, multiple, help, error, required, disabled |
-| `checkbox` | never | label, checked, description, disabled |
-| `radio` | never | label, checked, description, disabled |
-| `toggle` | never | label, checked, description, disabled |
-| `choice_group` | never | label, kind: checkbox\|radio, options, value, inline |
-| `tags_input` | never | label, tags, placeholder |
-| `upload` | always | label, hint, files, variant: dropzone\|button |
-| `picker` | always | label, options, value, columns |
-| `editor` | always | label, toolbar, rows |
+| `button` | never | label, icon, iconStyle: solid\|regular\|brands, iconSize, iconPosition: start\|end\|center, route, variant: primary\|secondary\|ghost\|danger\|link, size: sm\|md\|lg, iconOnly, loading, disabled, fab, pressed |
+| `toolbar` | never | items (items), size: sm\|md\|lg, orientation: row\|stack, labels |
+| `segmented` | never | options (items), value, size: sm\|md\|lg, + field |
+| `input` | never | placeholder, inputType: text\|password\|email\|number\|search\|tel\|url\|date\|time\|datetime\|color\|range\|otp\|stepper, value (two numbers on range), min, max, step, prefix, suffix, icon, iconStyle, iconPosition, variant: default\|plain, length, + field |
+| `textarea` | never | placeholder, rows, maxLength, + field |
+| `select` | never | placeholder, options (items), value (a list with multiple), searchable, multiple, + field |
+| `checkbox` | never | checked, indeterminate, description (help is its alias), + field |
+| `radio` | never | checked, description (help is its alias), + field |
+| `toggle` | never | checked, description (help is its alias), + field |
+| `choice_group` | never | kind: checkbox\|radio, options (items), value (a list for checkbox), inline, + field |
+| `tags_input` | never | tags, placeholder, + field |
+| `upload` | always | label (action copy), fieldLabel, hint, files, variant: dropzone\|button, + field |
+| `picker` | always | options (items), value, columns, + field |
+| `editor` | always | toolbar, rows, + field |
 
 **navigation**
 
