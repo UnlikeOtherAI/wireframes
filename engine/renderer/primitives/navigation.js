@@ -1,5 +1,7 @@
 'use strict';
 
+const { leadingChild } = require('../../schema/leading-child');
+
 function hrefFor(route, ctx, lib) {
   const routeId = lib.str(route);
   if (!routeId || !lib.isObject(ctx.routeTable)) return null;
@@ -175,7 +177,7 @@ function renderAppBar(node, ctx, lib) {
   if (Array.isArray(node.children) && node.children.length && !props.title && !props.leading && !props.actions?.length) {
     return { tag: 'header', inner: '', useChildren: true, style: 'justify-content:space-between' };
   }
-  const leading = lib.str(props.leading)
+  const leading = lib.str(props.leading) && !leadingChild(node)
     ? `<span class="wf-appbar-leading">${lib.icon(props.leading, { size: 'lg' })}</span>`
     : '';
   const title = lib.str(props.title);

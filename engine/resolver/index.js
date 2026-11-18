@@ -1,5 +1,6 @@
 'use strict';
 
+const { renameLeading } = require('../schema/leading-child');
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -93,6 +94,7 @@ function namespaceNodeIds(nodes, namespace) {
       idMap.set(oldId, newId);
     }
 
+    renameLeading(node, (oldId) => `${namespace}__${oldId}`);
     if (Array.isArray(node.children)) {
       for (const child of node.children) {
         visit(child);
@@ -276,6 +278,8 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
   }
 
   if (Array.isArray(resolvedNode.children) && typeof id === 'string' && id.trim() !== '') {
+    // A bar at the component's root names one of the children that are about to be renamed.
+    renameLeading(resolvedNode, (oldId) => `${id}__${oldId}`);
     const idMap = namespaceNodeIds(resolvedNode.children, id);
     rewriteScopedNodeReferences(resolvedNode.children, idMap);
   }
