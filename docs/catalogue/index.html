@@ -442,6 +442,80 @@ button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));bac
 .wf-nav-rail .wf-nav-on .wf-ico{background:var(--wf-ink);color:var(--wf-bg)}
 .wf-nav-rail.wf-nav-collapsed .wf-nav-label{display:inline;position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @media(any-pointer:coarse){.wf-nav:not(.wf-nav-rail) .wf-nav-item,.wf-menu-item{min-height:44px}}
+.wf-tab[data-wf-disabled],.wf-btab[data-wf-disabled],.wf-nav-item[data-wf-disabled],.wf-nav-link[data-wf-disabled],.wf-menu-item[data-wf-disabled],.wf-command-item[data-wf-disabled],.wf-sheet-row[data-wf-disabled],.wf-menubar-trigger[data-wf-disabled],.wf-step[data-wf-disabled]{opacity:.45;cursor:default}
+.wf-crumb[data-wf-disabled]{opacity:.55}
+.wf-nav-sep{height:1px;background:var(--wf-line-2);margin:6px 10px}
+.wf-mode-line .wf-nav-sep,.wf-mode-line .wf-menu-sep,.wf-mode-line .wf-command-sep,.wf-mode-line .wf-nav-panel-sep{background:var(--wf-line-strong)}
+.wf-nav-chevron{display:inline-flex;flex:0 0 auto;margin-left:auto;color:var(--wf-ink-4)}
+.wf-nav-item .wf-nav-chevron .wf-icon-glyph{width:auto;min-width:0;font-size:10px}
+.wf-nav-collapsed .wf-nav-chevron,.wf-nav-collapsed .wf-nav-sep{display:none}
+.wf-menu-heading{padding:8px 12px 4px;font-size:11px;font-weight:600;color:var(--wf-ink-4)}
+.wf-menu-item[data-wf-selected]{background:var(--wf-fill);color:var(--wf-ink)}
+.wf-menu-item[data-wf-current]{color:var(--wf-ink);font-weight:600}
+.wf-mode-line .wf-menu-item[data-wf-selected]{background:transparent;outline:1px dashed var(--wf-line-strong);outline-offset:-1px}
+.wf-menu-sub{display:inline-flex;flex:0 0 auto;color:var(--wf-ink-4)}
+.wf-menu-sub .wf-icon-glyph{font-size:10px;width:auto;min-width:0}
+.wf-sheet-sep{height:8px;background:var(--wf-fill)}
+.wf-mode-line .wf-sheet-sep{height:0;background:transparent;border-top:1px dashed var(--wf-line-strong)}
+.wf-sheet-heading{padding:10px 16px 4px;font-size:12px;color:var(--wf-ink-3);text-align:center}
+.wf-keys{display:inline-flex;align-items:center;gap:3px;flex:0 0 auto}
+.wf-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;font:inherit;font-size:11px;line-height:1;color:var(--wf-ink-3);background:var(--wf-fill-2);border:1px solid var(--wf-line-2);border-bottom-width:2px;border-radius:4px}
+.wf-mode-line .wf-kbd{background:transparent;border:1px solid var(--wf-line-strong);border-radius:0}
+.wf-nav-top{flex-direction:row;align-items:center;flex-wrap:wrap;gap:4px}
+.wf-nav-top .wf-nav-item{flex:0 0 auto}
+.wf-nav-top .wf-nav-label{flex:0 0 auto}
+.wf-nav-top .wf-nav-sep{width:1px;height:20px;margin:0 6px}
+.wf-nav-top .wf-nav-group{padding:0 8px}
+.wf-nav-menu{position:relative;display:flex}
+button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:0;cursor:pointer;gap:6px}
+.wf-nav-trigger .wf-nav-chevron{margin-left:0}
+.wf-nav-trigger[data-wf-expanded]{background:var(--wf-fill);color:var(--wf-ink)}
+.wf-mode-line .wf-nav-trigger[data-wf-expanded]{background:transparent;outline:1px dashed var(--wf-line-strong);outline-offset:-1px}
+.wf-nav-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:30;display:flex;flex-direction:column;gap:2px;width:320px;padding:8px;background:#ffffff;border:1px solid var(--wf-line-2);border-radius:10px;box-shadow:0 10px 30px rgba(17,24,39,.12)}
+.wf-mode-line .wf-nav-panel{border-color:var(--wf-line-strong);border-radius:0;box-shadow:none}
+.wf-nav-link{display:flex;align-items:flex-start;gap:12px;padding:10px;min-width:0;color:var(--wf-ink-2);text-decoration:none;border-radius:var(--wf-corner-radius,8px)}
+.wf-mode-line .wf-nav-link{border-radius:0}
+.wf-nav-link-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 36px;width:36px;height:36px;border-radius:8px;background:var(--wf-fill);color:var(--wf-ink-2)}
+.wf-mode-line .wf-nav-link-icon{background:transparent;border:1px dashed var(--wf-line);border-radius:0}
+.wf-nav-link-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.wf-nav-link-label{font-size:13px;font-weight:600;color:var(--wf-ink)}
+.wf-nav-link-desc{font-size:12px;line-height:1.4;color:var(--wf-ink-3)}
+.wf-nav-panel-heading{padding:8px 10px 2px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--wf-ink-4)}
+.wf-nav-panel-sep{height:1px;background:var(--wf-line-2);margin:4px 6px}
+.wf-menubar{display:flex;align-items:center;flex-wrap:wrap;gap:2px;min-width:0}
+.wf-menubar-menu{position:relative;display:flex}
+.wf-menubar-trigger{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;font:inherit;font-size:13px;font-weight:500;color:var(--wf-ink-2);background:transparent;border:0;border-radius:var(--wf-corner-radius,6px);cursor:pointer}
+.wf-menubar-trigger[data-wf-expanded]{background:var(--wf-fill);color:var(--wf-ink)}
+.wf-mode-line .wf-menubar-trigger{border-radius:0}
+.wf-mode-line .wf-menubar-trigger[data-wf-expanded]{background:transparent;outline:1px dashed var(--wf-line-strong);outline-offset:-1px}
+.wf-menubar-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:30;min-width:220px;padding:5px;background:#ffffff;border:1px solid var(--wf-line-2);border-radius:8px;box-shadow:0 10px 30px rgba(17,24,39,.12)}
+.wf-mode-line .wf-menubar-panel{border-color:var(--wf-line-strong);border-radius:0;box-shadow:none}
+.wf-menubar-panel .wf-menu-item{padding:6px 10px}
+.wf-command{display:flex;flex-direction:column;min-width:0}
+.wf-command-search{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 8px 8px;font-size:14px;border-bottom:1px solid var(--wf-line-2)}
+.wf-mode-line .wf-command-search{border-bottom-color:var(--wf-line-strong)}
+.wf-command-search .wf-icon-glyph{color:var(--wf-ink-4)}
+.wf-command-query{color:var(--wf-ink)}
+.wf-command-placeholder{color:var(--wf-ink-4)}
+.wf-command-list{display:flex;flex-direction:column;gap:2px;padding-top:6px;min-width:0}
+.wf-command-group{display:flex;flex-direction:column;min-width:0}
+.wf-command-heading{padding:8px 8px 4px;font-size:11px;font-weight:600;color:var(--wf-ink-4)}
+.wf-command-items{display:flex;flex-direction:column;gap:1px;margin:0;padding:0;list-style:none;min-width:0}
+.wf-command-item{display:flex;align-items:center;gap:10px;min-height:40px;padding:6px 8px;font-size:13px;color:var(--wf-ink-2);text-decoration:none;border-radius:var(--wf-corner-radius,6px);min-width:0}
+.wf-mode-line .wf-command-item{border-radius:0}
+.wf-command-item .wf-icon-glyph{width:16px;min-width:16px;color:var(--wf-ink-4)}
+.wf-command-item[data-wf-selected]{background:var(--wf-fill);color:var(--wf-ink)}
+.wf-mode-line .wf-command-item[data-wf-selected]{background:transparent;outline:1px dashed var(--wf-line-strong);outline-offset:-1px}
+.wf-command-item[data-wf-current]{font-weight:600}
+.wf-command-text{display:flex;flex-direction:column;flex:1 1 auto;min-width:0}
+.wf-command-label,.wf-command-desc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wf-command-desc{font-size:11.5px;color:var(--wf-ink-4)}
+.wf-command-sep{height:1px;margin:6px 0;background:var(--wf-line-2)}
+.wf-command-empty{padding:28px 8px;font-size:13px;text-align:center;color:var(--wf-ink-3)}
+.wf-command-footer{display:flex;flex-wrap:wrap;gap:16px;margin-top:6px;padding:10px 8px 0;font-size:11px;color:var(--wf-ink-3);border-top:1px solid var(--wf-line-2)}
+.wf-mode-line .wf-command-footer{border-top-color:var(--wf-line-strong)}
+.wf-command-hint{display:inline-flex;align-items:center;gap:6px}
+@media(any-pointer:coarse){.wf-command-item,.wf-menubar-trigger{min-height:44px}}
 .wf-page_header{display:flex;flex-direction:column;gap:10px;min-width:0}
 .wf-ph-main{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;min-width:0}
 .wf-ph-text{min-width:0;flex:1 1 240px}
@@ -633,8 +707,8 @@ button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));bac
     <div class="cat-shell">
       <nav class="cat-side">
   <h1>Element catalogue</h1>
-  <p>54 elements, generated by <code>wf catalogue</code></p>
-  <h2>Containers</h2><ul><li><a href="#el-section">section</a></li><li><a href="#el-card">card</a></li><li><a href="#el-stack">stack</a></li><li><a href="#el-row">row</a></li><li><a href="#el-grid">grid</a></li><li><a href="#el-split">split</a></li><li><a href="#el-form">form</a></li><li><a href="#el-carousel">carousel</a></li></ul><h2>Content</h2><ul><li><a href="#el-heading">heading</a></li><li><a href="#el-paragraph">paragraph</a></li><li><a href="#el-text">text</a></li><li><a href="#el-code">code</a></li><li><a href="#el-badge">badge</a></li><li><a href="#el-avatar">avatar</a></li><li><a href="#el-icon">icon</a></li><li><a href="#el-image">image</a></li><li><a href="#el-rating">rating</a></li><li><a href="#el-stat">stat</a></li><li><a href="#el-progress">progress</a></li><li><a href="#el-skeleton">skeleton</a></li><li><a href="#el-divider">divider</a></li><li><a href="#el-spacer">spacer</a></li><li><a href="#el-empty_state">empty_state</a></li></ul><h2>Controls</h2><ul><li><a href="#el-button">button</a></li><li><a href="#el-segmented">segmented</a></li><li><a href="#el-input">input</a></li><li><a href="#el-textarea">textarea</a></li><li><a href="#el-select">select</a></li><li><a href="#el-checkbox">checkbox</a></li><li><a href="#el-radio">radio</a></li><li><a href="#el-toggle">toggle</a></li><li><a href="#el-choice_group">choice_group</a></li><li><a href="#el-tags_input">tags_input</a></li><li><a href="#el-upload">upload</a></li><li><a href="#el-picker">picker</a></li><li><a href="#el-editor">editor</a></li></ul><h2>Navigation</h2><ul><li><a href="#el-tab_bar">tab_bar</a></li><li><a href="#el-bottom_tab_bar">bottom_tab_bar</a></li><li><a href="#el-breadcrumb">breadcrumb</a></li><li><a href="#el-pagination">pagination</a></li><li><a href="#el-stepper">stepper</a></li><li><a href="#el-nav">nav</a></li><li><a href="#el-menu">menu</a></li><li><a href="#el-app_bar">app_bar</a></li><li><a href="#el-action_sheet">action_sheet</a></li><li><a href="#el-page_header">page_header</a></li></ul><h2>Data</h2><ul><li><a href="#el-table">table</a></li><li><a href="#el-list">list</a></li><li><a href="#el-chart">chart</a></li><li><a href="#el-calendar">calendar</a></li><li><a href="#el-kanban">kanban</a></li><li><a href="#el-tree">tree</a></li><li><a href="#el-accordion">accordion</a></li></ul><h2>Feedback</h2><ul><li><a href="#el-alert">alert</a></li></ul>
+  <p>56 elements, generated by <code>wf catalogue</code></p>
+  <h2>Containers</h2><ul><li><a href="#el-section">section</a></li><li><a href="#el-card">card</a></li><li><a href="#el-stack">stack</a></li><li><a href="#el-row">row</a></li><li><a href="#el-grid">grid</a></li><li><a href="#el-split">split</a></li><li><a href="#el-form">form</a></li><li><a href="#el-carousel">carousel</a></li></ul><h2>Content</h2><ul><li><a href="#el-heading">heading</a></li><li><a href="#el-paragraph">paragraph</a></li><li><a href="#el-text">text</a></li><li><a href="#el-code">code</a></li><li><a href="#el-badge">badge</a></li><li><a href="#el-avatar">avatar</a></li><li><a href="#el-icon">icon</a></li><li><a href="#el-image">image</a></li><li><a href="#el-rating">rating</a></li><li><a href="#el-stat">stat</a></li><li><a href="#el-progress">progress</a></li><li><a href="#el-skeleton">skeleton</a></li><li><a href="#el-divider">divider</a></li><li><a href="#el-spacer">spacer</a></li><li><a href="#el-empty_state">empty_state</a></li></ul><h2>Controls</h2><ul><li><a href="#el-button">button</a></li><li><a href="#el-segmented">segmented</a></li><li><a href="#el-input">input</a></li><li><a href="#el-textarea">textarea</a></li><li><a href="#el-select">select</a></li><li><a href="#el-checkbox">checkbox</a></li><li><a href="#el-radio">radio</a></li><li><a href="#el-toggle">toggle</a></li><li><a href="#el-choice_group">choice_group</a></li><li><a href="#el-tags_input">tags_input</a></li><li><a href="#el-upload">upload</a></li><li><a href="#el-picker">picker</a></li><li><a href="#el-editor">editor</a></li></ul><h2>Navigation</h2><ul><li><a href="#el-tab_bar">tab_bar</a></li><li><a href="#el-bottom_tab_bar">bottom_tab_bar</a></li><li><a href="#el-breadcrumb">breadcrumb</a></li><li><a href="#el-pagination">pagination</a></li><li><a href="#el-stepper">stepper</a></li><li><a href="#el-nav">nav</a></li><li><a href="#el-menu">menu</a></li><li><a href="#el-menubar">menubar</a></li><li><a href="#el-command">command</a></li><li><a href="#el-app_bar">app_bar</a></li><li><a href="#el-action_sheet">action_sheet</a></li><li><a href="#el-page_header">page_header</a></li></ul><h2>Data</h2><ul><li><a href="#el-table">table</a></li><li><a href="#el-list">list</a></li><li><a href="#el-chart">chart</a></li><li><a href="#el-calendar">calendar</a></li><li><a href="#el-kanban">kanban</a></li><li><a href="#el-tree">tree</a></li><li><a href="#el-accordion">accordion</a></li></ul><h2>Feedback</h2><ul><li><a href="#el-alert">alert</a></li></ul>
 </nav>
       <main class="cat-main">
         <div class="cat-intro">
@@ -1094,7 +1168,7 @@ button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));bac
     <span class="cat-frame">draws one edge</span>
   </div>
   <p class="cat-summary">Local tabs select by unique label; routed tabs navigate. Pass tabs[] or children.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_tab_bar" class="wf-node wf-tab_bar wf-tabs-underline" data-wf-frame="edge" data-wf-state-bindings="{}"><button type="button" class="wf-tab wf-tab-on" data-wf-choice-value="&quot;Overview&quot;" aria-pressed="true">Overview</button><button type="button" class="wf-tab" data-wf-choice-value="&quot;Billing&quot;" aria-pressed="false">Billing</button></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_tab_bar" class="wf-node wf-tab_bar wf-tabs-underline" data-wf-frame="edge" data-wf-state-bindings="{}"><button type="button" class="wf-tab wf-tab-on" data-wf-choice-value="&quot;Overview&quot;" aria-pressed="true" data-wf-selected>Overview</button><button type="button" class="wf-tab" data-wf-choice-value="&quot;Billing&quot;" aria-pressed="false">Billing</button></div></div>
   <div class="cat-split">
     <pre class="cat-code">- tab_bar: { tabs: [{ label: Overview, active: true }, { label: Billing }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">tabs</td><td>array</td></tr><tr><td class="">variant</td><td>underline | pill | enclosed</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>tabs</code>.</p></div>
@@ -1106,7 +1180,7 @@ button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));bac
     <span class="cat-frame">draws one edge</span>
   </div>
   <p class="cat-summary">Mobile bottom tab bar, icon above label.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_bottom_tab_bar" class="wf-node wf-bottom_tab_bar" data-wf-frame="edge" data-wf-state-bindings="{}"><span class="wf-btab wf-tab-on"><span class="wf-btab-glyph"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-house fa-lg" data-wf-glyph="H" style="font-size:20px;width:20px"></i></span><span class="wf-btab-label">Home</span></span></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_bottom_tab_bar" class="wf-node wf-bottom_tab_bar" data-wf-frame="edge" data-wf-state-bindings="{}"><span class="wf-btab wf-tab-on" aria-current="page" data-wf-current><span class="wf-btab-glyph"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-house fa-lg" data-wf-glyph="H" style="font-size:20px;width:20px"></i></span><span class="wf-btab-label">Home</span></span></div></div>
   <div class="cat-split">
     <pre class="cat-code">- bottom_tab_bar: { tabs: [{ icon: house, label: Home, active: true }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">tabs</td><td>array</td></tr></tbody></table></div>
@@ -1117,8 +1191,8 @@ button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));bac
     <span class="cat-name">breadcrumb</span>
     <span class="cat-frame">never draws a box</span>
   </div>
-  <p class="cat-summary">Breadcrumb trail.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><nav id="demo_breadcrumb" class="wf-node wf-breadcrumb" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-crumb">Projects</span><span class="wf-crumb-sep">/</span><span class="wf-crumb">Acme</span><span class="wf-crumb-sep">/</span><span class="wf-crumb wf-crumb-current">Settings</span></nav></div>
+  <p class="cat-summary">Breadcrumb trail; the last crumb is current unless an item says otherwise.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><nav id="demo_breadcrumb" class="wf-node wf-breadcrumb" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-crumb">Projects</span><span class="wf-crumb-sep">/</span><span class="wf-crumb">Acme</span><span class="wf-crumb-sep">/</span><span class="wf-crumb wf-crumb-current" aria-current="location" data-wf-current>Settings</span></nav></div>
   <div class="cat-split">
     <pre class="cat-code">- breadcrumb: { items: [Projects, Acme, Settings] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">separator</td><td>string</td></tr></tbody></table></div>
@@ -1130,7 +1204,7 @@ button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));bac
     <span class="cat-frame">never draws a box</span>
   </div>
   <p class="cat-summary">Page controls; variant dots doubles as carousel/onboarding dots.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><nav id="demo_pagination" class="wf-node wf-pagination wf-pagination-numbers" data-wf-frame="content" data-wf-state-bindings="{}"><button class="wf-page-step">‹</button><button class="wf-pagenum">1</button><button class="wf-pagenum wf-pagenum-on">2</button><button class="wf-pagenum">3</button><span class="wf-page-gap">…</span><button class="wf-pagenum">9</button><button class="wf-page-step">›</button></nav></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><nav id="demo_pagination" class="wf-node wf-pagination wf-pagination-numbers" data-wf-frame="content" data-wf-state-bindings="{}"><button class="wf-page-step">‹</button><button class="wf-pagenum">1</button><button class="wf-pagenum wf-pagenum-on" aria-current="page" data-wf-current>2</button><button class="wf-pagenum">3</button><span class="wf-page-gap">…</span><button class="wf-pagenum">9</button><button class="wf-page-step">›</button></nav></div>
   <div class="cat-split">
     <pre class="cat-code">- pagination: { page: 2, pages: 9 }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">page</td><td>number</td></tr><tr><td class="">pages</td><td>number</td></tr><tr><td class="">variant</td><td>numbers | simple | dots</td></tr></tbody></table></div>
@@ -1142,7 +1216,7 @@ button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));bac
     <span class="cat-frame">never draws a box</span>
   </div>
   <p class="cat-summary">Wizard progress through named steps.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_stepper" class="wf-node wf-stepper wf-stepper-row" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-step wf-step-done"><span class="wf-step-marker">✓</span><span class="wf-step-label">Account</span><span class="wf-step-line"></span></span><span class="wf-step wf-step-on"><span class="wf-step-marker">2</span><span class="wf-step-label">Plan</span><span class="wf-step-line"></span></span><span class="wf-step wf-step-next"><span class="wf-step-marker">3</span><span class="wf-step-label">Done</span></span></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_stepper" class="wf-node wf-stepper wf-stepper-row" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-step wf-step-done"><span class="wf-step-marker">✓</span><span class="wf-step-label">Account</span><span class="wf-step-line"></span></span><span class="wf-step wf-step-on" aria-current="step" data-wf-current><span class="wf-step-marker">2</span><span class="wf-step-label">Plan</span><span class="wf-step-line"></span></span><span class="wf-step wf-step-next"><span class="wf-step-marker">3</span><span class="wf-step-label">Done</span></span></div></div>
   <div class="cat-split">
     <pre class="cat-code">- stepper: { steps: [Account, Plan, Done], current: 2 }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">steps</td><td>array</td></tr><tr><td class="">current</td><td>number</td></tr><tr><td class="">orientation</td><td>row | stack</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>wizard</code>.</p></div>
@@ -1153,11 +1227,11 @@ button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));bac
     <span class="cat-name">nav</span>
     <span class="cat-frame">never draws a box</span>
   </div>
-  <p class="cat-summary">Side navigation; rail stacks icons above labels; collapsed hides labels.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><nav id="demo_nav" class="wf-node wf-nav" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-nav-item wf-nav-on"><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-gauge" data-wf-glyph="G"></i></span><span class="wf-nav-label">Dashboard</span></span><span class="wf-nav-item"><span class="wf-nav-label">Settings</span></span></nav></div>
+  <p class="cat-summary">Side navigation; rail stacks icons above labels; collapsed hides labels; top is a horizontal site menu whose open item draws its panel.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><nav id="demo_nav" class="wf-node wf-nav" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-nav-item wf-nav-on" aria-current="page" data-wf-current><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-gauge" data-wf-glyph="G"></i></span><span class="wf-nav-label">Dashboard</span></span><span class="wf-nav-item"><span class="wf-nav-label">Settings</span></span></nav></div>
   <div class="cat-split">
     <pre class="cat-code">- nav: { items: [{ icon: gauge, label: Dashboard, active: true }, { label: Settings }] }</pre>
-    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="">variant</td><td>rail | sidebar</td></tr><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">collapsed</td><td>boolean</td></tr><tr><td class="">groups</td><td>boolean</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>sidenav</code>.</p></div>
+    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="">variant</td><td>rail | sidebar | top</td></tr><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">collapsed</td><td>boolean</td></tr><tr><td class="">groups</td><td>boolean</td></tr><tr><td class="">open</td><td>string</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>sidenav</code>.</p></div>
   </div>
 </article>
 <article class="cat-item" id="el-menu">
@@ -1170,6 +1244,30 @@ button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));bac
   <div class="cat-split">
     <pre class="cat-code">- menu: { items: [Rename, { label: Delete, danger: true }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr></tbody></table></div>
+  </div>
+</article>
+<article class="cat-item" id="el-menubar">
+  <div class="cat-head">
+    <span class="cat-name">menubar</span>
+    <span class="cat-frame">never draws a box</span>
+  </div>
+  <p class="cat-summary">Desktop application menu row; open draws that menu panel under its trigger. Never framed: the bar it sits in owns the frame.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_menubar" class="wf-node wf-menubar" data-wf-frame="content" data-wf-state-bindings="{}"><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">File</button></div><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">Edit</button></div><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">View</button></div></div></div>
+  <div class="cat-split">
+    <pre class="cat-code">- menubar: { items: [{ label: File, items: [New, Open] }, { label: Edit, items: [{ label: Undo, shortcut: &quot;⌘Z&quot; }, { label: Redo, shortcut: &quot;⇧⌘Z&quot; }] }, { label: View, items: [Zoom in] }] }</pre>
+    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">open</td><td>string</td></tr></tbody></table></div>
+  </div>
+</article>
+<article class="cat-item" id="el-command">
+  <div class="cat-head">
+    <span class="cat-name">command</span>
+    <span class="cat-frame">the frame rules decide</span>
+  </div>
+  <p class="cat-summary">Command palette: search row, grouped results with icons, descriptions and key-chip shortcuts. Framed on its own; inside a card or modal the container owns the frame.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_command" class="wf-node wf-command wf-surface" style="padding:16px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-command-search"><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-magnifying-glass" data-wf-glyph="M"></i></span><span class="wf-command-placeholder">Search or run a command</span></div><div class="wf-command-list"><div class="wf-command-group"><div class="wf-command-heading">Suggestions</div><ul class="wf-command-items"><li><span class="wf-command-item" data-wf-selected><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-plus" data-wf-glyph="P"></i></span><span class="wf-command-text"><span class="wf-command-label">New project</span></span><span class="wf-keys"><kbd class="wf-kbd">⌘</kbd><kbd class="wf-kbd">N</kbd></span></span></li><li><span class="wf-command-item"><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-gear" data-wf-glyph="G"></i></span><span class="wf-command-text"><span class="wf-command-label">Settings</span><span class="wf-command-desc">Workspace preferences</span></span></span></li></ul></div></div></div></div>
+  <div class="cat-split">
+    <pre class="cat-code">- command: { placeholder: Search or run a command, items: [{ type: group, label: Suggestions, items: [{ icon: plus, label: New project, shortcut: &quot;⌘N&quot;, selected: true }, { icon: gear, label: Settings, description: Workspace preferences }] }] }</pre>
+    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">placeholder</td><td>string</td></tr><tr><td class="">query</td><td>string</td></tr><tr><td class="">items</td><td>array</td></tr><tr><td class="">empty</td><td>string</td></tr><tr><td class="">footer</td><td>boolean</td></tr></tbody></table></div>
   </div>
 </article>
 <article class="cat-item" id="el-app_bar">

@@ -419,6 +419,7 @@ keys work everywhere. When an entry has both, the older precedence below wins.
 | `tabs` | `tab_bar`, `bottom_tab_bar`, `page_header.tabs` | As `basic`; `active` → `selected`. |
 | `choice` | `segmented`, `choice_group`, `picker` | As `basic`; a scalar also sets `value`. |
 | `select` | `select` | No legacy keys; scalars, booleans included, set `label` and `value`. |
+| `canonical` | `command`, `menubar` | None: these elements are new and read the model keys only. |
 
 These stay element-specific data and do not take the model: table `columns` and
 `rows`, chart `data` and `series`, calendar `events`, kanban `columns` and

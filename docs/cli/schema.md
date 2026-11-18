@@ -541,8 +541,10 @@ or a control with its own chrome; **edge only** draws one divider edge;
 | `breadcrumb` | never | items, separator |
 | `pagination` | never | page, pages, variant: numbers\|simple\|dots |
 | `stepper` | never | steps, current, orientation: row\|stack |
-| `nav` | never | items, collapsed, groups |
+| `nav` | never | variant: rail|sidebar|top, items, collapsed, groups, open |
 | `menu` | never | items |
+| `menubar` | never | items, open |
+| `command` | rules decide | placeholder, query, items, empty, footer |
 | `app_bar` | edge only | title, subtitle, leading, actions |
 | `action_sheet` | never | items, title, cancel |
 | `page_header` | never | title, subtitle, breadcrumb, actions, tabs |
