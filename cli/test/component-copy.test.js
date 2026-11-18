@@ -177,4 +177,22 @@ test('N4 copy into an empty flow map keeps the comments inside its braces', () =
   for (const comment of ['# inner mapping note', '# empty on purpose', '# outside note']) assert.ok(text.includes(comment), comment);
   assert.equal(readYaml(filePath).components.hero.root.id, 'hero');
 });
-
+
+test('N5 a project folder whose name starts with two dots is inside the project', () => {
+  const projectPath = createStdProject([]);
+  const filePath = path.join(projectPath, '..components', 'kit.yaml');
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, 'documentType: components\nspecVersion: "1.1"\nid: kit\ncomponents: {} # keep\n', 'utf8');
+  const copied = wf(projectPath, 'component', 'copy', 'std.login', '--file', '..components/kit.yaml');
+  assert.equal(copied.status, 0, copied.stderr);
+  assert.equal(readYaml(filePath).components.login.root.id, 'login');
+  assert.match(fs.readFileSync(filePath, 'utf8'), /# keep/);
+
+  const { projectFileTarget } = require('../../engine/component-registry/project-file');
+  assert.equal(projectFileTarget(projectPath, '..components/kit.yaml').inside, true);
+  assert.equal(projectFileTarget(projectPath, '..').inside, false, 'the parent folder itself');
+  assert.equal(projectFileTarget(projectPath, '../kit.yaml').inside, false);
+  assert.equal(projectFileTarget(projectPath, path.join('..', 'kit.yaml')).inside, false, 'the platform separator');
+  if (path.sep === '\\') assert.equal(projectFileTarget(projectPath, '..\\kit.yaml').inside, false, 'either separator on Windows');
+  assert.equal(projectFileTarget(projectPath, path.join(path.dirname(projectPath), 'kit.yaml')).inside, false, 'an absolute path outside');
+});
