@@ -1,5 +1,7 @@
 'use strict';
 
+const { childNodeLists } = require('../component-registry/child-nodes');
+
 const ADDRESS_PREFIX = 'wf://';
 const WF_ID_REGEX = /^[a-z][a-z0-9_]*$/;
 
@@ -194,8 +196,20 @@ function resolveNodeBySegment(nodes, segment, isRoot) {
   return { ok: true, match };
 }
 
+// The id under a node may sit in its children or in one of its named slot fills.
+function findInLists(lists, segment) {
+  for (const list of lists) {
+    const index = list.findIndex((entry) => isObject(entry) && entry.id === segment);
+    if (index !== -1) {
+      return { list, index };
+    }
+  }
+  return null;
+}
+
 function resolveAddressInRoots(roots, segments, { allowContainerFinal = false } = {}) {
-  let currentNodes = roots;
+  const currentNodes = roots;
+  let currentLists = [];
   let resolvedPath = [];
   let activeOrigin = null;
   let activeSourceRef = null;
@@ -236,11 +250,10 @@ function resolveAddressInRoots(roots, segments, { allowContainerFinal = false } 
             };
           }
 
-          if (!Array.isArray(directMatchNode.children)) {
+          currentLists = childNodeLists(directMatchNode);
+          if (currentLists.length === 0) {
             return { ok: false, error: `Node "${segment}" has no children.` };
           }
-
-          currentNodes = directMatchNode.children;
           continue;
         }
       }
@@ -279,7 +292,7 @@ function resolveAddressInRoots(roots, segments, { allowContainerFinal = false } 
         return { ok: false, error: `Node "${segment}" has no children.` };
       }
 
-      currentNodes = rootNode.nodes;
+      currentLists = [rootNode.nodes];
       continue;
     }
 
@@ -287,12 +300,12 @@ function resolveAddressInRoots(roots, segments, { allowContainerFinal = false } 
       return { ok: false, error: `Invalid node id "${segment}". Use snake_case starting with a letter.` };
     }
 
-    const matchIndex = currentNodes.findIndex((entry) => isObject(entry) && entry.id === segment);
-    if (matchIndex === -1) {
+    const found = findInLists(currentLists, segment);
+    if (!found) {
       return { ok: false, error: `Node "${segment}" not found while resolving address.` };
     }
 
-    const node = currentNodes[matchIndex];
+    const node = found.list[found.index];
     resolvedPath.push(node.id);
 
     if (isLast) {
@@ -301,19 +314,18 @@ function resolveAddressInRoots(roots, segments, { allowContainerFinal = false } 
         ok: true,
         targetType: 'node',
         node,
-        parentNodes: currentNodes,
-        parentIndex: matchIndex,
+        parentNodes: found.list,
+        parentIndex: found.index,
         origin: activeOrigin,
         sourceRef: activeSourceRef,
         resolvedAddress: `${baseRefPrefix}#${resolvedPath.join('.')}`,
       };
     }
 
-    if (!Array.isArray(node.children)) {
+    currentLists = childNodeLists(node);
+    if (currentLists.length === 0) {
       return { ok: false, error: `Node "${segment}" has no children.` };
     }
-
-    currentNodes = node.children;
   }
 
   return { ok: false, error: 'Unable to resolve address.' };
