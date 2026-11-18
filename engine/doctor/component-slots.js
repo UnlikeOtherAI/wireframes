@@ -163,7 +163,7 @@ function checkDefinition(componentId, definition, definitions, rootAt, report) {
 
 /**
  * Each `sources` map is the registry's: component id to `{ sourcePath, localId }`.
- * Without one, a definition is located and told apart by its registry id.
+ * Without one, a definition is located by its registry id.
  *
  * @param {object} input
  * @param {object} input.definitions Component id to definition, ids qualified by import alias.
@@ -177,8 +177,19 @@ function checkDefinition(componentId, definition, definitions, rootAt, report) {
 function checkComponentSlots({
   definitions = {}, sources, templates = {}, templateDefinitions, templateSources, pages = [],
 }) {
+  // A definition can render differently in each scope: a reference to an alias
+  // its own file does not import resolves to whatever the importing page or
+  // template gives that alias. So every definition is checked in every scope that
+  // can see it, and a finding is dropped only when it repeats one exactly: same
+  // code, same place and same message.
   const diagnostics = [];
-  const report = (severity, code, message, at) => diagnostics.push({ severity, code, message, at });
+  const reported = new Set();
+  const report = (severity, code, message, at) => {
+    const key = JSON.stringify([severity, code, message, at.document, at.file ?? null, at.path, at.key === true]);
+    if (reported.has(key)) return;
+    reported.add(key);
+    diagnostics.push({ severity, code, message, at });
+  };
 
   const templateScope = isObject(templateDefinitions) ? templateDefinitions : definitions;
   const scopes = [
@@ -186,21 +197,10 @@ function checkComponentSlots({
     { definitions: templateScope, sources: isObject(templateDefinitions) ? templateSources : sources },
     ...pages.map((entry) => ({ definitions: entry?.definitions, sources: entry?.sources })),
   ];
-  // A definition a template or page imports is checked in the first registry
-  // that imported it, so its nested instances resolve as they render. Registries
-  // share what they import: one file's definition is checked once, whatever
-  // alias each registry gives it. Without a source, the same registry id and the
-  // same body are the same definition.
-  const checked = new Set();
   for (const scope of scopes) {
     if (!isObject(scope.definitions)) continue;
     for (const [componentId, definition] of Object.entries(scope.definitions)) {
       const source = isObject(scope.sources) ? scope.sources[componentId] : null;
-      const key = isObject(source)
-        ? `${source.sourcePath}\u0000${source.localId}`
-        : `${componentId}\u0000${JSON.stringify(definition)}`;
-      if (checked.has(key)) continue;
-      checked.add(key);
       checkDefinition(componentId, definition, scope.definitions, rootPlace(componentId, source), report);
     }
   }
