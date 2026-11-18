@@ -19,9 +19,12 @@ function realPath(target) {
   }
 }
 
+// `..` as a whole segment, not a name such as `..components`. Windows takes either separator.
+const PARENT = path.sep === '\\' ? /^\.\.(?:[\\/]|$)/u : /^\.\.(?:\/|$)/u;
+
 function contains(root, target) {
   const relative = path.relative(root, target);
-  return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
+  return relative !== '' && !PARENT.test(relative) && !path.isAbsolute(relative);
 }
 
 /**

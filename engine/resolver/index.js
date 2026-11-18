@@ -58,11 +58,14 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
     };
   }
 
+  // `reason` and `componentId` say what failed, so validation can report it where it is written.
   const componentDoc = resolveComponentDefinition(node.use, components);
   if (!isObject(componentDoc) || !isObject(componentDoc.root)) {
     return {
       ok: false,
       error: `Unknown component reference "${node.use}".`,
+      reason: 'unknown-component',
+      componentId: node.use,
     };
   }
 
@@ -70,6 +73,8 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
     return {
       ok: false,
       error: `Circular component reference detected for "${node.use}".`,
+      reason: 'circular-component',
+      componentId: node.use,
     };
   }
 

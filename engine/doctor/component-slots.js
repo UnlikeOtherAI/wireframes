@@ -6,7 +6,9 @@
  * source linter and the in-memory `validateProject` entry point share it.
  *
  * Returns `{ severity, code, message, at }` entries; severity is `errors` or
- * `info`. `at` is `{ document, path, key? }`, where the finding is written.
+ * `info`. `at` is `{ document, file?, path, key? }`, where the finding is
+ * written. `file` names the components document a definition came from, since
+ * every components document has the one label.
  */
 
 const { appendPath } = require('../schema/validator');
@@ -22,8 +24,19 @@ const isObject = (value) => value != null && typeof value === 'object' && !Array
 const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
 
 function under(at, segments, key = false) {
-  const path = segments.reduce((current, segment) => appendPath(current, segment), at.path);
-  return key ? { document: at.document, path, key: true } : { document: at.document, path };
+  const place = { document: at.document, path: segments.reduce((current, segment) => appendPath(current, segment), at.path) };
+  if (at.file) place.file = at.file;
+  if (key) place.key = true;
+  return place;
+}
+
+/**
+ * Where a definition's root is written: in its own file under the id it has
+ * there when its registry knows its source, else under its registry id.
+ */
+function rootPlace(componentId, source) {
+  if (!isObject(source)) return { document: 'components', path: `${appendPath('$.components', componentId)}.root` };
+  return { document: 'components', file: source.sourcePath, path: `${appendPath('$.components', source.localId)}.root` };
 }
 
 /** Visits every node below `nodes`, slot fills included, with where each is written. */
@@ -115,10 +128,9 @@ function checkOutside(nodes, at, definitions, where, report) {
   });
 }
 
-function checkDefinition(componentId, definition, definitions, report) {
+function checkDefinition(componentId, definition, definitions, rootAt, report) {
   if (!isObject(definition) || !isObject(definition.root)) return;
   const where = `component "${componentId}"`;
-  const rootAt = { document: 'components', path: `${appendPath('$.components', componentId)}.root` };
   if (isSlotPlaceholder(definition.root)) {
     report('errors', 'SLOT_OUTSIDE_COMPONENT',
       `Component "${componentId}" has a slot placeholder as its root. A placeholder goes inside the root, never in its place.`,
@@ -150,31 +162,46 @@ function checkDefinition(componentId, definition, definitions, report) {
 }
 
 /**
+ * Each `sources` map is the registry's: component id to `{ sourcePath, localId }`.
+ * Without one, a definition is located and told apart by its registry id.
+ *
  * @param {object} input
  * @param {object} input.definitions Component id to definition, ids qualified by import alias.
+ * @param {object} [input.sources] Where each of `definitions` is written.
  * @param {object} [input.templates] Template id to template.
  * @param {object} [input.templateDefinitions] Definitions visible to templates; defaults to `definitions`.
- * @param {Array<{id: string, page: object, definitions?: object}>} [input.pages] Page payloads, each with the
- *   definitions it can see; defaults to `definitions`.
+ * @param {object} [input.templateSources] Where each of `templateDefinitions` is written.
+ * @param {Array<{id: string, page: object, definitions?: object, sources?: object}>} [input.pages] Page
+ *   payloads, each with the definitions it can see; defaults to `definitions`.
  */
-function checkComponentSlots({ definitions = {}, templates = {}, templateDefinitions, pages = [] }) {
+function checkComponentSlots({
+  definitions = {}, sources, templates = {}, templateDefinitions, templateSources, pages = [],
+}) {
   const diagnostics = [];
   const report = (severity, code, message, at) => diagnostics.push({ severity, code, message, at });
 
   const templateScope = isObject(templateDefinitions) ? templateDefinitions : definitions;
-  const scopes = [definitions, templateScope, ...pages.map((entry) => entry?.definitions)];
-  // A definition a template or page imports is checked in the registry that
-  // imported it, so its nested instances resolve as they render. Registries share
-  // what they import: a definition with the same qualified id and the same
-  // authored body is the same source, checked once.
+  const scopes = [
+    { definitions, sources },
+    { definitions: templateScope, sources: isObject(templateDefinitions) ? templateSources : sources },
+    ...pages.map((entry) => ({ definitions: entry?.definitions, sources: entry?.sources })),
+  ];
+  // A definition a template or page imports is checked in the first registry
+  // that imported it, so its nested instances resolve as they render. Registries
+  // share what they import: one file's definition is checked once, whatever
+  // alias each registry gives it. Without a source, the same registry id and the
+  // same body are the same definition.
   const checked = new Set();
   for (const scope of scopes) {
-    if (!isObject(scope)) continue;
-    for (const [componentId, definition] of Object.entries(scope)) {
-      const key = `${componentId}\u0000${JSON.stringify(definition)}`;
+    if (!isObject(scope.definitions)) continue;
+    for (const [componentId, definition] of Object.entries(scope.definitions)) {
+      const source = isObject(scope.sources) ? scope.sources[componentId] : null;
+      const key = isObject(source)
+        ? `${source.sourcePath}\u0000${source.localId}`
+        : `${componentId}\u0000${JSON.stringify(definition)}`;
       if (checked.has(key)) continue;
       checked.add(key);
-      checkDefinition(componentId, definition, scope, report);
+      checkDefinition(componentId, definition, scope.definitions, rootPlace(componentId, source), report);
     }
   }
 

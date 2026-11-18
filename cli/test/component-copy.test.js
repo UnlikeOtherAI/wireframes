@@ -145,3 +145,63 @@ test('#16 the inserted definition is the only text that changes, wherever the co
     assert.equal(output.slice(0, prefix) + output.slice(output.length - suffix), source, `${name}: only an insertion`);
   }
 });
+
+test('N4 copy into an empty flow map keeps the comments inside its braces', () => {
+  const definition = { root: { id: 'extra', component: 'section' } };
+  const head = 'documentType: components\nspecVersion: "1.1"\nid: c\n';
+  const commented = `${head}components: { # inner mapping note\n  # empty on purpose\n} # outside note\n`;
+  const cases = {
+    'comments before the closing brace': commented,
+    'indented closing brace': `${head}components: {\n    # empty on purpose\n  }\n`,
+    crlf: commented.replace(/\n/g, '\r\n'),
+    'anchored, with a comment': `${head}components: &defs { # inner mapping note\n}\n`,
+    'tagged, with a comment': `${head}components: !!map { # inner mapping note\n}\n`,
+  };
+  for (const [name, source] of Object.entries(cases)) {
+    const output = insertComponentDefinition(source, 'extra', definition);
+    const expected = yaml.load(source);
+    expected.components.extra = definition;
+    assert.deepEqual(yaml.load(output), expected, name);
+    for (const comment of source.match(/# [a-z ]+/g)) assert.ok(output.includes(comment), `${name}: "${comment}" kept`);
+    for (const property of source.match(/&defs|!!map/g) || []) assert.ok(output.includes(property), `${name}: ${property} kept`);
+    let prefix = 0;
+    while (prefix < source.length && source[prefix] === output[prefix]) prefix += 1;
+    const suffix = source.length - prefix;
+    assert.equal(output.slice(0, prefix) + output.slice(output.length - suffix), source, `${name}: only an insertion`);
+    if (source.includes('\r\n')) assert.doesNotMatch(output.replace(/\r\n/g, ''), /\n/, `${name}: line endings kept`);
+  }
+
+  const projectPath = createStdProject([]);
+  const filePath = path.join(projectPath, 'components.yaml');
+  fs.writeFileSync(filePath, cases['comments before the closing brace'], 'utf8');
+  const copied = wf(projectPath, 'component', 'copy', 'std.hero');
+  assert.equal(copied.status, 0, copied.stderr);
+  const text = fs.readFileSync(filePath, 'utf8');
+  for (const comment of ['# inner mapping note', '# empty on purpose', '# outside note']) assert.ok(text.includes(comment), comment);
+  assert.equal(readYaml(filePath).components.hero.root.id, 'hero');
+
+  // An anchored empty map with nothing between its braces still becomes a block mapping.
+  const anchored = `${head}components: &defs {} # keep\n`;
+  const filled = insertComponentDefinition(anchored, 'extra', definition);
+  assert.deepEqual(yaml.load(filled).components, { extra: definition });
+  assert.match(filled, /components: +# keep\n {2}extra:\n/);
+});
+
+test('N5 a project folder whose name starts with two dots is inside the project', () => {
+  const projectPath = createStdProject([]);
+  const filePath = path.join(projectPath, '..components', 'kit.yaml');
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, 'documentType: components\nspecVersion: "1.1"\nid: kit\ncomponents: {} # keep\n', 'utf8');
+  const copied = wf(projectPath, 'component', 'copy', 'std.login', '--file', '..components/kit.yaml');
+  assert.equal(copied.status, 0, copied.stderr);
+  assert.equal(readYaml(filePath).components.login.root.id, 'login');
+  assert.match(fs.readFileSync(filePath, 'utf8'), /# keep/);
+
+  const { projectFileTarget } = require('../../engine/component-registry/project-file');
+  assert.equal(projectFileTarget(projectPath, '..components/kit.yaml').inside, true);
+  assert.equal(projectFileTarget(projectPath, '..').inside, false, 'the parent folder itself');
+  assert.equal(projectFileTarget(projectPath, '../kit.yaml').inside, false);
+  assert.equal(projectFileTarget(projectPath, path.join('..', 'kit.yaml')).inside, false, 'the platform separator');
+  if (path.sep === '\\') assert.equal(projectFileTarget(projectPath, '..\\kit.yaml').inside, false, 'either separator on Windows');
+  assert.equal(projectFileTarget(projectPath, path.join(path.dirname(projectPath), 'kit.yaml')).inside, false, 'an absolute path outside');
+});

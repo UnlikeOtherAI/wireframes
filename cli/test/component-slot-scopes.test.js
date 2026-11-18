@@ -13,6 +13,7 @@ const assert = require('node:assert/strict');
 const { runValidate } = require('../../engine/validate/cli-adapter');
 const { validateProject } = require('../../engine/validate');
 const { loadComponentRegistryForDocuments } = require('../../engine/component-registry');
+const { lintSources } = require('../../engine/lint/source');
 const { createSlotsProject, pageContent, readYaml, writeYaml } = require('./fixtures/slots-project');
 
 const slotCodes = (entries) => entries.map((entry) => entry.code).filter((code) => /SLOT/.test(code)).sort();
@@ -145,4 +146,80 @@ test('ids are unique across regions, page overlays and template overlays', () =>
   assert.match(duplicates[0], /"dup"/);
   assert.match(duplicates[1], /"dup_tpl"/);
   assert.ok(!errors.some((entry) => entry.code === 'INVALID_FORM_REFERENCE'), 'a submit in template overlay content finds its form');
+});
+
+/** Every YAML document of a project folder but `.wfrc.yaml`, as the sources the in-memory linter takes. */
+function readSources(root, folder = '') {
+  return fs.readdirSync(path.join(root, folder), { withFileTypes: true })
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .flatMap((entry) => {
+      const name = folder ? `${folder}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) return readSources(root, name);
+      if (!/\.ya?ml$/.test(entry.name) || entry.name === '.wfrc.yaml') return [];
+      return [{ name, text: fs.readFileSync(path.join(root, name), 'utf8') }];
+    });
+}
+
+test('N2 slot findings in a page or template import are underlined in the module that defines them', () => {
+  for (const importer of ['page', 'template', 'two pages']) {
+    const projectPath = createSlotsProject((docs) => {
+      delete docs.components.imports;
+      docs.page.imports = { kit: '../components/kit.yaml' };
+      docs.kit.components.hollow = { root: { id: 'hollow', slot: 'default' } };
+      docs.kit.components.wrapper = { root: { id: 'wrapper', component: 'card', children: [
+        { id: 'inside', use: 'panel', slots: { typo: [{ id: 'dropped', component: 'text', props: { text: 'Dropped' } }] } },
+      ] } };
+      docs.page.page.slots[0].content = [{ id: 'empty', use: 'kit.hollow' }, { id: 'wrapped', use: 'kit.wrapper' }];
+    });
+    const pagePath = path.join(projectPath, 'pages', 'home.yaml');
+    if (importer === 'template') {
+      const templatesPath = path.join(projectPath, 'templates.yaml');
+      const templates = readYaml(templatesPath);
+      const page = readYaml(pagePath);
+      templates.imports = { kit: 'components/kit.yaml' };
+      templates.templates[page.page.template].regions[0].children = page.page.slots[0].content;
+      delete page.imports;
+      page.page.slots[0].content = [{ id: 'only', component: 'text', props: { text: 'Only' } }];
+      writeYaml(templatesPath, templates);
+      writeYaml(pagePath, page);
+    } else if (importer === 'two pages') {
+      const about = readYaml(pagePath);
+      about.id = 'about';
+      about.page.id = 'about';
+      about.imports = { parts: '../components/kit.yaml' };
+      about.page.slots[0].content = [{ id: 'about_empty', use: 'parts.hollow' }, { id: 'about_wrapped', use: 'parts.wrapper' }];
+      writeYaml(path.join(projectPath, 'pages', 'about.yaml'), about);
+    }
+
+    const sources = readSources(projectPath);
+    const kitText = sources.find((source) => source.name === 'components/kit.yaml').text;
+    const located = lintSources(sources).diagnostics
+      .filter((entry) => ['SLOT_OUTSIDE_COMPONENT', 'UNKNOWN_COMPONENT_SLOT'].includes(entry.code));
+    assert.deepEqual(located.map((entry) => [entry.code, entry.source, entry.path]), [
+      ['SLOT_OUTSIDE_COMPONENT', 'components/kit.yaml', '$.components.hollow.root.slot'],
+      ['UNKNOWN_COMPONENT_SLOT', 'components/kit.yaml', '$.components.wrapper.root.children[0].slots.typo'],
+    ], `${importer}: ${JSON.stringify(located)}`);
+    const underlined = located.map((entry) => kitText.slice(entry.range.start.offset, entry.range.end.offset));
+    assert.deepEqual(underlined, ['slot', 'typo'], importer);
+
+    const disk = runValidate({ projectPath }).errors;
+    assert.deepEqual(slotCodes(disk), ['SLOT_OUTSIDE_COMPONENT', 'UNKNOWN_COMPONENT_SLOT'], `${importer}: once each on disk`);
+  }
+});
+
+test('N2 an unused imported component is underlined in the module that defines it', () => {
+  const projectPath = createSlotsProject((docs) => {
+    docs.page.page.slots[0].content = [{ id: 'only_panel', use: 'kit.panel' }];
+  });
+  const sources = readSources(projectPath);
+  const unused = lintSources(sources).diagnostics.filter((entry) => entry.code === 'UNUSED_COMPONENT');
+  assert.ok(unused.length > 0, 'the fixture leaves some kit components unused');
+  for (const entry of unused) {
+    const [, alias, localId] = /"(kit|kit\.ui)\.(\w+)"/.exec(entry.message);
+    const file = alias === 'kit' ? 'components/kit.yaml' : 'components/ui.yaml';
+    assert.deepEqual([entry.source, entry.path], [file, `$.components.${localId}`], entry.message);
+    const text = sources.find((source) => source.name === file).text;
+    // Underlined at the definition, as for a component of components.yaml: the first line of its value.
+    assert.match(text.slice(0, entry.range.start.offset), new RegExp(`\\n {2}${localId}:\\s*$`), entry.message);
+  }
 });

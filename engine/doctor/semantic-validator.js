@@ -5,9 +5,8 @@
 // itself is in `node-walker.js`; what one node refers to is checked in
 // `semantic-interactions.js`.
 
-const { resolveTemplatePage } = require('../resolver');
-const { resolveNodes } = require('../resolver/nodes');
 const { appendPath } = require('../schema/validator');
+const { collectRenderedRoots } = require('./rendered-roots');
 const {
   isObject,
   addDiagnostic,
@@ -99,39 +98,7 @@ function collectComponentRoots(componentMap, result, routeIds, defaultGridColumn
   }
 }
 
-/**
- * The page as it renders: its template's regions with the page's slot content,
- * then the template's overlays and the page's own, every component expanded as
- * the build expands it (`build/page-tree.js`). Ids and form references are
- * checked on that tree, so a submit inside a slotted overlay sees the ids its
- * component renders. Content that cannot resolve is reported by the reference
- * checks and is not walked.
- */
-function collectRootsFromPage(pageDoc, templateDoc, componentRoots) {
-  const roots = [];
-
-  const templatePage = isObject(templateDoc) && isObject(pageDoc)
-    ? resolveTemplatePage({ template: templateDoc, page: pageDoc, components: componentRoots })
-    : null;
-
-  if (templatePage && templatePage.ok && Array.isArray(templatePage.roots)) {
-    roots.push(...templatePage.roots);
-  }
-
-  const overlays = [
-    ...(isObject(templateDoc) && Array.isArray(templateDoc.overlays) ? templateDoc.overlays : []),
-    ...(Array.isArray(pageDoc.overlays) ? pageDoc.overlays : []),
-  ];
-  for (const overlay of overlays) {
-    if (!isObject(overlay) || !Array.isArray(overlay.content)) continue;
-    const resolved = resolveNodes(overlay.content, componentRoots);
-    if (resolved.ok) roots.push(...resolved.nodes);
-  }
-
-  return roots;
-}
-
-function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, appState, componentRoots, result, defaultGridColumns) {
+function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, appState, componentRoots, result, defaultGridColumns, projectComponents) {
   const pageDoc = isObject(pageLoaded.document) ? pageLoaded.document.page : null;
   if (!isObject(pageDoc)) {
     return;
@@ -184,7 +151,9 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
     validateDepthAndNodes: true,
   });
 
-  const roots = collectRootsFromPage(pageDoc, template, componentRoots);
+  // Ids and form references are checked on the page as it renders, so a submit
+  // inside a slotted overlay sees the ids its component renders.
+  const roots = collectRenderedRoots({ result, pageId, page: pageDoc, template, components: componentRoots, projectComponents });
   for (const root of roots) {
     validateNode(root, context, 1);
   }
@@ -228,7 +197,7 @@ function runSemanticValidation({
       }
     }
 
-    validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, appState, pageComponents, result, defaultGrid);
+    validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, appState, pageComponents, result, defaultGrid, globalComponents);
   }
 }
 

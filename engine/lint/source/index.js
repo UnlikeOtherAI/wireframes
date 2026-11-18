@@ -139,12 +139,13 @@ function checkAcrossDocuments(documents, report) {
       pages,
       datasetIds,
       componentMap: scopes.componentMap,
+      componentSources: scopes.componentSources,
       componentsFor(target) {
         const page = target.kind === 'page' ? pageEntries.get(target.page) : null;
         const scope = scopes.scope(target.kind === 'template' ? [templates] : [page]);
-        if (scope.ok) return scope.components;
+        if (scope.ok) return scope;
         importError(scope, target.kind === 'template' ? `template "${target.id}"` : `page "${target.page.id}"`);
-        return target.components;
+        return { components: target.components, sources: target.sources };
       },
       resolveComponentsForPage(page) {
         const scope = scopes.scope([templates, pageEntries.get(page)].filter(Boolean));

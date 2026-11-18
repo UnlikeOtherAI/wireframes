@@ -105,5 +105,28 @@ test('a module std alias shadows only its own ids in the browser bundle', () => 
 
   const registry = parseProject(rooted).documentMap.componentRegistriesByFile.get('components/kit.yaml');
   assert.deepEqual(registry.components[`${registry.namespace}.landing`].root.children.map((node) => node.use),
-    [`${registry.namespace}.std.badge`, 'std.hero'], 'the per-file registry an editor previews with resolves the same way');
+    [`${registry.namespace}.std.badge`, 'builtin:std.hero'], 'the per-file registry an editor previews with resolves the same way');
+});
+
+test('a module std alias that lacks an id reaches the built-in, not the project std alias', () => {
+  const shadow = doc({ documentType: 'components', id: 'global', components: {
+    hero: { root: { id: 'hero', component: 'text', props: { text: 'Root shadow' } } },
+  } });
+  const rooted = nestedStd([{ id: 'promo', use: 'kit.landing' }, { id: 'own', use: 'std.hero' }]);
+  rooted['components.yaml'] = doc({ documentType: 'components', id: 'components', components: {},
+    imports: { kit: './components/kit.yaml', std: './components/global.yaml' } });
+  rooted['components/global.yaml'] = shadow;
+  const html = renderProject(rooted).pages.get('home');
+  assert.match(html, /Kit badge/);
+  assert.match(html, /id="promo__banner__title"[^>]*><h1>Kit hero/, 'the module std.hero is the built-in');
+  assert.equal(html.match(/Root shadow/g)?.length, 1, 'only the page std.hero is the project shadow');
+
+  const paged = nestedStd([{ id: 'promo', use: 'kit.landing' }, { id: 'own', use: 'std.hero' }]);
+  paged['components.yaml'] = doc({ documentType: 'components', id: 'components', components: {},
+    imports: { std: './components/global.yaml' } });
+  paged['components/global.yaml'] = shadow;
+  paged['pages/home.yaml'] = paged['pages/home.yaml'].replace('"documentType":"page"', '"documentType":"page","imports":{"kit":"../components/kit.yaml"}');
+  const pagedHtml = renderProject(paged).pages.get('home');
+  assert.match(pagedHtml, /id="promo__banner__title"[^>]*><h1>Kit hero/, 'the same through a page import');
+  assert.equal(pagedHtml.match(/Root shadow/g)?.length, 1);
 });

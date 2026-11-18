@@ -63,7 +63,7 @@ test('#6 a module std alias wins for the ids it defines and the built-ins stay r
   const registry = loadProjectComponentRegistry(projectPath);
   assert.equal(registry.ok, true, registry.error);
   assert.deepEqual(registry.registry.components['kit.landing'].root.children.map((node) => node.use),
-    ['kit.std.badge', 'std.hero'], 'the module alias qualifies what it defines; the rest keeps the authored built-in id');
+    ['kit.std.badge', 'builtin:std.hero'], 'the module alias qualifies what it defines; the rest names the built-in only');
   assert.deepEqual(Object.keys(registry.registry.components).sort(), ['kit.landing', 'kit.std.badge'],
     'the built-in never joins the registry');
 
@@ -94,6 +94,43 @@ test('#6 the module fallback also works for page imports, and the module still r
   assert.equal(homeNodes(projectPath).get('promo__banner').props.text, 'Module hero', 'the module alias hero wins');
 });
 
+test('N3 a module std alias that lacks an id reaches the built-in, not a std alias of the project', () => {
+  for (const imported of ['root', 'page']) {
+    const projectPath = nestedStdProject([{ id: 'promo', use: 'kit.landing' }, { id: 'own', use: 'std.hero' }]);
+    writeYaml(path.join(projectPath, 'components', 'global.yaml'), componentsDoc('global', {
+      hero: label('hero', 'Root shadow'),
+    }));
+    if (imported === 'root') {
+      importFromRoot(projectPath, { kit: './components/kit.yaml', std: './components/global.yaml' });
+    } else {
+      importFromRoot(projectPath, { std: './components/global.yaml' });
+      const pagePath = path.join(projectPath, 'pages', 'home.yaml');
+      const page = readYaml(pagePath);
+      page.imports = { kit: '../components/kit.yaml' };
+      writeYaml(pagePath, page);
+    }
+
+    assert.deepEqual(runValidate({ projectPath }).errors, [], imported);
+    const nodes = homeNodes(projectPath);
+    assert.equal(nodes.get('promo__tag').props.text, 'Kit badge', `${imported}: the module alias still wins for badge`);
+    assert.equal(nodes.get('promo__banner__title').props.text, 'Kit hero', `${imported}: the module's std.hero is the built-in`);
+    assert.equal(nodes.get('own').props.text, 'Root shadow', `${imported}: the page itself still sees the project std alias`);
+
+    const build = wf(projectPath, 'build');
+    assert.equal(build.status, 0, build.stderr);
+    const html = fs.readFileSync(path.join(projectPath, 'wireframes', 'build', 'web', 'home.html'), 'utf8');
+    assert.match(html, /id="promo__banner__title"[^>]*><h1>Kit hero/, imported);
+    assert.equal(html.match(/Root shadow/g).length, 1, `${imported}: only the page's own std.hero is the shadow`);
+  }
+
+  // The module's std.hero is not a use of the project's: without the page's own, it is unused.
+  const projectPath = nestedStdProject([{ id: 'promo', use: 'kit.landing' }]);
+  writeYaml(path.join(projectPath, 'components', 'global.yaml'), componentsDoc('global', { hero: label('hero', 'Root shadow') }));
+  importFromRoot(projectPath, { kit: './components/kit.yaml', std: './components/global.yaml' });
+  const unused = runValidate({ projectPath }).warnings.filter((entry) => entry.code === 'UNUSED_COMPONENT');
+  assert.ok(unused.some((entry) => /"std\.hero"/.test(entry.message)), JSON.stringify(unused));
+});
+
 test('#6 an id neither the module alias nor the built-ins define is still unknown under its qualified id', () => {
   const projectPath = nestedStdProject([{ id: 'promo', use: 'kit.landing' }]);
   const kitPath = path.join(projectPath, 'components', 'kit.yaml');
@@ -104,9 +141,13 @@ test('#6 an id neither the module alias nor the built-ins define is still unknow
   const tree = buildTreeTargets({ projectPath, targetType: 'page', targetId: 'home' });
   assert.equal(tree.ok, false);
   assert.match(tree.error, /Unknown component reference "kit\.std\.nope"/);
+  // Validation names it where the page uses the module, so the build stops there.
+  const errors = runValidate({ projectPath }).errors;
+  assert.deepEqual(errors.map((entry) => entry.code), ['BROKEN_COMPONENT_REFERENCE'], JSON.stringify(errors));
+  assert.match(errors[0].message, /"promo" in page "home" slot "main" cannot be expanded: Unknown component reference "kit\.std\.nope"/);
   const build = wf(projectPath, 'build');
   assert.notEqual(build.status, 0);
-  assert.match(`${build.stdout}${build.stderr}`, /kit\.std\.nope/);
+  assert.match(`${build.stdout}${build.stderr}`, /Project validation failed/);
 });
 
 /** The root `components.yaml` imports `components/auth.yaml` as `std`; its login has its own root id. */
