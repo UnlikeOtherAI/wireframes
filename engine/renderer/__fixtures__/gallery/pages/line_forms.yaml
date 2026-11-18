@@ -49,6 +49,21 @@ page:
                   props:
                     options: [Day, Week, Month]
                     value: Week
+                - id: lbtn_pressed
+                  component: button
+                  props:
+                    label: Pinned
+                    pressed: true
+                - id: ltoolbar
+                  component: toolbar
+                  props:
+                    size: sm
+                    items:
+                      - { label: Bold, icon: bold, pressed: true }
+                      - { label: Italic, icon: italic }
+                      - { type: separator }
+                      - { label: Align left, icon: align-left, checked: true }
+                      - { label: Delete, icon: trash, disabled: true }
         - id: line_fields
           component: card
           props:
@@ -128,3 +143,40 @@ page:
                   props:
                     label: Drop files here
                     hint: Up to 10 MB
+        - id: line_states
+          component: card
+          props:
+            title: Field states
+          layout:
+            type: grid
+            columns: 3
+            gap: 16
+          children:
+            - id: lstate_ref
+              component: input
+              props:
+                label: Reference
+                value: INV-0042
+                readonly: true
+            - id: lstate_range
+              component: input
+              props:
+                label: Price
+                inputType: range
+                value: [20, 70]
+            - id: lstate_choices
+              component: stack
+              props:
+                gap: 12
+              children:
+                - id: lstate_mixed
+                  component: checkbox
+                  props:
+                    label: Select all
+                    indeterminate: true
+                - id: lstate_segment
+                  component: segmented
+                  props:
+                    options: [Grid, List]
+                    value: List
+                    disabled: true
