@@ -88,8 +88,11 @@ submits a list of option values.
 - `select.value` is the initial selection; with `multiple: true` it is a
   list. Item `selected` wins; `selected: false` beats a matching value. A
   `group` item is an `<optgroup>`, a `separator` an `<hr>`, and a
-  `disabled` item a disabled option. A `{{state.x}}` value binds the select
-  like an input value.
+  `disabled` item a disabled option. The selection is resolved once across
+  the options of every group, so a single select marks only the first
+  match, and `AMBIGUOUS_VALUE` reads the options the same way
+  (`engine/renderer/choice-options.js`). A `{{state.x}}` value binds the
+  select like an input value.
 - A checkbox `choice_group` is multiple choice: its `value` may be a list,
   and an option's `checked: mixed` draws it indeterminate.
 - `picker` centres the selected option. With nothing selected it keeps its

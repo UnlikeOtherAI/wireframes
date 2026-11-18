@@ -3,7 +3,8 @@
 const { toPx } = require('./layout');
 const { standardRole } = require('../design-system/resolve');
 const { readLocalImage } = require('./wireframe-styles');
-const { normalizeItems, resolveSelection, itemProfiles } = require('./items');
+const { resolveSelection } = require('./items');
+const { selectOptionRows, optionLeaves } = require('./choice-options');
 const {
   isObject,
   isBoundSelectionValue,
@@ -318,28 +319,29 @@ function renderSectionTitle(props, options = {}) {
  * `<option>` markup for `select.options`, read through the item model's
  * `select` profile. A scalar (booleans included) is written as given; an
  * object trims its label and value and falls back to "Option". `value` (a
- * list with `multiple`) and item `selected` mark the initial selection; a
- * `group` is an `<optgroup>` and a `separator` an `<hr>`.
+ * list with `multiple`) and item `selected` mark the initial selection,
+ * resolved once across the options of every group, so a single select marks
+ * only the first match. A `group` is an `<optgroup>` and a `separator` an `<hr>`.
  */
 function renderSelectOptions(options, { value, multiple = false } = {}) {
-  const rows = (Array.isArray(options) ? options : []).map((entry) => {
-    const [item] = normalizeItems([entry], itemProfiles.select);
-    return item ? { item, scalar: !isObject(entry) } : null;
-  }).filter(Boolean);
+  const rows = selectOptionRows(options);
   if (rows.length === 0) return '';
-  const { selected } = resolveSelection(rows.map((row) => row.item), { value, multiple });
+  const leaves = optionLeaves(rows);
+  const { selected } = resolveSelection(leaves.map((row) => row.item), { value, multiple });
+  const chosen = new Set(leaves.filter((_, index) => selected[index]));
 
-  return rows.map(({ item, scalar }, index) => {
+  const write = (list) => list.map((row) => {
+    const { item, scalar } = row;
     if (item.type === 'separator') return '<hr>';
     if (item.type === 'heading' || item.type === 'group') {
-      const nested = item.type === 'group' ? renderSelectOptions(item.items, { value, multiple }) : '';
-      return `<optgroup label="${escapeAttr(String(item.label ?? '').trim())}">${nested}</optgroup>`;
+      return `<optgroup label="${escapeAttr(String(item.label ?? '').trim())}">${row.rows ? write(row.rows) : ''}</optgroup>`;
     }
     const label = scalar ? item.label : String(item.label || item.value || '').trim();
     const optionValue = scalar ? item.value : String(item.value ?? item.label ?? '').trim();
-    const attrs = `${selected[index] ? ' selected' : ''}${item.disabled === true ? ' disabled' : ''}`;
+    const attrs = `${chosen.has(row) ? ' selected' : ''}${item.disabled === true ? ' disabled' : ''}`;
     return `<option value="${escapeAttr(optionValue)}"${attrs}>${escapeHtml(scalar ? label : label || optionValue || 'Option')}</option>`;
   }).join('');
+  return write(rows);
 }
 
 module.exports = {
