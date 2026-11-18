@@ -129,6 +129,11 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-mode-card .wf-button-danger.wf-act{background:#1f2937;color:#ffffff}
 .wf-mode-card .wf-button-ghost.wf-act{background:transparent;color:var(--wf-ink-2)}
 .wf-mode-card .wf-button-link.wf-act{background:transparent;color:var(--wf-ink);text-decoration:underline;min-width:0;padding:0}
+.wf-act[class*="wf-tone-"]{color:var(--wf-tone)}
+.wf-mode-line .wf-act[class*="wf-tone-"]{border-color:var(--wf-tone)}
+.wf-mode-line .wf-act[data-wf-pressed]{background:var(--wf-fill);box-shadow:inset 0 0 0 1px var(--wf-line-strong)}
+.wf-mode-card .wf-act[data-wf-pressed]{background:var(--wf-line);color:var(--wf-ink);box-shadow:inset 0 1px 2px rgba(17,24,39,.18)}
+.wf-act[data-wf-disabled]{opacity:.5;cursor:not-allowed}
 .wf-section,.wf-card,.wf-stack,.wf-row,.wf-grid,.wf-split,.wf-form{min-width:0}
 .wf-card-media{margin:-16px -16px 0;overflow:hidden;border-radius:var(--wf-surface-radius,6px) var(--wf-surface-radius,6px) 0 0}
 .wf-card-media img{width:100%;display:block;border:none;border-radius:0}

@@ -4,6 +4,7 @@ const { PRIMITIVE_COMPONENTS } = require('../../schema/primitives');
 const { getPrimitive, resolvePrimitiveName, knownProps } = require('../../schema/primitive-registry');
 const { decideFrame } = require('../../renderer/frame-rules');
 const { ROLES } = require('../../renderer/sizing-tokens');
+const { validateAmbiguousValue } = require('./ambiguous-value');
 
 const TEXT_PRIMITIVES = new Set(['heading', 'paragraph', 'text']);
 const FIELD_PRIMITIVES = new Set(['input', 'select', 'textarea', 'picker']);
@@ -198,6 +199,7 @@ function validatePrimitiveProps(result, node, context, options = {}) {
     validateRedundantSurface(result, node, decision, context);
     validateLayoutOnLeaf(result, node, component, context);
     validateEmptyContainer(result, node, component, context);
+    validateAmbiguousValue(result, node, context);
   }
 
   const containerDepth = (Number.isInteger(options.containerDepth) ? options.containerDepth : 0)

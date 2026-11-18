@@ -61,6 +61,18 @@ function knownProps(name) {
   return entry ? new Set(Object.keys(entry.props || {})) : null;
 }
 
+/**
+ * Array props that take the shared item model, marked `{ type: 'array', items: true }`.
+ * The schema keeps them open; the model is enforced at render time.
+ */
+function itemProps(name) {
+  const entry = getPrimitive(name);
+  if (!entry) return [];
+  return Object.entries(entry.props || {})
+    .filter(([, spec]) => spec.type === 'array' && spec.items === true)
+    .map(([prop]) => prop);
+}
+
 /** Frame class: S always framed, C decided by frame rules, N never, E edge only. */
 function frameClass(name) {
   const entry = getPrimitive(name);
@@ -77,5 +89,6 @@ module.exports = {
   primitivesByFamily,
   primaryProp,
   knownProps,
+  itemProps,
   frameClass,
 };
