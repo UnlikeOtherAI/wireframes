@@ -98,7 +98,7 @@ const containerPrimitives = [
     props: {
       dots: { type: 'boolean' },
       arrows: { type: 'boolean' },
-      items: { type: 'array' },
+      items: { type: 'array', items: true },
     },
     example: '- carousel: { dots: true, items: [Slide one, Slide two] }',
   },

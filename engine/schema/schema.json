@@ -3999,7 +3999,7 @@
     },
     "PrimitiveProps_tree": {
       "type": "object",
-      "description": "Nested tree or file browser.",
+      "description": "Nested tree or file browser. Items stay open unless they set expanded: false.",
       "properties": {
         "items": {
           "type": "array"
@@ -4011,7 +4011,7 @@
     },
     "PrimitiveProps_accordion": {
       "type": "object",
-      "description": "Collapsible rows; set open on the item that starts expanded.",
+      "description": "Collapsible rows; set expanded on the item that starts open.",
       "properties": {
         "items": {
           "type": "array"

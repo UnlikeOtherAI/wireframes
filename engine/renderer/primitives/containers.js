@@ -35,7 +35,7 @@ function renderForm(node, ctx, lib) {
 }
 
 function renderCarousel(node, ctx, lib) {
-  const entries = lib.items(node.props?.items, 'title');
+  const entries = lib.normalizeItems(node.props?.items, lib.itemProfiles.list);
   const arrows = node.props?.arrows === false
     ? ''
     : '<button class="wf-carousel-arrow wf-carousel-prev">‹</button><button class="wf-carousel-arrow wf-carousel-next">›</button>';
@@ -47,7 +47,7 @@ function renderCarousel(node, ctx, lib) {
 
   if (entries.length > 0) {
     const slides = entries.map((item) => (
-      `<div class="wf-slide">${lib.str(item.title) ? lib.bound(item.title, ctx) : lib.renderSkeleton(14)}</div>`
+      `<div class="wf-slide">${lib.str(item.label) ? lib.bound(item.label, ctx) : lib.renderSkeleton(14)}</div>`
     )).join('');
     return { inner: `<div class="wf-carousel-track">${slides}</div>${arrows}${dots}`, after: '' };
   }

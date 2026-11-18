@@ -25,14 +25,14 @@ const dataPrimitives = [
     frame: 'C',
     summary: 'List rows. kind covers plain, avatar, action, file, chat and timeline shapes.',
     props: {
-      items: { type: 'array', primary: true },
+      items: { type: 'array', items: true, primary: true },
       kind: { enum: ['plain', 'avatar', 'action', 'file', 'chat', 'timeline', 'settings'] },
       divided: { type: 'boolean' },
       selectable: { type: 'boolean' },
       refreshable: { type: 'boolean' },
     },
     sizing: ['row.height'],
-    example: '- list: { kind: avatar, items: [{ title: Ada, text: Invited you }] }',
+    example: '- list: { kind: avatar, items: [{ label: Ada, description: Invited you }] }',
   },
   {
     name: 'chart',
@@ -86,22 +86,22 @@ const dataPrimitives = [
     name: 'tree',
     family: 'data',
     frame: 'C',
-    summary: 'Nested tree or file browser.',
+    summary: 'Nested tree or file browser. Items stay open unless they set expanded: false.',
     props: {
-      items: { type: 'array', primary: true },
+      items: { type: 'array', items: true, primary: true },
       expanded: { type: 'boolean' },
     },
-    example: '- tree: { items: [{ label: src, children: [{ label: index.js }] }] }',
+    example: '- tree: { items: [{ label: src, items: [{ label: index.js }] }] }',
   },
   {
     name: 'accordion',
     family: 'data',
     frame: 'C',
-    summary: 'Collapsible rows; set open on the item that starts expanded.',
+    summary: 'Collapsible rows; set expanded on the item that starts open.',
     props: {
-      items: { type: 'array', primary: true },
+      items: { type: 'array', items: true, primary: true },
     },
-    example: '- accordion: { items: [{ title: Billing, text: ..., open: true }] }',
+    example: '- accordion: { items: [{ label: Billing, description: ..., expanded: true }] }',
   },
 ];
 

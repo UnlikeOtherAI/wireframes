@@ -53,6 +53,9 @@ const dataStyles = [
   '.wf-list-chat .wf-list-body{padding:9px 12px;border-radius:12px;background:var(--wf-fill);max-width:72%;flex:0 1 auto}',
   '.wf-mode-line .wf-list-chat .wf-list-body{background:transparent;border:1px solid var(--wf-line)}',
   '.wf-list-chat .wf-list-text{white-space:normal}',
+  'a.wf-list-row,a.wf-list-body{color:inherit;text-decoration:none;cursor:pointer}',
+  'a.wf-list-row:hover{background:var(--wf-fill-2)}',
+  '.wf-list-row[data-wf-disabled]{opacity:.5;cursor:not-allowed}',
 
   // --- Charts ---
   '.wf-chart{min-width:0;display:flex;flex-direction:column;gap:6px}',
@@ -127,6 +130,8 @@ const dataStyles = [
   '.wf-tree-caret{width:12px;flex:0 0 auto;color:var(--wf-ink-4);font-size:10px}',
   '.wf-tree-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
   '.wf-tree-row .wf-icon-glyph{color:var(--wf-ink-4);font-size:13px}',
+  '.wf-tree-row[data-wf-selected]{color:var(--wf-ink);font-weight:600;background:var(--wf-fill-2)}',
+  '.wf-mode-line .wf-tree-row[data-wf-selected]{background:transparent;box-shadow:inset 2px 0 0 var(--wf-line-strong)}',
 
   // --- Accordion ---
   '.wf-accordion{display:flex;flex-direction:column;min-width:0;padding:0}',
