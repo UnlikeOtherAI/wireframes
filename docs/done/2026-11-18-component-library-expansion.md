@@ -714,12 +714,20 @@ These changed or sharpened the design while it was built. The code and the docs 
   the authored entry (`CIRCULAR_TEMPLATE_REFERENCE` or `BROKEN_COMPONENT_REFERENCE`), for
   page slots, template regions, injectables and overlays, including unknown ids inside
   root-imported modules. An overlay that fails to expand is not walked for id and form
-  checks until it does.
+  checks until it does. When a region fails, an injection is checked only once a
+  placeholder that renders reaches it, so one the page's slot content replaces is never
+  reported.
 - **Module-local `std` misses (re-check).** A module's `std.<name>` that its own `std`
   alias lacks becomes `builtin:std.<name>`, which only the built-in can satisfy, so a
-  parent's `std` alias never captures it. `wf component show` prints that form.
+  parent's `std` alias never captures it. The form is internal, kept as an id rather
+  than a flag so every lookup, cycle stack and use graph tells it apart unaided:
+  `wf component show` and findings print `std.<name>` (show adds `built-in`), and an id
+  a person types never resolves to it.
 - **Imported findings (re-check).** Slot and unused-component findings for imported
-  definitions are located in the file that defines them.
+  definitions are located in the file that defines them. A definition is slot-checked
+  in every scope that imports it, since an alias its file does not import resolves in
+  the importer; only identical findings (code, place and message) are merged, so a
+  module imported under two aliases is reported once per alias.
 - **Gallery pages (review).** Two pages were added despite §4.7: `app_navigation` (card)
   and `line_navigation` (line). They keep the new navigation elements, toolbar and
   gantt inside the 1280×900 screenshot. Both baseline sets include them; the macOS set
