@@ -98,6 +98,37 @@ test('a bound select keeps an explicit item selected over its value, across grou
   });
 });
 
+test('a stepper bound to disabled keeps both buttons disabled when its value changes', async () => {
+  const html = pageFor([
+    { id: 'qty', component: 'input', props: { inputType: 'stepper', min: 1, max: 5, value: '{{state.qty}}' }, stateBindings: { disabled: '{{state.off}}' } },
+    { id: 'fixed', component: 'input', props: { inputType: 'stepper', min: 1, max: 5, value: 5 }, stateBindings: { disabled: '{{state.off}}' } },
+    { id: 'literal', component: 'input', props: { inputType: 'stepper', min: 1, max: 5, value: 5, disabled: true } },
+    setter('disable', 'off', true),
+    setter('enable', 'off', false),
+    setter('qty_3', 'qty', 3),
+  ], { qty: 2, off: false });
+  await withPage(html, async (page) => {
+    const stepper = (id) => page.locator(`#${id} .wf-numstepper`).evaluate((el) => ({
+      off: el.hasAttribute('data-wf-disabled'),
+      text: el.querySelector('.wf-numstepper-value').textContent,
+      buttons: Array.from(el.querySelectorAll('button'), (button) => [button.disabled, button.hasAttribute('data-wf-disabled')]),
+    }));
+    const enabled = [[false, false], [false, false]];
+    const disabled = [[true, true], [true, true]];
+    assert.deepEqual(await stepper('qty'), { off: false, text: '2', buttons: enabled });
+
+    await click(page, 'disable');
+    assert.deepEqual(await stepper('qty'), { off: true, text: '2', buttons: disabled });
+    assert.deepEqual(await stepper('fixed'), await stepper('literal'), 'a bound disabled draws what a literal one does');
+    await click(page, 'qty_3');
+    assert.deepEqual(await stepper('qty'), { off: true, text: '3', buttons: disabled }, 'a value change keeps the binding');
+
+    await click(page, 'enable');
+    assert.deepEqual(await stepper('qty'), { off: false, text: '3', buttons: enabled });
+    assert.deepEqual(await stepper('fixed'), { off: false, text: '5', buttons: [[false, false], [true, true]] }, 'enabled again, the end it sits at stays disabled');
+  });
+});
+
 test('bound number fields and steppers respect min, max and step after mount and on later changes', async () => {
   const html = pageFor([
     { id: 'qty', component: 'input', props: { label: 'Qty', inputType: 'number', max: 100, value: '{{state.qty}}' } },

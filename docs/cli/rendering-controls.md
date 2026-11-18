@@ -200,7 +200,8 @@ together:
   for this. A number field and a stepper clamp to their bounds
   and show `step` decimals, exactly as at render time; a stepper carries
   `data-wf-min`, `data-wf-max` and `data-wf-step` for this and disables
-  its button at a bound.
+  its button at a bound. A bound `disabled` on a stepper goes on the
+  `.wf-numstepper` and disables both buttons through any value change.
   What the user types into a number field is left as typed.
 - Read-only and disabled marks, groups and segments ignore clicks; a
   read-only select puts back its selection; a read-only colour field puts

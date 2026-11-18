@@ -101,17 +101,23 @@ function boundedNumber(text, limits) {
     : value.toFixed(Math.min(20, Math.max(numberDecimals(limits.step), numberDecimals(value))));
   return { text: shown, value: value };
 }
-function refreshStepper(stepper, value) {
+// The wrapper owns the stepper's disabled state; each button is disabled
+// with it, or at the end the shown value sits at.
+function stepperButtons(stepper) {
   var limits = numberLimits(stepper, 'data-wf-');
-  var shown = boundedNumber(value == null ? '' : String(value), limits);
   var label = stepper.querySelector('.wf-numstepper-value');
-  if (label) label.textContent = shown.text;
+  var shown = boundedNumber(label ? label.textContent : '', limits);
   var ends = [shown.value != null && limits.bounded && shown.value <= limits.min, shown.value != null && limits.bounded && shown.value >= limits.max];
   var off = stepper.hasAttribute('data-wf-disabled');
   Array.prototype.forEach.call(stepper.querySelectorAll('.wf-numstepper-btn'), function (button, i) {
     button.disabled = off || ends[i] === true;
     setDataState(button, 'disabled', button.disabled);
   });
+}
+function refreshStepper(stepper, value) {
+  var label = stepper.querySelector('.wf-numstepper-value');
+  if (label) label.textContent = boundedNumber(value == null ? '' : String(value), numberLimits(stepper, 'data-wf-')).text;
+  stepperButtons(stepper);
 }
 function optionIdentity(value) {
   return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value).trim() : '';
@@ -356,6 +362,8 @@ function refresh() {
           else if (!node._wfMixedAt || node._wfMixedAt.value !== value) { node._wfMixedAt = null; setChoiceChecked(mark, bool); }
           continue;
         }
+        var stepper = name === 'disabled' ? node.querySelector('.wf-numstepper') : null;
+        if (stepper) { setDataState(stepper, 'disabled', bool); stepperButtons(stepper); continue; }
         var input = node.querySelector(name === 'disabled' ? 'button,input,select,textarea' : 'input') || node;
         if (bool) input.setAttribute(name, '');
         else input.removeAttribute(name);
