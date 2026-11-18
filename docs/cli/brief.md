@@ -566,6 +566,14 @@ Same rendering pipeline as `wf build`. Watches YAML files and hot-reloads.
 * `--open` — open browser on launch
 * `--no-reload` — disable hot reload
 
+Press `m` on a served or built page to toggle the measurement overlay: hover
+shows an element's width and height, a click pins it, and hovering another
+element shows the distance between them. `Esc` unpins. While it is on, clicks
+and keys measure instead of navigating or running interactions. The key is
+ignored in text fields and in pages embedded in another window, whose host
+switches measurement with a `wf:measure` message instead. See
+[rendering-measure.md](rendering-measure.md).
+
 See [rendering.md](rendering.md) for rendering details.
 
 ---

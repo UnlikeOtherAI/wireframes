@@ -81,8 +81,13 @@ const wf = createWireframe(document.getElementById('host'), project, {
 wf.setPage('dashboard');
 wf.setMode('line');
 wf.setPlatform('ios');
+wf.setMeasure(true);     // dimension lines and pinned distances; stays on across re-renders
 wf.explain('sidebar');   // { frame: 'surface', rule: 5, reason: 'region:sidebar' }
 ```
+
+`setMeasure(on)` switches the [measurement overlay](rendering-measure.md) in the
+mounted page and replays it after every `setPage`, `setMode`, `setPlatform` and
+in-page navigation until it is switched off.
 
 Everything runs on the client. The page renders into a sandboxed iframe so its
 stylesheet and runtime cannot reach the host application; navigation comes back
