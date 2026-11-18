@@ -75,7 +75,9 @@ scrolling keeps working.
 
 A pick (pin or release) happens on a `pointerup` that ends within 8 px of its
 `pointerdown`, not on `click`: browsers send disabled form controls pointer
-events but no click, and a drag or scroll is not a pick.
+events but no click, and a drag or scroll is not a pick. A press that moves
+more than 8 px from where it started, or ends in `pointercancel`, is dropped
+even if it comes back before release.
 
 - **Escape** is handled once: it unpins, or does nothing when nothing is
   pinned. Overlays do not also close.
@@ -90,6 +92,10 @@ those events: pending long-press and gesture timers, overlay outside-dismiss and
 Escape handlers, keyboard activation of `role="button"` nodes, and pane size
 persistence. Admin's `wf:nodeClick` selection bridge also ignores clicks while
 measuring.
+
+Timed dismissals (`dismissOn: [timeout]`) pause while measuring. Switching
+measurement off resumes each one with the time it had left, so an overlay
+opened a second before measuring closes two seconds after it ends.
 
 ## Output and serialization
 
@@ -109,4 +115,4 @@ removes the layer and every listener it added, so
 | `renderer/src/mount.ts` | `setMeasure` and its replay on load |
 | `admin/src/stores/previewMeasureStore.ts` | The admin viewer's persisted choice |
 | `admin/src/features/workspace/postMeasure.ts` | The host message |
-| `cli/test/measure-browser.test.js` | Playwright: labels, gaps, blocked input, serialization, `m`, messages |
+| `cli/test/measure-browser.test.js` | Playwright: labels, gaps, blocked input, paused timeouts, dropped drags, serialization, `m`, messages |
