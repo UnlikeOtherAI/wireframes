@@ -165,6 +165,9 @@ Checks naming conventions:
 * Missing text, unlabeled fields, label-alias usage, and demoted nested
   surfaces (`info`, never strict-fatal)
 
+An editor gets the same findings from YAML text, each with the range it is
+about, from `engine/lint/source`. See [source-lint.md](source-lint.md).
+
 ---
 
 ## Pages

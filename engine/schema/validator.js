@@ -481,5 +481,6 @@ function validateDocumentAgainstSchema(document, filePath) {
 }
 
 module.exports = {
+  appendPath,
   validateDocumentAgainstSchema,
 };
