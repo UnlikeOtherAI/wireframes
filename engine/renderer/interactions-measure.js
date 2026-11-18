@@ -134,7 +134,7 @@ function measureBand(left, top, width, height, fill, kind, value) {
   var view = measureViewport();
   if (width < 1 || height < 1 || left >= view.w || top >= view.h || left + width <= 0 || top + height <= 0) return;
   measureMark(left, top, width, height, fill).setAttribute('data-wf-measure-band', kind);
-  measureChip(left + width / 2, top + height / 2, value, kind);
+  measureChip(measureVisibleMid(left, left + width, view.w), measureVisibleMid(top, top + height, view.h), value, kind);
 }
 function measureChildBoxes(shell) {
   var boxes = [];

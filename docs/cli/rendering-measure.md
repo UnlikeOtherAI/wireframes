@@ -33,8 +33,8 @@ Every page load starts with measurement off; hosts replay their state on load.
   draw nothing. When the measured line falls outside the pinned box, a dashed
   guide extends the pinned edge to it.
 
-Bands that are entirely outside the viewport are not drawn; dimension lines
-that are partly outside keep their chip inside the viewport.
+Bands that are entirely outside the viewport are not drawn. Lines and bands
+that are partly outside put their chip in the middle of the visible part.
 
 Labels show the border-box size in the page's own CSS pixels, rounded to one
 decimal place only when formatted (`320`, `43.4`). Colours are a magenta ink
