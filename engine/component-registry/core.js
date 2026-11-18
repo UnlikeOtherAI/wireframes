@@ -3,6 +3,7 @@
 const { PRIMITIVE_COMPONENTS } = require('../schema/primitives');
 const { childNodeLists } = require('./child-nodes');
 const { resolveComponentDefinition } = require('./definition-lookup');
+const { STD_PREFIX } = require('../stdlib');
 const IMPORT_ALIAS_REGEX = /^[a-z][a-z0-9_]*$/;
 
 function isObject(value) {
@@ -45,7 +46,7 @@ function qualifyReference(namespacePrefix, reference) {
 function qualifyImportedReference(reference, context) {
   const qualified = qualifyReference(context.namespacePrefix, reference);
   if (
-    reference.startsWith('std.')
+    reference.startsWith(STD_PREFIX)
     && !Object.hasOwn(context.importedComponents, qualified)
     && resolveComponentDefinition(reference, null)
   ) {
