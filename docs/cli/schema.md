@@ -664,9 +664,9 @@ A newline in prose is a line break: `heading`, `paragraph` and `text` text, the 
 | `breadcrumb` | never | items, separator |
 | `pagination` | never | page, pages, variant: numbers\|simple\|dots |
 | `stepper` | never | steps, current, orientation: row\|stack |
-| `nav` | never | variant: rail|sidebar|top, items, collapsed, groups, open |
-| `menu` | never | items |
-| `menubar` | never | items, open |
+| `nav` | edge at top level (variant sidebar, rail, top); otherwise never | variant: rail|sidebar|top, items, collapsed, groups, open |
+| `menu` | box at top level | items |
+| `menubar` | edge at top level | items, open |
 | `command` | rules decide | placeholder, query, items, empty, footer |
 | `app_bar` | edge only | title, subtitle, leading, actions |
 | `action_sheet` | never | items, title, cancel |
@@ -720,9 +720,13 @@ Precedence, first match wins:
 
 1. `surface: true` / `surface: false` on the node.
 2. A border in the node's `wireframeStyle`.
-3. The element's own class from the registry (`always`, `never`, `edge only`).
+3. The element's own class from the registry (`always`, `never`, `edge only`,
+   `edge at top level`, `box at top level`). The last two draw their chrome
+   only at surface depth 0 and outside a sidebar panel; anywhere else they
+   draw none.
 4. Overlay chrome owns the frame, so overlay content does not double-box.
-5. Template regions: a slot never frames, a `role: main` region never frames,
+5. Template regions: a slot never frames, except that a `role: sidebar` slot
+   draws a sidebar panel (`edge`). A `role: main` region never frames, and
    any other persistent region does.
 6. A node with a `pane` is a panel, so it frames.
 7. A parent that separates its children draws the strokes, so the children do not.

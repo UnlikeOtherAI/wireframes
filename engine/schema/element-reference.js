@@ -18,6 +18,8 @@ const FRAME_NOTE = {
   C: 'box decided by the frame rules',
   N: 'never a box',
   E: 'one divider edge, never a box',
+  B: 'its own bar edge at the top level; nothing inside a frame',
+  T: 'a box at the top level; nothing inside a frame',
 };
 
 function propSignature(entry) {
@@ -34,7 +36,8 @@ function propSignature(entry) {
 function elementCatalogue() {
   const sections = FAMILY_ORDER.map((family) => {
     const rows = PRIMITIVES.filter((entry) => entry.family === family).map((entry) => (
-      `- **${entry.name}** — ${entry.summary} _(${FRAME_NOTE[entry.frame]})_\n`
+      `- **${entry.name}** — ${entry.summary} _(${FRAME_NOTE[entry.frame]}${
+        entry.frameVariants ? `, for variant ${entry.frameVariants.join('|')}; otherwise never a box` : ''})_\n`
       + `  - props: ${propSignature(entry)}\n`
       + `  - e.g. \`${entry.example}\``
     ));

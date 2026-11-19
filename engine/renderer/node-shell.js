@@ -127,7 +127,7 @@ function wrapStyle(element, node, decision, ctx) {
     if (props.wrap === true || isToolbarRow(node)) parts.push('flex-wrap:wrap');
   }
   // A frame needs breathing room, unless the element draws its own insets.
-  const SELF_PADDED = new Set(['table', 'list', 'calendar', 'accordion', 'tree', 'code', 'carousel', 'alert', 'upload', 'editor', 'empty_state', 'stat']);
+  const SELF_PADDED = new Set(['table', 'list', 'calendar', 'accordion', 'tree', 'code', 'carousel', 'alert', 'upload', 'editor', 'empty_state', 'stat', 'menu']);
   if (decision.frame === 'surface' && !SELF_PADDED.has(element)) {
     const authoredPadding = isObject(node.layout) ? node.layout.padding : (props.padding);
     if (authoredPadding == null) {
@@ -160,6 +160,7 @@ function buildShell(node, element, ctx) {
     parentDivides: ctx.parentDivides,
     hasPane: paneData != null,
     isOverlayChild: ctx.isOverlayChild,
+    insideChrome: ctx.insideChrome,
     role: typeof node.role === 'string' ? node.role.trim() : undefined,
   });
 

@@ -30,6 +30,8 @@ const FRAME_NOTE = {
   C: 'the frame rules decide',
   N: 'never draws a box',
   E: 'draws one edge',
+  B: 'draws its own bar edge at the top level',
+  T: 'draws a box at the top level only',
 };
 
 function escapeHtml(value) {
@@ -81,7 +83,7 @@ function renderItem(entry, options) {
   return `<article class="cat-item" id="el-${escapeHtml(entry.name)}"${selectAttrs}>
   <div class="cat-head">
     <span class="cat-name">${escapeHtml(entry.name)}</span>
-    <span class="cat-frame">${escapeHtml(FRAME_NOTE[entry.frame] || '')}</span>
+    <span class="cat-frame">${escapeHtml(`${FRAME_NOTE[entry.frame] || ''}${entry.frameVariants ? ` (variant ${entry.frameVariants.join('|')})` : ''}`)}</span>
   </div>
   <p class="cat-summary">${escapeHtml(entry.summary)}</p>
   <div class="cat-demo${modeClass} wf wf-mode-${escapeHtml(options.mode)} wf-platform-${escapeHtml(options.platform)}">${demo}</div>

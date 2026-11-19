@@ -59,20 +59,28 @@ function decideFrame(node, ctx = {}) {
     return decide('surface', 2, 'explicit:style');
   }
 
-  // 3. The element type settles it, unless the registry says `C`.
-  const klass = ctx.isRegionRoot ? null : frameClass(element);
+  // 3. The element type settles it, unless the registry says `C`. `B` (a bar's
+  // own edge) and `T` (a box) draw their chrome only at the top level: inside
+  // a frame, or a region that draws a sidebar panel, the container owns it.
+  const klass = ctx.isRegionRoot ? null : frameClass(element, node?.props?.variant);
   if (klass === 'S') return decide('surface', 3, `element:${element}`);
   if (klass === 'E') return decide('edge', 3, `element:${element}`);
   if (klass === 'N') return decide(unframedKind(element), 3, `element:${element}`);
+  if (klass === 'B' || klass === 'T') {
+    if (depth > 0 || ctx.insideChrome === true) return decide(unframedKind(element), 3, `element:${element}:contained`);
+    return decide(klass === 'B' ? 'edge' : 'surface', 3, `element:${element}:top-level`);
+  }
 
   // 4. Overlay chrome owns the frame; its content must not double-box.
   if (ctx.isOverlayRoot === true) return decide('surface', 4, 'overlay-root');
   if (ctx.isOverlayChild === true && depth > 0) return decide('group', 4, 'overlay-chrome');
 
-  // 5. Template regions.
+  // 5. Template regions. A slot with role sidebar draws a sidebar panel: an
+  // edge on the side facing the content, never a box. A persistent sidebar
+  // is already a surface.
   if (ctx.isRegionRoot === true) {
-    if (ctx.regionKind === 'slot') return decide('group', 5, 'region:slot');
     const role = typeof ctx.role === 'string' && ctx.role.trim() !== '' ? ctx.role.trim() : null;
+    if (ctx.regionKind === 'slot') return role === 'sidebar' ? decide('edge', 5, 'region:sidebar-panel') : decide('group', 5, 'region:slot');
     if (role && !CONTAINER_ROLES.has(role) && role !== 'main' && role !== 'content') {
       return decide('surface', 5, `region:${role}`);
     }

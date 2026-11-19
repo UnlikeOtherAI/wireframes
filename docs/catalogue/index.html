@@ -478,9 +478,27 @@ button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));bac
 .wf-nav-child{padding-left:38px;font-size:12.5px}
 .wf-nav-collapsed .wf-nav-label,.wf-nav-collapsed .wf-nav-badge,.wf-nav-collapsed .wf-nav-group{display:none}
 .wf-nav-collapsed .wf-nav-item{justify-content:center;padding:8px}
-.wf-menu{display:flex;flex-direction:column;gap:1px;min-width:180px}
+.wf-menu{display:flex;flex-direction:column;gap:1px;min-width:min(180px,100%)}
 .wf-menu-item{display:flex;align-items:center;gap:10px;padding:7px 12px;font-size:13px;color:var(--wf-ink-2);text-decoration:none;border-radius:4px;min-width:0}
-.wf-menu-label{flex:1 1 auto;min-width:0;white-space:nowrap}
+.wf-menu-label{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wf-menu[data-wf-frame="surface"]{width:max-content;max-width:100%;padding:5px}
+.wf-mode-card .wf-menu[data-wf-frame="surface"]{border-radius:8px;box-shadow:0 10px 30px rgba(17,24,39,.12)}
+.wf-mode-line .wf-menu[data-wf-frame="surface"]{outline:none;border:1px solid var(--wf-line-strong);border-radius:0}
+.wf-mode-card{--wf-panel-edge:var(--wf-line)}
+.wf-mode-line{--wf-panel-edge:var(--wf-line-strong)}
+.wf-mode-card .wf-root.wf-role-sidebar[data-wf-frame="edge"],.wf-mode-card .wf-nav-sidebar[data-wf-frame="edge"],.wf-mode-card .wf-nav-rail[data-wf-frame="edge"],.wf-mode-card .wf-nav-top[data-wf-frame="edge"],.wf-mode-card .wf-menubar[data-wf-frame="edge"]{background:#ffffff}
+.wf-root.wf-role-sidebar[data-wf-edge-side="end"],.wf-nav-sidebar[data-wf-frame="edge"],.wf-nav-rail[data-wf-frame="edge"]{border-right:1px solid var(--wf-panel-edge)}
+.wf-root.wf-role-sidebar[data-wf-edge-side="start"]{border-left:1px solid var(--wf-panel-edge)}
+.wf-root.wf-role-sidebar[data-wf-edge-side="bottom"]{border-bottom:1px solid var(--wf-panel-edge)}
+.wf-root.wf-role-sidebar[data-wf-edge-side="top"]{border-top:1px solid var(--wf-panel-edge)}
+.wf-nav-sidebar[data-wf-frame="edge"]{width:var(--wf-sidebar-w,256px);flex:0 0 auto;align-self:stretch;padding:8px}
+.wf-nav-rail[data-wf-frame="edge"]{align-self:stretch;padding:8px 0}
+.wf-nav-rail .wf-ico-placeholder{border:1px dashed var(--wf-line)}
+.wf-mode-line .wf-nav-rail .wf-ico-placeholder{border-color:var(--wf-line-strong)}
+.wf-nav-rail .wf-nav-on .wf-ico-placeholder{border-color:transparent}
+.wf-nav-top[data-wf-frame="edge"]{align-self:stretch;min-height:var(--wf-header-h,56px);padding:0 12px;border-bottom:1px solid var(--wf-panel-edge)}
+.wf-menubar[data-wf-frame="edge"]{align-self:stretch;min-height:36px;padding:0 4px;gap:0;border-top:1px solid var(--wf-panel-edge);border-bottom:1px solid var(--wf-panel-edge)}
+.wf-menubar[data-wf-frame="edge"] .wf-menubar-trigger{border-radius:0}
 .wf-menu-shortcut{font-size:11px;color:var(--wf-ink-4);flex:0 0 auto}
 .wf-menu-danger{color:var(--wf-danger);font-weight:500}
 .wf-menu-sep{height:1px;background:var(--wf-line-2);margin:4px 0}
@@ -1333,9 +1351,9 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
 <article class="cat-item" id="el-nav">
   <div class="cat-head">
     <span class="cat-name">nav</span>
-    <span class="cat-frame">never draws a box</span>
+    <span class="cat-frame">draws its own bar edge at the top level (variant sidebar|rail|top)</span>
   </div>
-  <p class="cat-summary">Side navigation; rail stacks icons above labels; collapsed hides labels; top is a horizontal site menu whose open item draws its panel.</p>
+  <p class="cat-summary">Side navigation; rail stacks icons above labels; collapsed hides labels; top is a horizontal site menu whose open item draws its panel. Put a sidebar or rail in a template region with role: sidebar beside main.</p>
   <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><nav id="demo_nav" class="wf-node wf-nav" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-nav-item wf-nav-on" aria-current="page" data-wf-current><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-gauge" data-wf-glyph="G"></i></span><span class="wf-nav-label">Dashboard</span></span><span class="wf-nav-item"><span class="wf-nav-label">Settings</span></span></nav></div>
   <div class="cat-split">
     <pre class="cat-code">- nav: { items: [{ icon: gauge, label: Dashboard, active: true }, { label: Settings }] }</pre>
@@ -1345,10 +1363,10 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
 <article class="cat-item" id="el-menu">
   <div class="cat-head">
     <span class="cat-name">menu</span>
-    <span class="cat-frame">never draws a box</span>
+    <span class="cat-frame">draws a box at the top level only</span>
   </div>
-  <p class="cat-summary">Menu item list for a dropdown or context overlay; the overlay owns the frame.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_menu" class="wf-node wf-menu" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-menu-item"><span class="wf-menu-label">Rename</span></span><span class="wf-menu-item wf-menu-danger"><span class="wf-menu-label">Delete</span></span></div></div>
+  <p class="cat-summary">Menu item list. On the page it draws as a dropdown panel; in a dropdown, card or modal the container owns the frame.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_menu" class="wf-node wf-menu wf-surface" data-wf-frame="surface" data-wf-state-bindings="{}"><span class="wf-menu-item"><span class="wf-menu-label">Rename</span></span><span class="wf-menu-item wf-menu-danger"><span class="wf-menu-label">Delete</span></span></div></div>
   <div class="cat-split">
     <pre class="cat-code">- menu: { items: [Rename, { label: Delete, danger: true }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr></tbody></table></div>
@@ -1357,10 +1375,10 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
 <article class="cat-item" id="el-menubar">
   <div class="cat-head">
     <span class="cat-name">menubar</span>
-    <span class="cat-frame">never draws a box</span>
+    <span class="cat-frame">draws its own bar edge at the top level</span>
   </div>
-  <p class="cat-summary">Desktop application menu row. A title with items is a menu; open draws its panel. A title without items is a plain link: give it a route, never a one-item menu repeating its name. Mark the page with current, not open. Never framed: the bar it sits in owns the frame.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_menubar" class="wf-node wf-menubar" data-wf-frame="content" data-wf-state-bindings="{}"><div class="wf-menubar-menu"><span class="wf-menubar-trigger" aria-current="page" data-wf-current>Home</span></div><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">File</button></div><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">Edit</button></div></div></div>
+  <p class="cat-summary">Desktop application menu row. A title with items is a menu; open draws its panel. A title without items is a plain link: give it a route, never a one-item menu repeating its name. Mark the page with current, not open. At the top level it draws as a menu strip; in a framed bar the bar owns it.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_menubar" class="wf-node wf-menubar" data-wf-frame="edge" data-wf-state-bindings="{}"><div class="wf-menubar-menu"><span class="wf-menubar-trigger" aria-current="page" data-wf-current>Home</span></div><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">File</button></div><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">Edit</button></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- menubar: { items: [{ label: Home, route: home, current: true }, { label: File, items: [New, Open] }, { label: Edit, items: [{ label: Undo, shortcut: &quot;⌘Z&quot; }, { label: Redo, shortcut: &quot;⇧⌘Z&quot; }] }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">open</td><td>string</td></tr></tbody></table></div>
@@ -1683,7 +1701,7 @@ wf component copy std.site_footer --as my_site_footer</pre>
   </div>
   <p class="cat-summary">Marketing site header: logo, a top navigation menu (nav variant top) and an actions slot.</p>
   <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="site_header" class="wf-node wf-row wf-group" style="display:flex;flex-direction:row;gap:32px;align-items:center;justify-content:space-between" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="site_header__brand" class="wf-node wf-row wf-group" style="display:flex;flex-direction:row;gap:32px;align-items:center" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="site_header__logo" class="wf-node wf-image wf-image-logo wf-company-logo" style="width:112px;height:32px;max-width:100%;flex:none;align-self:flex-start;overflow:hidden" data-wf-frame="content" data-wf-state-bindings="{}"><div data-wf-logo-slot="logo_1" data-wf-logo-width="112" data-wf-logo-height="32" class="wf-image-placeholder" role="img" aria-label="Acme" title="Acme" style="width:100%;height:100%;min-height:0;padding:4px"><span class="wf-image-caption">Acme</span></div></div>
-<nav id="site_header__menu" class="wf-node wf-nav wf-nav-top" data-wf-frame="content" data-wf-state-bindings="{}"><div class="wf-nav-menu"><button type="button" class="wf-nav-item wf-nav-trigger" aria-expanded="false"><span class="wf-nav-label">Product</span><span class="wf-nav-chevron"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-chevron-down" data-wf-glyph="C"></i></span></button></div><div class="wf-nav-menu"><button type="button" class="wf-nav-item wf-nav-trigger" aria-expanded="false"><span class="wf-nav-label">Solutions</span><span class="wf-nav-chevron"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-chevron-down" data-wf-glyph="C"></i></span></button></div><span class="wf-nav-item"><span class="wf-nav-label">Pricing</span></span><span class="wf-nav-item"><span class="wf-nav-label">Docs</span></span></nav></div></div>
+<nav id="site_header__menu" class="wf-node wf-nav wf-nav-top" data-wf-frame="edge" data-wf-state-bindings="{}"><div class="wf-nav-menu"><button type="button" class="wf-nav-item wf-nav-trigger" aria-expanded="false"><span class="wf-nav-label">Product</span><span class="wf-nav-chevron"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-chevron-down" data-wf-glyph="C"></i></span></button></div><div class="wf-nav-menu"><button type="button" class="wf-nav-item wf-nav-trigger" aria-expanded="false"><span class="wf-nav-label">Solutions</span><span class="wf-nav-chevron"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-chevron-down" data-wf-glyph="C"></i></span></button></div><span class="wf-nav-item"><span class="wf-nav-label">Pricing</span></span><span class="wf-nav-item"><span class="wf-nav-label">Docs</span></span></nav></div></div>
 <div id="site_header__action_row" class="wf-node wf-row wf-group" style="display:flex;flex-direction:row;gap:8px;align-items:center;flex-wrap:wrap" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="site_header__sign_in" class="wf-node wf-button wf-button-ghost wf-button-md" style="flex:0 0 auto" data-wf-frame="control" data-wf-state-bindings="{}"><button>Sign in</button></div>
 <div id="site_header__cta" class="wf-node wf-button wf-button-primary wf-button-md" style="flex:0 0 auto" data-wf-frame="control" data-wf-state-bindings="{}"><button>Get started</button></div></div></div></div></div></div>
   <div class="cat-split">

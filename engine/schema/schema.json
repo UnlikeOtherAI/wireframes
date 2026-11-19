@@ -4162,7 +4162,7 @@
     },
     "PrimitiveProps_nav": {
       "type": "object",
-      "description": "Side navigation; rail stacks icons above labels; collapsed hides labels; top is a horizontal site menu whose open item draws its panel.",
+      "description": "Side navigation; rail stacks icons above labels; collapsed hides labels; top is a horizontal site menu whose open item draws its panel. Put a sidebar or rail in a template region with role: sidebar beside main.",
       "properties": {
         "variant": {
           "type": "string",
@@ -4188,7 +4188,7 @@
     },
     "PrimitiveProps_menu": {
       "type": "object",
-      "description": "Menu item list for a dropdown or context overlay; the overlay owns the frame.",
+      "description": "Menu item list. On the page it draws as a dropdown panel; in a dropdown, card or modal the container owns the frame.",
       "properties": {
         "items": {
           "type": "array"
@@ -4197,7 +4197,7 @@
     },
     "PrimitiveProps_menubar": {
       "type": "object",
-      "description": "Desktop application menu row. A title with items is a menu; open draws its panel. A title without items is a plain link: give it a route, never a one-item menu repeating its name. Mark the page with current, not open. Never framed: the bar it sits in owns the frame.",
+      "description": "Desktop application menu row. A title with items is a menu; open draws its panel. A title without items is a plain link: give it a route, never a one-item menu repeating its name. Mark the page with current, not open. At the top level it draws as a menu strip; in a framed bar the bar owns it.",
       "properties": {
         "items": {
           "type": "array"

@@ -469,7 +469,23 @@ Every node carries the renderer's decision as `data-wf-frame`:
 | `group` | a layout wrapper: spacing and alignment only |
 | `control` | element-owned chrome: inputs, buttons |
 | `content` | bare content: text, icons, images |
-| `edge` | one divider edge: tab bars, app bars, rules |
+| `edge` | one divider edge: tab bars, app bars, rules, and the panels, strips and bars below |
+
+Two frame classes draw chrome only at the top level. Inside a framed
+container, or inside a `role: sidebar` slot that draws its own panel, the
+container owns that chrome:
+
+- `B`, a bar's own edge: `nav` with `variant: sidebar | rail | top` and
+  `menubar`. A sidebar is a panel at `sidebar.width`, a rail a narrow strip
+  of icon tiles, a top nav a bar across the width with a bottom rule, and a
+  menubar a strip ruled above and below. A `nav` without a variant never
+  frames, as before.
+- `T`, a box: `menu`, drawn as the dropdown panel.
+
+A template slot with `role: sidebar` draws a sidebar panel: a fill in card
+mode, one edge on the side facing the content, and a comfortable inset when
+no padding above 0 is authored. A persistent sidebar region stays a surface
+([rendering-navigation.md § Navigation kinds](rendering-navigation.md#navigation-kinds)).
 
 One function, `decideFrame(node, ctx)` in `engine/renderer/frame-rules.js`,
 settles it, and both the renderer and the linter call it. The ten rules in

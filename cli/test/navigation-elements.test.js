@@ -89,7 +89,8 @@ test('menubar opens the named menu below its trigger, display-only', () => {
     'Help',
   ];
   const html = render({ id: 'mb', component: 'menubar', props: { open: 'edit', items } });
-  assert.match(html, /^<div id="mb" class="wf-node wf-menubar" data-wf-frame="content"/);
+  // At the top level a menubar draws its own strip (frame B, edge).
+  assert.match(html, /^<div id="mb" class="wf-node wf-menubar" data-wf-frame="edge"/);
   assert.match(html, /<div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">File<\/button><\/div>/);
   assert.match(html, /<button type="button" class="wf-menubar-trigger" aria-expanded="true" data-wf-expanded>Edit<\/button><div class="wf-menubar-panel wf-menu">/);
   assert.match(html, /<button type="button" class="wf-menubar-trigger" aria-disabled="true" aria-expanded="false" data-wf-disabled>Window<\/button>/);

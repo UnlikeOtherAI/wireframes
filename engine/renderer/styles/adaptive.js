@@ -14,6 +14,15 @@ const adaptiveStyles = [
   '.wf-adapt-mobile .wf-role-sidebar .wf-nav-item{flex:0 0 auto;white-space:nowrap}',
   '.wf-adapt-mobile .wf-role-sidebar .wf-nav-label{flex:0 0 auto;overflow:visible}',
   '.wf-adapt-mobile .wf-role-main{width:auto!important;min-width:0!important;flex:1 1 auto!important}',
+  // A sidebar panel across the top draws its edge below it, facing the content.
+  '.wf-adapt-mobile .wf-root.wf-role-sidebar[data-wf-frame="edge"]{border:0!important;border-bottom:1px solid var(--wf-panel-edge)!important}',
+  // A standalone sidebar or rail reflows the same way: a full-width row that
+  // scrolls inside itself, ruled below, never wider than the page.
+  '.wf-adapt-mobile .wf-nav-sidebar[data-wf-frame="edge"],.wf-adapt-mobile .wf-nav-rail[data-wf-frame="edge"]'
+    + '{width:100%!important;min-width:0!important;flex:0 0 auto!important;flex-direction:row!important;flex-wrap:nowrap;'
+    + 'overflow-x:auto;border-right:0!important;border-bottom:1px solid var(--wf-panel-edge)!important}',
+  '.wf-adapt-mobile .wf-nav[data-wf-frame="edge"] .wf-nav-item{flex:0 0 auto;width:auto;white-space:nowrap}',
+  '.wf-adapt-mobile .wf-nav-sidebar[data-wf-frame="edge"] .wf-nav-label{flex:0 0 auto;overflow:visible}',
   // Grids reflow in the renderer, not here: layout.gridTemplateColumns gives
   // every grid host tiles at the shown device's grid.minItemWidth.
   // A row of panels stacks. A row of small things wraps and stays together.

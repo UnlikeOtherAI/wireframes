@@ -405,7 +405,8 @@ primitives:
     - alert           # text, title, variant (info|success|warning|error|neutral), icon, dismissible, inline, actions
 
 # Frame class per element: S always, C decided by the frame rules,
-# N never, E one divider edge. See docs/cli/schema.md section 4.2.
+# N never, E one divider edge, B its own bar edge at the top level only,
+# T a box at the top level only. See docs/cli/schema.md section 4.2.
 frameClass:
   section: C
   card: S
@@ -449,9 +450,9 @@ frameClass:
   breadcrumb: N
   pagination: N
   stepper: N
-  nav: N
-  menu: N
-  menubar: N
+  nav: B           # variant sidebar | rail | top; a nav without a variant is N
+  menu: T
+  menubar: B
   command: C
   app_bar: E
   action_sheet: N

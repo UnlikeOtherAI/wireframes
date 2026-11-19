@@ -117,6 +117,9 @@ function renderRoot(root, options) {
     surfaceDepth: 0,
   });
   const rootRendersSurface = decision.frame === 'surface';
+  // A sidebar slot draws a sidebar panel (frame-rules rule 5): what it holds
+  // draws no panel, strip or menu box of its own.
+  const sidebarPanel = decision.frame === 'edge';
 
   const content = renderNodes(children, {
     ...options,
@@ -127,13 +130,16 @@ function renderRoot(root, options) {
     parentLayoutIsGrid: rootLayoutType === 'grid',
     parentDivides: shouldRenderParentSeparators(rootLayout),
     surfaceDepth: rootRendersSurface ? 1 : 0,
+    insideChrome: options.insideChrome === true || sidebarPanel,
   });
 
   // Region proportions: the author's `size` wins; otherwise the role's token
   // supplies a width/height and stops the region collapsing to content width.
   const sizeCss = layoutToCss({ type: 'none' }, isObject(root.size) ? root.size : {}, {});
   const roleCss = regionSizingCss(role, root.size, options.viewport, options.sizing);
-  const padCss = rootRendersSurface && rootLayout.padding == null
+  // A sidebar panel keeps a comfortable inset unless the author gave one.
+  const insetMissing = rootRendersSurface ? rootLayout.padding == null : sidebarPanel && !(Number(rootLayout.padding) > 0);
+  const padCss = insetMissing
     ? `padding:${token('card.padding', options.viewport, options.sizing) || 16}px`
     : '';
 
@@ -168,6 +174,8 @@ function renderRoot(root, options) {
     ? ` data-sticky="${escapeAttr(root.sticky)}"`
     : '';
   const frameAttr = ` data-wf-frame="${decision.frame}"${
+    sidebarPanel ? ` data-wf-edge-side="${escapeAttr(options.edgeSide || 'end')}"` : ''
+  }${
     options.explain === true ? ` data-wf-why="${escapeAttr(`${decision.rule}:${decision.reason}`)}"` : ''
   }`;
 
@@ -179,6 +187,17 @@ function renderRoot(root, options) {
     </section>`;
 }
 
+// The side of a region that faces the page content, where a sidebar panel
+// draws its edge: after the content in a row it is the start side, before
+// it the end side; in a stacked body, the top or the bottom.
+function contentSide(roots, index, bodyLayoutType) {
+  const isContent = (r) => isObject(r) && (r.role === 'main' || r.role === 'content' || (r.kind === 'slot' && r.role !== 'sidebar'));
+  const main = roots.findIndex(isContent);
+  const after = main >= 0 && main < index;
+  if (bodyLayoutType === 'stack') return after ? 'top' : 'bottom';
+  return after ? 'start' : 'end';
+}
+
 function renderPageShell(roots, viewportWidth, viewportHeight, renderOptions, bodyLayoutType, bodyLayout = {}) {
   const platform = renderOptions.platform || 'web';
   const stickyTop = roots.filter((r) => r.sticky === 'top');
@@ -187,7 +206,7 @@ function renderPageShell(roots, viewportWidth, viewportHeight, renderOptions, bo
 
   const topHtml = stickyTop.map((r) => renderRoot(r, renderOptions)).join('\n');
   const bottomHtml = stickyBottom.map((r) => renderRoot(r, renderOptions)).join('\n');
-  const bodyHtml = bodyRoots.map((r) => renderRoot(r, renderOptions)).join('\n');
+  const bodyHtml = bodyRoots.map((r, index) => renderRoot(r, { ...renderOptions, edgeSide: contentSide(bodyRoots, index, bodyLayoutType) })).join('\n');
 
   const bodyClass = bodyLayoutType === 'stack' ? 'wf-body-column' : 'wf-body-row';
   const bodyLayoutCss = layoutToCss(isObject(bodyLayout) ? bodyLayout : {}, {}, gridHost(renderOptions, bodyRoots));
@@ -212,6 +231,8 @@ function platformVars(renderOptions) {
     ['--wf-control-h', token('control.height', viewport, sizing)],
     ['--wf-row-h', token('row.height', viewport, sizing)],
     ['--wf-header-h', token('header.height', viewport, sizing)],
+    // The width a top-level sidebar nav draws its panel at.
+    ['--wf-sidebar-w', token('sidebar.width', viewport, sizing)],
     ['--wf-tabbar-h', token('tabbar.height', viewport, sizing)],
     ['--wf-gutter', token('page.gutter', viewport, sizing)],
     ['--wf-card-pad', token('card.padding', viewport, sizing)],
