@@ -1,6 +1,6 @@
 'use strict';
 
-// One decision for a grid's tracks (docs/plans/2026-11-19-render-polish.md §9.1).
+// One decision for a grid's tracks (docs/done/2026-11-19-render-polish.md §9.1).
 
 const test = require('node:test');
 const assert = require('node:assert/strict');

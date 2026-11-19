@@ -30,7 +30,7 @@ function tag(html, text) {
 
 // At the top level a sidebar, rail or top nav and a menubar draw their own edge
 // (frame B) and a menu its dropdown box (frame T): the shell's frame decision,
-// not the element's markup (docs/plans/2026-11-19-render-polish.md §9.3-9.4).
+// not the element's markup (docs/done/2026-11-19-render-polish.md §9.3-9.4).
 const TOP_LEVEL_FRAME = { B: 'edge', T: 'surface' };
 function withoutFrame(html) {
   return html.replace(/ data-wf-frame="\w+"/, ' data-wf-frame').replace(' wf-surface"', '"');

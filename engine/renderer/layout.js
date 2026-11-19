@@ -85,7 +85,7 @@ function autoFitTracks(min) {
 
 /**
  * The one decision for a grid's tracks, shared by every host and by adaptive
- * mode (docs/plans/2026-11-19-render-polish.md §9.1):
+ * mode (docs/done/2026-11-19-render-polish.md §9.1):
  *  1. a child placed with `gridItem` keeps the column system, even adapted;
  *  2. `minItemWidth` gives tiles of at least that width;
  *  3. adaptive mode gives tiles at the shown device's `grid.minItemWidth`;

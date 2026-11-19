@@ -1,6 +1,6 @@
 # Render polish: tiles, text, read-only and navigation kinds
 
-Status: reviewed by Codex on 19 November 2026 (branch `claude/render-polish`, from `57c953f`). §9 records the review decisions. Where §9 and §4 differ, §9 wins.
+Status: implemented on 19 November 2026 (branch `claude/render-polish`, from `57c953f`). §9 records the Codex review decisions and §10 the implementation decisions. Where they differ from §4, §10 wins, then §9.
 
 ## 1. Problem Statement
 
@@ -286,3 +286,18 @@ Codex reviewed `2e90056`. Decisions, by finding:
   - every page of the gallery, examples and the three in-repo projects is rendered before and after in both modes, and each pixel change is explained;
   - targeted assertions cover the states below the baseline crop.
 - **WebKit.** Every fixed case is checked in Playwright WebKit as well as Chromium.
+
+## 10. Implementation Decisions
+
+- **Text is scoped to framed boxes.** `overflow-wrap: break-word` applies to a surface's own title and description, and to `heading`, `paragraph` and `text` placed straight in a surface, not to `body`. On `body`, `wireframe_studio`'s miniature 58 px stat previews broke "1,234" mid-number, where the text had only run into invisible padding. Stat label and number keep their own wrap.
+- **List titles change by CSS only.** `.wf-list-title` becomes a block, so its ellipsis draws without new markup, and the legacy list markup tests stay exact. A list badge sits 1–2 px lower; that is the only `data.png` change.
+- **The sidebar slot was added after the review.** On the iPad build, a `role: sidebar` slot region (stack, padding 0, beside `main`) rendered four bare words:
+  - such a slot now draws the sidebar panel itself (frame-rules rule 5, `edge`);
+  - its edge faces the content (`data-wf-edge-side` end, start, bottom or top);
+  - it takes a `card.padding` inset when no padding above 0 is authored;
+  - its descendants render with `insideChrome`, so `B` and `T` draw nothing inside it, and persistent sidebar regions stay surfaces;
+  - adaptive phone mode rules the panel below instead of beside.
+- **`B` is variant-aware through the registry.** `frameVariants: [sidebar, rail, top]` on `nav`, read by `frameClass(name, variant)`. The sidebar panel width comes from a page variable (`--wf-sidebar-w`), not inline style, so nav markup is unchanged. The legacy navigation test still compares exact markup inside a frame, and at the top level it allows only the frame decision to differ.
+- **Menubar `selected` counts like `current`** for top-level titles (nav's rule). Panel rows still keep `selected` and `current` apart.
+- **Keyboard checks are engine-aware.** Safari's WebKit moves focus between links with Option-Tab, so the menubar keyboard test presses Alt+Tab there.
+- **Not changed.** A page designed for a phone with a side-by-side template keeps the region's 280 px sidebar width. That is pre-existing region sizing; the `adaptive` option reflows it.
