@@ -632,6 +632,8 @@ or a control with its own chrome; **edge only** draws one divider edge;
 | `spacer` | never | size |
 | `empty_state` | rules decide | title, text, icon, action, variant: empty\|error\|404\|offline |
 
+A newline in prose is a line break: `heading`, `paragraph` and `text` text, the `title` and `description` of `card`, `section` and `form`, and `alert` and `empty_state` text. Write it with a `|` block or `\n`; folded `>` text has no newlines. List rows, labels and tabs stay on one line ([rendering-text.md](rendering-text.md)).
+
 **controls**
 
 "+ field" is the shared field contract: label, help, error, required, disabled and readonly ([schema-systems.md §15.5](schema-systems.md)). Rendering: [rendering-controls.md](rendering-controls.md).

@@ -80,6 +80,13 @@ const baseStyles = [
   '.wf-text-label{font-size:12px;font-weight:600;color:var(--wf-ink-3);text-transform:uppercase;letter-spacing:.04em}',
   '.wf-text-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}',
   '.wf-inline-link{color:inherit;text-decoration:underline;text-underline-offset:2px}',
+  // Prose keeps the line breaks its author wrote: a newline breaks the line,
+  // spaces still collapse. Folded YAML (>-) has no newlines, so it is
+  // unaffected. One-line summaries (list rows, labels, tabs) are not prose.
+  '.wf-heading :is(h1,h2,h3,h4,h5,h6),.wf-paragraph p,.wf-text,.wf-block-title,.wf-section-title,.wf-card-title,'
+    + '.wf-form-title,.wf-block-desc,.wf-alert-title,.wf-alert-text,.wf-empty-title,.wf-empty-text{white-space:pre-line}',
+  // Markup newlines between a text node's own children are not authored text.
+  '.wf-text>.wf-node-children{white-space:normal}',
   '.wf-interactive{cursor:pointer}',
 
   // --- Skeletons: the wireframe placeholder vocabulary ---
