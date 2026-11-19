@@ -130,11 +130,17 @@ const navigationStyles = [
   '.wf-menubar[data-wf-frame="edge"]{align-self:stretch;min-height:36px;padding:0 4px;gap:0;'
     + 'border-top:1px solid var(--wf-panel-edge);border-bottom:1px solid var(--wf-panel-edge)}',
   '.wf-menubar[data-wf-frame="edge"] .wf-menubar-trigger{border-radius:0}',
-  // A shortcut cut narrower than two letters would leave a stray mark, so the
-  // mask, opaque only while the box is at least 2em wide, hides it whole.
   '.wf-menu-shortcut{font-size:11px;color:var(--wf-ink-4);flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;'
-    + 'text-overflow:ellipsis;-webkit-mask-image:linear-gradient(90deg,#000 calc((100% - 2em) * 1000),transparent 0);'
-    + 'mask-image:linear-gradient(90deg,#000 calc((100% - 2em) * 1000),transparent 0)}',
+    + 'text-overflow:ellipsis}',
+  // A shortcut cut narrower than two letters would leave a stray mark, so a
+  // mask, opaque only while the box is at least 2em wide, hides it whole. The
+  // mask applies only while the text is cut: the shortcut's own scroll
+  // timeline is active only while its text overflows, so "⌘R" that fits is
+  // never masked. Without scroll timelines there is no mask.
+  '@supports (animation-timeline:scroll()){'
+    + '.wf-menu-shortcut{animation:wf-menu-cut linear both;animation-timeline:scroll(self x)}'
+    + '@keyframes wf-menu-cut{from,to{-webkit-mask-image:linear-gradient(90deg,#000 calc((100% - 2em) * 1000),transparent 0);'
+    + 'mask-image:linear-gradient(90deg,#000 calc((100% - 2em) * 1000),transparent 0)}}}',
   '.wf-menu-danger{color:var(--wf-danger);font-weight:500}',
   '.wf-menu-sep{height:1px;background:var(--wf-line-2);margin:4px 0}',
   '.wf-menu-item .wf-icon-glyph{color:var(--wf-ink-4);width:16px;min-width:16px;font-size:13px}',
