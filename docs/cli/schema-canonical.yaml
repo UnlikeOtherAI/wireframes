@@ -389,7 +389,7 @@ primitives:
     - menu            # items
     - menubar         # items (menus with nested items), open
     - command         # placeholder, query, items, empty, footer
-    - app_bar         # title, subtitle, leading, actions
+    - app_bar         # title, subtitle, leading (an icon name, or the id of a child to draw before the title), actions
     - action_sheet    # items, title, cancel
     - page_header     # title, subtitle, breadcrumb, actions, tabs
   data:

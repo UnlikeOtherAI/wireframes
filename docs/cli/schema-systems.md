@@ -777,6 +777,8 @@ Company logos are optional on each named skin: `logos` maps only `logo_1`, `logo
 
 Navigation supports optional nav.props.variant: rail|sidebar (omitted preserves legacy output). Rail uses sidebar.collapsedWidth, keeps labels and routes, and honours size.width. Nav/app_bar roles can paint an explicitly authored background; inherited page background does not fill them.
 
+`app_bar.props.leading` is an icon name, or the id of one of the bar's own children. A named child is drawn before the title in place of a glyph, with its interaction, and the bar's other children stay after its actions. A child's id wins over an icon of the same name. The reference follows the child when ids are rewritten inside a reusable component or a bound list.
+
 ### Control selection and editable values
 The existing `selection` contract also applies to `segmented` and local
 `tab_bar` choices: unique option labels are string values stored at

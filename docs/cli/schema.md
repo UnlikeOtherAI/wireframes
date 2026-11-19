@@ -667,6 +667,8 @@ or a control with its own chrome; **edge only** draws one divider edge;
 | `action_sheet` | never | items, title, cancel |
 | `page_header` | never | title, subtitle, breadcrumb, actions, tabs |
 
+`app_bar.props.leading` is an icon name, or the id of one of the bar's own children. A named child is drawn before the title in place of a glyph, with its interaction, and the bar's other children stay after its actions. A child's id wins over an icon of the same name. The reference follows the child when ids are rewritten inside a reusable component or a bound list.
+
 **data**
 
 | Element | Box | Props |

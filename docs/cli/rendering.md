@@ -485,6 +485,10 @@ toggle    → <div class="wf-toggle">
             </div>
 ```
 
+### App bar leading control
+
+An `app_bar` whose `props.leading` names one of its children renders that child first, inside its own `.wf-node-children` wrapper, before `.wf-appbar-title`. No `.wf-appbar-leading` glyph is drawn. The other children render after `.wf-appbar-actions`, as they do without it.
+
 ## Structural primitives
 
 ```

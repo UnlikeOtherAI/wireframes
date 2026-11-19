@@ -9,6 +9,7 @@ const { PRIMITIVE_COMPONENTS } = require('../schema/primitives');
 const { resolvePrimitiveName, getPrimitive } = require('../schema/primitive-registry');
 const { renderOverlay } = require('./overlay-renderer');
 const { PRIMITIVE_RENDERERS } = require('./primitives/index');
+const { leadingChild } = require('../schema/leading-child');
 const { buildShell, openTag } = require('./node-shell');
 const lib = require('./render-lib');
 const {
@@ -219,8 +220,13 @@ function renderNode(node, options = {}) {
   const hasOwnMarkup = (normalized.inner || '') !== '' || (normalized.after || '') !== '';
   const splitBody = hasOwnMarkup && wantsChildren && element !== 'app_bar';
 
+  // An app bar draws the child it names as its leading control before the title, and the rest after its actions.
+  const lead = element === 'app_bar' ? leadingChild(node) : null;
+  // Only the child: a bar's other lists belong with the rest, and would be drawn twice.
+  const before = lead ? renderChildren({ layout: node.layout, children: [lead] }, childOptions, shell.layout, null) : '';
+  const rest = lead ? { ...node, children: node.children.filter((child) => child !== lead) } : node;
   const children = wantsChildren || !SELF_LAID_OUT.has(element)
-    ? renderChildren(node, childOptions, shell.layout, splitBody ? shell.layoutCss : null)
+    ? renderChildren(rest, childOptions, shell.layout, splitBody ? shell.layoutCss : null)
     : '';
 
   const outerStyle = splitBody ? shell.stackStyle : null;
@@ -228,7 +234,7 @@ function renderNode(node, options = {}) {
   // attributes are built once the element has rendered, not before.
   const dataAttrs = buildNodeDataAttributes(node, stateBindings, options.selectionValue, paneData);
   const open = openTag(tag, node, shell, normalized.className, normalized.style, dataAttrs, outerStyle);
-  return `${open}${normalized.inner || ''}${children}${normalized.after || ''}</${tag}>`;
+  return `${open}${before}${normalized.inner || ''}${children}${normalized.after || ''}</${tag}>`;
 }
 
 function renderNodes(nodes, options = {}) {

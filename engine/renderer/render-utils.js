@@ -1,5 +1,6 @@
 'use strict';
 
+const { renameLeading } = require('../schema/leading-child');
 const { toPx } = require('./layout');
 
 const PANE_SIDES = new Set(['left', 'right', 'center']);
@@ -38,6 +39,7 @@ function suffixNodeIds(node, suffix) {
     node.id = `${node.id}_${suffix}`;
   }
 
+  renameLeading(node, (oldId) => `${oldId}_${suffix}`);
   const childKeys = ['children', 'content', 'nodes'];
   for (const key of childKeys) {
     if (!Array.isArray(node[key])) {

@@ -1,5 +1,6 @@
 'use strict';
 
+const { leadingChild } = require('../../schema/leading-child');
 const { hasInteraction, itemLink, itemsOn, expandGroups } = require('./navigation-items');
 
 // A tab, crumb or step list has no headings or separators.
@@ -143,7 +144,7 @@ function renderAppBar(node, ctx, lib) {
   if (Array.isArray(node.children) && node.children.length && !props.title && !props.leading && !props.actions?.length) {
     return { tag: 'header', inner: '', useChildren: true, style: 'justify-content:space-between' };
   }
-  const leading = lib.str(props.leading)
+  const leading = lib.str(props.leading) && !leadingChild(node)
     ? `<span class="wf-appbar-leading">${lib.icon(props.leading, { size: 'lg' })}</span>`
     : '';
   const title = lib.str(props.title);

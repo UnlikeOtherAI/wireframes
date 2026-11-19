@@ -120,7 +120,7 @@ const navigationPrimitives = [
     shellBackground: true,
     family: 'navigation',
     frame: 'E',
-    summary: 'Mobile top chrome: leading glyph, title, trailing actions.',
+    summary: 'Mobile top chrome: a leading glyph or control, title, trailing actions.',
     props: {
       title: { type: 'string', primary: true },
       subtitle: { type: 'string' },

@@ -7,6 +7,7 @@
  */
 
 const { childNodeLists } = require('../component-registry/child-nodes');
+const { renameLeading } = require('../schema/leading-child');
 
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
@@ -101,6 +102,8 @@ function namespaceNodeIds(nodes, namespace) {
 
   const idMap = new Map();
   visitNodes(nodes, (node) => {
+    // A bar names one of the children about to be renamed; keep it naming the same child.
+    renameLeading(node, (oldId) => `${namespace}__${oldId}`);
     if (typeof node.id === 'string' && node.id.trim() !== '') {
       const oldId = node.id;
       const newId = `${namespace}__${oldId}`;
@@ -133,6 +136,8 @@ function namespaceDescendants(root, namespace, authoredRootId) {
   if (typeof namespace !== 'string' || namespace.trim() === '') {
     return;
   }
+  // A bar at the component root names one of the children about to be renamed.
+  renameLeading(root, (oldId) => `${namespace}__${oldId}`);
   const lists = childNodeLists(root);
   const idMap = new Map();
   if (typeof authoredRootId === 'string' && authoredRootId.trim() !== '' && typeof root.id === 'string') {

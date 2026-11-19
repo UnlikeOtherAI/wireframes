@@ -4226,7 +4226,7 @@
     },
     "PrimitiveProps_app_bar": {
       "type": "object",
-      "description": "Mobile top chrome: leading glyph, title, trailing actions.",
+      "description": "Mobile top chrome: a leading glyph or control, title, trailing actions.",
       "properties": {
         "title": {
           "type": "string"
