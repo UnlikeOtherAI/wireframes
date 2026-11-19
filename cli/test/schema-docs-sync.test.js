@@ -13,6 +13,8 @@ const yaml = require('js-yaml');
 const { runValidate } = require('../../engine/validate/cli-adapter');
 const { validateProject } = require('../../engine/validate');
 const { createStdProject, readYaml, writeYaml } = require('./fixtures/std-project');
+const { lintSources } = require('../../engine/lint/source');
+const { COMPONENTS, documentMap } = require('./fixtures/repeat-project');
 
 const DOCS = path.join(__dirname, '..', '..', 'docs', 'cli');
 const SECTIONS = { blockingErrors: 'errors', warnings: 'warnings', info: 'info' };
@@ -58,20 +60,50 @@ function stdAliasDiagnostics() {
   return runValidate({ projectPath });
 }
 
+/** Every repeat code, from lint on text, filed by the severity lint reports. */
+function repeatDiagnostics() {
+  const wide = (cell) => ({ root: { id: cell, component: 'stack', repeat: { cell: cell === 'level_2' ? 'text' : `level_${Number(cell.slice(-1)) + 1}`,
+    items: Array.from({ length: 200 }, (_, index) => ({ id: `i${index}` })) } } });
+  const components = { ...COMPONENTS, level_0: wide('level_0'), level_1: wide('level_1'), level_2: wide('level_2') };
+  const map = documentMap([
+    { id: 'a', component: 'stack', repeat: { cell: 'statt', items: [{ id: 'x' }, { id: 'x' }] } },
+    { id: 'b', component: 'button', binding: { source: 'people' }, repeat: { cell: 'text', items: [{ id: 'y', text: '{{item.name}}' }] } },
+    { id: 'c', component: 'stack', repeat: { cell: 'stat', items: [] } },
+    { id: 'd', component: 'stack', repeat: { cell: 'level_0', items: [{ id: 'z' }] } },
+  ], { components });
+  const text = (value) => yaml.dump(value);
+  const result = lintSources([
+    { name: 'manifest.yaml', text: text(map.manifest) },
+    { name: 'sitemap.yaml', text: text(map.sitemap) },
+    { name: 'templates.yaml', text: text(map.templates) },
+    { name: 'components.yaml', text: text(map.components) },
+    { name: 'pages/home.yaml', text: text(map.pages.get('home')) },
+  ]);
+  const bySeverity = { errors: [], warnings: [], info: [] };
+  for (const diagnostic of result.diagnostics) {
+    bySeverity[{ error: 'errors', warning: 'warnings', info: 'info' }[diagnostic.severity]].push(diagnostic);
+  }
+  return bySeverity;
+}
+
 test('the canonical validation inventory lists each reported code under its severity', () => {
   const listed = canonicalCodes();
   const reported = new Map();
-  for (const result of [slotDiagnostics(), stdAliasDiagnostics()]) {
+  for (const result of [slotDiagnostics(), stdAliasDiagnostics(), repeatDiagnostics()]) {
     for (const severity of Object.values(SECTIONS)) {
       for (const entry of result[severity] || []) reported.set(entry.code, severity);
     }
   }
-  for (const code of ['EMPTY_COMPONENT_SLOT', 'STD_ALIAS_SHADOWED', 'UNKNOWN_COMPONENT_SLOT', 'DUPLICATE_DEFAULT_SLOT_FILL', 'SLOTS_WITHOUT_USE']) {
+  for (const code of ['EMPTY_COMPONENT_SLOT', 'STD_ALIAS_SHADOWED', 'UNKNOWN_COMPONENT_SLOT', 'DUPLICATE_DEFAULT_SLOT_FILL', 'SLOTS_WITHOUT_USE',
+    'UNKNOWN_REPEAT_CELL', 'REPEAT_INVALID_HOST', 'DUPLICATE_REPEAT_ITEM_ID', 'REPEAT_WITH_BINDING', 'REPEAT_BUDGET_EXCEEDED', 'EMPTY_REPEAT', 'REPEAT_ITEM_TOKEN']) {
     assert.ok(reported.has(code), `the fixtures report ${code}`);
   }
   for (const [code, severity] of reported) {
     const sections = Object.keys(listed).filter((name) => listed[name].has(code));
-    if (sections.length === 0) continue;
+    if (sections.length === 0) {
+      assert.ok(!/REPEAT/.test(code), `${code} is listed in the inventory`);
+      continue;
+    }
     assert.deepEqual(sections, [severity], `${code} is reported as ${severity}`);
   }
 });

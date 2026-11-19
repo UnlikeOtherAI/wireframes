@@ -214,6 +214,7 @@ node:
     - elevation
     - children        # on a use: node, fills the component's default slot
     - slots           # use: nodes only; slot name -> node array (SLOTS_WITHOUT_USE otherwise)
+    - repeat          # { cell, items }: one row per keyed item, after children (see repeat below)
     - pane
     - wireframeStyle
 
@@ -232,6 +233,42 @@ slotPlaceholder:
   notAllowed:
     - as a component root
     - in pages, templates or overlays
+
+# 7.1 REPEAT (one cell, one row per keyed item; schema-systems.md 14.1)
+repeat:
+  required:
+    - cell            # use: grammar; an element name or alias wins, else a component reference
+    - items           # 0-200 maps; each has a unique id (Id pattern) plus the cell's props
+  additionalProperties: false
+  row: "{ id: <host id>__<item id>, component|use: <cell>, props: <item without id> }, after the host's children"
+  hosts:
+    - a component: node whose element lays out children (section, card, stack, row, grid, split, form, carousel, app_bar, tab_bar or bottom_tab_bar without tabs)
+    - in region children, page slot and injection content, overlay content, definitions, slot fallbacks and fills
+  notHosts:           # REPEAT_INVALID_HOST; the rows never render
+    - use nodes, injectable markers and slot placeholders
+    - template region records and overlay records
+    - elements that do not lay out authored children
+  expansion:
+    - definition rows after the definition's props substitution, before namespacing and slot splicing
+    - caller rows (page, template, fill) before the callee expands; forwarded fills keep page ids
+    - ids are checked on the rendered page; a collision is DUPLICATE_NODE_ID at the item
+    - one page expands to at most 50,000 nodes; a fan-out over it is REPEAT_BUDGET_EXCEEDED at the outermost repeat
+  example:
+    - id: team
+      component: grid
+      layout: { type: grid, columns: 3 }
+      repeat:
+        cell: person_card
+        items:
+          - { id: ada, name: Ada Lovelace, role: Admin }       # renders as team__ada
+          - { id: grace, name: Grace Hopper, role: Editor }
+    - id: kpis
+      component: row
+      repeat:
+        cell: stat
+        items:
+          - { id: revenue, label: Revenue, value: $12.4k, delta: +8%, trend: up }
+          - { id: users, label: Users, value: "1,204" }
 
 # 7.x POSITION (for absolute layout children)
 position:
@@ -963,6 +1000,11 @@ validation:
     - children plus slots.default (DUPLICATE_DEFAULT_SLOT_FILL)
     - slot placeholder as a component root or outside a component (SLOT_OUTSIDE_COMPONENT)
     - slots on a node without use (SLOTS_WITHOUT_USE)
+    - repeat cell that is neither an element nor a component (UNKNOWN_REPEAT_CELL, suggests the nearest)
+    - repeat on a node or record that cannot host rows (REPEAT_INVALID_HOST)
+    - two repeat items with one id (DUPLICATE_REPEAT_ITEM_ID)
+    - repeat with a collection binding on, above or in its cell (REPEAT_WITH_BINDING)
+    - repeat fan-out over the page budget (REPEAT_BUDGET_EXCEEDED)
 
   warnings:
     - unused components
@@ -981,6 +1023,8 @@ validation:
     - demoted nested surfaces with explicit width or height
     - component slot with neither content nor fallback (EMPTY_COMPONENT_SLOT)
     - a std import alias shadowing built-in std patterns (STD_ALIAS_SHADOWED)
+    - a repeat with no items (EMPTY_REPEAT)
+    - an {{item.}} token in a repeat item, which is not interpreted (REPEAT_ITEM_TOKEN)
 
   safetyLimits:
     maxTreeDepth: 100

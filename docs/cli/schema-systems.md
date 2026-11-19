@@ -337,6 +337,81 @@ The optional `fields` array declares expected field names for validation
 and tooling hints, but items may contain additional fields beyond what
 is declared.
 
+## 14.1 Repeat
+
+`repeat` renders one cell per keyed item of an inline array. Use it for three
+or more similar siblings, such as people, plans or stat tiles.
+
+```yaml
+- id: team
+  component: grid
+  layout: { type: grid, columns: 3 }
+  repeat:
+    cell: person_card            # an element (name or alias) or a component reference
+    items:
+      - { id: ada, name: Ada Lovelace, role: Admin }
+      - { id: grace, name: Grace Hopper, role: Editor }
+```
+
+**Grammar.** `repeat` takes exactly `cell` and `items`. `cell` uses the `use:`
+grammar. A registry element name or alias wins; anything else is a component
+reference, qualified like `use:`: a local id, `alias.id`, `std.<name>`. Use a
+qualified reference to reach a component that shares an element's name.
+`items` holds 0–200 maps. Each has an `id` (`Id` pattern, unique in the
+repeat) and the cell's props. There is no scalar shorthand and no per-item
+`slots`.
+
+**Hosts.** Only a concrete `component:` node whose element lays out its
+authored children hosts rows: `section`, `card`, `stack`, `row`, `grid`,
+`split`, `form`, `carousel`, `app_bar`, and `tab_bar` or `bottom_tab_bar`
+without `tabs`. A host can sit in template region children, page slot and
+injection content, overlay content, a component definition, a slot fallback
+and a slot fill. A `use:` node, an injectable marker, a slot placeholder, a
+template region record, an overlay record and any other element is
+`REPEAT_INVALID_HOST`, and its rows never render.
+
+**Rows.** Each item becomes the node an author would write by hand:
+`{ id: <host id>__<item id>, component: <cell>, props }` for an element cell,
+or `use: <cell>` for a component cell. The props are the item without its
+`id`. Rows follow the host's own `children`, in item order. They are expanded
+by the host's author, where hand-written siblings would be:
+* rows in a component definition after its `{{props}}` substitution and before
+  namespacing, so they get the definition's props and become
+  `<instance>__<host>__<item>` per instance;
+* rows in caller content (a page, a template, a fill) before the callee
+  expands. A fill forwarded through another component keeps its rows' page ids
+  and gets no callee substitution.
+
+A sibling in the same scope may refer to a row by its id (`formId: team__ada`,
+an overlay `trigger`), and a form cell's own submit follows its row. Ids are
+checked on the rendered page, so a row id that equals an authored id is
+`DUPLICATE_NODE_ID`, located at the item.
+
+**Budget.** One page expands to at most 50,000 nodes, its regions and overlays
+together. A repeat's whole fan-out, nested components and repeats included, is
+checked before its first row is made: `REPEAT_BUDGET_EXCEEDED`, at the
+outermost repeat. `assertComponentExpansion` counts the rows too. The page
+limits in §16 (5,000 nodes, depth 100) still apply to the result.
+
+**Binding.** `repeat` is for fixed inline content; `binding` stays the dataset
+mechanism. A repeat under a collection binding, on a node with one, or with a
+cell whose root has one, is `REPEAT_WITH_BINDING`, since the binding would
+clone the rows. A single-value `{{…}}` binding is fine. Items are plain props:
+`{{item.…}}` inside an item is not interpreted (`REPEAT_ITEM_TOKEN`, info).
+
+**Checks.** On the authored YAML: `UNKNOWN_REPEAT_CELL` (with the nearest
+name), `REPEAT_INVALID_HOST`, `DUPLICATE_REPEAT_ITEM_ID`, `REPEAT_WITH_BINDING`,
+and a component cell counts as a usage and a dependency edge. On the rendered
+page: ids, form references and overlay triggers. Lint runs element prop
+contracts on each row and reports `…props.<key>` at `…repeat.items[i].<key>`;
+a component cell's items follow the component-input policy. `items: []` is
+`EMPTY_REPEAT` (info). Shape and the 200 limit are schema errors.
+
+**Editing.** A row is addressed by its id under its host
+(`wf://page/home#main.team.team__ada`). The address finds the item by its id
+wherever it sits, so reordering never retargets it and a stale id fails. See
+`wf inspect` and `wf node` in brief.md.
+
 ---
 
 # 15. Elements
@@ -539,6 +614,13 @@ Blocking errors:
   * `SLOT_OUTSIDE_COMPONENT`: a placeholder is a component root, or sits in a
     page, a template or an overlay.
   * `SLOTS_WITHOUT_USE`: a node has `slots` but no `use:`.
+* Repeat (§14.1):
+  * `UNKNOWN_REPEAT_CELL`: the cell is neither an element nor a component the
+    document can reach. The message suggests the nearest name.
+  * `REPEAT_INVALID_HOST`: `repeat` on a node or record that cannot host rows.
+  * `DUPLICATE_REPEAT_ITEM_ID`: two items in one repeat share an `id`.
+  * `REPEAT_WITH_BINDING`: a collection binding on, above or in the cell of a repeat.
+  * `REPEAT_BUDGET_EXCEEDED`: the fan-out passes the page's 50,000-node budget.
 
 Warnings:
 
@@ -562,10 +644,12 @@ Info diagnostics:
 * A document that imports components under the alias `std`, whose components
   win over the built-in std patterns of the same id (`STD_ALIAS_SHADOWED`;
   see [stdlib.md](stdlib.md)).
+* A repeat with `items: []` (`EMPTY_REPEAT`), and an item value holding an
+  `{{item.…}}` token, which is not interpreted (`REPEAT_ITEM_TOKEN`). Both are lint info.
 
-The slot checks run in `wf validate` and in the in-memory `validateProject`
-entry point the browser and API use; `validateProject` returns its info
-diagnostics in `info`.
+The slot and authored repeat checks run in `wf validate` and in the in-memory
+`validateProject` entry point the browser and API use; `validateProject`
+returns its info diagnostics in `info`.
 
 Safety limits:
 
