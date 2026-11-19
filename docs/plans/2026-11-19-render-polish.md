@@ -1,0 +1,207 @@
+# Render polish: tiles, text, read-only and navigation kinds
+
+Status: design, 19 November 2026 (branch `claude/render-polish`, from `57c953f`). Awaiting adversarial review.
+
+## 1. Problem Statement
+
+On the iPad the edits were right, but the pages looked wrong. There are seven rendering defects:
+
+1. A `grid` with no `columns` squeezes its tiles into 1/12-width slivers.
+2. Text paints outside its card, tile or stat, or is clipped mid-glyph.
+3. Authored line breaks are lost.
+4. A read-only control looks editable.
+5. A menubar cannot hold a plain link or mark the current page.
+6. An inline `menu` draws as bare text.
+7. Sidebar, rail and menu look alike; top nav and menubar look alike.
+
+Reproduced on `origin/main` (Chromium headless shell 1243, Minis). The fixtures are `visual-review/*/wf/*.wf` plus synthetic projects. Pages render at their own width: `device: web` is 1280 px (the iPad scales it to fit) and `device: mobile` is 390 px.
+
+| # | Reproduced | Evidence |
+|---|---|---|
+| 1 | yes | Every unplaced grid gets 12 tracks: 86.7 px at 1280, 34 px at 390. `layout: { type: grid }` on a section does the same (83.8 px). |
+| 2 | yes | 120 px tiles: "Supercalifragilistic" ends 30 px past the box and a URL 118 px. Stat "$1,250,000" ends 19 px past it. At 390, every card in `specialist-pricing-5` spills, by up to 66 px. |
+| 3 | yes | `\|-`, `\|`, `"\n"` and blank-line `>-` text all render on one line: in section and card descriptions, paragraph, text, list row text and alert text. |
+| 4 | yes | Read-only input, select, textarea, tags and date fields get only `#f9fafb` instead of `#fff`. Checkbox, radio, toggle, choice_group, segmented, range, otp, colour and picker look identical to editable. |
+| 5 | yes | A menubar leaf with `route` and `current` renders as `<button class="wf-menubar-trigger">Home</button>`: no link, no state. |
+| 6 | yes | A top-level `menu` has `data-wf-frame="content"`: three bare lines. |
+| 7 | yes | Card mode: the current row's fill (`--wf-fill`) is the page background, so only the bold weight shows. The kinds differ by direction and font size alone. |
+
+## 2. Current Behavior
+
+- **Grid columns.** `layoutToCss` (`engine/renderer/layout.js:85`) emits `repeat(N,1fr)`, with `N = columns`, else the default.
+  - Build resolves a missing `manifest.defaultGridColumns` to 12 (`engine/build/index.js:237`, `:302`, `engine/screenshots/index.js:279`), and `engine/screenshots/renderer.js:225` defaults to 12, so the renderer never sees "unset".
+  - Only `props.minItemWidth` gives auto-fit (`engine/renderer/node-shell.js:123`).
+  - `wf init` writes `defaultGridColumns: 12` into every new manifest (`engine/init/index.js:22`); the iPad app's manifests omit it.
+- **Text.** No container sets `overflow-wrap`.
+  - The stat label is `nowrap` plus ellipsis, and the value is a flex row whose bare text cannot shrink (`styles/content.js:57`, `:60`).
+  - The list title is a flex box with `text-overflow:ellipsis`, which flex boxes ignore, so it clips mid-glyph (`styles/data.js:41`).
+- **Line breaks.** `renderBoundText` (`render-utils.js:161`) escapes the text and keeps its `\n`, but every text class uses `white-space:normal`. `lib.str` trims; `textProp` (`render-lib.js:29`) does not.
+- **Read-only.** States reach the markup (`data-wf-readonly`, `readonly`, `aria-readonly`), but only `styles/controls.js:101` styles native fields: a near-white fill in card mode, a dashed edge in line mode. Drawn controls get nothing.
+- **Menubar.** `renderMenubar` (`primitives/navigation-menus.js:108`) makes every top-level item a `<button>`. It ignores its `route`, and its `current` and `selected`. Top nav (`navigation-nav.js` `topEntry`) already turns a childless item into a link through `itemLink`/`itemsOn`, with `aria-current="page"`.
+- **Menu.** The registry gives `menu` frame `N` ("the overlay owns the frame", `primitive-registry/navigation.js:84`). A dropdown's panel is drawn by the overlay (`.wf-menubar-panel`, `styles/navigation.js`).
+- **Nav kinds.** `nav` and `menubar` are `N` (never framed), so their chrome comes only from a template region (e.g. role `sidebar`). In a slot they are bare. `.wf-nav-on` fills with `--wf-fill`, the card-mode page colour (`styles/navigation.js:78`).
+
+## 3. Desired Behavior
+
+1. A grid with no positive `columns`, no `minItemWidth` and no child placed with `gridItem` lays out as tiles that fill the row and wrap. This holds when `manifest.defaultGridColumns` is unset. Spans, offsets, explicit columns and an explicit manifest default keep the 12-column (or N-column) system.
+2. No text in a card, tile, stat or list row paints outside its box. Long words wrap inside it. Numbers wrap between digits rather than spill or be overpainted. Single-line rows truncate with a visible ellipsis.
+3. An authored newline in prose (headings, paragraph, text, titles, descriptions, alert and empty-state text, list row text) is a line break. Folded `>-` text is unchanged.
+4. Every control with `readonly` looks read-only in one consistent way, distinct from disabled: a lock beside the label, a dashed field edge, and no editing affordances. The value stays at full contrast.
+5. A top-level menubar item without a submenu is a link in the bar when its route is known. `current` (or route inference, as in `nav`) draws it like top nav's current item, with `aria-current="page"`.
+6. A `menu` placed in content draws as the dropdown surface.
+7. Each kind is recognisable at the top level of content, in both modes. Inside a framed region or card nothing changes.
+
+## 4. Design
+
+### 4.1 Tiles (item 1)
+- **Unset default.** `resolveDefaultGridColumns(manifest)` returns a positive integer or `null`. It is one function, in `engine/renderer/layout.js`, used by the three build/screenshot call sites, and `screenshots/renderer.js` drops its `= 12`. `DEFAULT_GRID_COLUMNS` stays 12 as the span system's width.
+- **Auto-fit rule.** `layoutToCss(layout, size, { defaultGridColumns, density, children, tileMin })` decides in one place, so `buildShell`, regions and the tab-body paths agree:
+  - If `layout.columns` is a positive integer, use `repeat(columns,1fr)`.
+  - Else, if `defaultGridColumns` is set, use `repeat(default,1fr)`.
+  - Else, if any child has a `gridItem` with `span`, `offset`, `row` or `column`, use `repeat(12,1fr)`.
+  - Else, use `repeat(auto-fit,minmax(min(<tileMin>px,100%),1fr))`.
+  - `min(…,100%)` stops a single track overflowing a container narrower than the minimum.
+  - Authored `minItemWidth` still wins, as today.
+- **Token.** A new sizing token `grid.minItemWidth`: web 220, tablet 200, mobile 150. These match `styles/adaptive.js`, which already reflows grids at 150 and 200. At 1280 that fits five tiles per row; at 390, two.
+- **Scope.** Both the `grid` primitive and `layout: { type: grid }`. No layout grid without columns or placed children has ever drawn anything but slivers (case 5 in the grid fixture, 83.8 px tracks). Two rules for one CSS grid would be a patch.
+- **Scaffold.** `wf init` stops writing `defaultGridColumns`, so new CLI projects get tiles. The gallery fixture's `defaultGridColumns: 12` is removed so the gallery can show tiles; every gallery grid sets `columns`, so nothing else moves. `wf info` prints `auto` when the value is unset.
+- **Visible changes.** No existing content changes: all 46 grids in the gallery, examples, `admin_wireframes`, `web_wireframes`, `wireframe_studio` and `cli/test/fixtures` set `columns` (a census of every parsed YAML node in those trees, including `layout: { type: grid }`). Only the new gallery fixture (§5) shows it.
+- **Schema and docs.**
+  - The token goes in `sizing-tokens.js`, then `schema.json` `SizingTokens` (`node scripts/sync-schema-primitives.js`).
+  - Grid registry `sizing: ['grid.gap', 'grid.minItemWidth']`.
+  - Hand-written docs: `schema.md` (manifest default and the grid row), `schema-systems.md` (layout grid), `schema-canonical.yaml` (token list, manifest comment).
+  - `rendering.md` §"Layout type → CSS" is rewritten in place. The file is at 1,001 lines, so it must not grow: the detail moves to a new `rendering-data.md` §Grid columns.
+  - Regenerated: the agent guide and the catalogue.
+
+### 4.2 Text stays in its box (item 2)
+- **Global wrap.** `body{overflow-wrap:break-word}` (`styles/base.js`). It breaks a word only where it would otherwise overflow, and it does not change min-content sizing, so tables, rows and intrinsic widths keep their sizes.
+- **Flex items need more.** A flex item's automatic minimum keeps its longest word, so break-word alone cannot shrink it:
+  - **Stat.** The value text gets its own span `.wf-stat-number`, with `min-width:0` and `overflow-wrap:anywhere`. `.wf-stat-value` wraps, so a delta drops to the next line. The label wraps (`white-space:normal; overflow-wrap:anywhere`) instead of truncating to "SA…".
+  - **List rows** stay single-line summaries by design. The title text gets its own span with `overflow:hidden;text-overflow:ellipsis`, so a real ellipsis shows instead of a mid-glyph clip. `.wf-list-text` already ellipsizes.
+- **Visible changes.** These show only where text overflowed or truncated before. Expected candidates are stat labels in `content` (`stats_row`) and in `line_structure`; each changed PNG is checked and named in the report. The in-repo projects are pixel-diffed page by page before and after.
+- **Schema.** None. **Docs:** `rendering-presentation.md` gains a short "Text" section covering items 2 and 3.
+
+### 4.3 Line breaks (item 3)
+- **CSS.** `white-space:pre-line` (newlines break, spaces still collapse) on the prose classes: `.wf-heading h1–h6`, `.wf-paragraph p`, `.wf-text`, `.wf-block-title` and its title aliases, `.wf-block-desc`, `.wf-alert-title`, `.wf-alert-text`, `.wf-empty-title` and `.wf-empty-text`.
+  - List `text` gets `white-space-collapse:preserve-breaks` with `text-wrap-mode:nowrap`, so each authored line keeps its own ellipsis. Older engines ignore the longhands and keep today's single line.
+  - CSS rather than `<br>`, so text set at runtime through `data-bind` breaks too.
+- **Trim.** Prose from `textProp` is trimmed at both ends, as `lib.str` already does, so a `|` block's final newline adds no empty line. Trimming the ends changes no rendering today, because leading and trailing white space already collapses.
+- **YAML check.** `>-` and `>` fold single newlines to spaces, so existing text is unaffected. A blank line inside a folded block becomes one `\n` and now breaks, which is what such a paragraph means.
+- **Visible changes.** No existing content contains a newline inside any string after YAML parsing (a census of the same trees as §4.1, plus `specs/`), so no existing page changes.
+- **Schema.** None. **Docs:** `schema.md` text props ("a newline is a line break") and `rendering-presentation.md`.
+
+### 4.4 Read-only (item 4)
+- **The iPad case.** `editor-6` sets `select` `plan_picker` `readonly: true`. The user sees the same chevron and an almost invisible tint.
+- **One state class.** Every control spreading `FIELD_PROPS` adds `wf-field-readonly` to its node, next to where it adds `wf-field-invalid` today. This goes through one helper `fieldClasses(state)` in `controls-field.js`, and is added only when `readonly` is set and `disabled` is not ("disabled wins").
+- **One look.**
+  - **Lock.** `fieldLabel` and the inline label of checkbox, radio and toggle append `<span class="wf-field-lock" aria-hidden="true">` holding `lib.icon('lock')`, so the accessible name is unchanged.
+  - **Field edge.** Native fields, the tags and colour boxes, otp boxes, the stepper, picker wheel, editor body, upload zone and segment track get a dashed edge, with full-ink text:
+    - card mode: `--wf-line`, with a `--wf-fill-2` fill;
+    - line mode: `--wf-line-strong`, dashed.
+  - **Marks.** Checkbox, radio, toggle and choice marks get a dashed outline. Checked marks fill with `--wf-ink-3` instead of `--wf-ink`; labels stay ink.
+  - **Affordances removed.** The select chevron (`appearance:none`), the textarea resize handle, the stepper −/+ (hidden), the range thumb (drawn flat) and the date/colour picker indicators.
+- **Unchanged.** Runtime guards, ARIA and submission. Disabled keeps its faded look and gets no lock.
+- **Visible changes.** `forms` (`field_states_card`) and `line_forms` (`line_states`) hold read-only controls. They change only if those controls are inside the 1280×900 baseline crop; I expect them below it.
+- **Schema.** None. **Docs:** `rendering-controls.md` (the "Field contract per widget" read-only column and paragraph), `rendering-states.md` Rules, and `schema-systems.md` §15.5.
+
+### 4.5 Menubar leaves and current (item 5)
+- **What exists.** The canonical item model already has `route`, `current` and `selected`. `itemLink`, `itemsOn` and `STATE_OWNERS.link` do what is needed. No new keys.
+- **Changes in `renderMenubar`.**
+  - **Leaf items.** A top-level item with no nested `items` and a known `route` renders as `<a class="wf-menubar-trigger" href data-wf-route-target>`, through `itemLink`. A leaf without a known route stays a `<button>`, as today, so the gallery's route-less `Help` titles keep their markup. An element `interaction` keeps the items inert, as in nav.
+  - **Current.** The current item is decided by `itemsOn` with nav's rule: the item's own `selected`/`current` first, otherwise an enabled item whose `route` is the page being rendered.
+  - **State.** A current item, leaf or trigger, gets `aria-current="page" data-wf-current`. Triggers keep `aria-expanded`, as `topEntry` does.
+- **Look.** `[data-wf-current]` on a trigger is drawn like `.wf-nav-on`: fill, ink and weight 600 in card mode, the dashed outline in line mode. `open` still only opens a panel.
+- **Model guidance.** The registry summary and example show a leaf (`{ label: Home, route: home }`) and `current`, so `wf llm` teaches leaves instead of "Home > Home" and `current` instead of `open`. Panel rows still never link.
+- **Visible changes.** None. Gallery menubars (`menubar_demo`, `appnav_menubar`, `lnav_menubar`) have no top-level routes or `current`; their route-less `Help` leaf stays a button.
+- **Schema and docs.** Only the registry summary and example change (then `sync-schema-primitives`, agent guide and catalogue). `rendering-navigation.md` changes in its `menubar` section, the Links list and the State attributes table.
+
+### 4.6 Inline menu surface (item 6)
+- **Registry.** `menu` frame `N` → `C`, like `command`: framed on its own, unframed inside a card, modal or dropdown (frame rules 4 and 9). `menu` joins `SELF_PADDED`.
+- **Look.** `.wf-menu[data-wf-frame="surface"]` takes the dropdown panel look:
+  - 5 px inset, radius 8 and the `0 10px 30px` shadow;
+  - `width:max-content; max-width:100%`, with the current `min-width:180px`;
+  - in line mode, the panel's solid `--wf-line-strong` edge with no shadow.
+- **Visible changes.** `navigation_elements` `states_menu` sits in a grid-layout card, so rule 8 makes it a tile surface, as `command` already is. It is deliberate, and probably below the crop. `menu_demo` (in a card), overlay menus in `android` and `interactive-workspace`: unchanged.
+- **Schema and docs.**
+  - The `menu` summary is reworded.
+  - `schema.md` Box column: never → rules decide.
+  - `schema-canonical.yaml` `menu: C`.
+  - `rendering-navigation.md`.
+  - Regenerated: the agent guide and the catalogue.
+
+### 4.7 Navigation kinds (item 7)
+- **New frame class `B`** (bar): `edge` at surface depth 0, otherwise `content`. It is decided in `frame-rules.js` rule 3, beside `S`, `E` and `N`. `nav` and `menubar` become `B`.
+  - It is not `C`: a surface draws a full box and adds depth, so every kind would have to undo it.
+  - It is not `E`: an edge inside a sidebar region or card would double the region's own frame.
+  - `wf why` gains its rule text.
+- **Drawing.** CSS keys on `[data-wf-frame="edge"]` per kind. A nav with no `variant` has no edge rule, so it looks as it does today.
+
+| Kind at top level | Card mode | Line mode |
+|---|---|---|
+| `nav variant: sidebar` | white panel, `sidebar.width` wide (inline `--wf-nav-w`, applied only by the edge rule), right rule `--wf-line-2`, 8 px inset | right rule `--wf-line-strong` |
+| `nav variant: rail` | white strip, `sidebar.collapsedWidth`, right rule. Items without `icon` draw a placeholder icon box (any depth), so the current item's filled box shows | right rule; dashed placeholder |
+| `nav variant: top` | white bar across the width, `min-height: header.height`, bottom rule | bottom rule |
+| `menubar` | compact strip across the width, 36 px, rules above and below, tight 13 px medium titles | rules above and below |
+| `menu` | floating dropdown card (§4.6) | solid panel edge |
+| `tab_bar` | unchanged: rule plus active underline | unchanged |
+
+- **Current item.** On these white panels and bars, `.wf-nav-on` and the menubar's current fill become visible again.
+- **Visible changes.** None. The census found every existing `nav` and `menubar` inside a framed container. No fixture or in-repo project uses `variant: rail`, so the placeholder box changes nothing either.
+- **Schema and docs.**
+  - The registry frame letter goes into the `frameClass` comment.
+  - `schema.md` Box column ("edge at top level").
+  - `schema-canonical.yaml` frame list and legend.
+  - `rendering-modes.md` must not grow (1,035 lines), so the frame rules note goes in `rendering-navigation.md` §Kinds.
+  - Regenerated: the catalogue and the agent guide.
+
+## 5. Implementation Order
+
+One focused commit per step, each with tests that fail first, the docs and the regenerated artefacts its change feeds. Push after each commit.
+
+1. Tiles: `resolveDefaultGridColumns`, the auto-fit rule, the token, `wf init`, `wf info`. Tests: `layout-css.test.js` cases (unset → auto-fit, placed → 12, explicit → N); a build test on a manifest without the default; the init test.
+2. Text containment: CSS plus the stat and list spans. A browser test runs the spill checker (text rect past the content box) on a fixture at 1280 and 390.
+3. Line breaks: CSS plus the trim. A browser test counts line boxes per prose element; a `>-` case stays one line.
+4. Read-only: the helper, the lock and the CSS. Markup tests per control; a browser test reads the computed dashed edge, the lock, the hidden chevron and the full-ink value, and checks disabled is distinct.
+5. Menubar: the renderer, CSS and registry text. Markup tests: leaf `<a href>`, `aria-current="page"`, inferred current, trigger `current`, an inert element.
+6. Inline menu: the registry and CSS. A frame decision test: top level → surface, in a card, overlay or modal → content or group.
+7. Nav kinds: frame `B`, CSS and the rail placeholder. Frame-rule tests plus a browser test of the computed edges at the top level and none inside a sidebar region.
+8. Gallery: drop the manifest default and add the pages `polish` (card) and `line_polish` (line) to `PAGE_IDS`:
+   - auto-fit tiles (cards and stats);
+   - a fixed narrow tile row with long words;
+   - multi-line prose;
+   - read-only next to disabled;
+   - a menubar with leaves and current;
+   - an inline menu;
+   - sidebar, rail, top nav and menubar at the top level.
+
+   Regenerate the Windows baselines on Maxis and the macOS ones on the Mac, then capture before/after evidence.
+
+## 6. Edge Cases
+
+- **Grid shapes.** A single unplaced child fills the row (intended). Eight children wrap five and three at 1280. A grid nested in a tile gets one track through `min(…,100%)`.
+- **Mixed placement.** If any child is placed, the whole grid uses 12 columns. `gridItem` inside a repeat cell counts, because children are expanded before render.
+- **`form`.** `form` with `columns` is explicit. `form` with `layout: { type: grid }` and no columns gets tiles.
+- **Explicit defaults.** A manifest default of 12 (or any value) keeps today's grids exactly. That covers every existing CLI project and the in-repo projects.
+- **Adaptive.** The `adaptive` option's `!important` reflow still wins on smaller devices.
+- **Long text.** A URL or a word wider than a 120 px tile breaks inside it. Buttons, badges and tabs keep `nowrap` and may still overflow a box narrower than themselves (§7).
+- **Trailing newline.** A `|` block's final newline is trimmed, while `"a\n\nb"` keeps its blank line. Newlines in labels of controls, menus, tabs and table cells still collapse (§7).
+- **Read-only state combinations.** Read-only with disabled looks only disabled. Read-only with error keeps the invalid edge colour, dashed. A read-only control without a label gets the edge but no lock.
+- **Menubar.** A disabled leaf never links and is never inferred current. An unknown route keeps the `<button>`. `current` on several items is allowed: they are exactly the marked ones (`resolveSelection`).
+- **Nav placement.** A sidebar nav in a top-level `row` beside content gets its panel. Inside a role-`sidebar` or `header` region it gets none. A rail given `size.width` keeps it. Skin `shellBackground` still paints inline over the white panel.
+
+## 7. Non-Goals
+
+- Reflowing explicit `columns` on phones; the `adaptive` option owns that.
+- Migrating existing manifests' explicit `defaultGridColumns: 12`.
+- A new look for a nav with no `variant`.
+- Linking menubar panel rows, keyboard behaviour or menu/listbox roles.
+- Wrapping control, button, badge, tab or table-cell labels.
+- Container queries or font scaling to fit numbers.
+
+## 8. Open Questions
+
+1. **The scaffold default.** Should `wf init`'s historical `defaultGridColumns: 12` count as explicit? This design keeps it explicit, as the brief says, but stops writing it for new projects. The alternative is to treat 12 as unset, which also fixes existing CLI projects.
+2. **The read-only cue.** Is a lock glyph right, or a "Read-only" caption? The glyph needs no copy or translation, and it falls back to the lettered box without the icon font.
+3. **Tile width.** Is 220/200/150 px the right minimum? It is the same as `adaptive`'s reflow, and leaves five tiles across at 1280.
+4. **The new frame class.** Is `B` worth adding, or should top-level nav chrome come from `C` plus per-kind overrides of the surface box?
+5. **Menubar inference.** Should menubar leaves infer current from the route, as `nav` does? This design says yes, for consistency and because a menubar in a template cannot know its page.
