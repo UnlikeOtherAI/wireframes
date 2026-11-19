@@ -30,7 +30,7 @@ function buildContentMap(list, idField) {
   return map;
 }
 
-function resolveComponentNode(node, components, componentStack, injectableMap, budget) {
+function resolveComponentNode(node, components, componentStack, injections, budget) {
   if (!isObject(node)) {
     return {
       ok: true,
@@ -62,7 +62,7 @@ function resolveComponentNode(node, components, componentStack, injectableMap, b
       return rows;
     }
     if (Array.isArray(resolvedNode.children)) {
-      const childResult = resolveInjectableNodes(resolvedNode.children, injectableMap, components, componentStack, budget);
+      const childResult = resolveInjectableNodes(resolvedNode.children, injections, components, componentStack, budget);
       if (!childResult.ok) {
         return childResult;
       }
@@ -96,7 +96,7 @@ function resolveComponentNode(node, components, componentStack, injectableMap, b
   }
 
   if (collectSlotPlaceholders(componentDoc).length > 0) {
-    return resolveSlottedInstance(node, componentDoc, components, componentStack, injectableMap, budget);
+    return resolveSlottedInstance(node, componentDoc, components, componentStack, injections, budget);
   }
 
   const { props, id } = node;
@@ -112,6 +112,10 @@ function resolveComponentNode(node, components, componentStack, injectableMap, b
     ...instanceOverrides,
     id,
   };
+  // Instance children replace the root's children, and its rows with them.
+  if (Object.hasOwn(instanceOverrides, 'children')) {
+    delete resolvedNode.repeat;
+  }
 
   const mergedProps = mergeNodeProps(props, resolvedNode.props, componentDoc.propDefaults);
   if (Object.keys(mergedProps).length > 0) {
@@ -123,8 +127,9 @@ function resolveComponentNode(node, components, componentStack, injectableMap, b
     resolvedNode[key] = value;
   }
 
-  // The definition's rows are its own content: substituted above, namespaced below.
-  const rows = materializeDefinitionRows(resolvedNode, components, budget, componentDoc.root.id);
+  // The definition's rows are its own content: substituted above, namespaced below,
+  // and stamped with where the definition writes them.
+  const rows = materializeDefinitionRows(resolvedNode, components, budget, { root: componentDoc.root });
   if (!rows.ok) {
     return rows;
   }
@@ -136,7 +141,7 @@ function resolveComponentNode(node, components, componentStack, injectableMap, b
     resolvedNode.interaction = resolveComponentPropTemplates(instanceOverrides.interaction, mergedProps);
   }
 
-  return expandDefinitionTree(resolvedNode, node.use, components, componentStack, injectableMap, budget);
+  return expandDefinitionTree(resolvedNode, node.use, components, componentStack, injections, budget);
 }
 
 /**
@@ -145,7 +150,7 @@ function resolveComponentNode(node, components, componentStack, injectableMap, b
  * is on the stack: a caller-authored instance of the same component inside a
  * fill is finite nesting, not recursion.
  */
-function resolveSlottedInstance(node, componentDoc, components, componentStack, injectableMap, budget) {
+function resolveSlottedInstance(node, componentDoc, components, componentStack, injections, budget) {
   const authored = [];
   if (Array.isArray(node.children)) {
     authored.push(['default', node.children]);
@@ -160,7 +165,7 @@ function resolveSlottedInstance(node, componentDoc, components, componentStack, 
 
   const fills = new Map();
   for (const [name, nodes] of authored) {
-    const expanded = resolveInjectableNodes(nodes, injectableMap, components, componentStack, budget);
+    const expanded = resolveInjectableNodes(nodes, injections, components, componentStack, budget);
     if (!expanded.ok) {
       return expanded;
     }
@@ -168,12 +173,13 @@ function resolveSlottedInstance(node, componentDoc, components, componentStack, 
   }
 
   const token = Symbol('slot fills');
+  // A fallback the caller replaces never renders, so its rows are not made.
   const prepared = prepareSlottedInstance(node, componentDoc, fills, token,
-    (tree) => materializeDefinitionRows(tree, components, budget, componentDoc.root.id));
+    (tree) => materializeDefinitionRows(tree, components, budget, { root: componentDoc.root, replaced: new Set(fills.keys()) }));
   if (!prepared.ok) {
     return prepared;
   }
-  const expanded = expandDefinitionTree(prepared.node, node.use, components, componentStack, injectableMap, budget);
+  const expanded = expandDefinitionTree(prepared.node, node.use, components, componentStack, injections, budget);
   if (!expanded.ok) {
     return expanded;
   }
@@ -181,12 +187,12 @@ function resolveSlottedInstance(node, componentDoc, components, componentStack, 
 }
 
 /** Expand the nested instances a prepared definition tree contains, with the definition on the stack. */
-function expandDefinitionTree(resolvedNode, use, components, componentStack, injectableMap, budget) {
+function expandDefinitionTree(resolvedNode, use, components, componentStack, injections, budget) {
   componentStack.add(use);
   if (Array.isArray(resolvedNode.children)) {
     const childResult = resolveInjectableNodes(
       resolvedNode.children,
-      injectableMap,
+      injections,
       components,
       componentStack,
       budget,
@@ -203,7 +209,7 @@ function expandDefinitionTree(resolvedNode, use, components, componentStack, inj
       resolvedNode,
       components,
       componentStack,
-      injectableMap,
+      injections,
       budget,
     );
     componentStack.delete(use);
@@ -221,7 +227,24 @@ function expandDefinitionTree(resolvedNode, use, components, componentStack, inj
   };
 }
 
-function resolveInjectableNodes(nodes, injectableMap, components, componentStack, budget) {
+const isMarker = (node) => isObject(node) && node.injectable === true && typeof node.id === 'string';
+
+/**
+ * The page's content for one injectable marker, expanded. An injection that
+ * reaches its own marker again renders nothing there instead of recursing.
+ */
+function inject(id, injections, components, componentStack, budget) {
+  const content = injections.content.get(id);
+  if (!Array.isArray(content) || content.length === 0 || injections.active.has(id)) {
+    return { ok: true, nodes: [] };
+  }
+  injections.active.add(id);
+  const injected = resolveInjectableNodes(content, injections, components, componentStack, budget);
+  injections.active.delete(id);
+  return injected;
+}
+
+function resolveInjectableNodes(nodes, injections, components, componentStack, budget) {
   if (!Array.isArray(nodes)) {
     return {
       ok: true,
@@ -237,26 +260,36 @@ function resolveInjectableNodes(nodes, injectableMap, components, componentStack
       continue;
     }
 
-    if (node.injectable === true && typeof node.id === 'string') {
-      const injected = injectableMap.get(node.id);
-      if (Array.isArray(injected) && injected.length > 0) {
-        const injectedNodes = resolveInjectableNodes(injected, injectableMap, components, componentStack, budget);
-        if (!injectedNodes.ok) {
-          return injectedNodes;
-        }
-        output.push(...injectedNodes.nodes);
+    if (isMarker(node)) {
+      const injected = inject(node.id, injections, components, componentStack, budget);
+      if (!injected.ok) {
+        return injected;
       }
+      output.push(...injected.nodes);
       continue;
     }
 
     // A resolved node comes back with its children resolved, so nothing is
     // expanded twice and the budget counts each node once.
-    const resolvedNode = resolveComponentNode(node, components, componentStack, injectableMap, budget);
+    // A failure is located at the outermost row it passes through.
+    const failed = (failure) => (node.__repeat ? { ...failure, row: origin(node) } : failure);
+    const resolvedNode = resolveComponentNode(node, components, componentStack, injections, budget);
     if (!resolvedNode.ok) {
-      // A failure is located at the outermost row it passes through.
-      return node.__repeat ? { ...resolvedNode, row: origin(node) } : resolvedNode;
+      return failed(resolvedNode);
     }
-    output.push(...resolvedNode.nodes);
+    // A component may expand to a marker; it takes its injection where it lands,
+    // as a written one does.
+    for (const resolved of resolvedNode.nodes) {
+      if (!isMarker(resolved)) {
+        output.push(resolved);
+        continue;
+      }
+      const injected = inject(resolved.id, injections, components, componentStack, budget);
+      if (!injected.ok) {
+        return failed(injected);
+      }
+      output.push(...injected.nodes);
+    }
   }
 
   return {
@@ -265,7 +298,7 @@ function resolveInjectableNodes(nodes, injectableMap, components, componentStack
   };
 }
 
-function resolveRegion(region, slotMap, injectableMap, components, componentStack, budget) {
+function resolveRegion(region, slotMap, injections, components, componentStack, budget) {
   if (!isObject(region) || typeof region.id !== 'string' || typeof region.kind !== 'string') {
     return {
       ok: false,
@@ -279,7 +312,7 @@ function resolveRegion(region, slotMap, injectableMap, components, componentStac
     ? (Array.isArray(slotContent) ? slotContent : (Array.isArray(region.children) ? region.children : []))
     : (Array.isArray(region.children) ? region.children : []);
 
-  const resolvedChildren = resolveInjectableNodes(baseChildren, injectableMap, components, componentStack, budget);
+  const resolvedChildren = resolveInjectableNodes(baseChildren, injections, components, componentStack, budget);
   if (!resolvedChildren.ok) {
     return resolvedChildren;
   }
@@ -309,11 +342,12 @@ function resolveTemplatePage({ template, page, budget = createExpansionBudget() 
   const pageDoc = isObject(page) ? page : {};
   const slotMap = buildContentMap(Array.isArray(pageDoc.slots) ? pageDoc.slots : [], 'slotId');
   const injectableMap = buildContentMap(Array.isArray(pageDoc.injectables) ? pageDoc.injectables : [], 'injectableId');
+  const injections = { content: injectableMap, active: new Set() };
   const roots = [];
   const componentStack = new Set();
 
   for (const region of regions) {
-    const resolvedRegion = resolveRegion(region, slotMap, injectableMap, components, componentStack, budget);
+    const resolvedRegion = resolveRegion(region, slotMap, injections, components, componentStack, budget);
     if (!resolvedRegion.ok) {
       return resolvedRegion;
     }

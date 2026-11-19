@@ -2,9 +2,11 @@
 
 // The page as it renders, resolved as the build resolves it (`build/page-tree.js`):
 // its template's regions with the page's content, then the template's overlays and
-// the page's own. Ids and form references are checked on that tree. Content that
-// cannot be expanded is not walked; each authored entry that would render and
-// fails is reported where it is written, so validation fails before the build does.
+// the page's own, all sharing one expansion budget. Ids and form references are
+// checked on that tree. Content that cannot be expanded is not walked; each
+// authored entry that would render and fails is reported where it is written, so
+// validation fails before the build does. A page over the budget is reported once,
+// and nothing after it is expanded.
 
 const { resolveTemplatePage } = require('../resolver');
 const { resolveNodes } = require('../resolver/nodes');
@@ -14,7 +16,7 @@ const { createExpansionBudget } = require('../component-registry/expansion');
 const { repeatCellReference } = require('../component-registry/repeat');
 const { collectComponentUseGraph } = require('./component-graph');
 const { isObject, addDiagnostic } = require('./semantic-interactions');
-const { placeOf, stampRenderedInputs } = require('./row-places');
+const { placeOf, repeatPlaceOf, stampRenderedInputs } = require('./row-places');
 
 const list = (value) => (Array.isArray(value) ? value : []);
 
@@ -93,7 +95,7 @@ function injectedIds(value, found) {
 }
 
 /** Expands one entry as a region does, with each of `ids` injected as its marker. */
-function expandEntry(node, components, ids) {
+function expandEntry(node, components, ids, budget) {
   const resolved = resolveTemplatePage({
     template: { regions: [{ id: ENTRY_REGION, kind: 'slot' }] },
     page: {
@@ -101,6 +103,7 @@ function expandEntry(node, components, ids) {
       injectables: ids.map((id) => ({ injectableId: id, content: [{ [INJECTED]: id }] })),
     },
     components,
+    budget,
   });
   return resolved.ok ? { ok: true, injected: injectedIds(resolved.roots, []) } : resolved;
 }
@@ -139,24 +142,33 @@ function collectRenderedRoots({ result, pageId, page: authoredPage, template: au
   const roots = [];
   let graph = null;
   // The page's regions and overlays share one budget, as they do when it builds.
-  const budget = createExpansionBudget();
-  const tooLarge = (failure) => addDiagnostic(result, 'MAX_NODES_PER_PAGE_EXCEEDED',
-    `Page "${pageId}" cannot be expanded: ${failure.error}`, { document: `page:${pageId}`, path: '$.page' });
+  let budget = createExpansionBudget();
+  const pageAt = { document: `page:${pageId}`, path: '$.page' };
 
-  // An unknown id written in the entry itself, an unknown repeat cell, and a
-  // cycle among the project's own components are already reported by the
-  // reference, repeat and cycle checks. Anything else that fails inside a row is
-  // located at the outermost row's item.
+  // A fan-out is reported at the outermost repeat it passes through. An unknown
+  // id written in the entry itself, an unknown repeat cell, and a cycle among the
+  // project's own components are already reported by the reference, repeat and
+  // cycle checks. Anything else that fails inside a row is located at the
+  // outermost row's item.
   const reportFailure = (entry, failure) => {
+    if (failure.reason === 'expansion-budget') {
+      addDiagnostic(result, 'MAX_NODES_PER_PAGE_EXCEEDED', `Page "${pageId}" cannot be expanded: ${failure.error}`, pageAt);
+      return;
+    }
+    if (failure.reason === 'repeat-budget') {
+      const at = failure.row ? repeatPlaceOf(failure.row, sources) : placeOf(failure.host, sources, ['repeat']);
+      addDiagnostic(result, 'REPEAT_BUDGET_EXCEEDED', failure.error, at ? { ...at, key: true } : (entry?.at || pageAt));
+      return;
+    }
     if (failure.reason === 'unknown-component' && (failure.repeatCell || usesDirectly(entry.node, failure.componentId))) return;
     if (failure.reason === 'circular-component') {
       graph = graph || collectComponentUseGraph(projectComponents);
       if (onCycle(graph, failure.componentId)) return;
     }
-    if (failure.reason === 'repeat-budget') {
-      const at = placeOf(failure.host, sources, ['repeat']);
-      addDiagnostic(result, 'REPEAT_BUDGET_EXCEEDED', `${failure.error} Fewer items, or fewer repeats inside the cell, bring it back under.`,
-        at ? { ...at, key: true } : entry.at);
+    if (failure.row) {
+      const { host, item } = failure.row.__repeat;
+      addDiagnostic(result, 'REPEAT_ROW_FAILED', `Item "${item}" of the repeat on "${host}" cannot be expanded: ${failure.error}`,
+        placeOf(failure.row, sources) || entry.at);
       return;
     }
     const id = typeof entry.node?.id === 'string' ? entry.node.id : '<unnamed>';
@@ -164,32 +176,46 @@ function collectRenderedRoots({ result, pageId, page: authoredPage, template: au
       result,
       failure.reason === 'circular-component' ? 'CIRCULAR_TEMPLATE_REFERENCE' : 'BROKEN_COMPONENT_REFERENCE',
       `Node "${id}" in ${entry.where} cannot be expanded: ${failure.error}`,
-      placeOf(failure.row, sources) || entry.at,
+      entry.at,
     );
+  };
+  const overBudget = (failure) => failure.reason === 'expansion-budget' || failure.reason === 'repeat-budget';
+  // One entry against the shared budget. A failure is reported, and one that is
+  // not the budget spends none of it. Returns null once the page is over the
+  // budget: nothing more is expanded.
+  const expandOne = (entry, expand) => {
+    const before = budget.used;
+    const expanded = expand();
+    if (expanded.ok) return expanded;
+    reportFailure(entry, expanded);
+    if (overBudget(expanded)) return null;
+    budget.used = before;
+    return expanded;
   };
 
   if (isObject(template)) {
     const templatePage = resolveTemplatePage({ template, page, components, budget });
     if (templatePage.ok) {
       roots.push(...templatePage.roots);
-    } else if (templatePage.reason === 'expansion-budget') {
-      tooLarge(templatePage);
+    } else if (overBudget(templatePage)) {
+      reportFailure(null, templatePage);
+      return roots;
     } else {
-      // Each entry the regions render is expanded on its own. An injection is
-      // expanded once a placeholder that renders reaches it, so one the page's
-      // content replaces is never reported; one reached only through an entry
-      // that fails waits until that entry expands.
+      // Each entry the regions render is expanded on its own, against a fresh
+      // budget they share. An injection is expanded once a placeholder that
+      // renders reaches it, so one the page's content replaces is never
+      // reported; one reached only through an entry that fails waits until that
+      // entry expands.
+      budget = createExpansionBudget();
       const injections = injectionEntries(page, pageId);
       const ids = [...injections.keys()];
       const queue = regionEntries(page, pageId, template, page.template);
       const reached = new Set();
       while (queue.length > 0) {
         const entry = queue.shift();
-        const expanded = expandEntry(entry.node, components, ids);
-        if (!expanded.ok) {
-          reportFailure(entry, expanded);
-          continue;
-        }
+        const expanded = expandOne(entry, () => expandEntry(entry.node, components, ids, budget));
+        if (expanded === null) return roots;
+        if (!expanded.ok) continue;
         for (const id of expanded.injected) {
           if (reached.has(id)) continue;
           reached.add(id);
@@ -201,19 +227,20 @@ function collectRenderedRoots({ result, pageId, page: authoredPage, template: au
 
   for (const { overlay, document, path, where } of overlaysOf(page, pageId, template, page.template)) {
     if (!isObject(overlay) || !Array.isArray(overlay.content)) continue;
+    const before = budget.used;
     const resolved = resolveNodes(overlay.content, components, budget);
     if (resolved.ok) {
       roots.push(...resolved.nodes);
       continue;
     }
-    if (resolved.reason === 'expansion-budget') {
-      tooLarge(resolved);
+    if (overBudget(resolved)) {
+      reportFailure(null, resolved);
       break;
     }
-    entriesOf(overlay.content, document, `${path}.content`, where).forEach((entry) => {
-      const failure = resolveNodes([entry.node], components);
-      if (!failure.ok) reportFailure(entry, failure);
-    });
+    budget.used = before;
+    for (const entry of entriesOf(overlay.content, document, `${path}.content`, where)) {
+      if (expandOne(entry, () => resolveNodes([entry.node], components, budget)) === null) return roots;
+    }
   }
 
   return roots;

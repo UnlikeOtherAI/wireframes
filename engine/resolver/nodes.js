@@ -54,7 +54,7 @@ function buildOverlayRoots(overlays, components, source, budget) {
     }
     const resolvedOverlay = resolveNodes(overlay.content, components, budget);
     if (!resolvedOverlay.ok) {
-      return { ok: false, error: resolvedOverlay.error, target: overlay.id };
+      return { ok: false, error: resolvedOverlay.error, reason: resolvedOverlay.reason, target: overlay.id };
     }
     list.push({
       id: overlay.id,

@@ -87,7 +87,8 @@ function loadScopedComponentDefinitions(root, result, entries, contextLabel, fal
   return registryResult.registry;
 }
 
-function runDoctor({ projectPath } = {}) {
+/** `onRenderedPage` sees each page as it renders (see `checkProject`). */
+function runDoctor({ projectPath, onRenderedPage } = {}) {
   const result = {
     ok: true,
     errors: [],
@@ -203,6 +204,7 @@ function runDoctor({ projectPath } = {}) {
 
   checkProject({
     result,
+    onRenderedPage,
     manifest,
     sitemap,
     templates,

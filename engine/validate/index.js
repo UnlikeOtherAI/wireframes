@@ -8,6 +8,7 @@ const { SUPPORTED_SPEC_VERSION } = require('../schema/constants');
 const { checkComponentSlots } = require('../doctor/component-slots');
 const { checkRepeats } = require('../doctor/repeat-checks');
 const { checkStdAlias } = require('../doctor/std-alias');
+const { resolvePageTree } = require('../build/page-tree');
 
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
@@ -123,6 +124,18 @@ function validateProject(documentMap, options = {}) {
   ]);
   for (const diagnostic of [...slotDiagnostics, ...stdAliasDiagnostics]) {
     (diagnostic.severity === 'errors' ? errors : info).push({ code: diagnostic.code, message: diagnostic.message });
+  }
+
+  // Each page against the expansion budget the build enforces, its regions and
+  // overlays together, so a page the build would refuse fails validation too.
+  for (const [pageId, pageDoc] of pages) {
+    if (!isObject(pageDoc?.page)) continue;
+    const tree = resolvePageTree(documentMap, pageId);
+    if (tree.reason === 'repeat-budget') {
+      errors.push({ code: 'REPEAT_BUDGET_EXCEEDED', message: tree.error });
+    } else if (tree.reason === 'expansion-budget') {
+      errors.push({ code: 'MAX_NODES_PER_PAGE_EXCEEDED', message: `Page "${pageId}" cannot be expanded: ${tree.error}` });
+    }
   }
 
   errors.push(...validateLogoReferences(documentMap));

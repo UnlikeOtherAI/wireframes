@@ -382,30 +382,54 @@ by the host's author, where hand-written siblings would be:
   expands. A fill forwarded through another component keeps its rows' page ids
   and gets no callee substitution.
 
+Rows follow the override rules of hand-written children. In a component
+without slots, instance `children` replace the root's children and its rows. A
+slot fallback the caller fills, or empties with `[]`, never renders, so its
+rows are never made. A row in a definition is stamped with the definition's
+file and path, also when the repeat is on the root.
+
 A sibling in the same scope may refer to a row by its id (`formId: team__ada`,
 an overlay `trigger`), and a form cell's own submit follows its row. Ids are
 checked on the rendered page, so a row id that equals an authored id is
 `DUPLICATE_NODE_ID`, located at the item.
 
 **Budget.** One page expands to at most 50,000 nodes, its regions and overlays
-together. A repeat's whole fan-out, nested components and repeats included, is
-checked before its first row is made: `REPEAT_BUDGET_EXCEEDED`, at the
-outermost repeat. `assertComponentExpansion` counts the rows too. The page
-limits in §16 (5,000 nodes, depth 100) still apply to the result.
+together, so repeats that share a page share it, as do the hosts of one
+definition. A repeat's whole fan-out, nested components and repeats included,
+is checked before its first row is made: `REPEAT_BUDGET_EXCEEDED`, at the
+outermost repeat. A fallback the caller replaces costs nothing. The build,
+`wf validate` and the in-memory `validateProject` apply the same budget.
+`assertComponentExpansion` counts the rows too. The page limits in §16 (5,000
+nodes, depth 100) still apply to the result.
 
 **Binding.** `repeat` is for fixed inline content; `binding` stays the dataset
 mechanism. A repeat under a collection binding, on a node with one, or with a
 cell whose root has one, is `REPEAT_WITH_BINDING`, since the binding would
-clone the rows. A single-value `{{…}}` binding is fine. Items are plain props:
-`{{item.…}}` inside an item is not interpreted (`REPEAT_ITEM_TOKEN`, info).
+clone the rows. The rule crosses component boundaries:
+* a binding on or above an instance clones every repeat its definition
+  renders, and each is reported where the definition writes it;
+* a binding on a definition's root, or on the root it delegates to with
+  `use:`, clones the content an instance gives it, and so does a binding above
+  the placeholder a fill lands in;
+* a cell whose root delegates to a bound root counts as a bound cell.
+
+A single-value `{{…}}` binding is fine. Items are plain props: `{{item.…}}`
+inside an item is not interpreted (`REPEAT_ITEM_TOKEN`, info). Below a row, an
+`{{item.…}}` token renders as written, unless a collection inside the row
+gives it an item.
 
 **Checks.** On the authored YAML: `UNKNOWN_REPEAT_CELL` (with the nearest
 name), `REPEAT_INVALID_HOST`, `DUPLICATE_REPEAT_ITEM_ID`, `REPEAT_WITH_BINDING`,
 and a component cell counts as a usage and a dependency edge. On the rendered
-page: ids, form references and overlay triggers. Lint runs element prop
-contracts on each row and reports `…props.<key>` at `…repeat.items[i].<key>`;
-a component cell's items follow the component-input policy. `items: []` is
-`EMPTY_REPEAT` (info). Shape and the 200 limit are schema errors.
+page: ids, form references and overlay triggers. A row that cannot be
+expanded, for example because its cell uses an unknown component, is
+`REPEAT_ROW_FAILED` at its item. Lint runs element prop contracts on each row
+that renders, with the values it renders with (after a definition's
+`{{props}}`), and reports `…props.<key>` at `…repeat.items[i].<key>`, once
+per place. A row that never renders, such as one in a replaced fallback, is not
+checked. A component cell's items follow the component-input policy.
+`items: []` is `EMPTY_REPEAT` (info). Shape and the 200 limit are schema
+errors.
 
 **Editing.** A row is addressed by its id under its host
 (`wf://page/home#main.team.team__ada`). The address finds the item by its id
@@ -619,8 +643,11 @@ Blocking errors:
     document can reach. The message suggests the nearest name.
   * `REPEAT_INVALID_HOST`: `repeat` on a node or record that cannot host rows.
   * `DUPLICATE_REPEAT_ITEM_ID`: two items in one repeat share an `id`.
-  * `REPEAT_WITH_BINDING`: a collection binding on, above or in the cell of a repeat.
+  * `REPEAT_WITH_BINDING`: a collection binding on, above or in the cell of a
+    repeat, including one that reaches it across a component boundary.
   * `REPEAT_BUDGET_EXCEEDED`: the fan-out passes the page's 50,000-node budget.
+  * `REPEAT_ROW_FAILED`: a row cannot be expanded, for example because its cell
+    uses an unknown component. It is reported at the item.
 
 Warnings:
 
@@ -649,7 +676,8 @@ Info diagnostics:
 
 The slot and authored repeat checks run in `wf validate` and in the in-memory
 `validateProject` entry point the browser and API use; `validateProject`
-returns its info diagnostics in `info`.
+returns its info diagnostics in `info`, and checks each page against the
+expansion budget as the build does.
 
 Safety limits:
 

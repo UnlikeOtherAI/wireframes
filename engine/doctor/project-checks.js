@@ -50,6 +50,8 @@ function nameOf(loaded, label) {
  *   components. Built-in `std.*` patterns are never in it: lookups fall back to them.
  * @param {(page: object) => object} [input.resolveComponentsForPage]
  *   `{ ok, components, sources }` for a page with its template's imports, or `{ ok: false, error }`
+ * @param {(page: object) => void} [input.onRenderedPage]
+ *   Called with `{ pageId, roots, sources }` for each page as it renders, stamped, for lint.
  */
 function checkProject({
   result,
@@ -63,6 +65,7 @@ function checkProject({
   componentSources = {},
   componentsFor,
   resolveComponentsForPage,
+  onRenderedPage,
 }) {
   if (manifest && manifest.document?.manifest?.schemaVersion) {
     const schemaVersion = manifest.document.manifest.schemaVersion;
@@ -185,6 +188,7 @@ function checkProject({
     componentSources,
     pages: Array.from(pages.values()),
     resolveComponentsForPage: scopeFor,
+    onRenderedPage,
   });
 
   const pageEntries = Array.from(pages.values()).map((pageLoaded) => {

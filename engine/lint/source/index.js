@@ -28,7 +28,7 @@ const NEEDS_EVERY_DOCUMENT = new Set([
   'MISSING_DATASET_REFERENCE', 'MISSING_SLOT_REFERENCE', 'MISSING_INJECTABLE_REFERENCE', 'EMPTY_SLOT',
   'INVALID_TARGET_ROUTE', 'INVALID_ROUTE_REFERENCE', 'INVALID_TARGET_OVERLAY', 'INVALID_OVERLAY_TRIGGER',
   'INVALID_FORM_REFERENCE', 'MISSING_STATE_KEY', 'UNUSED_COMPONENT', 'UNUSED_DATASET', 'COMPONENT_IMPORT_ERROR',
-  'UNKNOWN_COMPONENT_SLOT',
+  'UNKNOWN_COMPONENT_SLOT', 'REPEAT_ROW_FAILED',
 ]);
 
 // Where a document-level failure is, when the loader names only the document.
@@ -92,7 +92,10 @@ function checkIcons(documents, iconIndex, report) {
   }
 }
 
-/** The rules that look across documents, on everything that parsed. */
+/**
+ * The rules that look across documents, on everything that parsed. Returns the
+ * pages as they render, for the lint rules on repeat rows.
+ */
 function checkAcrossDocuments(documents, report) {
   const parsed = documents.filter((entry) => entry.document);
   for (const type of SINGLE_TYPES) {
@@ -129,9 +132,11 @@ function checkAcrossDocuments(documents, report) {
     `Unable to load component imports for ${label}: ${scope.error}`, { entry: scope.entry, path: '$.imports', key: true });
 
   const result = { errors: [], warnings: [], info: [], locations: true };
+  const renderedPages = [];
   try {
     checkProject({
       result,
+      onRenderedPage: (page) => renderedPages.push(page),
       manifest: loaded(one('manifest')),
       sitemap: loaded(one('sitemap')),
       templates: loaded(templates),
@@ -155,16 +160,17 @@ function checkAcrossDocuments(documents, report) {
   } catch {
     // A document the schema already refused can have any shape. Its schema findings
     // are reported; the project rules wait until it is a document again.
-    return;
+    return [];
   }
   // A duplicate is underlined where it was repeated, not where it was first written.
   for (const finding of result.errors) report('error', finding.code, finding.message, { at: finding.at, last: finding.code.startsWith('DUPLICATE_') });
   for (const finding of result.warnings) report('warning', finding.code, finding.message, { at: finding.at });
   for (const finding of result.info) report('info', finding.code, finding.message, { at: finding.at });
+  return renderedPages;
 }
 
-/** Naming and element rules, only where the schema found nothing. */
-function checkStyle(documents, report) {
+/** Naming and element rules, only where the schema found nothing; repeat rows as they render. */
+function checkStyle(documents, report, renderedPages) {
   const valid = documents.filter((entry) => entry.valid);
   const one = (type) => valid.find((entry) => entry.type === type)?.document || null;
   const result = { errors: [], warnings: [], info: [], locations: true };
@@ -175,6 +181,7 @@ function checkStyle(documents, report) {
     components: one('components'),
     datasets: valid.filter((entry) => entry.type === 'dataset').map((entry) => entry.document),
     pages: valid.filter((entry) => entry.type === 'page').map((entry) => entry.document),
+    renderedPages,
   });
   for (const finding of result.warnings) report('warning', finding.code, finding.message, { at: finding.at });
   for (const finding of result.info) report('info', finding.code, finding.message, { at: finding.at });
@@ -202,8 +209,7 @@ function lintSources(sources, options = {}) {
   if (!documents.some((entry) => entry.type === 'manifest')) {
     report('error', 'MISSING_MANIFEST', 'A project needs a manifest document.');
   }
-  checkAcrossDocuments(documents, report);
-  checkStyle(documents, report);
+  checkStyle(documents, report, checkAcrossDocuments(documents, report));
 
   // A document that did not parse, or does not say what it is, may hold anything the
   // others refer to, so findings about missing things wait until it can be read.

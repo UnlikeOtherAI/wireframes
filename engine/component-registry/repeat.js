@@ -7,8 +7,8 @@
  * A row is the node an author would have written by hand:
  * `{ id: <host>__<item>, component: <cell>, props }` for an element cell, or
  * the same with `use: <cell>` for a component cell. `__repeat` records which
- * host and item it came from, and a stamped host passes its source on, so a
- * rendered row points at `…repeat.items[i]`.
+ * host, item and cell it came from, and a stamped host passes its source on, so
+ * a rendered row points at `…repeat.items[i]`.
  */
 
 const { resolvePrimitiveName } = require('../schema/primitive-registry');
@@ -86,17 +86,18 @@ function repeatRowNode(hostId, cell, item) {
 
 /**
  * The rows a host renders, in item order. Empty unless the host can host rows.
- * `hostId` is the id the host is written with: a definition root has taken its
- * instance's id by the time its rows are made, but its rows are named as written.
+ * A definition root has taken its instance's id and stamps by the time its rows
+ * are made, but its rows are named and stamped as written: `hostId` is the id
+ * the host is written with, and `written` the node whose stamps they take.
  */
-function repeatRows(host, hostId = host?.id) {
+function repeatRows(host, hostId = host?.id, written = host) {
   const repeat = repeatOf(host);
   if (!repeat || typeof hostId !== 'string' || repeatHostProblem(host) != null) return [];
   return keyedItems(repeat.items).map(({ item, index }) => {
     const row = repeatRowNode(hostId, repeat.cell, item);
-    row.__repeat = { host: hostId, item: item.id, index };
-    if (typeof host.__source === 'string') row.__source = `${host.__source.split('#')[0]}#${row.id}`;
-    if (typeof host.__sourcePath === 'string') row.__sourcePath = `${host.__sourcePath}.repeat.items[${index}]`;
+    row.__repeat = { host: hostId, item: item.id, index, cell: repeat.cell };
+    if (typeof written?.__source === 'string') row.__source = `${written.__source.split('#')[0]}#${row.id}`;
+    if (typeof written?.__sourcePath === 'string') row.__sourcePath = `${written.__sourcePath}.repeat.items[${index}]`;
     return row;
   });
 }

@@ -64,11 +64,16 @@ function stdAliasDiagnostics() {
 function repeatDiagnostics() {
   const wide = (cell) => ({ root: { id: cell, component: 'stack', repeat: { cell: cell === 'level_2' ? 'text' : `level_${Number(cell.slice(-1)) + 1}`,
     items: Array.from({ length: 200 }, (_, index) => ({ id: `i${index}` })) } } });
-  const components = { ...COMPONENTS, level_0: wide('level_0'), level_1: wide('level_1'), level_2: wide('level_2') };
+  const components = {
+    ...COMPONENTS, level_0: wide('level_0'), level_1: wide('level_1'), level_2: wide('level_2'),
+    broken: { root: { id: 'broken', component: 'stack', children: [{ id: 'gone', use: 'nowhere' }] } },
+  };
   const map = documentMap([
     { id: 'a', component: 'stack', repeat: { cell: 'statt', items: [{ id: 'x' }, { id: 'x' }] } },
     { id: 'b', component: 'button', binding: { source: 'people' }, repeat: { cell: 'text', items: [{ id: 'y', text: '{{item.name}}' }] } },
     { id: 'c', component: 'stack', repeat: { cell: 'stat', items: [] } },
+    // Before the fan-out: nothing after a page goes over the budget is expanded.
+    { id: 'e', component: 'stack', repeat: { cell: 'broken', items: [{ id: 'w' }] } },
     { id: 'd', component: 'stack', repeat: { cell: 'level_0', items: [{ id: 'z' }] } },
   ], { components });
   const text = (value) => yaml.dump(value);
@@ -95,7 +100,7 @@ test('the canonical validation inventory lists each reported code under its seve
     }
   }
   for (const code of ['EMPTY_COMPONENT_SLOT', 'STD_ALIAS_SHADOWED', 'UNKNOWN_COMPONENT_SLOT', 'DUPLICATE_DEFAULT_SLOT_FILL', 'SLOTS_WITHOUT_USE',
-    'UNKNOWN_REPEAT_CELL', 'REPEAT_INVALID_HOST', 'DUPLICATE_REPEAT_ITEM_ID', 'REPEAT_WITH_BINDING', 'REPEAT_BUDGET_EXCEEDED', 'EMPTY_REPEAT', 'REPEAT_ITEM_TOKEN']) {
+    'UNKNOWN_REPEAT_CELL', 'REPEAT_INVALID_HOST', 'DUPLICATE_REPEAT_ITEM_ID', 'REPEAT_WITH_BINDING', 'REPEAT_BUDGET_EXCEEDED', 'REPEAT_ROW_FAILED', 'EMPTY_REPEAT', 'REPEAT_ITEM_TOKEN']) {
     assert.ok(reported.has(code), `the fixtures report ${code}`);
   }
   for (const [code, severity] of reported) {

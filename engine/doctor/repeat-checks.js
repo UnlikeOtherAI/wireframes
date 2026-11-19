@@ -5,8 +5,9 @@
  * `docs/plans/2026-11-19-repeat-cells.md` §4.3): the cell resolves
  * (UNKNOWN_REPEAT_CELL), the node can host rows (REPEAT_INVALID_HOST), item ids
  * are unique (DUPLICATE_REPEAT_ITEM_ID), and no collection binding can clone the
- * rows (REPEAT_WITH_BINDING). The checks on rendered rows (ids, form
- * references, the budget) run on the resolved page in `rendered-roots.js`.
+ * rows (REPEAT_WITH_BINDING), including one that reaches the repeat across a
+ * component boundary (`repeat-bindings.js`). The checks on rendered rows (ids,
+ * form references, the budget) run on the resolved page in `rendered-roots.js`.
  *
  * Takes what `checkComponentSlots` takes and returns the same
  * `{ severity, code, message, at }` entries.
@@ -19,6 +20,7 @@ const { builtinComponentIds } = require('../stdlib');
 const { childNodeEntries } = require('../component-registry/child-nodes');
 const { authoredReference, resolveComponentDefinition } = require('../component-registry/definition-lookup');
 const { isElementCell, repeatHostProblem, repeatOf } = require('../component-registry/repeat');
+const { createBindingLookup, isCollectionBinding } = require('./repeat-bindings');
 
 const isObject = (value) => value != null && typeof value === 'object' && !Array.isArray(value);
 const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
@@ -34,13 +36,6 @@ function under(at, segments, key = false) {
 function rootPlace(componentId, source) {
   if (!isObject(source)) return { document: 'components', path: `${appendPath('$.components', componentId)}.root` };
   return { document: 'components', file: source.sourcePath, path: `${appendPath('$.components', source.localId)}.root` };
-}
-
-/** A binding whose source names a data source clones its node once per item; an expression does not. */
-function isCollectionBinding(binding) {
-  if (!isObject(binding) || typeof binding.source !== 'string') return false;
-  const source = binding.source.trim();
-  return source !== '' && !source.startsWith('{{');
 }
 
 function suggestion(cell, definitions) {
@@ -59,7 +54,7 @@ function checkCell(node, repeat, at, scope, report) {
       under(at, ['repeat', 'cell']));
     return;
   }
-  if (isCollectionBinding(definition.root.binding)) {
+  if (scope.bindings.root(repeat.cell)) {
     report('errors', 'REPEAT_WITH_BINDING',
       `Repeat on "${node.id}" in ${scope.where} uses cell "${cell}", whose root has a collection binding that would clone every row. Bind the data in one place: drop the binding, or render the dataset without repeat.`,
       under(at, ['repeat'], true));
@@ -79,7 +74,11 @@ function checkItems(node, repeat, at, scope, report) {
   });
 }
 
-function checkHost(node, at, scope, boundAbove, report) {
+/**
+ * `bound` is the collection binding the node renders under, or null: written
+ * above it in the same tree (`local`), or reached across a component boundary.
+ */
+function checkHost(node, at, scope, bound, report) {
   const problem = repeatHostProblem(node);
   if (problem) {
     report('errors', 'REPEAT_INVALID_HOST',
@@ -90,24 +89,47 @@ function checkHost(node, at, scope, boundAbove, report) {
   if (!repeat) return;
   checkCell(node, repeat, at, scope, report);
   checkItems(node, repeat, at, scope, report);
-  if (isCollectionBinding(node.binding) || boundAbove) {
+  const own = isCollectionBinding(node.binding);
+  if (bound && !bound.local) {
     report('errors', 'REPEAT_WITH_BINDING',
-      `Repeat on "${node.id}" in ${scope.where} sits ${boundAbove ? 'under' : 'on'} a collection binding, which would clone every row. Use one of the two: repeat for inline items, binding for a dataset.`,
+      `Repeat on "${node.id}" in ${scope.where} renders under the collection binding on "${bound.id}" in ${bound.where}, which would clone every row. Use one of the two: repeat for inline items, binding for a dataset.`,
+      under(at, ['repeat'], true));
+  } else if (own || bound) {
+    report('errors', 'REPEAT_WITH_BINDING',
+      `Repeat on "${node.id}" in ${scope.where} sits ${bound ? 'under' : 'on'} a collection binding, which would clone every row. Use one of the two: repeat for inline items, binding for a dataset.`,
       under(at, ['repeat'], true));
   }
+  // Cloned rows clone whatever their cell renders, its own repeats included.
+  const rowsBound = bound || (own ? { id: node.id, where: scope.where } : null);
+  if (rowsBound && !isElementCell(repeat.cell)) checkBoundDefinition(repeat.cell, scope, rowsBound, report);
 }
 
-function checkTree(node, at, scope, boundAbove, report) {
+/** Walks a definition an instance renders under a collection binding, reporting its repeats where it writes them. */
+function checkBoundDefinition(ref, scope, bound, report) {
+  // A built-in owns no repeat, and has no file to point at.
+  const definition = isObject(scope.definitions) && hasOwn(scope.definitions, ref) ? scope.definitions[ref] : null;
+  const key = JSON.stringify([ref, bound.where, bound.id]);
+  if (!isObject(definition?.root) || scope.entered.has(key)) return;
+  scope.entered.add(key);
+  const source = isObject(scope.sources) ? scope.sources[ref] : null;
+  checkTree(definition.root, rootPlace(ref, source), { ...scope, where: `component "${ref}"` }, { id: bound.id, where: bound.where }, report);
+}
+
+function checkTree(node, at, scope, bound, report) {
   if (!isObject(node)) return;
-  if (hasOwn(node, 'repeat')) checkHost(node, at, scope, boundAbove, report);
-  const bound = boundAbove || isCollectionBinding(node.binding);
+  if (hasOwn(node, 'repeat')) checkHost(node, at, scope, bound, report);
+  const here = bound || (isCollectionBinding(node.binding) ? { id: node.id, where: scope.where, local: true } : null);
+  const use = typeof node.use === 'string' ? node.use : null;
+  // A binding on or above an instance lands on its definition's root.
+  if (use && here) checkBoundDefinition(use, scope, here, report);
   for (const { segments, nodes } of childNodeEntries(node)) {
-    nodes.forEach((child, index) => checkTree(child, under(at, [...segments, index]), scope, bound, report));
+    const below = here || (use ? scope.bindings.fill(use, segments) : null);
+    nodes.forEach((child, index) => checkTree(child, under(at, [...segments, index]), scope, below, report));
   }
 }
 
 function checkNodes(nodes, at, scope, report) {
-  list(nodes).forEach((node, index) => checkTree(node, under(at, [index]), scope, false, report));
+  list(nodes).forEach((node, index) => checkTree(node, under(at, [index]), scope, null, report));
 }
 
 /** A region or overlay record is not a node: its repeat would never render. */
@@ -124,6 +146,12 @@ function checkRepeats({
 }) {
   const diagnostics = [];
   const reported = new Set();
+  // Per registry: its binding lookups, and the bound walks already made.
+  const registries = new Map();
+  const scopeOf = (definitions, sources, where) => {
+    if (!registries.has(definitions)) registries.set(definitions, { bindings: createBindingLookup(definitions), entered: new Set() });
+    return { definitions, sources, where, ...registries.get(definitions) };
+  };
   const report = (severity, code, message, at) => {
     const key = JSON.stringify([severity, code, message, at.document, at.file ?? null, at.path, at.key === true]);
     if (reported.has(key)) return;
@@ -144,13 +172,13 @@ function checkRepeats({
     for (const [componentId, definition] of Object.entries(scope.definitions)) {
       if (!isObject(definition)) continue;
       const source = isObject(scope.sources) ? scope.sources[componentId] : null;
-      checkTree(definition.root, rootPlace(componentId, source), { definitions: scope.definitions, where: `component "${componentId}"` }, false, report);
+      checkTree(definition.root, rootPlace(componentId, source), scopeOf(scope.definitions, scope.sources, `component "${componentId}"`), null, report);
     }
   }
 
   for (const [templateId, template] of Object.entries(isObject(templates) ? templates : {})) {
     if (!isObject(template)) continue;
-    const scope = { definitions: templateScope, where: `template "${templateId}"` };
+    const scope = scopeOf(templateScope, isObject(templateDefinitions) ? templateSources : sources, `template "${templateId}"`);
     const at = { document: 'templates', path: appendPath('$.templates', templateId) };
     list(template.regions).forEach((region, index) => {
       checkRecord(region, under(at, ['regions', index]), 'Region', scope, report);
@@ -165,7 +193,9 @@ function checkRepeats({
   for (const entry of pages) {
     const page = isObject(entry?.page) ? entry.page : null;
     if (!page) continue;
-    const scope = { definitions: isObject(entry.definitions) ? entry.definitions : definitions, where: `page "${entry.id}"` };
+    const scope = isObject(entry.definitions)
+      ? scopeOf(entry.definitions, entry.sources, `page "${entry.id}"`)
+      : scopeOf(definitions, sources, `page "${entry.id}"`);
     const at = { document: `page:${entry.id}`, path: '$.page' };
     for (const key of ['slots', 'injectables', 'overlays']) {
       list(page[key]).forEach((container, index) => {
@@ -178,4 +208,4 @@ function checkRepeats({
   return diagnostics;
 }
 
-module.exports = { checkRepeats, isCollectionBinding };
+module.exports = { checkRepeats };

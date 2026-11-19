@@ -224,3 +224,32 @@ test('a deep tree resolves each node once', () => {
   assert.equal(resolveInSlot([node]).ok, true);
   assert.ok(Date.now() - started < 1000, `took ${Date.now() - started} ms`);
 });
+
+// Item values are plain props (REPEAT_ITEM_TOKEN), so a row prints an item token
+// as written; outside rows, and inside a collection in a row, tokens resolve as before.
+test('an {{item.…}} token in a row renders as written; elsewhere it is unchanged', () => {
+  const bound = { source: 'people' };
+  const components = {
+    greeter: { root: { id: 'greeter', component: 'text', props: { text: '{{props.greeting}}' } } },
+    people_list: { root: { id: 'people_list', component: 'stack', children: [{ id: 'person', component: 'text', binding: bound, props: { text: '{{item.name}}' } }] } },
+  };
+  const map = documentMap([
+    { id: 'token', component: 'stack', repeat: { cell: 'text', items: [{ id: 'one', text: 'Hi {{item.name}}' }] } },
+    { id: 'greet', component: 'stack', repeat: { cell: 'greeter', items: [{ id: 'ada', greeting: 'Hello {{item.name}}' }] } },
+    { id: 'fields', component: 'form', repeat: { cell: 'input', items: [{ id: 'q', label: 'Query', placeholder: 'e.g. {{item.hint}}' }] } },
+    { id: 'loose', component: 'text', props: { text: 'Bye {{item.name}}' } },
+    { id: 'lists', component: 'stack', repeat: { cell: 'people_list', items: [{ id: 'one' }] } },
+  ], { components, page: { dataSources: [{ id: 'people', dataset: 'people_data' }] } });
+  map.datasets.set('people_data', {
+    documentType: 'dataset', specVersion: '1.1', id: 'people_data',
+    dataset: { id: 'people_data', primaryKey: 'name', items: [{ name: 'Ada' }, { name: 'Grace' }] },
+  });
+  const result = renderPage(map, 'home');
+  assert.equal(result.ok, true, result.error);
+  assert.match(result.html, /id="token__one"[^>]*>Hi \{\{item\.name\}\}</);
+  assert.match(result.html, /id="greet__ada"[^>]*>Hello \{\{item\.name\}\}</);
+  assert.match(result.html, /placeholder="e\.g\. \{\{item\.hint\}\}"/);
+  assert.match(result.html, /id="loose"[^>]*>Bye <span class="wf-bar"/, 'outside a row the token is still a skeleton');
+  assert.match(result.html, /id="lists__one__person_0"[^>]*>Ada</, 'a collection inside a row still binds its items');
+  assert.match(result.html, /id="lists__one__person_1"[^>]*>Grace</);
+});

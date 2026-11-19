@@ -97,6 +97,11 @@ function renderNode(node, options = {}) {
   if (!isObject(node)) {
     return '';
   }
+  // A repeat item's values are plain props, so below a row an `{{item.…}}`
+  // token that no collection gives an item renders as written.
+  if (isObject(node.__repeat) && options.repeatRow !== true) {
+    options = { ...options, repeatRow: true };
+  }
 
   const rawComponent = String(node.component || '');
   const element = resolvePrimitiveName(rawComponent) || rawComponent;
@@ -166,8 +171,9 @@ function renderNode(node, options = {}) {
     bindingContext: {
       routeId: options.routeId || '',
       props,
-      item: options.itemContext || {},
+      item: options.itemContext,
       itemVar: options.itemVar || 'item',
+      repeatRow: options.repeatRow === true,
     },
     stateBindings,
     routeTable: isObject(options.routeTable) ? options.routeTable : {},

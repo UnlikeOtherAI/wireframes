@@ -28,9 +28,10 @@ function loadYamlDirectory(directory, result) {
 }
 
 /** Reads the project from disk and applies the lint rules to it. */
-function collectLintTargets(projectPath, result) {
+function collectLintTargets(projectPath, result, renderedPages) {
   const root = path.resolve(projectPath);
   lintDocuments(result, {
+    renderedPages,
     manifest: loadYamlSafe(path.join(root, 'manifest.yaml'), result),
     sitemap: loadYamlSafe(path.join(root, 'sitemap.yaml'), result),
     templates: loadYamlSafe(path.join(root, 'templates.yaml'), result),
@@ -51,10 +52,11 @@ function promoteWarningsToErrors(result) {
 }
 
 function runLint({ projectPath, strict = false } = {}) {
-  const result = runDoctor({ projectPath });
+  const renderedPages = [];
+  const result = runDoctor({ projectPath, onRenderedPage: (page) => renderedPages.push(page) });
 
   if (result.errors.length === 0) {
-    collectLintTargets(projectPath, result);
+    collectLintTargets(projectPath, result, renderedPages);
   }
 
   if (strict && result.warnings.length > 0) {

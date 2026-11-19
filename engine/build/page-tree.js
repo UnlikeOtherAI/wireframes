@@ -47,7 +47,7 @@ function resolvePageTree(documentMap, pageId) {
   const budget = createExpansionBudget();
   const resolved = resolveTemplatePage({ template, page, components, budget });
   if (!resolved.ok) {
-    return { ok: false, error: resolved.error };
+    return { ok: false, error: resolved.error, reason: resolved.reason };
   }
 
   const templateOverlays = buildOverlayRoots(template.overlays, components, 'template', budget);
