@@ -50,14 +50,18 @@ function writeProject(dir) {
   }
 }
 
+// The export leaves out the local CLI config.
+const EXPORTED = Object.keys(FILES).filter((name) => name !== '.wfrc.yaml').sort();
+
+// bsdtar reads ZIP archives and ships with Windows (System32, not the GNU tar
+// a POSIX shell may put first on PATH) and macOS. GNU tar cannot, so Linux unzips.
 function extract(zip, dest) {
   fs.mkdirSync(dest, { recursive: true });
-  const unzip = spawnSync('unzip', ['-q', '-o', zip, '-d', dest], { encoding: 'utf8' });
-  if (unzip.status === 0) return;
-  const ps = spawnSync('powershell', ['-NoProfile', '-Command', 'Expand-Archive -Path $env:WF_ZIP -DestinationPath $env:WF_DEST -Force'], {
-    encoding: 'utf8', env: { ...process.env, WF_ZIP: zip, WF_DEST: dest },
-  });
-  assert.equal(ps.status, 0, ps.stderr || unzip.stderr);
+  const tar = process.platform === 'win32' ? path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'tar.exe') : 'tar';
+  const [command, args] = process.platform === 'linux' ? ['unzip', ['-q', '-o', zip, '-d', dest]] : [tar, ['-xf', zip, '-C', dest]];
+  const run = spawnSync(command, args, { encoding: 'utf8' });
+  assert.ifError(run.error);
+  assert.equal(run.status, 0, `${command} could not extract the export: ${run.stderr}`);
 }
 
 function readTree(dir, base = dir, out = {}) {
@@ -82,7 +86,11 @@ test('an exported project renders the same grid and menubar links in the bundle 
     assert.equal(exported.ok, true, exported.error);
     const unpacked = path.join(root, 'unpacked');
     extract(zip, unpacked);
-    const bundled = renderProject(readTree(unpacked)).pages.get('home');
+    const tree = readTree(unpacked);
+    assert.deepEqual(Object.keys(tree).sort(), EXPORTED, 'the archive holds every project file');
+    const rendered = renderProject(tree);
+    assert.equal(typeof rendered.pages.get('home'), 'string', 'the bundle renders the home page');
+    const bundled = rendered.pages.get('home');
 
     const built = runBuild({ projectPath: project, output: path.join(root, 'build'), platform: 'web', clean: true });
     assert.equal(built.ok, true, built.error);
