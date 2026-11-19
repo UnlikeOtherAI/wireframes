@@ -48,7 +48,7 @@ const rowParts = (page, id) => page.locator(`#${id} .wf-menu-item`).evaluateAll(
     label: { width: part('.wf-menu-label').clientWidth, full: part('.wf-menu-label').scrollWidth },
     shortcut: shortcut ? {
       width: shortcut.clientWidth, full: shortcut.scrollWidth, overflow: getComputedStyle(shortcut).textOverflow,
-      twoLetters: 2 * parseFloat(getComputedStyle(shortcut).fontSize),
+      box: shortcut.getBoundingClientRect().width, twoLetters: 2 * parseFloat(getComputedStyle(shortcut).fontSize),
     } : null,
   };
 }));
@@ -163,6 +163,51 @@ for (const engine of engines()) {
           assert.deepEqual(edge, [...expected, 0, 0], `${engine.name} ${mode}: a sidebar ${order} main draws its rule facing the content`);
           await page.close();
         }
+      }
+    } finally {
+      await browser.close();
+    }
+  });
+  // Every width from 96 to 170 px, so some row lands in each case whatever the
+  // engine's fonts: a shortcut that fits is drawn, one cut below two letters
+  // draws nothing, and one cut wider than that is drawn with its ellipsis.
+  test(`a shortcut is drawn whole, cut with an ellipsis, or not at all, never as a sliver, in ${engine.name}`, { skip: engine.skip }, async () => {
+    const widths = Array.from({ length: 38 }, (_, i) => 96 + i * 2);
+    const sweep = widths.flatMap((w) => [
+      menuIn(`long_${w}`, w),
+      menuIn(`short_${w}`, w, [{ label: 'Rename', icon: 'pen', shortcut: '⌘R' }]),
+    ]);
+    // A page of a few widths at a time, so every row is inside an ordinary viewport.
+    const pages = Array.from({ length: Math.ceil(sweep.length / 12) }, (_, i) => sweep.slice(i * 12, i * 12 + 12));
+    const browser = await engine.launch();
+    try {
+      for (const mode of ['card', 'line']) {
+        const seen = { whole: 0, sliver: 0, cut: 0 };
+        for (const content of pages) {
+          const result = renderPage(polishProject(content, { mode, routes: ['docs', 'settings'] }), 'home', { deviceChrome: false, routeTable: ROUTE_TABLE });
+          assert.equal(result.ok, true, result.error);
+          const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+          await page.setContent(result.html);
+          for (const id of content.map((box) => box.children[0].id)) {
+            const [row] = await rowParts(page, id);
+            const ink = await shortcutInk(page, id);
+            const { box, full, twoLetters } = row.shortcut;
+            const label = `${engine.name} ${mode} ${id}: a ${box}px shortcut of ${full}px`;
+            // Within a pixel of 2em either outcome is right, so that band is not asserted.
+            if (row.shortcut.width >= full) {
+              seen.whole += 1;
+              assert.ok(ink > 0, `${label} fits and is drawn`);
+            } else if (box < twoLetters - 1) {
+              if (box > 0) seen.sliver += 1;
+              assert.equal(ink, 0, `${label} is cut below two letters and leaves no mark`);
+            } else if (box > twoLetters + 1) {
+              seen.cut += 1;
+              assert.ok(ink > 0, `${label} is cut and drawn with its ellipsis`);
+            }
+          }
+          await page.close();
+        }
+        for (const [kind, count] of Object.entries(seen)) assert.ok(count > 0, `${engine.name} ${mode}: the sweep reached a ${kind} shortcut`);
       }
     } finally {
       await browser.close();
