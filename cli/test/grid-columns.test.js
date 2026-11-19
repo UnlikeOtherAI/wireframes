@@ -87,11 +87,17 @@ test('every host renders the same decision: grid, layout grid, form and region',
 });
 
 test('repeat rows are the children the decision sees', () => {
-  const content = [{ id: 'team', component: 'grid', repeat: { cell: 'card', items: [
+  // The cell's root is placed, so only the expanded rows carry a placement.
+  const team = { id: 'team', component: 'grid', repeat: { cell: 'half_tile', items: [
     { id: 'ada', title: 'Ada' }, { id: 'grace', title: 'Grace' },
-  ] } }];
-  const { html } = renderPage(polishProject(content), 'home', { deviceChrome: false });
-  assert.equal(tracksOf(html, 'team'), tiles(220));
+  ] } };
+  assert.equal(gridTemplateColumns({}, { children: team.children, viewport: WEB }), tiles(220), 'the host as written has no placed child');
+  const map = polishProject([team]);
+  map.components.components = { half_tile: { root: { id: 'half_tile', component: 'card', gridItem: { span: 6 }, props: { title: '{{props.title}}' } } } };
+  const result = renderPage(map, 'home', { deviceChrome: false });
+  assert.equal(result.ok, true, result.error);
+  assert.match(result.html, /id="team__grace"[^>]*grid-column:span 6/);
+  assert.equal(tracksOf(result.html, 'team'), 'repeat(12,minmax(0,1fr))');
 });
 
 test('adaptive renders replay the decision on phone and tablet', () => {
@@ -116,7 +122,10 @@ test('adaptive renders replay the decision on phone and tablet', () => {
 
 test('the same input renders identical HTML twice', () => {
   const content = [{ id: 'tiles', component: 'grid', children: [card('a'), card('b')] }];
-  const first = renderPage(polishProject(content), 'home', { deviceChrome: false }).html;
-  const second = renderPage(polishProject(content), 'home', { deviceChrome: false }).html;
-  assert.equal(first, second);
+  const first = renderPage(polishProject(content), 'home', { deviceChrome: false });
+  const second = renderPage(polishProject(content), 'home', { deviceChrome: false });
+  assert.equal(first.ok, true, first.error);
+  assert.equal(second.ok, true, second.error);
+  assert.equal(tracksOf(first.html, 'tiles'), tiles(220));
+  assert.equal(first.html, second.html);
 });
