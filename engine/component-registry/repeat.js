@@ -60,11 +60,19 @@ function repeatHostProblem(node) {
   return null;
 }
 
-/** The items that become rows: keyed maps whose id is a string. */
+/**
+ * The items that become rows: keyed maps whose id is a string. An id repeated
+ * in the same repeat keys no second row; DUPLICATE_REPEAT_ITEM_ID reports it.
+ */
 function keyedItems(items) {
+  const seen = new Set();
   return items
     .map((item, index) => ({ item, index }))
-    .filter(({ item }) => isObject(item) && typeof item.id === 'string' && item.id.trim() !== '');
+    .filter(({ item }) => {
+      if (!isObject(item) || typeof item.id !== 'string' || item.id.trim() === '' || seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
 }
 
 /**

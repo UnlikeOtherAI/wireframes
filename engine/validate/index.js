@@ -6,6 +6,7 @@ const { validateLogoReferences } = require('../design-system/logo-references');
 const { validateIconReferences } = require('../icons/validate');
 const { SUPPORTED_SPEC_VERSION } = require('../schema/constants');
 const { checkComponentSlots } = require('../doctor/component-slots');
+const { checkRepeats } = require('../doctor/repeat-checks');
 const { checkStdAlias } = require('../doctor/std-alias');
 
 function isObject(value) {
@@ -102,7 +103,7 @@ function validateProject(documentMap, options = {}) {
   const registriesByPage = documentMap.componentRegistriesByPage instanceof Map
     ? documentMap.componentRegistriesByPage
     : null;
-  const slotDiagnostics = checkComponentSlots({
+  const authoredScopes = {
     definitions: isObject(documentMap.components?.components) ? documentMap.components.components : {},
     templates: templatesDef,
     pages: [...pages].map(([pageId, pageDoc]) => ({
@@ -110,7 +111,8 @@ function validateProject(documentMap, options = {}) {
       page: pageDoc?.page,
       definitions: registriesByPage?.get(pageId),
     })),
-  });
+  };
+  const slotDiagnostics = [...checkComponentSlots(authoredScopes), ...checkRepeats(authoredScopes)];
   const projectDefinitions = isObject(documentMap.components?.components) ? documentMap.components.components : {};
   const stdAliasDiagnostics = checkStdAlias([
     { label: 'components', document: documentMap.components, definitions: projectDefinitions },

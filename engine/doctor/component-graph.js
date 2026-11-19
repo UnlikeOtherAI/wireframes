@@ -1,6 +1,7 @@
 'use strict';
 
 const { childNodeLists } = require('../component-registry/child-nodes');
+const { repeatCellReference } = require('../component-registry/repeat');
 
 /**
  * Component dependency graph: build, traverse, detect cycles, and compute transitive usage.
@@ -28,6 +29,12 @@ function walkUseGraph(node, edges, componentIds) {
 
   if (typeof node.use === 'string' && componentIds.has(node.use)) {
     edges.push(node.use);
+  }
+
+  // Each row of a component cell is an instance of it.
+  const cell = repeatCellReference(node);
+  if (cell && componentIds.has(cell)) {
+    edges.push(cell);
   }
 
   for (const list of childNodeLists(node)) {

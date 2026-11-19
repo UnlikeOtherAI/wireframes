@@ -10,7 +10,9 @@ const assert = require('node:assert/strict');
 
 const { buildTreeTargets } = require('../../engine/tree');
 const { runValidate } = require('../../engine/validate/cli-adapter');
-const { createRepeatProject, writeYaml } = require('./fixtures/repeat-project');
+const { removeComponent } = require('../../engine/component');
+const { findComponentUsages } = require('../../engine/introspection/usage');
+const { COMPONENTS, createRepeatProject, writeYaml } = require('./fixtures/repeat-project');
 
 const componentsDoc = (id, components, imports) => ({
   documentType: 'components', specVersion: '1.1', id, ...(imports ? { imports } : {}), components,
@@ -92,4 +94,17 @@ test('an element name wins over a component with the same id; a qualified refere
   const nodes = homeNodes(projectPath);
   assert.equal(nodes.get('team__plain__one').component, 'stat');
   assert.equal(nodes.get('team__own__one').props.text, 'Component stat');
+});
+
+test('a component used only as a cell cannot be removed and is listed where it is used', () => {
+  const projectPath = createRepeatProject([{ id: 'team', component: 'grid', repeat: { cell: 'person_card', items: [{ id: 'ada' }] } }], {
+    components: { person_card: COMPONENTS.person_card, crew: { root: { id: 'crew', component: 'stack', repeat: { cell: 'person_form', items: [] } } }, person_form: COMPONENTS.person_form },
+  });
+  const removal = removeComponent({ projectPath, componentId: 'person_card' });
+  assert.equal(removal.ok, false);
+  assert.deepEqual(removal.details.usages, ['page:home']);
+  assert.deepEqual(removeComponent({ projectPath, componentId: 'person_form' }).details.usages, ['component:crew']);
+  const usages = findComponentUsages(projectPath, 'person_card');
+  assert.equal(usages.ok, true);
+  assert.ok(JSON.stringify(usages).includes('page:home'), JSON.stringify(usages));
 });

@@ -98,7 +98,7 @@ function collectComponentRoots(componentMap, result, routeIds, defaultGridColumn
   }
 }
 
-function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, appState, componentRoots, result, defaultGridColumns, projectComponents) {
+function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, appState, componentRoots, result, defaultGridColumns, projectComponents, componentSources) {
   const pageDoc = isObject(pageLoaded.document) ? pageLoaded.document.page : null;
   if (!isObject(pageDoc)) {
     return;
@@ -147,13 +147,16 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
     actionIds: isObject(pageDoc.actions) ? new Set(Object.keys(pageDoc.actions)) : new Set(),
     overlayIds,
     componentRoots,
+    componentSources,
     defaultGridColumns,
     validateDepthAndNodes: true,
   });
 
   // Ids and form references are checked on the page as it renders, so a submit
   // inside a slotted overlay sees the ids its component renders.
-  const roots = collectRenderedRoots({ result, pageId, page: pageDoc, template, components: componentRoots, projectComponents });
+  const roots = collectRenderedRoots({
+    result, pageId, page: pageDoc, template, components: componentRoots, projectComponents, sources: componentSources,
+  });
   for (const root of roots) {
     validateNode(root, context, 1);
   }
@@ -167,6 +170,7 @@ function runSemanticValidation({
   sitemap = {},
   templates = {},
   components = {},
+  componentSources = {},
   pages = [],
   resolveComponentsForPage = null,
 }) {
@@ -180,6 +184,7 @@ function runSemanticValidation({
 
   for (const pageLoaded of pages) {
     let pageComponents = globalComponents;
+    let pageSources = componentSources;
 
     if (typeof resolveComponentsForPage === 'function') {
       const resolvedComponents = resolveComponentsForPage(pageLoaded);
@@ -194,10 +199,11 @@ function runSemanticValidation({
       }
       if (resolvedComponents && isObject(resolvedComponents.components)) {
         pageComponents = resolvedComponents.components;
+        pageSources = resolvedComponents.sources;
       }
     }
 
-    validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, appState, pageComponents, result, defaultGrid, globalComponents);
+    validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, appState, pageComponents, result, defaultGrid, globalComponents, pageSources);
   }
 }
 

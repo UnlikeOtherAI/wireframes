@@ -6,6 +6,7 @@ const yaml = require('js-yaml');
 const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
 const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 const { childNodeLists } = require(path.resolve(__dirname, '..', 'component-registry', 'child-nodes'));
+const { repeatCellReference } = require(path.resolve(__dirname, '..', 'component-registry', 'repeat'));
 const { loadProjectComponentRegistry } = require(path.resolve(__dirname, '..', 'component-registry'));
 const { resolveAuthoredComponent } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
 const { builtinCopyHint } = require(path.resolve(__dirname, '..', 'stdlib'));
@@ -90,7 +91,7 @@ function collectTemplateUsages(templates, componentId, usages) {
       if (Array.isArray(region.children)) {
         for (const node of region.children) {
           walkNodes(node, (entry) => {
-            if (entry.use === componentId) {
+            if (entry.use === componentId || repeatCellReference(entry) === componentId) {
               usages.push(`template:${templateId}`);
             }
           });
@@ -106,7 +107,7 @@ function collectTemplateUsages(templates, componentId, usages) {
 
       for (const node of overlay.content) {
         walkNodes(node, (entry) => {
-          if (entry.use === componentId) {
+          if (entry.use === componentId || repeatCellReference(entry) === componentId) {
             usages.push(`template:${templateId}`);
           }
         });
@@ -135,7 +136,7 @@ function collectPageUsages(projectPath, componentId, usages) {
 
       for (const node of slot.content) {
         walkNodes(node, (entry) => {
-          if (entry.use === componentId) {
+          if (entry.use === componentId || repeatCellReference(entry) === componentId) {
             usages.push(`page:${pageId}`);
           }
         });
@@ -150,7 +151,7 @@ function collectPageUsages(projectPath, componentId, usages) {
 
       for (const node of injectable.content) {
         walkNodes(node, (entry) => {
-          if (entry.use === componentId) {
+          if (entry.use === componentId || repeatCellReference(entry) === componentId) {
             usages.push(`page:${pageId}`);
           }
         });
@@ -165,7 +166,7 @@ function collectPageUsages(projectPath, componentId, usages) {
 
       for (const node of overlay.content) {
         walkNodes(node, (entry) => {
-          if (entry.use === componentId) {
+          if (entry.use === componentId || repeatCellReference(entry) === componentId) {
             usages.push(`page:${pageId}`);
           }
         });
@@ -182,7 +183,7 @@ function collectComponentUsages(components, componentId, usages) {
 
     const root = componentDocument.root;
     walkNodes(root, (entry) => {
-      if (entry.use === componentId) {
+      if (entry.use === componentId || repeatCellReference(entry) === componentId) {
         usages.push(`component:${componentName}`);
       }
     });
