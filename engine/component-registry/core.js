@@ -3,6 +3,7 @@
 const { PRIMITIVE_COMPONENTS } = require('../schema/primitives');
 const { childNodeLists } = require('./child-nodes');
 const { builtinReference } = require('./definition-lookup');
+const { repeatCellReference } = require('./repeat');
 const { STD_PREFIX } = require('../stdlib');
 const IMPORT_ALIAS_REGEX = /^[a-z][a-z0-9_]*$/;
 
@@ -87,6 +88,11 @@ function rewriteComponentNode(node, context) {
 
   if (typeof node.component === 'string' && !PRIMITIVE_COMPONENTS.has(node.component)) {
     node.component = remapComponentReference(node.component, context);
+  }
+
+  // A component cell is a reference like `use:`, qualified at the same stage.
+  if (repeatCellReference(node) != null) {
+    node.repeat.cell = remapComponentReference(node.repeat.cell, context);
   }
 
   for (const list of childNodeLists(node)) {

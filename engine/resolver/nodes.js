@@ -3,7 +3,8 @@
 const { resolveTemplatePage } = require('./index');
 const isObject = value => value != null && typeof value === 'object' && !Array.isArray(value);
 
-function resolveNodes(nodes, components) {
+/** `budget` is the page's shared expansion budget, when the nodes belong to a page. */
+function resolveNodes(nodes, components, budget) {
   const syntheticTemplate = {
     regions: [
       {
@@ -24,6 +25,7 @@ function resolveNodes(nodes, components) {
     template: syntheticTemplate,
     page: syntheticPage,
     components,
+    ...(budget ? { budget } : {}),
   });
   if (!resolved.ok) {
     return resolved;
@@ -41,7 +43,7 @@ function resolveNodes(nodes, components) {
     nodes: resolvedNodes,
   };
 }
-function buildOverlayRoots(overlays, components, source) {
+function buildOverlayRoots(overlays, components, source, budget) {
   const list = [];
   if (!Array.isArray(overlays)) {
     return { ok: true, roots: list };
@@ -50,7 +52,7 @@ function buildOverlayRoots(overlays, components, source) {
     if (!isObject(overlay) || typeof overlay.id !== 'string' || overlay.id.trim() === '') {
       continue;
     }
-    const resolvedOverlay = resolveNodes(overlay.content, components);
+    const resolvedOverlay = resolveNodes(overlay.content, components, budget);
     if (!resolvedOverlay.ok) {
       return { ok: false, error: resolvedOverlay.error, target: overlay.id };
     }

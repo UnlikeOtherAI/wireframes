@@ -22,8 +22,9 @@ const {
   resolveComponentPropTemplates,
 } = require('./component-prep');
 
-// Keys of an instance node that are not overrides of the definition root.
-const INSTANCE_ONLY_KEYS = new Set(['use', 'props', 'children', 'slots', 'id']);
+// Keys of an instance node that are not overrides of the definition root. A
+// use: node hosts no rows (REPEAT_INVALID_HOST), so its repeat never renders.
+const INSTANCE_ONLY_KEYS = new Set(['use', 'props', 'children', 'slots', 'id', 'repeat']);
 
 // A marker is `{ [FILL]: token, name }`. The token is a symbol per instance, so
 // cloning keeps it and no authored value can equal it.
@@ -67,11 +68,13 @@ function spliceBelow(node, fills, token) {
  * @param {object} componentDoc The component definition.
  * @param {Map<string, object[]>} fills Slot name to caller content. `[]` means intentionally empty.
  * @param {symbol} token Marks this instance's filled placeholders.
- * @returns {object} The prepared definition root, with a marker for each filled
- *   placeholder and fallbacks in place of the rest. Its own nested `use:`
- *   instances are still unexpanded.
+ * @param {(tree: object) => {ok: boolean}} materializeRows Expands the definition's
+ *   own `repeat` rows; it runs after substitution and before namespacing.
+ * @returns {{ok: true, node: object} | {ok: false}} The prepared definition root,
+ *   with a marker for each filled placeholder and fallbacks in place of the
+ *   rest. Its own nested `use:` instances are still unexpanded.
  */
-function prepareSlottedInstance(node, componentDoc, fills, token) {
+function prepareSlottedInstance(node, componentDoc, fills, token, materializeRows) {
   const { props, id } = node;
   const root = cloneDeep(componentDoc.root);
   const mergedProps = mergeNodeProps(props, root.props, componentDoc.propDefaults);
@@ -81,6 +84,9 @@ function prepareSlottedInstance(node, componentDoc, fills, token) {
 
   const prepared = resolveComponentPropTemplates(root, mergedProps);
   prepared.id = id;
+
+  const rows = materializeRows(prepared);
+  if (!rows.ok) return rows;
 
   namespaceDescendants(prepared, id, componentDoc.root.id);
 
@@ -93,7 +99,7 @@ function prepareSlottedInstance(node, componentDoc, fills, token) {
   }
 
   spliceBelow(prepared, fills, token);
-  return prepared;
+  return { ok: true, node: prepared };
 }
 
 /**
