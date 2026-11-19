@@ -184,6 +184,8 @@ function itemAt(yamlFiles: Record<string, string>, address: string) {
   return resolved
 }
 
+const outline = (frame: HTMLIFrameElement, renderedId: string) => frame.contentDocument!.getElementById(renderedId)!.style.outline
+
 describe('Workspace rows in templates, injections and definitions', { timeout: 30000 }, () => {
   it('addresses template rows in the template and injected rows in their injection, listed once', async () => {
     const onNodeSelect = vi.fn()
@@ -255,6 +257,34 @@ describe('Workspace rows in templates, injections and definitions', { timeout: 3
     clickTreeItem(within(rows[1].parentElement!).getByTestId('node-tree-item-role'))
     expect(onNodeSelect).toHaveBeenLastCalledWith(definitionRow)
     itemAt(files(), definitionRow)
+  })
+
+  it('outlines the selected row in the preview, for page rows, definition rows and their descendants', async () => {
+    const onNodeSelect = vi.fn()
+    render(workspace(files(), onNodeSelect))
+    const frame = await loadPreview('other__team__grace')
+
+    await clickRendered(frame, 'team__grace__name')
+    expect(onNodeSelect).toHaveBeenLastCalledWith('wf://page/home#main.team.team__grace')
+    await waitFor(() => expect(outline(frame, 'team__grace')).not.toBe(''))
+
+    await clickRendered(frame, 'core__team__grace__name')
+    expect(onNodeSelect).toHaveBeenLastCalledWith('wf://component/team_section#team_section.team.team__grace')
+    await waitFor(() => expect(outline(frame, 'core__team__grace')).not.toBe(''))
+    expect(outline(frame, 'team__grace')).toBe('')
+    expect(outline(frame, 'other__team__grace')).toBe('')
+
+    // The same definition row selected under the other instance outlines that instance's row.
+    await clickRendered(frame, 'other__team__grace')
+    await waitFor(() => expect(outline(frame, 'other__team__grace')).not.toBe(''))
+    expect(outline(frame, 'core__team__grace')).toBe('')
+
+    // A tree selection outlines the instance it was made under.
+    const hosts = treeItems('team')
+    expandTreeItem(hosts[1])
+    clickTreeItem(treeItems('team__grace')[1])
+    await waitFor(() => expect(outline(frame, 'core__team__grace')).not.toBe(''))
+    expect(outline(frame, 'other__team__grace')).toBe('')
   })
 
   it('lists element cells without the children of a same-named local component', async () => {

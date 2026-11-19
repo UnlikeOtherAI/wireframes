@@ -12,6 +12,8 @@ interface WorkspacePreviewProps {
   onNavigate?: (routeId: string) => void
   onNodeSelect?: (address: string) => void
   highlightedNode?: string | null
+  /** The rendered node the highlighted selection was made on, when it renders more than once. */
+  highlightedRenderedId?: string | null
   interactive?: boolean
   onHtmlChange?: (html: string) => void
   zoom?: number
@@ -27,6 +29,7 @@ export function WorkspacePreview({
   onNavigate,
   onNodeSelect,
   highlightedNode,
+  highlightedRenderedId,
   interactive = true,
   onHtmlChange,
   zoom = 100,
@@ -38,6 +41,8 @@ export function WorkspacePreview({
   const [html, setHtml] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [srcdoc, setSrcdoc] = useState<string>('')
+  // The selection a click in the preview made, and the rendered node it outlines.
+  const [clicked, setClicked] = useState<{ address: string; renderedId: string } | null>(null)
   const renderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const viewport = DEVICE_VIEWPORTS[device]
   const scale = zoom / 100
@@ -61,8 +66,11 @@ export function WorkspacePreview({
         onNavigate?.(event.data.routeId)
       }
       if (event.data?.type === 'wf:nodeClick' && !measureRef.current) {
-        const address = clickedNodeAddress(event.data, nodeIdToAddress, activePage)
-        if (address) onNodeSelect?.(address)
+        const selection = clickedSelection(event.data, nodeIdToAddress, activePage)
+        if (selection) {
+          setClicked(selection)
+          onNodeSelect?.(selection.address)
+        }
       }
     }
     window.addEventListener('message', handleMessage)
@@ -123,41 +131,24 @@ export function WorkspacePreview({
     }
   }, [html, error, t, interactive])
 
-  // Highlight node in iframe — uses HTML id attr (engine renders node IDs as id attrs)
-  const prevHighlightRef = useRef<string | null>(null)
+  // Outline the selected node in the page. Node ids render as element ids.
+  const highlightedRef = useRef<HTMLElement | null>(null)
   useEffect(() => {
-    const iframe = iframeRef.current
-    if (!iframe) return
-    const doc = iframe.contentDocument
+    const doc = iframeRef.current?.contentDocument
     if (!doc) return
-
-    // Remove previous highlight
-    if (prevHighlightRef.current) {
-      const nodeId = extractNodeIdFromAddress(prevHighlightRef.current)
-      if (nodeId) {
-        const prev = doc.getElementById(nodeId)
-        if (prev) {
-          prev.style.outline = ''
-          prev.style.outlineOffset = ''
-        }
-      }
+    if (highlightedRef.current) {
+      highlightedRef.current.style.outline = ''
+      highlightedRef.current.style.outlineOffset = ''
     }
-
-    // Add new highlight
-    if (highlightedNode) {
-      const nodeId = extractNodeIdFromAddress(highlightedNode)
-      if (nodeId) {
-        const el = doc.getElementById(nodeId)
-        if (el) {
-          el.style.outline = '2px solid #1976d2'
-          el.style.outlineOffset = '2px'
-          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-        }
-      }
+    const anchor = highlightedRenderedId ?? (clicked?.address === highlightedNode ? clicked?.renderedId : null)
+    const el = highlightedNode ? selectionElement(doc, highlightedNode, nodeIdToAddress, anchor ?? null) : null
+    if (el) {
+      el.style.outline = '2px solid #1976d2'
+      el.style.outlineOffset = '2px'
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
-
-    prevHighlightRef.current = highlightedNode ?? null
-  }, [highlightedNode, html])
+    highlightedRef.current = el
+  }, [highlightedNode, highlightedRenderedId, clicked, nodeIdToAddress, html])
 
   return (
     <div
@@ -215,41 +206,72 @@ function fixPreviewAssetPaths(html: string): string {
   )
 }
 
-function extractNodeIdFromAddress(address: string): string | null {
+function lastSegment(address: string): string | null {
   const hashIdx = address.indexOf('#')
-  if (hashIdx >= 0) {
-    const path = address.slice(hashIdx + 1)
-    const parts = path.split('.')
-    return parts[parts.length - 1] || null
+  const parts = (hashIdx >= 0 ? address.slice(hashIdx + 1) : address).split('.')
+  return parts[parts.length - 1] || null
+}
+
+/**
+ * The element a selection outlines. A selected node renders as itself; a
+ * component's internal node selects its owner, so the owner is outlined: the
+ * outermost element around the anchor that selects the same address. The
+ * anchor is the rendered node the selection was made on; without one, the
+ * first rendering of the address is used, since a definition's node renders
+ * once per instance. Without a node map, the address's last id is the
+ * element id.
+ */
+function selectionElement(
+  doc: Document,
+  address: string,
+  nodeIdToAddress: Map<string, string> | undefined,
+  anchorId: string | null,
+): HTMLElement | null {
+  const byId = (id: string | null) => (id ? doc.getElementById(id) : null)
+  if (!nodeIdToAddress) return byId(lastSegment(address))
+  let el = byId(anchorId)
+  if (!el || nodeIdToAddress.get(el.id) !== address) {
+    el = null
+    for (const [id, selects] of nodeIdToAddress) {
+      el = selects === address ? byId(id) : null
+      if (el) break
+    }
   }
-  return address || null
+  if (!el) return byId(lastSegment(address))
+  for (let up = el.parentElement?.closest<HTMLElement>('.wf-node[id]'); up; up = up.parentElement?.closest<HTMLElement>('.wf-node[id]')) {
+    const selects = nodeIdToAddress.get(up.id)
+    if (selects === address) el = up
+    else if (selects !== undefined) break
+  }
+  return el
 }
 
 const NODE_ID = /^[a-z][a-z0-9_]*$/
 
 /**
- * What a click in the preview selects. The page reports the clicked node and
- * the rendered nodes around it, innermost first; the first one the node tree
- * knows wins. A node rendered inside an imported or built-in component is not
- * in the tree, so its click lands on the closest page-authored instance. The
- * page's own message never names the address. Without a node map (a bare
- * preview) only a well-formed node id on this page is selected.
+ * What a click in the preview selects, and the rendered node it selects
+ * through. The page reports the clicked node and the rendered nodes around it,
+ * innermost first; the first one the node tree knows wins. A node rendered
+ * inside an imported or built-in component is not in the tree, so its click
+ * lands on the closest page-authored instance. The page's own message never
+ * names the address. Without a node map (a bare preview) only a well-formed
+ * node id on this page is selected.
  */
-function clickedNodeAddress(
+function clickedSelection(
   data: { nodeId?: unknown; ancestorIds?: unknown },
   nodeIdToAddress: Map<string, string> | undefined,
   activePage: string,
-): string | null {
+): { address: string; renderedId: string } | null {
   if (typeof data.nodeId !== 'string') return null
   if (nodeIdToAddress) {
     const around = Array.isArray(data.ancestorIds) ? data.ancestorIds : []
     for (const id of [data.nodeId, ...around]) {
       const address = typeof id === 'string' ? nodeIdToAddress.get(id) : undefined
-      if (address) return address
+      if (address) return { address, renderedId: id as string }
     }
     return null
   }
-  return NODE_ID.test(data.nodeId) ? `wf://page/${activePage}#${data.nodeId}` : null
+  return NODE_ID.test(data.nodeId) ? { address: `wf://page/${activePage}#${data.nodeId}`, renderedId: data.nodeId } : null
 }
 
 function injectNodeClickBridge(html: string, interactive: boolean): string {

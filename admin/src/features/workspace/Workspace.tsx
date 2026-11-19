@@ -62,6 +62,8 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
   ref,
 ) {
   const [highlightedNode, setHighlightedNode] = useState<string | null>(null)
+  // The tree node a selection was made on, so the preview outlines that rendering of it.
+  const [highlightedRenderedId, setHighlightedRenderedId] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [zoom, setZoom] = useState(100)
   const renderedHtmlRef = useRef('')
@@ -76,8 +78,9 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
   const pageIds = externalPageIds ?? derivePageIds(yamlFiles)
 
   const handleNodeSelect = useCallback(
-    (address: string) => {
+    (address: string, renderedId?: string) => {
       setHighlightedNode(address)
+      setHighlightedRenderedId(renderedId ?? null)
       onNodeSelect?.(address)
     },
     [onNodeSelect],
@@ -110,6 +113,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
       },
       highlightNode(address: string) {
         setHighlightedNode(address)
+        setHighlightedRenderedId(null)
       },
       setMeasure(on: boolean) {
         setMeasure(on)
@@ -168,6 +172,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
           onNavigate={handleNavigate}
           onNodeSelect={handleNodeSelect}
           highlightedNode={highlightedNode}
+          highlightedRenderedId={highlightedRenderedId}
           interactive={interactive}
           onHtmlChange={handleHtmlChange}
           zoom={zoom}
