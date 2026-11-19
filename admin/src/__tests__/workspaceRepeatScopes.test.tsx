@@ -287,6 +287,22 @@ describe('Workspace rows in templates, injections and definitions', { timeout: 3
     expect(outline(frame, 'other__team__grace')).toBe('')
   })
 
+  it('draws the outline again on a fresh load of the page', async () => {
+    render(workspace(files(), vi.fn()))
+    const frame = await loadPreview('core__team__grace')
+    await clickRendered(frame, 'core__team__grace__name')
+    await waitFor(() => expect(outline(frame, 'core__team__grace')).not.toBe(''))
+
+    // A fresh document, as after an edit or on switching back to the preview.
+    const view = frame.contentDocument!
+    view.open()
+    view.write(frame.getAttribute('srcdoc')!)
+    view.close()
+    expect(outline(frame, 'core__team__grace')).toBe('')
+    fireEvent.load(frame)
+    await waitFor(() => expect(outline(frame, 'core__team__grace')).not.toBe(''))
+  })
+
   it('lists element cells without the children of a same-named local component', async () => {
     const onNodeSelect = vi.fn()
     render(workspace(files(), onNodeSelect))

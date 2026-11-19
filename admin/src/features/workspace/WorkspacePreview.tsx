@@ -43,6 +43,8 @@ export function WorkspacePreview({
   const [srcdoc, setSrcdoc] = useState<string>('')
   // The selection a click in the preview made, and the rendered node it outlines.
   const [clicked, setClicked] = useState<{ address: string; renderedId: string } | null>(null)
+  // Each load is a fresh page, which the outline has to be drawn on again.
+  const [loads, setLoads] = useState(0)
   const renderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const viewport = DEVICE_VIEWPORTS[device]
   const scale = zoom / 100
@@ -148,7 +150,7 @@ export function WorkspacePreview({
       el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
     highlightedRef.current = el
-  }, [highlightedNode, highlightedRenderedId, clicked, nodeIdToAddress, html])
+  }, [highlightedNode, highlightedRenderedId, clicked, nodeIdToAddress, html, loads])
 
   return (
     <div
@@ -182,7 +184,10 @@ export function WorkspacePreview({
           title={t('workspace.preview')}
           sandbox={interactive ? 'allow-scripts allow-same-origin' : undefined}
           srcDoc={srcdoc || undefined}
-          onLoad={() => postMeasure(iframeRef.current, measureRef.current)}
+          onLoad={() => {
+            postMeasure(iframeRef.current, measureRef.current)
+            setLoads((count) => count + 1)
+          }}
           style={{
             width: viewport.width,
             height: viewport.minHeight,
