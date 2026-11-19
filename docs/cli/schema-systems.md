@@ -621,6 +621,8 @@ Blocking errors:
   * `DUPLICATE_REPEAT_ITEM_ID`: two items in one repeat share an `id`.
   * `REPEAT_WITH_BINDING`: a collection binding on, above or in the cell of a repeat.
   * `REPEAT_BUDGET_EXCEEDED`: the fan-out passes the page's 50,000-node budget.
+  * `REPEAT_ROW_FAILED`: a row cannot be expanded, for example because its cell
+    uses an unknown component. It is reported at the item.
 
 Warnings:
 
@@ -649,7 +651,8 @@ Info diagnostics:
 
 The slot and authored repeat checks run in `wf validate` and in the in-memory
 `validateProject` entry point the browser and API use; `validateProject`
-returns its info diagnostics in `info`.
+returns its info diagnostics in `info`, and checks each page against the
+expansion budget as the build does.
 
 Safety limits:
 

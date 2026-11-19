@@ -1005,6 +1005,7 @@ validation:
     - two repeat items with one id (DUPLICATE_REPEAT_ITEM_ID)
     - repeat with a collection binding on, above or in its cell (REPEAT_WITH_BINDING)
     - repeat fan-out over the page budget (REPEAT_BUDGET_EXCEEDED)
+    - repeat row that cannot be expanded, at its item (REPEAT_ROW_FAILED)
 
   warnings:
     - unused components

@@ -47,7 +47,7 @@ function expandHostRows(host, definitions, budget, { hostId = host?.id, written 
       return {
         ok: false,
         reason: 'repeat-budget',
-        error: `Repeat on "${hostId}" would expand to ${need} more nodes; a page may expand to at most ${budget.max}.`,
+        error: `Repeat on "${hostId}" would expand to ${need} more nodes; a page may expand to at most ${budget.max}. Fewer items, or fewer repeats inside the cell, bring it back under.`,
         host: { ...origin(written), id: hostId },
       };
     }

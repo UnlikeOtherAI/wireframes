@@ -51,4 +51,10 @@ function placeOf(node, sources, suffix = []) {
   return place;
 }
 
-module.exports = { placeOf, stampRenderedInputs };
+/** The `repeat` key of the host a stamped row was made by, or undefined. */
+function repeatPlaceOf(row, sources) {
+  const place = placeOf(row, sources);
+  return place ? { ...place, path: place.path.replace(/\.items\[\d+\]$/, ''), key: true } : undefined;
+}
+
+module.exports = { placeOf, repeatPlaceOf, stampRenderedInputs };

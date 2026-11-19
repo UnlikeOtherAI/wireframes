@@ -247,9 +247,24 @@ test('a fan-out over the budget is reported once, at the outermost repeat', () =
   assert.deepEqual(onDisk.errors.map((e) => e.code), ['REPEAT_BUDGET_EXCEEDED']);
 });
 
-test('an expansion failure inside a row is located at its item', () => {
-  const components = { ...COMPONENTS, broken: { root: { id: 'broken', component: 'stack', children: [{ id: 'gone', use: 'nowhere' }] } } };
-  const list = sources([{ id: 'crew', component: 'stack', repeat: { cell: 'broken', items: [{ id: 'one' }, { id: 'two' }] } }], { components });
-  const broken = only(lintSources(list), 'BROKEN_COMPONENT_REFERENCE');
-  assert.equal(broken.path, '$.page.slots[0].content[0].repeat.items[0]');
+test('an expansion failure inside a row is REPEAT_ROW_FAILED, at its item, in the file that writes it', () => {
+  const components = {
+    ...COMPONENTS,
+    broken: { root: { id: 'broken', component: 'stack', children: [{ id: 'gone', use: 'nowhere' }] } },
+    crew: { root: { id: 'list', component: 'stack', repeat: { cell: 'broken', items: [{ id: 'one' }] } } },
+  };
+  const crew = { id: 'crew', component: 'stack', repeat: { cell: 'broken', items: [{ id: 'one' }, { id: 'two' }] } };
+  const list = sources([crew], { components });
+  const result = lintSources(list);
+  const failed = only(result, 'REPEAT_ROW_FAILED');
+  assert.equal(failed.path, '$.page.slots[0].content[0].repeat.items[0]');
+  assert.equal(underlined(list, failed), 'id: one');
+  assert.equal(failed.severity, 'error');
+  assert.match(failed.message, /Item "one" of the repeat on "crew" cannot be expanded: Unknown component reference "nowhere"/);
+  assert.ok(!codes(result).includes('BROKEN_COMPONENT_REFERENCE'));
+
+  const inDefinition = only(lintSources(sources([{ id: 'team', use: 'crew' }], { components })), 'REPEAT_ROW_FAILED');
+  assert.deepEqual([inDefinition.source, inDefinition.path], ['components.yaml', '$.components.crew.root.repeat.items[0]']);
+  const onDisk = runValidate({ projectPath: createRepeatProject([crew], { components }) });
+  assert.deepEqual(onDisk.errors.map((e) => e.code), ['REPEAT_ROW_FAILED']);
 });
