@@ -70,7 +70,10 @@ test('the iPad footer draws the brand and copyright across the full width, and n
   assert.doesNotMatch(footer, /class="wf-bar"/, 'no skeleton bar for the blank tagline');
   assert.match(footer, /The Cozy Corner Cafe/);
   assert.match(footer, /© The Cozy Corner Cafe\. All rights reserved\./);
-  assert.match(footer, /width:160px;height:40px/, 'the logo box fits a brand on one line');
+  // No skin logo: the box fits the brand on one line, over the 160px floor, up to 24rem.
+  assert.match(footer, /id="footer__logo"[^>]*style="display:flex;width:max-content;max-width:min\(100%,24rem\);min-height:40px;/, 'the logo box fits a brand on one line');
+  assert.match(footer, /class="wf-image-placeholder"[^>]*style="flex:1 1 auto;min-width:160px;/, 'the logo box keeps its 160px floor');
+  assert.match(footer, /id="footer__brand"[^>]*style="[^"]*width:min-content;min-width:240px;max-width:384px/, 'the brand column follows the logo box');
 });
 
 test('a footer in a framed footer region adds no second frame', () => {

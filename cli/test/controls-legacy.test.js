@@ -44,6 +44,15 @@ function render(renderers, renderLib, node) {
   return { inner: result.inner, className: result.className, bindings: ctx.stateBindings };
 }
 
+// A labelled editor is a field: the same parts, with the toolbar and body in a
+// box under the label (rendering-controls.md). Lift them out of the box to
+// compare; nothing else may differ.
+function unboxEditor(out) {
+  const inner = out.inner.replace(/<div class="wf-editor-box">([^]*)<\/div>((?:<span class="wf-field-(?:help|error)">[^<]*<\/span>)?)$/, '$1$2');
+  const className = (out.className || '').replace(/\s*wf-editor-field/, '').trim();
+  return { ...out, inner, className: className || undefined };
+}
+
 const SELECT_OPTIONS = [null, undefined, true, false, 0, 7, '', 'Plain', ' padded ', ['nested'],
   { label: 'L', value: 'v' }, { value: 'only value' }, { label: 'only label' }, { label: '', value: '' }, {},
   { label: 0, value: 0 }, { title: 'ignored' }, { label: ' padded ' }, { label: 'Sel', selected: false }];
@@ -110,7 +119,8 @@ test('legacy-only controls render what they did, plus state and ARIA attributes'
   CORPUS.forEach((entry, index) => {
     const node = { id: `n${index}`, ...entry };
     const before = render(legacyRenderers, legacyLib, node);
-    const after = render(controlRenderers, lib, node);
+    const drawn = render(controlRenderers, lib, node);
+    const after = entry.component === 'editor' ? unboxEditor(drawn) : drawn;
     const label = `${entry.component} ${JSON.stringify(entry.props)}`;
     assert.equal(strip(after.inner), strip(before.inner), label);
     assert.equal(after.className, before.className, label);

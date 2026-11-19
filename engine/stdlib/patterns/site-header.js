@@ -37,7 +37,8 @@ root:
       children:
         - id: logo
           component: image
-          props: { kind: logo, slot: logo_1, alt: "{{props.brand}}", width: 160, height: 40 }
+          # No width: without a skin logo the box fits the brand on one line.
+          props: { kind: logo, slot: logo_1, alt: "{{props.brand}}", height: 40 }
         # The header is the bar, so its menu draws no bar of its own; an empty
         # items list leaves the menu out.
         - id: menu

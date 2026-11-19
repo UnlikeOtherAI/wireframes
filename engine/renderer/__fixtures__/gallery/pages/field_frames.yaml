@@ -1,0 +1,34 @@
+documentType: page
+specVersion: "1.1"
+id: field_frames
+page:
+  id: field_frames
+  template: app_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: card
+  slots:
+    - slotId: main
+      content:
+        # A labelled editor straight in the page: the label above the box, the help below it.
+        - id: ff_editor
+          component: editor
+          props:
+            label: Document
+            help: Formatting is kept when you paste.
+            rows: 3
+        - id: ff_states
+          component: grid
+          props: { columns: 2 }
+          children:
+            - { id: ff_readonly, component: editor, props: { label: Release notes, readonly: true, rows: 2 } }
+            - { id: ff_invalid, component: editor, props: { label: Summary, error: Write at least one line., rows: 2 } }
+        # Without a label the editor is one box; beside it, the other fields put their label above their box too.
+        - id: ff_compare
+          component: grid
+          props: { columns: 3 }
+          children:
+            - { id: ff_plain, component: editor, props: { rows: 2 } }
+            - { id: ff_upload, component: upload, props: { fieldLabel: Contract, files: [{ name: contract-2026.pdf }] } }
+            - { id: ff_notes, component: textarea, props: { label: Notes, rows: 3 } }

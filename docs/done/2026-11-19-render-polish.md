@@ -334,3 +334,15 @@ Codex reviewed the implementation and found eight problems. All are adopted. Eac
 6. **An adaptive phone sidebar faces the content.** A sidebar slot authored after `main` stacks below it and draws its rule on top. One authored before `main` keeps the bottom rule. Both orders are tested.
 7. **The grid tests prove their names.** The repeat test's cell root is placed, so only expanded rows carry a placement, and a decision that saw no rows fails it. The determinism test asserts that both renders succeed. These are test fixes; each new test was checked against an engine change that brings back the gap it closes.
 8. **The schema prose says what comes before the manifest default.** `schema.md`, `schema-systems.md` and `rendering-data.md` now say that an authored `minItemWidth` and adaptive reflow come before `manifest.defaultGridColumns`, as the canonical YAML already did. This is a documentation fix, so there is no test.
+
+### 10.3 Follow-up: the shortcut mask
+
+The mask in item 2 measured the shortcut's box, so a shortcut that fits but is under 2em wide, such as the gallery menu's "⌘R", was always hidden. The gallery tolerance let it through. Gating the mask on the shortcut's own scroll timeline fixed it in Chromium, but WebKit 26 (Playwright, the proxy for the iPad's iPadOS 27.2 web view) reported some of those timelines inactive and did not paint the mask on others, so slivers stayed.
+
+The mask is gone. A row with a shortcut now uses the wrapping item 2 set aside, with both objections met:
+
+- the shortcut needs `min-width: 2em`; with less room it wraps onto a second line, and the row, `height: calc(1lh + 14px)` with `overflow: hidden`, clips it. `1lh` follows the font's `normal` line height, so the row is as tall as a row without a shortcut;
+- on touch screens the row gets its 44 px from padding, `max(7px, calc((44px - 1lh) / 2))`, not `min-height`, so the label stays centred and the clipped line stays out of the box;
+- the label is capped to the row less the icon and its gap, so it never wraps away; a shortcut shorter than 2em sits right-aligned in its 2em box, so "⌘R" is drawn whenever it fits.
+
+A sweep test renders a long shortcut and "⌘R" every 2 px from 96 to 170 px and checks the drawn pixels in Chromium and WebKit: a shortcut is drawn whole, cut at two letters or more with an ellipsis, or not at all. It fails against the box mask and against no mask. A touch test checks that rows with a shortcut shown, cut away or absent are one height with the label centred.
