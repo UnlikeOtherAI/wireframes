@@ -58,7 +58,8 @@ for (const engine of engines()) {
         // Keyboard: Tab reaches the leaf links and Enter follows them.
         const docs = page.locator('#bar').getByRole('link', { name: 'Docs', exact: true });
         await home.focus();
-        await page.keyboard.press('Tab');
+        // Safari's WebKit moves focus between links with Option-Tab; plain Tab skips them.
+        await page.keyboard.press(engine.name === 'webkit' ? 'Alt+Tab' : 'Tab');
         assert.equal(await docs.evaluate((el) => el === document.activeElement), true, `${label}: Tab moves to Docs`);
         await page.keyboard.press('Enter');
         assert.equal(await page.evaluate(() => location.hash), '#docs', `${label}: Enter follows the link`);
