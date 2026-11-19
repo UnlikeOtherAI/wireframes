@@ -93,7 +93,8 @@ test('menubar opens the named menu below its trigger, display-only', () => {
   assert.match(html, /<div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">File<\/button><\/div>/);
   assert.match(html, /<button type="button" class="wf-menubar-trigger" aria-expanded="true" data-wf-expanded>Edit<\/button><div class="wf-menubar-panel wf-menu">/);
   assert.match(html, /<button type="button" class="wf-menubar-trigger" aria-disabled="true" aria-expanded="false" data-wf-disabled>Window<\/button>/);
-  assert.match(html, /<button type="button" class="wf-menubar-trigger">Help<\/button>/, 'a menu without items is a plain trigger');
+  // A title without items is a page link when its route is known; without one it is plain text, as a nav row.
+  assert.match(html, /<span class="wf-menubar-trigger">Help<\/span>/, 'a title without items or a route is plain text');
   assert.equal(count(html, /wf-menubar-panel/g), 1);
   assert.match(html, /<span class="wf-menu-label">Undo<\/span><span class="wf-keys"><kbd class="wf-kbd">⌘<\/kbd><kbd class="wf-kbd">Z<\/kbd><\/span>/);
   assert.match(html, /<span class="wf-menu-item" aria-disabled="true" data-wf-disabled><span class="wf-menu-label">Redo/);

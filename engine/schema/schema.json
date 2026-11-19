@@ -4197,7 +4197,7 @@
     },
     "PrimitiveProps_menubar": {
       "type": "object",
-      "description": "Desktop application menu row; open draws that menu panel under its trigger. Never framed: the bar it sits in owns the frame.",
+      "description": "Desktop application menu row. A title with items is a menu; open draws its panel. A title without items is a plain link: give it a route, never a one-item menu repeating its name. Mark the page with current, not open. Never framed: the bar it sits in owns the frame.",
       "properties": {
         "items": {
           "type": "array"

@@ -94,12 +94,12 @@ const navigationPrimitives = [
     name: 'menubar',
     family: 'navigation',
     frame: 'N',
-    summary: 'Desktop application menu row; open draws that menu panel under its trigger. Never framed: the bar it sits in owns the frame.',
+    summary: 'Desktop application menu row. A title with items is a menu; open draws its panel. A title without items is a plain link: give it a route, never a one-item menu repeating its name. Mark the page with current, not open. Never framed: the bar it sits in owns the frame.',
     props: {
       items: { type: 'array', items: true, primary: true },
       open: { type: 'string' },
     },
-    example: '- menubar: { items: [{ label: File, items: [New, Open] }, { label: Edit, items: [{ label: Undo, shortcut: "⌘Z" }, { label: Redo, shortcut: "⇧⌘Z" }] }, { label: View, items: [Zoom in] }] }',
+    example: '- menubar: { items: [{ label: Home, route: home, current: true }, { label: File, items: [New, Open] }, { label: Edit, items: [{ label: Undo, shortcut: "⌘Z" }, { label: Redo, shortcut: "⇧⌘Z" }] }] }',
   },
   {
     name: 'command',

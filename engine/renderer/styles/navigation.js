@@ -194,6 +194,11 @@ const navigationStyles = [
     + 'font-size:13px;font-weight:500;color:var(--wf-ink-2);background:transparent;border:0;'
     + 'border-radius:var(--wf-corner-radius,6px);cursor:pointer}',
   '.wf-menubar-trigger[data-wf-expanded]{background:var(--wf-fill);color:var(--wf-ink)}',
+  // A title without a menu is a page link (or plain text) in the bar.
+  'a.wf-menubar-trigger,span.wf-menubar-trigger{text-decoration:none}',
+  'span.wf-menubar-trigger{cursor:default}',
+  // Current is an underline, so it never reads as the open (expanded) menu.
+  '.wf-menubar-trigger[data-wf-current]{color:var(--wf-ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--wf-ink)}',
   '.wf-mode-line .wf-menubar-trigger{border-radius:0}',
   '.wf-mode-line .wf-menubar-trigger[data-wf-expanded]{background:transparent;outline:1px dashed var(--wf-line-strong);outline-offset:-1px}',
   '.wf-menubar-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:30;min-width:220px;padding:5px;'

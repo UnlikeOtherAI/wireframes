@@ -1,6 +1,6 @@
 'use strict';
 
-const { hasInteraction, itemLink, flattenItems, expandGroups, openIndex, keyChips } = require('./navigation-items');
+const { hasInteraction, itemLink, itemsOn, flattenItems, expandGroups, openIndex, keyChips } = require('./navigation-items');
 
 // Menus, the command palette and the menubar are display-only: plain lists
 // with aria-current and aria-disabled, never menu or listbox roles, because
@@ -104,21 +104,42 @@ function renderCommand(node, ctx, lib) {
   return { inner: `${search}${body}${footer}` };
 }
 
-// Each menu is a trigger button; the open one draws its panel below it.
+// A title with a menu discloses it; a current one also says it is the page.
+function triggerOwner(lib) {
+  const link = lib.STATE_OWNERS.link;
+  return { ...link, aria: { ...link.aria, expanded: 'aria-expanded' } };
+}
+
+function submenu(item) {
+  return Array.isArray(item.items) ? item.items : [];
+}
+
+/**
+ * Each title with a menu is a trigger button; the open one draws its panel
+ * below it. A title without one is a page link in the bar when its route is
+ * known (otherwise plain text, exactly as a nav row). Which titles are
+ * current follows nav's rule: an item's own `selected` or `current` first,
+ * otherwise an enabled leaf whose route is the page being rendered.
+ */
 function renderMenubar(node, ctx, lib) {
   const props = node.props || {};
   const menus = lib.normalizeItems(props.items, lib.itemProfiles.canonical)
     .filter((item) => item.type === 'item' || item.type === 'group');
   const opened = openIndex(menus, props.open);
+  const inert = hasInteraction(node);
+  const on = itemsOn(menus, lib, (item) => item.disabled !== true && submenu(item).length === 0
+    && item.route != null && String(item.route) === ctx.currentRoute);
   const markup = menus.map((menu, index) => {
     const label = lib.str(menu.label);
-    const nested = Array.isArray(menu.items) ? menu.items : [];
+    const nested = submenu(menu);
     const open = index === opened;
-    const state = { disabled: menu.disabled === true, expanded: nested.length > 0 ? open : undefined };
-    const owner = nested.length > 0 ? lib.STATE_OWNERS.disclosure : lib.STATE_OWNERS.item;
-    const trigger = `<button type="button" class="wf-menubar-trigger"${lib.stateAttrs(state, { owner })}>${
-      lib.iconSpan(menu.icon)
-    }${label ? lib.escapeHtml(label) : lib.renderSkeleton(5)}</button>`;
+    const body = `${lib.iconSpan(menu.icon)}${label ? lib.escapeHtml(label) : lib.renderSkeleton(5)}`;
+    if (nested.length === 0) {
+      const state = { current: on[index] === true, disabled: menu.disabled === true };
+      return `<div class="wf-menubar-menu">${itemLink(menu, 'wf-menubar-trigger', body, ctx, lib, { inert, state, owner: lib.STATE_OWNERS.link })}</div>`;
+    }
+    const state = { current: on[index] === true, disabled: menu.disabled === true, expanded: open };
+    const trigger = `<button type="button" class="wf-menubar-trigger"${lib.stateAttrs(state, { owner: triggerOwner(lib) })}>${body}</button>`;
     const panel = open
       ? `<div class="wf-menubar-panel wf-menu">${menuRows(nested, ctx, lib, { chips: true, linked: false })}</div>`
       : '';

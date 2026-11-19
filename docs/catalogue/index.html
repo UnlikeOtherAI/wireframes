@@ -556,6 +556,9 @@ button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:
 .wf-menubar-menu{position:relative;display:flex}
 .wf-menubar-trigger{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;font:inherit;font-size:13px;font-weight:500;color:var(--wf-ink-2);background:transparent;border:0;border-radius:var(--wf-corner-radius,6px);cursor:pointer}
 .wf-menubar-trigger[data-wf-expanded]{background:var(--wf-fill);color:var(--wf-ink)}
+a.wf-menubar-trigger,span.wf-menubar-trigger{text-decoration:none}
+span.wf-menubar-trigger{cursor:default}
+.wf-menubar-trigger[data-wf-current]{color:var(--wf-ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--wf-ink)}
 .wf-mode-line .wf-menubar-trigger{border-radius:0}
 .wf-mode-line .wf-menubar-trigger[data-wf-expanded]{background:transparent;outline:1px dashed var(--wf-line-strong);outline-offset:-1px}
 .wf-menubar-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:30;min-width:220px;padding:5px;background:#ffffff;border:1px solid var(--wf-line-2);border-radius:8px;box-shadow:0 10px 30px rgba(17,24,39,.12)}
@@ -1356,10 +1359,10 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
     <span class="cat-name">menubar</span>
     <span class="cat-frame">never draws a box</span>
   </div>
-  <p class="cat-summary">Desktop application menu row; open draws that menu panel under its trigger. Never framed: the bar it sits in owns the frame.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_menubar" class="wf-node wf-menubar" data-wf-frame="content" data-wf-state-bindings="{}"><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">File</button></div><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">Edit</button></div><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">View</button></div></div></div>
+  <p class="cat-summary">Desktop application menu row. A title with items is a menu; open draws its panel. A title without items is a plain link: give it a route, never a one-item menu repeating its name. Mark the page with current, not open. Never framed: the bar it sits in owns the frame.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_menubar" class="wf-node wf-menubar" data-wf-frame="content" data-wf-state-bindings="{}"><div class="wf-menubar-menu"><span class="wf-menubar-trigger" aria-current="page" data-wf-current>Home</span></div><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">File</button></div><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">Edit</button></div></div></div>
   <div class="cat-split">
-    <pre class="cat-code">- menubar: { items: [{ label: File, items: [New, Open] }, { label: Edit, items: [{ label: Undo, shortcut: &quot;⌘Z&quot; }, { label: Redo, shortcut: &quot;⇧⌘Z&quot; }] }, { label: View, items: [Zoom in] }] }</pre>
+    <pre class="cat-code">- menubar: { items: [{ label: Home, route: home, current: true }, { label: File, items: [New, Open] }, { label: Edit, items: [{ label: Undo, shortcut: &quot;⌘Z&quot; }, { label: Redo, shortcut: &quot;⇧⌘Z&quot; }] }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">open</td><td>string</td></tr></tbody></table></div>
   </div>
 </article>

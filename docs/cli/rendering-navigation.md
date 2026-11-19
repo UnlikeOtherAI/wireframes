@@ -76,6 +76,8 @@ States go on the element that owns them, through `lib.stateAttrs`:
 | Step | `<span class="wf-step">` | `aria-current="step" data-wf-current` | `aria-disabled="true" data-wf-disabled` |
 | Current page number or dot | `<button>` or `<span>` | `aria-current="page" data-wf-current` | — |
 | Menu, command and menubar panel row | `<a>` or `<span>` | `data-wf-selected`; `current` adds `aria-current="true" data-wf-current` | `aria-disabled="true" data-wf-disabled` |
+| Menubar title without a menu | `<a>` or `<span>` | `aria-current="page" data-wf-current` | `aria-disabled="true" data-wf-disabled` |
+| Menubar title with a menu | `<button>` | `aria-current="page" data-wf-current`, beside `aria-expanded` | `aria-disabled="true" data-wf-disabled` |
 | Action sheet row | `<button>` | — | native `disabled`, `data-wf-disabled` |
 
 A tab button that was blank or unselectable was already disabled; it keeps its
@@ -100,7 +102,8 @@ An item `route` renders a link in `nav`, `breadcrumb`, `tab_bar`,
   actions then render as plain buttons.
 - The current crumb never links.
 
-`menubar` panel rows are display-only and never link.
+A `menubar` title without a menu links like a nav row. Its panel rows are
+display-only and never link.
 
 ## Expanded rows
 
@@ -145,8 +148,21 @@ A horizontal site menu (`wf-nav-top`):
 
 A desktop application menu row (`wf-menubar`), never framed:
 
-- Each top-level item is a `<button class="wf-menubar-trigger">`. Items with
-  nested `items` are disclosures with `aria-expanded`.
+- A top-level item with nested `items` is a `<button class="wf-menubar-trigger">`
+  disclosure with `aria-expanded`. Its own `route` is not used.
+- A top-level item without `items` is a page link in the bar, through
+  `itemLink` as a nav row: `<a class="wf-menubar-trigger" href>` when its route
+  is known, focusable and followed on Enter. With an unknown or missing route,
+  when `disabled`, or when the menubar has its own `interaction`, it is a
+  `<span>` that takes no focus. Write a plain link this way, never as a title
+  whose one-item menu repeats its name.
+- Which titles are current follows nav's rule: an item's own `selected` or
+  `current` decides first, and every marked item is on. Otherwise an enabled
+  title without a menu whose `route` is the page being rendered is current.
+  An item marked `false` is never inferred. Current titles get
+  `aria-current="page"`, ink, weight 600 and a 2px underline; an open
+  (`expanded`) menu keeps its fill (card) or dashed outline (line), so the two
+  never look alike. Mark the page with `current`, not `open`.
 - `open` names the menu drawn open, by `value` or `label`; without a match, the
   first item with `expanded: true` opens. The panel (`wf-menubar-panel`) hangs
   below its trigger, out of the layout flow.
