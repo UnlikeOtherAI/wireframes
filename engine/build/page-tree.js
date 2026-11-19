@@ -2,6 +2,7 @@
 
 const { resolveTemplatePage } = require('../resolver');
 const { buildOverlayRoots } = require('../resolver/nodes');
+const { createExpansionBudget } = require('../component-registry/expansion');
 const isObject = (value) => value != null && typeof value === 'object' && !Array.isArray(value);
 
 function resolvePageTree(documentMap, pageId) {
@@ -42,14 +43,16 @@ function resolvePageTree(documentMap, pageId) {
       ? documentMap.components
       : {};
 
-  const resolved = resolveTemplatePage({ template, page, components });
+  // The regions and every overlay share one expansion budget.
+  const budget = createExpansionBudget();
+  const resolved = resolveTemplatePage({ template, page, components, budget });
   if (!resolved.ok) {
-    return { ok: false, error: resolved.error };
+    return { ok: false, error: resolved.error, reason: resolved.reason };
   }
 
-  const templateOverlays = buildOverlayRoots(template.overlays, components, 'template');
+  const templateOverlays = buildOverlayRoots(template.overlays, components, 'template', budget);
   if (!templateOverlays.ok) return templateOverlays;
-  const pageOverlays = buildOverlayRoots(page.overlays, components, 'page');
+  const pageOverlays = buildOverlayRoots(page.overlays, components, 'page', budget);
   if (!pageOverlays.ok) return pageOverlays;
 
   const templateLayout = isObject(template.layout) ? template.layout : {};

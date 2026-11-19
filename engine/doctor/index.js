@@ -71,7 +71,8 @@ function loadDocument(filePath, result, expectedType) {
   }
 }
 
-function loadScopedComponentIds(root, result, entries, contextLabel, fallbackIds) {
+/** `{ components, sources }` for what these documents import, or `fallback` when that fails. */
+function loadScopedComponentDefinitions(root, result, entries, contextLabel, fallback) {
   const registryResult = loadComponentRegistryForDocuments(root, entries);
   if (!registryResult.ok) {
     addDiagnostic(
@@ -80,13 +81,14 @@ function loadScopedComponentIds(root, result, entries, contextLabel, fallbackIds
       'COMPONENT_IMPORT_ERROR',
       `Unable to load component imports for ${contextLabel}: ${registryResult.error}`,
     );
-    return fallbackIds;
+    return fallback;
   }
 
-  return new Set(Object.keys(registryResult.registry.components));
+  return registryResult.registry;
 }
 
-function runDoctor({ projectPath } = {}) {
+/** `onRenderedPage` sees each page as it renders (see `checkProject`). */
+function runDoctor({ projectPath, onRenderedPage } = {}) {
   const result = {
     ok: true,
     errors: [],
@@ -202,17 +204,21 @@ function runDoctor({ projectPath } = {}) {
 
   checkProject({
     result,
+    onRenderedPage,
     manifest,
     sitemap,
     templates,
+    components,
     pages: pageMap,
     datasetIds,
     componentMap: projectComponentRegistry.ok ? projectComponentRegistry.registry.components : {},
+    componentSources: projectComponentRegistry.ok ? projectComponentRegistry.registry.sources : {},
     // A document on disk can import components from other files by path.
-    componentIdsFor(scope) {
+    componentsFor(scope) {
+      const fallback = { components: scope.components, sources: scope.sources };
       return scope.kind === 'template'
-        ? loadScopedComponentIds(root, result, templatesEntry, `template "${scope.id}"`, scope.componentIds)
-        : loadScopedComponentIds(root, result, pageEntry(scope.page), `page "${scope.page.id}"`, scope.componentIds);
+        ? loadScopedComponentDefinitions(root, result, templatesEntry, `template "${scope.id}"`, fallback)
+        : loadScopedComponentDefinitions(root, result, pageEntry(scope.page), `page "${scope.page.id}"`, fallback);
     },
     resolveComponentsForPage(pageLoaded) {
       const registryResult = loadComponentRegistryForDocuments(root, [...templatesEntry, ...pageEntry(pageLoaded)]);
@@ -226,6 +232,7 @@ function runDoctor({ projectPath } = {}) {
       return {
         ok: true,
         components: registryResult.registry.components,
+        sources: registryResult.registry.sources,
       };
     },
   });

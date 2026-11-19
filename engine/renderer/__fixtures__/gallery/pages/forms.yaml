@@ -55,6 +55,19 @@ page:
                   props:
                     label: Learn more
                     variant: link
+                - id: btn_pressed
+                  component: button
+                  props:
+                    label: Pinned
+                    icon: thumbtack
+                    pressed: true
+                - id: btn_pressed_icon
+                  component: button
+                  props:
+                    label: Bold
+                    icon: bold
+                    iconOnly: true
+                    pressed: true
             - id: button_sizes
               component: row
               props:
@@ -84,6 +97,23 @@ page:
                   props:
                     label: Disabled
                     disabled: true
+                - id: toolbar_format
+                  component: toolbar
+                  props:
+                    items:
+                      - { label: Bold, icon: bold, pressed: true }
+                      - { label: Italic, icon: italic, pressed: false }
+                      - { label: Underline, icon: underline, pressed: false }
+                      - { type: separator }
+                      - type: group
+                        label: Alignment
+                        items:
+                          - { label: Align left, icon: align-left, checked: true }
+                          - { label: Align centre, icon: align-center, checked: false }
+                          - { label: Align right, icon: align-right, checked: false }
+                      - { type: separator }
+                      - { label: Link, icon: link }
+                      - { label: Delete, icon: trash, disabled: true }
             - id: button_icons
               component: row
               props:
@@ -331,3 +361,220 @@ page:
                   props:
                     label: Time zone
                     options: [UTC, CET, PST]
+
+        - id: field_states_card
+          component: card
+          props:
+            title: Field states
+          layout:
+            type: grid
+            columns: 3
+            gap: 16
+          children:
+            - id: fs_help_error
+              component: input
+              props:
+                label: Coupon
+                value: SPRING
+                help: Applied at checkout
+                error: This code has expired.
+            - id: fs_readonly
+              component: input
+              props:
+                label: Workspace URL
+                value: acme.wireframe.app
+                readonly: true
+                help: Set by your admin; still submitted.
+            - id: fs_readonly_disabled
+              component: input
+              props:
+                label: Account ID
+                value: AC-2044
+                readonly: true
+                disabled: true
+            - id: fs_select_value
+              component: select
+              props:
+                label: Region
+                options: [EU, US, APAC]
+                value: US
+                required: true
+            - id: fs_select_readonly
+              component: select
+              props:
+                label: Plan
+                options: [Free, Pro, Enterprise]
+                value: Pro
+                readonly: true
+                help: Change it on the billing page.
+            - id: fs_select_multiple
+              component: select
+              props:
+                label: Channels
+                multiple: true
+                options: [Email, SMS, Push]
+                value: [Email, Push]
+            - id: fs_number
+              component: input
+              props:
+                label: Seats
+                inputType: number
+                value: 12
+                min: 1
+                max: 50
+                help: Between 1 and 50.
+            - id: fs_stepper
+              component: input
+              props:
+                label: Guests
+                inputType: stepper
+                value: 1
+                min: 1
+                max: 8
+            - id: fs_range_pair
+              component: input
+              props:
+                label: Price
+                inputType: range
+                value: [40, 140]
+                min: 0
+                max: 200
+            - id: fs_segmented_field
+              component: segmented
+              props:
+                label: View
+                options: [List, Board, Calendar]
+                value: Board
+                help: Applies to every project.
+            - id: fs_segmented_readonly
+              component: segmented
+              props:
+                label: Billing
+                options: [Monthly, Annual]
+                value: Annual
+                readonly: true
+            - id: fs_tags_readonly
+              component: tags_input
+              props:
+                label: Labels
+                tags: [urgent, billing]
+                readonly: true
+            - id: fs_choices
+              component: stack
+              props:
+                gap: 12
+              children:
+                - id: fs_indeterminate
+                  component: checkbox
+                  props:
+                    label: Select all rows
+                    indeterminate: true
+                - id: fs_terms
+                  component: checkbox
+                  props:
+                    label: I accept the terms
+                    required: true
+                    help: Required to create an account.
+                    error: Accept the terms to continue.
+                - id: fs_toggle_readonly
+                  component: toggle
+                  props:
+                    label: Single sign-on
+                    checked: true
+                    readonly: true
+                - id: fs_radio_disabled
+                  component: radio
+                  props:
+                    label: Legacy plan
+                    checked: true
+                    disabled: true
+            - id: fs_choice_list
+              component: choice_group
+              props:
+                label: Notify me by
+                kind: checkbox
+                options: [Email, SMS, Push]
+                value: [Email, Push]
+                help: Pick at least one.
+            - id: fs_choice_error
+              component: choice_group
+              props:
+                label: Support tier
+                kind: radio
+                required: true
+                options: [Community, Priority]
+                error: Choose a support tier.
+            - id: fs_upload
+              component: upload
+              props:
+                fieldLabel: Attachments
+                label: Drop files to upload
+                hint: PDF up to 10 MB
+                required: true
+                help: Shared with your team.
+            - id: fs_upload_readonly
+              component: upload
+              props:
+                fieldLabel: Signed contract
+                readonly: true
+                files:
+                  - name: contract-2026.pdf
+            - id: fs_editor_readonly
+              component: editor
+              props:
+                label: Release notes
+                readonly: true
+                rows: 3
+            - id: fs_picker_error
+              component: picker
+              props:
+                label: Repeat
+                options: [Never, Daily, Weekly, Monthly]
+                value: Weekly
+                error: Pick a schedule that ends.
+
+        - id: toolbars_card
+          component: card
+          props:
+            title: Toolbars
+          children:
+            - id: toolbar_row
+              component: row
+              props:
+                gap: 16
+                align: start
+              children:
+                - id: tb_labels
+                  component: toolbar
+                  props:
+                    labels: true
+                    items:
+                      - { label: Undo, icon: rotate-left }
+                      - { label: Redo, icon: rotate-right, disabled: true }
+                      - { type: separator }
+                      - { label: Comment, icon: comment, pressed: true }
+                - id: tb_small
+                  component: toolbar
+                  props:
+                    size: sm
+                    items:
+                      - { label: Bold, icon: bold }
+                      - { label: Strikethrough, icon: strikethrough, pressed: true }
+                      - { label: Bullets, icon: list-ul }
+                - id: tb_large
+                  component: toolbar
+                  props:
+                    size: lg
+                    items:
+                      - { label: Play, icon: play }
+                      - { label: Shuffle, icon: shuffle, checked: mixed }
+                      - { label: Mute, icon: volume-xmark, pressed: false }
+                - id: tb_stack
+                  component: toolbar
+                  props:
+                    orientation: stack
+                    items:
+                      - { label: Select, icon: arrow-pointer, pressed: true }
+                      - { label: Pan, icon: hand }
+                      - { type: separator }
+                      - { label: Zoom in, icon: magnifying-glass-plus }

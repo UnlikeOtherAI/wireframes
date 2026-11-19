@@ -9,6 +9,9 @@ const { SUPPORTED_SPEC_VERSION } = require('../schema/constants');
 const { compareVersions } = require('../schema');
 const { appendPath } = require('../schema/validator');
 const { runSemanticValidation } = require('./semantic-validator');
+const { checkComponentSlots } = require('./component-slots');
+const { checkRepeats } = require('./repeat-checks');
+const { checkStdAlias } = require('./std-alias');
 const {
   collectComponentUseGraph,
   collectUsedComponents,
@@ -25,30 +28,44 @@ function addDiagnostic(result, severity, code, message, at) {
   result[severity].push(at && result.locations ? { code, message, at } : { code, message });
 }
 
+/** A document's file name on disk, or its document map label in memory. */
+function nameOf(loaded, label) {
+  return typeof loaded?.absolutePath === 'string' ? loaded.absolutePath.split(/[\\/]/).pop() : label;
+}
+
 /**
  * @param {object} input
- * @param {object} input.result               `{ errors, warnings }`, added to in place
+ * @param {object} input.result               `{ errors, warnings, info }`, added to in place
  * @param {object|null} input.manifest        a loaded document: `{ document, absolutePath? }`
  * @param {object|null} input.sitemap
  * @param {object|null} input.templates
+ * @param {object|null} [input.components]    the project's own components document
  * @param {Map<string, object>} input.pages   page id to `{ id, document, absolutePath? }`
  * @param {Set<string>} input.datasetIds
  * @param {object} input.componentMap         component id to its definition
- * @param {(scope: object) => Set<string>} [input.componentIdsFor]
- *   The component ids one template or page may use. A project on disk can import more
- *   by file path; in memory every document sees the project's components.
+ * @param {object} [input.componentSources]   component id to where it is written, `{ sourcePath, localId }`
+ * @param {(scope: object) => object} [input.componentsFor]
+ *   The components one template or page may use, `{ components, sources }`. A project
+ *   can import more by path; without imports every document sees the project's
+ *   components. Built-in `std.*` patterns are never in it: lookups fall back to them.
  * @param {(page: object) => object} [input.resolveComponentsForPage]
+ *   `{ ok, components, sources }` for a page with its template's imports, or `{ ok: false, error }`
+ * @param {(page: object) => void} [input.onRenderedPage]
+ *   Called with `{ pageId, roots, sources }` for each page as it renders, stamped, for lint.
  */
 function checkProject({
   result,
   manifest,
   sitemap,
   templates,
+  components,
   pages,
   datasetIds,
   componentMap,
-  componentIdsFor,
+  componentSources = {},
+  componentsFor,
   resolveComponentsForPage,
+  onRenderedPage,
 }) {
   if (manifest && manifest.document?.manifest?.schemaVersion) {
     const schemaVersion = manifest.document.manifest.schemaVersion;
@@ -71,8 +88,9 @@ function checkProject({
 
   const templateMap = new Map();
   const templateDefinitions = templates?.document?.templates || {};
-  const componentIds = new Set(Object.keys(componentMap));
-  const idsFor = typeof componentIdsFor === 'function' ? componentIdsFor : () => componentIds;
+  const projectScope = { components: componentMap, sources: componentSources };
+  const definitionsFor = typeof componentsFor === 'function' ? componentsFor : () => projectScope;
+  let templateScope = projectScope;
   const componentUsages = {
     componentsUsed: new Set(),
     datasetsUsed: new Set(),
@@ -86,11 +104,11 @@ function checkProject({
       });
     }
     const templateInfo = templateMap.get(templateId);
-    const templateComponentIds = idsFor({ kind: 'template', id: templateId, componentIds });
+    templateScope = definitionsFor({ kind: 'template', id: templateId, ...projectScope });
     collectTemplateReferences(
       templateDocument,
       result,
-      templateComponentIds,
+      templateScope.components,
       templateInfo.slotIds,
       templateInfo.injectableIds,
       componentUsages,
@@ -107,12 +125,12 @@ function checkProject({
   });
 
   for (const pageLoaded of pages.values()) {
-    const pageComponentIds = idsFor({ kind: 'page', page: pageLoaded, componentIds });
+    const pageDefinitions = definitionsFor({ kind: 'page', page: pageLoaded, ...projectScope }).components;
     collectPageReferences(
       pageLoaded.document?.page ? pageLoaded : { id: pageLoaded.id, document: pageLoaded.document },
       result,
       templateMap,
-      pageComponentIds,
+      pageDefinitions,
       datasetIds,
       componentUsages,
       addDiagnostic,
@@ -124,12 +142,16 @@ function checkProject({
 
   for (const componentId of Object.keys(componentMap)) {
     if (!usedComponents.has(componentId)) {
+      // An imported definition is written in its own file, under the id it has there.
+      const source = componentSources[componentId];
       addDiagnostic(
         result,
         'warnings',
         'UNUSED_COMPONENT',
         `Component "${componentId}" is not referenced by any page or template.`,
-        { document: 'components', path: appendPath('$.components', componentId) },
+        source
+          ? { document: 'components', file: source.sourcePath, path: appendPath('$.components', source.localId) }
+          : { document: 'components', path: appendPath('$.components', componentId) },
       );
     }
   }
@@ -148,15 +170,56 @@ function checkProject({
 
   detectCircularUse(componentGraph, result, addDiagnostic);
 
+  // Each page's registry is loaded once, for the node walk and the slot rules.
+  const pageScopes = new Map();
+  const scopeFor = typeof resolveComponentsForPage === 'function'
+    ? (pageLoaded) => {
+      if (!pageScopes.has(pageLoaded)) pageScopes.set(pageLoaded, resolveComponentsForPage(pageLoaded));
+      return pageScopes.get(pageLoaded);
+    }
+    : null;
+
   runSemanticValidation({
     result,
     manifest: manifest?.document?.manifest || {},
     sitemap: sitemap?.document?.sitemap || sitemap?.document || {},
-    templates: templates?.document?.templates || {},
+    templates: templateDefinitions,
     components: componentMap,
+    componentSources,
     pages: Array.from(pages.values()),
-    resolveComponentsForPage,
+    resolveComponentsForPage: scopeFor,
+    onRenderedPage,
   });
+
+  const pageEntries = Array.from(pages.values()).map((pageLoaded) => {
+    const scoped = scopeFor ? scopeFor(pageLoaded) : null;
+    return {
+      id: pageLoaded.id,
+      document: pageLoaded.document,
+      page: pageLoaded.document?.page,
+      definitions: scoped?.ok ? scoped.components : componentMap,
+      sources: scoped?.ok ? scoped.sources : componentSources,
+    };
+  });
+  const authoredScopes = {
+    definitions: componentMap,
+    sources: componentSources,
+    templates: templateDefinitions,
+    templateDefinitions: templateScope.components,
+    templateSources: templateScope.sources,
+    pages: pageEntries,
+  };
+  const slotDiagnostics = [...checkComponentSlots(authoredScopes), ...checkRepeats(authoredScopes)];
+  const stdAliasDiagnostics = checkStdAlias([
+    { label: nameOf(components, 'components'), document: components?.document, definitions: componentMap, documentLabel: 'components' },
+    { label: nameOf(templates, 'templates'), document: templates?.document, definitions: templateScope.components, documentLabel: 'templates' },
+    ...pageEntries.map((entry) => ({
+      label: `page "${entry.id}"`, document: entry.document, definitions: entry.definitions, documentLabel: `page:${entry.id}`,
+    })),
+  ]);
+  for (const diagnostic of [...slotDiagnostics, ...stdAliasDiagnostics]) {
+    addDiagnostic(result, diagnostic.severity, diagnostic.code, diagnostic.message, diagnostic.at);
+  }
 }
 
 module.exports = {

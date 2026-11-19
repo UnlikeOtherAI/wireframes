@@ -15,6 +15,9 @@ function hasImports(entry) {
 /**
  * @param {object[]} documents  the documents that parsed
  * @param {Function} report
+ * @returns {{ componentMap: object, componentSources: object, root: object | null, scope: Function }}
+ *   `root` is the components document every page sees without importing it. A source's
+ *   `sourcePath` is the document's path among the sources.
  */
 function createComponentScopes(documents, report) {
   const byPath = new Map(documents.filter((entry) => entry.path).map((entry) => [entry.path, entry]));
@@ -44,11 +47,11 @@ function createComponentScopes(documents, report) {
     else report('error', 'COMPONENT_IMPORT_ERROR', `Unable to load project component registry: ${loaded.error}`, { entry: root, path: '$.imports', key: true });
   }
 
-  /** The project's components plus what these documents import. */
+  /** The project's components plus what these documents import, with where each is written. */
   function scope(entries) {
     const importing = entries.filter(hasImports);
     // With nothing imported the project's own registry is the scope, and is not copied.
-    if (importing.length === 0) return { ok: true, components: project.components };
+    if (importing.length === 0) return { ok: true, components: project.components, sources: project.sources };
     const combined = resolver.createEmptyRegistry();
     resolver.mergeComponentRegistry(combined, project);
     for (const entry of importing) {
@@ -56,10 +59,10 @@ function createComponentScopes(documents, report) {
       const merged = imported.ok ? resolver.mergeComponentRegistry(combined, imported.registry) : imported;
       if (!merged.ok) return { ok: false, error: merged.error, entry };
     }
-    return { ok: true, components: combined.components };
+    return { ok: true, components: combined.components, sources: combined.sources };
   }
 
-  return { componentMap: project.components, scope };
+  return { componentMap: project.components, componentSources: project.sources, root, scope };
 }
 
 module.exports = { createComponentScopes };

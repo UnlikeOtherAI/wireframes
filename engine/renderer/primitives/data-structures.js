@@ -63,16 +63,24 @@ function renderKanban(node, ctx, lib) {
   return { inner: markup };
 }
 
+// A branch row and an accordion head open and close, so they are disclosure
+// buttons with aria-expanded. Display-only: no keyboard behaviour ships.
+const DISCLOSURE = ' role="button"';
+
 function treeRow(item, ctx, lib, depth) {
-  const label = lib.str(item.label) || lib.str(item.title);
-  const children = lib.items(item.children);
+  const label = lib.str(item.label);
+  const children = item.items || [];
   const hasChildren = children.length > 0;
-  const open = item.open !== false;
+  // A tree stays open unless the item says `expanded: false` (or `open: false`).
+  const open = item.expanded !== false;
   const caret = hasChildren
     ? `<span class="wf-tree-caret">${open ? '▾' : '▸'}</span>`
     : '<span class="wf-tree-caret wf-tree-leaf"></span>';
   const glyph = lib.iconSpan(item.icon || (hasChildren ? 'folder' : 'file'), { size: 'sm' });
-  const row = `<div class="wf-tree-row" style="padding-left:${depth * 16}px">${caret}${glyph}<span class="wf-tree-label">${
+  const state = hasChildren
+    ? `${DISCLOSURE}${lib.stateAttrs({ selected: item.selected, expanded: open }, { owner: lib.STATE_OWNERS.disclosure })}`
+    : lib.stateAttrs({ selected: item.selected });
+  const row = `<div class="wf-tree-row" style="padding-left:${depth * 16}px"${state}>${caret}${glyph}<span class="wf-tree-label">${
     label ? lib.bound(label, ctx) : lib.renderSkeleton(9)
   }</span></div>`;
   const kids = hasChildren && open
@@ -82,22 +90,24 @@ function treeRow(item, ctx, lib, depth) {
 }
 
 function renderTree(node, ctx, lib) {
-  const entries = lib.items(node.props?.items);
-  const rows = entries.length > 0 ? entries : [{ label: '', children: [{ label: '' }] }];
+  const entries = lib.normalizeItems(node.props?.items, lib.itemProfiles.tree);
+  const rows = entries.length > 0 ? entries : [{ label: '', items: [{ label: '' }] }];
   return { inner: rows.map((item) => treeRow(item, ctx, lib, 0)).join('') };
 }
 
 function renderAccordion(node, ctx, lib) {
-  const entries = lib.items(node.props?.items, 'title');
+  const entries = lib.normalizeItems(node.props?.items, lib.itemProfiles.accordion);
   const rows = entries.length > 0 ? entries : [{}, {}, {}];
   const markup = rows.map((item) => {
-    const open = item.open === true;
-    const title = lib.str(item.title);
-    const text = lib.str(item.text);
+    // An accordion row stays closed unless the item says `expanded: true` (or `open: true`).
+    const open = item.expanded === true;
+    const title = lib.str(item.label);
+    const text = lib.str(item.description);
     const body = open
       ? `<div class="wf-accordion-body">${text ? lib.bound(text, ctx) : lib.renderSkeleton('80%')}</div>`
       : '';
-    return `<div class="wf-accordion-item${open ? ' wf-accordion-open' : ''}"><div class="wf-accordion-head"><span class="wf-accordion-title">${
+    const state = lib.stateAttrs({ expanded: open }, { owner: lib.STATE_OWNERS.disclosure });
+    return `<div class="wf-accordion-item${open ? ' wf-accordion-open' : ''}"><div class="wf-accordion-head"${DISCLOSURE}${state}><span class="wf-accordion-title">${
       title ? lib.bound(title, ctx) : lib.renderSkeleton(12)
     }</span><span class="wf-accordion-caret">${open ? '−' : '+'}</span></div>${body}</div>`;
   }).join('');

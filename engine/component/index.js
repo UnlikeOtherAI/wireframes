@@ -5,6 +5,11 @@ const path = require('node:path');
 const yaml = require('js-yaml');
 const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
 const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
+const { childNodeLists } = require(path.resolve(__dirname, '..', 'component-registry', 'child-nodes'));
+const { repeatCellReference } = require(path.resolve(__dirname, '..', 'component-registry', 'repeat'));
+const { loadProjectComponentRegistry } = require(path.resolve(__dirname, '..', 'component-registry'));
+const { resolveAuthoredComponent } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
+const { builtinCopyHint } = require(path.resolve(__dirname, '..', 'stdlib'));
 
 const COMPONENT_ID_REGEX = /^[a-z][a-z0-9_]*$/;
 
@@ -54,8 +59,8 @@ function walkNodes(node, callback) {
 
   callback(node);
 
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
+  for (const list of childNodeLists(node)) {
+    for (const child of list) {
       walkNodes(child, callback);
     }
   }
@@ -86,7 +91,7 @@ function collectTemplateUsages(templates, componentId, usages) {
       if (Array.isArray(region.children)) {
         for (const node of region.children) {
           walkNodes(node, (entry) => {
-            if (entry.use === componentId) {
+            if (entry.use === componentId || repeatCellReference(entry) === componentId) {
               usages.push(`template:${templateId}`);
             }
           });
@@ -102,7 +107,7 @@ function collectTemplateUsages(templates, componentId, usages) {
 
       for (const node of overlay.content) {
         walkNodes(node, (entry) => {
-          if (entry.use === componentId) {
+          if (entry.use === componentId || repeatCellReference(entry) === componentId) {
             usages.push(`template:${templateId}`);
           }
         });
@@ -131,7 +136,7 @@ function collectPageUsages(projectPath, componentId, usages) {
 
       for (const node of slot.content) {
         walkNodes(node, (entry) => {
-          if (entry.use === componentId) {
+          if (entry.use === componentId || repeatCellReference(entry) === componentId) {
             usages.push(`page:${pageId}`);
           }
         });
@@ -146,7 +151,7 @@ function collectPageUsages(projectPath, componentId, usages) {
 
       for (const node of injectable.content) {
         walkNodes(node, (entry) => {
-          if (entry.use === componentId) {
+          if (entry.use === componentId || repeatCellReference(entry) === componentId) {
             usages.push(`page:${pageId}`);
           }
         });
@@ -161,7 +166,7 @@ function collectPageUsages(projectPath, componentId, usages) {
 
       for (const node of overlay.content) {
         walkNodes(node, (entry) => {
-          if (entry.use === componentId) {
+          if (entry.use === componentId || repeatCellReference(entry) === componentId) {
             usages.push(`page:${pageId}`);
           }
         });
@@ -178,7 +183,7 @@ function collectComponentUsages(components, componentId, usages) {
 
     const root = componentDocument.root;
     walkNodes(root, (entry) => {
-      if (entry.use === componentId) {
+      if (entry.use === componentId || repeatCellReference(entry) === componentId) {
         usages.push(`component:${componentName}`);
       }
     });
@@ -246,13 +251,33 @@ function addComponent({ projectPath, componentId }) {
   };
 }
 
+/**
+ * Why a dotted id cannot be removed here, judged by what it resolves to: a
+ * component another file defines (imported under an alias, `std` included) or,
+ * only when the project has none, a built-in pattern.
+ */
+function importedRemoveError(projectPath, componentId) {
+  const loaded = loadProjectComponentRegistry(projectPath);
+  if (!loaded.ok) {
+    return `Unable to load project components: ${loaded.error}`;
+  }
+  const source = loaded.registry.sources[componentId];
+  if (source) {
+    const file = path.relative(projectPath, source.sourcePath).split(path.sep).join('/');
+    return `Component "${componentId}" is defined in ${file} as "${source.localId}". `
+      + `wf component remove only removes components defined in components.yaml; delete "${source.localId}" from ${file}.`;
+  }
+  return resolveAuthoredComponent(componentId, loaded.registry.components) ? builtinCopyHint(componentId) : null;
+}
+
 function removeComponent({ projectPath, componentId }) {
   const normalizedId = typeof componentId === 'string' ? componentId.trim() : '';
 
   if (!isValidId(normalizedId)) {
     return {
       ok: false,
-      error: `Invalid component id "${componentId}". Use snake_case alpha-numeric with underscores starting with a letter.`,
+      error: (normalizedId.includes('.') && importedRemoveError(projectPath, normalizedId))
+        || `Invalid component id "${componentId}". Use snake_case alpha-numeric with underscores starting with a letter.`,
     };
   }
 

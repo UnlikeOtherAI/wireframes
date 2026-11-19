@@ -43,6 +43,14 @@ routes:
     path: /line/data
     page: line_data
     template: app_shell
+  - id: app_navigation
+    path: /app-navigation
+    page: app_navigation
+    template: app_shell
+  - id: line_navigation
+    path: /line/navigation
+    page: line_navigation
+    template: app_shell
   - id: mobile
     path: /mobile
     page: mobile

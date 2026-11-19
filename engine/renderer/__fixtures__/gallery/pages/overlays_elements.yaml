@@ -42,6 +42,13 @@ page:
               interaction:
                 - type: open_overlay
                   targetOverlay: filters_drawer
+            - id: open_upgrade
+              component: button
+              props:
+                label: Open upgrade dialog
+              interaction:
+                - type: open_overlay
+                  targetOverlay: upgrade_modal
   overlays:
     - id: confirm_modal
       type: modal
@@ -89,3 +96,23 @@ page:
             label: Minimum seats
             inputType: range
             value: 30
+    - id: upgrade_modal
+      type: modal
+      dismissOn: [backdrop, escape]
+      props:
+        title: Upgrade to Pro
+        actions:
+          - label: Not now
+          - label: Compare plans
+            route: data
+          - label: Upgrade
+            variant: primary
+            route: data
+            disabled: true
+          - label: Cancel subscription
+            tone: danger
+      content:
+        - id: upgrade_body
+          component: paragraph
+          props:
+            text: Upgrading is disabled until an owner confirms the billing address. Compare plans opens the data page.

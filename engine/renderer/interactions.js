@@ -3,6 +3,7 @@
 const { buildControlRuntimeCode } = require('./interactions-controls');
 const { buildPaneRuntimeCode } = require('./interactions-panes');
 const { buildOverlayRuntimeCode } = require('./interactions-overlays');
+const { buildMeasureRuntimeCode } = require('./interactions-measure');
 
 function sanitizeOptions({
   routeId = '',
@@ -247,6 +248,7 @@ function refreshVisibility() {
   });
 }
 ` + buildOverlayRuntimeCode() + `
+` + buildMeasureRuntimeCode() + `
 function wfNavigate(id) {
   try {
     if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
@@ -262,17 +264,27 @@ function formValues(formId) {
   var root = document.getElementById(formId);
   if (!root) return null;
   var output = {};
-  var fields = root.querySelectorAll('input,textarea,select');
+  var fields = root.querySelectorAll('input,textarea,select,' + WF_DRAWN_FIELDS);
   for (var i = 0; i < fields.length; i++) {
     var field = fields[i];
-    if (field.hasAttribute('data-wf-color-picker')) continue;
+    // Drawn controls go under their node id, in document order with native fields.
+    if (field.matches(WF_DRAWN_FIELDS)) {
+      var drawn = drawnFieldValue(field);
+      if (drawn !== undefined && field.id) output[field.id] = drawn;
+      continue;
+    }
+    // As in HTML: a disabled field is not submitted; a read-only one is.
+    if (field.hasAttribute('data-wf-color-picker') || field.disabled) continue;
     var cursor = field;
     var key = field.getAttribute('data-wf-form-key');
     while (!key && cursor && cursor !== root) {
       if (cursor.getAttribute && cursor.getAttribute('id')) { key = cursor.getAttribute('id'); break; }
       cursor = cursor.parentNode;
     }
-    if (key) output[key] = field.type === 'checkbox' ? !!field.checked : field.value;
+    if (!key) continue;
+    if (field.type === 'checkbox') output[key] = !!field.checked;
+    else if (field.tagName === 'SELECT') output[key] = selectFieldValue(field);
+    else output[key] = field.value;
   }
   return output;
 }
@@ -348,7 +360,7 @@ function bindInteractions() {
       if (node.getAttribute && !node.getAttribute('tabindex')) node.setAttribute('tabindex', '0');
       if (node.getAttribute && !node.getAttribute('role')) node.setAttribute('role', 'button');
       node.addEventListener('keydown', function (event) {
-        if (event.key !== 'Enter' && event.key !== ' ') return;
+        if (isMeasuring() || (event.key !== 'Enter' && event.key !== ' ')) return;
         if (event.preventDefault) event.preventDefault();
         for (var k = 0; k < nonGestures.length; k++) runInteraction(nonGestures[k], node, event);
       });
@@ -362,6 +374,7 @@ function bindGestures(node, gestureInteractions) {
   var start = null, timer = null, pinch = null;
   var lastTap = 0, lastX = 0, lastY = 0;
   function trigger(type, event) {
+    if (isMeasuring()) return;
     node.classList.add('wf-gesture-pulse');
     setTimeout(function () { node.classList.remove('wf-gesture-pulse'); }, 250);
     for (var i = 0; i < gestureInteractions.length; i++) if (gestureInteractions[i].gestureType === type) runInteraction(gestureInteractions[i], node, event);
@@ -447,11 +460,23 @@ function bindRouteLinks() {
     }
   });
 }
+// The form element renders a real HTML form, so its buttons and Enter in a
+// field submit it natively and reload the page. A prototype submits through its
+// own submit interactions only. Forms the host page owns are left alone.
+function blockNativeSubmit() {
+  if (!document || typeof document.addEventListener !== 'function') return;
+  document.addEventListener('submit', function (event) {
+    var form = event.target;
+    if (form && form.classList && form.classList.contains('wf-form')) event.preventDefault();
+  }, true);
+}
 function init() {
+  initMeasure();
   initState();
   initControls();
   initPanes();
   refresh();
+  blockNativeSubmit();
   bindSelection();
   bindInteractions();
   bindRouteLinks();

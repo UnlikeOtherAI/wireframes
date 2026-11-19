@@ -83,6 +83,24 @@ page:
                 label: Repeat
                 options: [Never, Hourly, Daily, Weekly, Monthly]
                 value: Daily
+        - id: ios_sheet_states
+          component: action_sheet
+          props:
+            title: Photo options
+            cancel: Cancel
+            items:
+              - type: group
+                label: Share
+                items:
+                  - label: AirDrop
+                    icon: wifi
+                  - label: Copy link
+                    icon: link
+                    disabled: true
+              - type: separator
+              - label: Delete photo
+                icon: trash
+                tone: danger
         - id: ios_share
           component: button
           props:

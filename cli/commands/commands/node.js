@@ -4,10 +4,11 @@ const path = require('node:path');
 const {
   addNode,
   removeNode,
+  renameRepeatItem,
   updateNode,
 } = require(path.resolve(__dirname, '..', '..', '..', 'engine', 'node'));
 
-const SUBCOMMAND_USAGE = 'Usage: wf node <add|update|remove> ...';
+const SUBCOMMAND_USAGE = 'Usage: wf node <add|update|remove|rename> ...';
 
 function parseAddArgs(args) {
   const options = {
@@ -232,6 +233,26 @@ function runNode(args, context = {}) {
     }
 
     console.error(`wf node remove failed: ${result.error}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  if (subcommand === 'rename') {
+    const [address, itemId] = rest;
+    if (!address || !itemId) {
+      console.error('wf node rename requires <repeat-row-address> <item-id>.');
+      console.log(SUBCOMMAND_USAGE);
+      process.exitCode = 2;
+      return;
+    }
+
+    const result = renameRepeatItem({ projectPath: cwd, address, itemId });
+    if (result.ok) {
+      console.log(`Renamed row to ${result.nodeId} (${result.address})`);
+      return;
+    }
+
+    console.error(`wf node rename failed: ${result.error}`);
     process.exitCode = 1;
     return;
   }

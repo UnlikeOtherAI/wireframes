@@ -1,8 +1,6 @@
 'use strict';
 
 const path = require('node:path');
-const { SUPPORTED_SPEC_VERSION } = require(path.resolve(__dirname, '..', 'schema', 'constants'));
-const { loadDocumentFromFile } = require(path.resolve(__dirname, '..', 'schema', 'loader'));
 const {
   parseAddress,
   resolveAddressInRoots,
@@ -15,6 +13,10 @@ const {
 } = require(path.resolve(__dirname, '..', 'addressing', 'fs-resolver'));
 
 const { PRIMITIVE_COMPONENTS } = require(path.resolve(__dirname, '..', 'schema', 'primitives'));
+const { childNodeLists } = require(path.resolve(__dirname, '..', 'component-registry', 'child-nodes'));
+const { repeatRows } = require(path.resolve(__dirname, '..', 'component-registry', 'repeat'));
+const { resolveAuthoredComponent } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
+const { loadProjectComponentRegistry } = require(path.resolve(__dirname, '..', 'component-registry'));
 
 const WF_ID_REGEX = /^[a-z][a-z0-9_]*$/;
 
@@ -64,8 +66,12 @@ function collectNodeIds(nodes, set) {
       set.add(node.id);
     }
 
-    if (Array.isArray(node.children)) {
-      collectNodeIds(node.children, set);
+    for (const row of repeatRows(node)) {
+      set.add(row.id);
+    }
+
+    for (const list of childNodeLists(node)) {
+      collectNodeIds(list, set);
     }
   }
 }
@@ -87,13 +93,6 @@ function parseNodeId(nodeId) {
   return { ok: true, value: nodeId };
 }
 
-function buildComponentIds(projectPath) {
-  const components = loadDocumentFromFile(componentsFilePath(projectPath), {
-    supportedSpecVersion: SUPPORTED_SPEC_VERSION,
-  }).document?.components;
-  return isObject(components) ? new Set(Object.keys(components)) : new Set();
-}
-
 function resolveComponentBinding(projectPath, componentRef) {
   if (typeof componentRef !== 'string' || componentRef.trim() === '') {
     return { ok: false, error: 'Component is required.' };
@@ -103,15 +102,32 @@ function resolveComponentBinding(projectPath, componentRef) {
     return { ok: true, node: { component: componentRef } };
   }
 
-  if (buildComponentIds(projectPath).has(componentRef)) {
+  // The same lookup a `use:` gets: the project's own components first, then the built-ins.
+  const loaded = loadProjectComponentRegistry(projectPath);
+  if (!loaded.ok) {
+    return { ok: false, error: `Unable to load project components: ${loaded.error}` };
+  }
+  if (resolveAuthoredComponent(componentRef, loaded.registry.components)) {
     return { ok: true, node: { use: componentRef } };
   }
 
   return { ok: false, error: `Unknown component reference "${componentRef}".` };
 }
 
+// Every caller of this one writes the document it resolves, so a read-only
+// target stops here with the way to make it editable: a built-in std pattern
+// the project does not define, or a component defined outside the project.
 function resolveTarget(projectPath, address) {
-  return resolveTargetWithMetadata(projectPath, address);
+  const target = resolveTargetWithMetadata(projectPath, address);
+  return target.ok && target.readOnly ? { ok: false, error: target.readOnly } : target;
+}
+
+/** Why an operation cannot apply to a repeat row: it would make the row a different node. */
+function repeatRowRefusal(resolved, advice) {
+  return {
+    ok: false,
+    error: `Node "${resolved.rowId}" is a repeat row: item "${resolved.item.id}" of repeat on "${resolved.host.id}", drawn with cell "${resolved.cell}". ${advice}`,
+  };
 }
 
 module.exports = {
@@ -124,6 +140,7 @@ module.exports = {
   parseNodeId,
   pageFilePath,
   resolveAddressInRoots,
+  repeatRowRefusal,
   resolveComponentBinding,
   resolveTarget,
   templatesFilePath,

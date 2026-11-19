@@ -48,15 +48,19 @@ const COMMANDS = [
   },
   {
     name: 'component',
-    args: '<add|remove|list>',
-    summary: 'Manage reusable components',
-    usage: 'wf component <add|remove|list> [id]',
+    args: '<add|remove|list|show|copy>',
+    summary: 'Manage reusable components, show their props and slots, and copy built-in std patterns',
+    usage: 'wf component <add|remove|list> [id]\n'
+      + 'wf component list --std\n'
+      + 'wf component show <id>\n'
+      + 'wf component copy std.<name> [--as <id>] [--file <path>]',
   },
   {
     name: 'node',
-    args: '<add|update|remove>',
-    summary: 'Add, update and remove nodes',
-    usage: 'wf node <add|update|remove> ...',
+    args: '<add|update|remove|rename>',
+    summary: 'Add, update and remove nodes; rename a repeat row',
+    usage: 'wf node <add|update|remove> ...\n'
+      + 'wf node rename <repeat-row-address> <item-id>',
   },
   {
     name: 'overlay',

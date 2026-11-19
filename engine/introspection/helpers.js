@@ -3,6 +3,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
+const { childNodeLists } = require('../component-registry/child-nodes');
+const { repeatCellReference } = require('../component-registry/repeat');
 
 const ID_REGEX = /^[a-z][a-z0-9_]*$/;
 
@@ -74,8 +76,14 @@ function collectNodeComponentUsages(node, componentIds, callback) {
     callback(node.use);
   }
 
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
+  // Each row of a component cell is an instance of it.
+  const cell = repeatCellReference(node);
+  if (cell && componentIds.has(cell)) {
+    callback(cell);
+  }
+
+  for (const list of childNodeLists(node)) {
+    for (const child of list) {
       collectNodeComponentUsages(child, componentIds, callback);
     }
   }

@@ -3,6 +3,8 @@
 const { toPx } = require('./layout');
 const { standardRole } = require('../design-system/resolve');
 const { readLocalImage } = require('./wireframe-styles');
+const { resolveSelection } = require('./items');
+const { selectOptionRows, optionLeaves } = require('./choice-options');
 const {
   isObject,
   isBoundSelectionValue,
@@ -133,6 +135,7 @@ function sourceAttrs(node, options) {
   if (role.component) entries.push('data-wf-component="' + escapeAttr(role.component) + '"');
   if (role.variant) entries.push('data-wf-variant="' + escapeAttr(role.variant) + '"');
   if (typeof node.__source === 'string') entries.push(`data-wf-source="${escapeAttr(node.__source)}"`);
+  if (typeof node.__sourcePath === 'string') entries.push(`data-wf-source-path="${escapeAttr(node.__sourcePath)}"`);
   if (typeof node.__definition === 'string') entries.push(`data-wf-definition="${escapeAttr(node.__definition)}"`);
   if (Number.isInteger(options.rowIndex)) entries.push(`data-wf-row="${options.rowIndex}"`);
   return entries.length > 0 ? ` ${entries.join(' ')}` : '';
@@ -192,6 +195,85 @@ function navigationAttrs(navTarget) {
   ];
 }
 
+// Every state an element can show, in the order its attributes are written.
+const STATES = ['disabled', 'readonly', 'required', 'invalid', 'loading', 'pressed', 'checked', 'selected', 'current', 'expanded'];
+// A widget that supports one of these is toggleable, so its ARIA says "false" when off.
+const TOGGLE_STATES = new Set(['pressed', 'checked', 'selected', 'expanded']);
+const MIXED_STATES = new Set(['pressed', 'checked']);
+const NATIVE_STATES = new Set(['disabled', 'readonly', 'required']);
+
+/**
+ * Who owns a state decides how it is announced. `native` lists states written
+ * as bare HTML attributes; `aria` maps a state to the ARIA attribute the
+ * owner's role supports; `current` is the `aria-current` token.
+ */
+const STATE_OWNERS = Object.freeze({
+  // A <button> that does not toggle.
+  button: { native: ['disabled'], aria: { loading: 'aria-busy' } },
+  // A <button> that toggles: pressed buttons, toolbar toggles.
+  toggle: { native: ['disabled'], aria: { pressed: 'aria-pressed', loading: 'aria-busy' } },
+  // Existing tab and segment buttons announce selection as aria-pressed.
+  tab: { native: ['disabled'], aria: { selected: 'aria-pressed' } },
+  // <input> and <textarea>.
+  field: { native: ['disabled', 'readonly', 'required'], aria: { invalid: 'aria-invalid' } },
+  // <select> has no native readonly.
+  select: { native: ['disabled', 'required'], aria: { readonly: 'aria-readonly', invalid: 'aria-invalid' } },
+  // An element with role checkbox, radio or switch.
+  check: {
+    aria: {
+      checked: 'aria-checked',
+      disabled: 'aria-disabled',
+      readonly: 'aria-readonly',
+      required: 'aria-required',
+      invalid: 'aria-invalid',
+    },
+  },
+  // A navigation link.
+  link: { aria: { current: 'aria-current', disabled: 'aria-disabled' }, current: 'page' },
+  // A display-only list row: menu, command and menubar entries.
+  item: { aria: { current: 'aria-current', disabled: 'aria-disabled' }, current: 'true' },
+  // A tree row or accordion head that opens and closes.
+  disclosure: { aria: { expanded: 'aria-expanded', disabled: 'aria-disabled' } },
+});
+
+function stateValue(name, raw) {
+  if (raw === true) return 'true';
+  if (raw === 'mixed' && MIXED_STATES.has(name)) return 'mixed';
+  return null;
+}
+
+/**
+ * State attributes for the element that owns the state. Every state that is
+ * on gets a presence-only `data-wf-<state>` (`="mixed"` when mixed); the
+ * owner decides which native and ARIA attributes go with it.
+ */
+function stateAttrs(state, { owner = {} } = {}) {
+  const values = isObject(state) ? state : {};
+  const native = new Set(Array.isArray(owner.native) ? owner.native : []);
+  const aria = isObject(owner.aria) ? owner.aria : {};
+  const nativeAttrs = [];
+  const ariaAttrs = [];
+  const dataAttrs = [];
+  const written = new Set();
+  for (const name of STATES) {
+    const on = stateValue(name, values[name]);
+    if (on) dataAttrs.push(on === 'mixed' ? `data-wf-${name}="mixed"` : `data-wf-${name}`);
+    if (native.has(name) && NATIVE_STATES.has(name)) {
+      if (on) nativeAttrs.push(name);
+      continue;
+    }
+    const attr = aria[name];
+    if (typeof attr !== 'string' || written.has(attr)) continue;
+    const token = name === 'current' && on === 'true' && typeof owner.current === 'string' ? owner.current : on;
+    if (on) ariaAttrs.push(`${attr}="${escapeAttr(token)}"`);
+    else if (TOGGLE_STATES.has(name)) ariaAttrs.push(`${attr}="false"`);
+    else continue;
+    written.add(attr);
+  }
+  const attrs = [...nativeAttrs, ...ariaAttrs, ...dataAttrs];
+  return attrs.length > 0 ? ` ${attrs.join(' ')}` : '';
+}
+
 function renderImageElement(projectPath, props, options = {}) {
   const rawSource = resolveAttributeValue(typeof props.src === 'string' ? props.src.trim() : '', options);
   const alt = resolveAttributeValue(
@@ -233,27 +315,51 @@ function renderSectionTitle(props, options = {}) {
   return `<div class="wf-section-title">${renderBoundText(titleValue, options)}</div>`;
 }
 
-function renderSelectOptions(options) {
-  if (!Array.isArray(options) || options.length === 0) {
-    return '';
-  }
+/**
+ * `<option>` markup for `select.options`, read through the item model's
+ * `select` profile. A scalar (booleans included) is written as given; an
+ * object trims its label and value and falls back to "Option". `value` (a
+ * list with `multiple`) and item `selected` mark the initial selection,
+ * resolved once across the options of every group, so a single select marks
+ * only the first match. A `group` is an `<optgroup>` and a `separator` an `<hr>`.
+ */
+function choiceIdentity(raw) {
+  return ['string', 'number', 'boolean'].includes(typeof raw) ? String(raw).trim() : '';
+}
 
-  return options.map((entry) => {
-    if (entry == null) {
-      return '';
+/**
+ * What the runtime needs to re-select a bound select from state with the
+ * precedence it rendered with (items.js resolveSelection): an authored
+ * `selected` as `data-wf-item-selected`, and the option's identity when its
+ * trimmed `value` attribute is not it.
+ */
+function boundOptionAttrs(item, optionValue) {
+  const id = choiceIdentity(item.value) || choiceIdentity(item.label);
+  return `${typeof item.selected === 'boolean' ? ` data-wf-item-selected="${item.selected}"` : ''}${
+    id !== String(optionValue).trim() ? ` data-wf-identity="${escapeAttr(id)}"` : ''}`;
+}
+
+/** `bound`: the select's value comes from state, so the runtime re-selects its options. */
+function renderSelectOptions(options, { value, multiple = false, bound = false } = {}) {
+  const rows = selectOptionRows(options);
+  if (rows.length === 0) return '';
+  const leaves = optionLeaves(rows);
+  const { selected } = resolveSelection(leaves.map((row) => row.item), { value, multiple });
+  const chosen = new Set(leaves.filter((_, index) => selected[index]));
+
+  const write = (list) => list.map((row) => {
+    const { item, scalar } = row;
+    if (item.type === 'separator') return '<hr>';
+    if (item.type === 'heading' || item.type === 'group') {
+      return `<optgroup label="${escapeAttr(String(item.label ?? '').trim())}">${row.rows ? write(row.rows) : ''}</optgroup>`;
     }
-    if (typeof entry === 'string' || typeof entry === 'number' || typeof entry === 'boolean') {
-      const label = String(entry);
-      const value = String(entry);
-      return `<option value="${escapeAttr(value)}">${escapeHtml(label)}</option>`;
-    }
-    if (isObject(entry)) {
-      const label = String(entry.label || entry.value || '').trim();
-      const value = String(entry.value ?? entry.label ?? '').trim();
-      return `<option value="${escapeAttr(value)}">${escapeHtml(label || value || 'Option')}</option>`;
-    }
-    return '';
-  }).filter(Boolean).join('');
+    const label = scalar ? item.label : String(item.label || item.value || '').trim();
+    const optionValue = scalar ? item.value : String(item.value ?? item.label ?? '').trim();
+    const attrs = `${chosen.has(row) ? ' selected' : ''}${item.disabled === true ? ' disabled' : ''}${
+      bound ? boundOptionAttrs(item, optionValue) : ''}`;
+    return `<option value="${escapeAttr(optionValue)}"${attrs}>${escapeHtml(scalar ? label : label || optionValue || 'Option')}</option>`;
+  }).join('');
+  return write(rows);
 }
 
 module.exports = {
@@ -263,6 +369,8 @@ module.exports = {
   sourceAttrs,
   primaryNavigationTarget,
   navigationAttrs,
+  stateAttrs,
+  STATE_OWNERS,
   renderImageElement,
   renderSectionTitle,
   renderSelectOptions,

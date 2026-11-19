@@ -68,11 +68,20 @@ function createLocator(sources, documents) {
    * The node a semantic rule named by id. Those rules walk a page with its template
    * and shared components folded in, so the id may be written in another document. It
    * is only looked for there when one node has it: a guess could underline the wrong file.
+   * `within` is the path of the definition being walked, when the rule knows it; the
+   * id is looked for under it first, since every components document has one label.
    */
-  function atNode(candidates, id, last) {
+  function atNode(candidates, id, last, within) {
     const idRange = (entry, hit) => ({
       source: entry.source, start: entry.start + hit.id.start, end: entry.start + hit.id.end, document: entry.label, path: null,
     });
+    if (typeof within === 'string') {
+      for (const entry of candidates) {
+        const scope = entry.root ? locate(entry.root, parsePath(within)) : null;
+        const hits = scope?.complete ? findAllById(scope.node, id) : [];
+        if (hits.length > 0) return idRange(entry, last ? hits[hits.length - 1] : hits[0]);
+      }
+    }
     for (const entry of candidates) {
       const hits = entry.root ? findAllById(entry.root, id) : [];
       if (hits.length > 0) return idRange(entry, last ? hits[hits.length - 1] : hits[0]);
@@ -95,8 +104,10 @@ function createLocator(sources, documents) {
     }
     const at = where.at;
     if (!at || typeof at.document !== 'string') return null;
-    const candidates = documents.filter((entry) => entry.label === at.document && entry.value !== null);
-    if (typeof at.node === 'string') return atNode(candidates, at.node, where.last === true);
+    // Every components document has one label; `file` says which one a rule means.
+    const candidates = documents.filter((entry) => entry.label === at.document && entry.value !== null
+      && (typeof at.file !== 'string' || entry.path === at.file));
+    if (typeof at.node === 'string') return atNode(candidates, at.node, where.last === true, at.within);
     if (candidates.length === 0) return null;
     if (typeof at.path !== 'string') return documentStart(candidates[0]);
     const places = candidates.map((entry) => atPath(entry, at.path, at.key === true));

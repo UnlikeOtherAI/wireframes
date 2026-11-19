@@ -146,6 +146,11 @@ function resolveTemplateToken(type, path, options = {}) {
   return undefined;
 }
 
+/** Below a repeat row, an `{{item.…}}` token with no collection item to read is plain item text. */
+function isItemTokenAsWritten(type, options) {
+  return type === 'item' && options.repeatRow === true && options.item == null;
+}
+
 function renderSkeleton(width) {
   const cssWidth = typeof width === 'number' && Number.isFinite(width)
     ? `${width}ch`
@@ -180,6 +185,8 @@ function renderBoundText(value, options = {}) {
     const path = match[2];
     if (type === 'state' || type === 'appState') {
       parts.push(`<span data-bind="${escapeAttr(`${type}.${path}`)}"></span>`);
+    } else if (isItemTokenAsWritten(type, options)) {
+      parts.push(escapeHtml(match[0]));
     } else {
       const resolved = resolveTemplateToken(type, path, options);
       const rendered = resolved == null ? '' : String(resolved);
@@ -208,12 +215,15 @@ function resolveAttributeValue(value, options = {}, stateBindings = null, stateP
     return source;
   }
 
-  return source.replace(BINDING_TOKEN, (_match, type, path) => {
+  return source.replace(BINDING_TOKEN, (match, type, path) => {
     if (type === 'state' || type === 'appState') {
       if (isObject(stateBindings) && stateProperty) {
         stateBindings[stateProperty] = `{{${type}.${path}}}`;
       }
       return '';
+    }
+    if (isItemTokenAsWritten(type, options)) {
+      return match;
     }
 
     if (type === 'route') {

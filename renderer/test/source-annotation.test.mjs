@@ -25,7 +25,7 @@ function loadQuickstart() {
   return map;
 }
 
-const stripAnnotations = (html) => html.replace(/ data-wf-(source|definition|row|component|variant)="[^"]*"/g, '');
+const stripAnnotations = (html) => html.replace(/ data-wf-(source|source-path|definition|row|component|variant)="[^"]*"/g, '');
 
 describe('source annotation', () => {
   it('leaves default output free of annotations', () => {

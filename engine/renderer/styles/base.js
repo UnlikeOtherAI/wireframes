@@ -121,6 +121,12 @@ const baseStyles = [
   '.wf-mode-card .wf-button-danger.wf-act{background:#1f2937;color:#ffffff}',
   '.wf-mode-card .wf-button-ghost.wf-act{background:transparent;color:var(--wf-ink-2)}',
   '.wf-mode-card .wf-button-link.wf-act{background:transparent;color:var(--wf-ink);text-decoration:underline;min-width:0;padding:0}',
+  // Action states: a toned label and edge, a pressed toggle, a disabled action.
+  '.wf-act[class*="wf-tone-"]{color:var(--wf-tone)}',
+  '.wf-mode-line .wf-act[class*="wf-tone-"]{border-color:var(--wf-tone)}',
+  '.wf-mode-line .wf-act[data-wf-pressed]{background:var(--wf-fill);box-shadow:inset 0 0 0 1px var(--wf-line-strong)}',
+  '.wf-mode-card .wf-act[data-wf-pressed]{background:var(--wf-line);color:var(--wf-ink);box-shadow:inset 0 1px 2px rgba(17,24,39,.18)}',
+  '.wf-act[data-wf-disabled]{opacity:.5;cursor:not-allowed}',
 ].join('\n');
 
 module.exports = { baseStyles };

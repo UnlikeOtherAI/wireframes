@@ -1,0 +1,185 @@
+documentType: page
+specVersion: "1.1"
+id: line_navigation
+page:
+  id: line_navigation
+  template: app_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: line
+  slots:
+    - slotId: main
+      content:
+        - id: lnav_header
+          component: page_header
+          props:
+            title: Line mode — navigation
+            subtitle: The same palette, menus, toolbar and gantt, drawn as hairlines.
+
+        - id: lnav_grid
+          component: grid
+          props:
+            columns: 2
+          children:
+            - id: lnav_top_card
+              component: card
+              props:
+                title: Top navigation
+              size:
+                minHeight: 245
+              children:
+                - id: lnav_top
+                  component: nav
+                  props:
+                    variant: top
+                    open: Resources
+                    items:
+                      - label: Platform
+                        items: [Overview, Security]
+                      - label: Resources
+                        items:
+                          - label: Guides
+                            icon: book
+                            description: Step-by-step walkthroughs.
+                            route: content
+                            current: true
+                          - label: API reference
+                            icon: code
+                            description: Every endpoint and field.
+                            route: data
+                          - type: separator
+                          - label: Webinars
+                            icon: video
+                            description: Paused for the summer.
+                            disabled: true
+                      - label: Customers
+                        route: charts
+                      - type: separator
+                      - label: Careers
+                        disabled: true
+                        route: content
+            - id: lnav_menubar_card
+              component: card
+              props:
+                title: Menubar
+              size:
+                minHeight: 245
+              children:
+                - id: lnav_menubar
+                  component: menubar
+                  props:
+                    open: View
+                    items:
+                      - label: File
+                        items: [New, Open]
+                      - label: Edit
+                        items: [Undo, Redo]
+                      - label: View
+                        items:
+                          - label: Show sidebar
+                            shortcut: "⌘B"
+                            selected: true
+                          - label: Show minimap
+                            disabled: true
+                          - type: separator
+                          - type: group
+                            label: Zoom
+                            items:
+                              - label: Zoom in
+                                shortcut: "⌘+"
+                              - label: Zoom out
+                                shortcut: "⌘-"
+                              - label: Actual size
+                                shortcut: "⌘0"
+                      - label: Go
+                        disabled: true
+                        items: [Back]
+                      - label: Help
+            - id: lnav_command_card
+              component: card
+              props:
+                title: Command palette
+              children:
+                - id: lnav_command
+                  component: command
+                  props:
+                    query: inv
+                    footer: true
+                    items:
+                      - type: group
+                        label: Actions
+                        items:
+                          - label: Invite teammates
+                            icon: user-plus
+                            description: Send an email invite
+                            shortcut: "⌘⇧I"
+                            selected: true
+                          - label: Create invoice
+                            icon: file-invoice
+                            shortcut: "⌘I"
+                          - label: Export inventory
+                            icon: file-export
+                            description: Admins only
+                            disabled: true
+                      - type: group
+                        label: Pages
+                        items:
+                          - label: Invoices
+                            icon: receipt
+                            route: data
+                          - label: Invitations
+                            icon: envelope
+                            route: forms
+            - id: lnav_side
+              component: stack
+              props:
+                gap: 20
+              children:
+                - id: lnav_toolbar_card
+                  component: card
+                  props:
+                    title: Toolbar
+                  children:
+                    - id: lnav_toolbar
+                      component: toolbar
+                      props:
+                        labels: true
+                        items:
+                          - { label: Undo, icon: rotate-left }
+                          - { label: Redo, icon: rotate-right, disabled: true }
+                          - { type: separator }
+                          - { label: Comment, icon: comment, pressed: true }
+                          - { label: Share, icon: share-nodes }
+                - id: lnav_gantt
+                  component: chart
+                  props:
+                    chartType: gantt
+                    title: Migration plan
+                    ticks: [Mon, Tue, Wed, Thu, Fri]
+                    data:
+                      - { label: Freeze writes, start: 0, end: 1, tone: warning }
+                      - { label: Copy data, start: 1, end: 3 }
+                      - { label: Verify, start: 2.5, end: 4, tone: info }
+                      - { label: Switch over, start: 3.6, end: 4, tone: success }
+                # One cell per keyed item: stat tiles, then a small local component.
+                - id: lnav_kpis
+                  component: grid
+                  props:
+                    columns: 3
+                  repeat:
+                    cell: stat
+                    items:
+                      - { id: seats, label: Seats, value: "48" }
+                      - { id: active, label: Active, value: "41" }
+                      - { id: invited, label: Invited, value: "7" }
+                - id: lnav_members
+                  component: row
+                  props:
+                    gap: 16
+                  repeat:
+                    cell: member_chip
+                    items:
+                      - { id: ada, name: Ada Lovelace }
+                      - { id: grace, name: Grace Hopper }
+                      - { id: alan, name: Alan Turing }

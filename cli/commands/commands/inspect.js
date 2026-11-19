@@ -49,6 +49,12 @@ function runInspect(args, context = {}) {
   console.log(`Origin: ${result.origin}`);
   console.log(`Source: ${result.sourceRef}`);
   console.log(`Resolved path: ${result.resolvedAddress}`);
+  if (result.repeatItem) {
+    const row = result.repeatItem;
+    console.log(`Repeat item: "${row.item}" of repeat on "${row.host}" (${row.hostAddress}), index ${row.index}, cell ${row.cell}`);
+    console.log(`Rendered id: ${row.renderedId}`);
+    console.log(`File: ${row.file ?? '<built-in, read-only>'}`);
+  }
   console.log('Node definition:');
   console.log(JSON.stringify(result.node, null, 2));
   printChildren(result.children);

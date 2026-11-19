@@ -378,3 +378,27 @@ page:
                 title: Scheduled maintenance
                 text: The dashboard is read-only on Sunday morning.
                 variant: neutral
+
+        - id: alerts_actions
+          component: stack
+          props:
+            gap: 10
+          children:
+            - id: alert_actions
+              component: alert
+              props:
+                title: Your trial ends in three days
+                text: Add a payment method to keep every project.
+                variant: warning
+                actions:
+                  - { label: Add payment method, variant: primary, route: forms }
+                  - { label: Remind me later }
+            - id: alert_actions_disabled
+              component: alert
+              props:
+                title: Export queued
+                text: We will email you when the file is ready.
+                variant: info
+                actions:
+                  - { label: Download, route: data, disabled: true }
+                  - { label: Cancel export, tone: danger }

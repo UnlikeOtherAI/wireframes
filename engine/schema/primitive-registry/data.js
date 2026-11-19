@@ -25,31 +25,33 @@ const dataPrimitives = [
     frame: 'C',
     summary: 'List rows. kind covers plain, avatar, action, file, chat and timeline shapes.',
     props: {
-      items: { type: 'array', primary: true },
+      items: { type: 'array', items: true, primary: true },
       kind: { enum: ['plain', 'avatar', 'action', 'file', 'chat', 'timeline', 'settings'] },
       divided: { type: 'boolean' },
       selectable: { type: 'boolean' },
       refreshable: { type: 'boolean' },
     },
     sizing: ['row.height'],
-    example: '- list: { kind: avatar, items: [{ title: Ada, text: Invited you }] }',
+    example: '- list: { kind: avatar, items: [{ label: Ada, description: Invited you }] }',
   },
   {
     name: 'chart',
     family: 'data',
     frame: 'C',
-    summary: 'Greeked chart placeholder in nine shapes. Deterministic, never random.',
+    summary: 'Greeked chart placeholder in ten shapes. Deterministic, never random. '
+      + 'gantt draws data [{ label, start, end, tone }] as bars on one axis labelled by ticks.',
     props: {
       chartType: {
         enum: [
           'bar', 'vertical', 'horizontal', 'line', 'area',
-          'pie', 'donut', 'gauge', 'sparkline', 'heatmap',
+          'pie', 'donut', 'gauge', 'sparkline', 'heatmap', 'gantt',
         ],
         primary: true,
       },
       title: { type: 'string' },
       label: { type: 'string', aliasOf: 'title' },
       data: { type: 'array' },
+      ticks: { type: 'array' },
       series: { type: 'number' },
       legend: { type: 'boolean' },
       axes: { type: 'boolean' },
@@ -86,22 +88,22 @@ const dataPrimitives = [
     name: 'tree',
     family: 'data',
     frame: 'C',
-    summary: 'Nested tree or file browser.',
+    summary: 'Nested tree or file browser. Items stay open unless they set expanded: false.',
     props: {
-      items: { type: 'array', primary: true },
+      items: { type: 'array', items: true, primary: true },
       expanded: { type: 'boolean' },
     },
-    example: '- tree: { items: [{ label: src, children: [{ label: index.js }] }] }',
+    example: '- tree: { items: [{ label: src, items: [{ label: index.js }] }] }',
   },
   {
     name: 'accordion',
     family: 'data',
     frame: 'C',
-    summary: 'Collapsible rows; set open on the item that starts expanded.',
+    summary: 'Collapsible rows; set expanded on the item that starts open.',
     props: {
-      items: { type: 'array', primary: true },
+      items: { type: 'array', items: true, primary: true },
     },
-    example: '- accordion: { items: [{ title: Billing, text: ..., open: true }] }',
+    example: '- accordion: { items: [{ label: Billing, description: ..., expanded: true }] }',
   },
 ];
 

@@ -5,6 +5,7 @@ const { paintMarkup, skinShellStyle } = require('../design-system/paint');
 
 const { toPx } = require('./layout');
 const { sourceAttrs } = require('./render-attrs');
+const { actionButtons } = require('./render-lib');
 
 const OVERLAY_TYPES = new Set([
   'modal',
@@ -180,13 +181,11 @@ function renderOverlay(node, options, childStyle, ctx) {
       node.dismissOn ? '<button type="button" class="wf-overlay-close" aria-label="Close">×</button>' : ''
     }</header>`
     : '';
-  const actions = Array.isArray(props.actions) && props.actions.length > 0
-    ? `<footer class="wf-overlay-foot">${props.actions.map((action) => {
-      const entry = isObject(action) ? action : { label: String(action) };
-      const variant = typeof entry.variant === 'string' ? entry.variant : 'secondary';
-      return `<button class="wf-act wf-button-${ctx.toSafeClass(variant)}">${ctx.escapeHtml(String(entry.label ?? ''))}</button>`;
-    }).join('')}</footer>`
-    : '';
+  const actions = actionButtons(
+    props.actions,
+    { routeTable: isObject(options.routeTable) ? options.routeTable : {} },
+    { tag: 'footer', className: 'wf-overlay-foot' },
+  );
 
   const appearance = resolveAppearance(node, options);
   const paint = (markup) => paintMarkup(markup, node, appearance, options);

@@ -4,13 +4,24 @@
 
 - **containers**: section, card, stack, row, grid, split, form, carousel
 - **text**: heading, paragraph, text, code, badge, avatar, icon, image, rating, stat, progress, skeleton, divider, spacer, empty_state
-- **controls**: button, segmented, input, textarea, select, checkbox, radio, toggle, choice_group, tags_input, upload, picker, editor
-- **navigation**: tab_bar, bottom_tab_bar, breadcrumb, pagination, stepper, nav, menu, app_bar, action_sheet, page_header
+- **controls**: button, toolbar, segmented, input, textarea, select, checkbox, radio, toggle, choice_group, tags_input, upload, picker, editor
+- **navigation**: tab_bar, bottom_tab_bar, breadcrumb, pagination, stepper, nav, menu, menubar, command, app_bar, action_sheet, page_header
 - **data**: table, list, chart, calendar, kanban, tree, accordion
 - **feedback**: alert
 
 Pick the element that *is* the thing. Do not build a card out of a section and a
 border; use `card`. Do not build a nav out of buttons; use `nav`.
+
+Three or more similar siblings: write one `repeat: { cell, items }` on a stack, row,
+grid or card. `cell` is an element or a component; each item is its props plus an `id`
+and renders as `<host>__<id>`: `repeat: { cell: stat, items: [{ id: mrr, label: MRR }] }`.
+
+## Screen patterns
+
+Whole screens ship built in. Use one before building it by hand: `use: std.login`.
+`std.data_page`, `std.hero`, `std.login`, `std.not_found`, `std.settings_page`, `std.signup`, `std.site_footer`, `std.site_header`.
+`wf component show std.<name>` lists its props and slots; `wf component copy
+std.<name>` makes an editable copy in components.yaml.
 
 ## Boxes: the one rule that matters
 
@@ -149,5 +160,6 @@ you can see what the engine decided without guessing. Turn on
 | `UNKNOWN_ROLE` | a role that drives no proportions |
 | `MISSING_TEXT` | an element rendering a skeleton you may not have intended |
 | `UNLABELED_FIELD` | a field with no label |
+| `AMBIGUOUS_VALUE` | a single-choice `value` that matches several items, so only the first is selected |
 | `ORPHAN_LAYOUT`, `EMPTY_CONTAINER`, `DEEP_NESTING` | structure that will not render as intended |
 

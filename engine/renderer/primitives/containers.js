@@ -35,7 +35,7 @@ function renderForm(node, ctx, lib) {
 }
 
 function renderCarousel(node, ctx, lib) {
-  const entries = lib.items(node.props?.items, 'title');
+  const entries = lib.normalizeItems(node.props?.items, lib.itemProfiles.list);
   const arrows = node.props?.arrows === false
     ? ''
     : '<button class="wf-carousel-arrow wf-carousel-prev">‹</button><button class="wf-carousel-arrow wf-carousel-next">›</button>';
@@ -47,7 +47,7 @@ function renderCarousel(node, ctx, lib) {
 
   if (entries.length > 0) {
     const slides = entries.map((item) => (
-      `<div class="wf-slide">${lib.str(item.title) ? lib.bound(item.title, ctx) : lib.renderSkeleton(14)}</div>`
+      `<div class="wf-slide">${lib.str(item.label) ? lib.bound(item.label, ctx) : lib.renderSkeleton(14)}</div>`
     )).join('');
     return { inner: `<div class="wf-carousel-track">${slides}</div>${arrows}${dots}`, after: '' };
   }
@@ -70,7 +70,9 @@ function renderAlert(node, ctx, lib) {
   const text = lib.str(props.text);
   const body = `<div class="wf-alert-body">${
     title ? `<div class="wf-alert-title">${lib.bound(title, ctx)}</div>` : ''
-  }${text ? `<div class="wf-alert-text">${lib.bound(text, ctx)}</div>` : (title ? '' : lib.renderSkeleton('70%'))}</div>`;
+  }${text ? `<div class="wf-alert-text">${lib.bound(text, ctx)}</div>` : (title ? '' : lib.renderSkeleton('70%'))}${
+    lib.actionButtons(props.actions, ctx)
+  }</div>`;
   const close = props.dismissible === true ? '<button class="wf-alert-close">×</button>' : '';
   return {
     inner: `<span class="wf-alert-glyph">${glyph}</span>${body}${close}`,

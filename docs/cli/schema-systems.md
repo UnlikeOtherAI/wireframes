@@ -154,6 +154,17 @@ wf://data/products#items:sku=ABC123
 
 No index-based addressing.
 
+A path descends through a node's `children` and through the named slot fills of
+a `use:` node, matching by id, so a page fill is addressed on its instance:
+`wf://page/billing#main.billing_panel.upgrade`. `wf node` and `wf inspect` use
+the same rule; `wf node add --inside` a `use:` node fills its `default` slot.
+
+Annotated renders (`annotateSource: true`) stamp each node with
+`data-wf-source="<doctype>:<docid>#<node id>"` (the document that wrote it) and
+`data-wf-source-path` (where it is written in that document, relative to the
+page document, the template or the component definition, for example
+`page.slots[0].content[1].slots.footer[0]` or `root.children[1].children[0]`).
+
 Resolved nodes must track:
 
 * origin (page/template/component)
@@ -189,6 +200,8 @@ Optional:
 * `placement` — top, bottom, left, right, center
 * `dismissOn` — array of dismissal triggers: backdrop, escape, button, timeout, outside
 * `wireframeStyle` — per-overlay style override
+* `props.title` — title in the overlay header
+* `props.actions` — footer actions: `{ label, variant, route, disabled, tone }`, no other keys. They render like every other action row (§15.4).
 
 Rules:
 
@@ -324,6 +337,113 @@ The optional `fields` array declares expected field names for validation
 and tooling hints, but items may contain additional fields beyond what
 is declared.
 
+## 14.1 Repeat
+
+`repeat` renders one cell per keyed item of an inline array. Use it for three
+or more similar siblings, such as people, plans or stat tiles.
+
+```yaml
+- id: team
+  component: grid
+  layout: { type: grid, columns: 3 }
+  repeat:
+    cell: person_card            # an element (name or alias) or a component reference
+    items:
+      - { id: ada, name: Ada Lovelace, role: Admin }
+      - { id: grace, name: Grace Hopper, role: Editor }
+```
+
+**Grammar.** `repeat` takes exactly `cell` and `items`. `cell` uses the `use:`
+grammar. A registry element name or alias wins; anything else is a component
+reference, qualified like `use:`: a local id, `alias.id`, `std.<name>`. Use a
+qualified reference to reach a component that shares an element's name.
+`items` holds 0–200 maps. Each has an `id` (`Id` pattern, unique in the
+repeat) and the cell's props. There is no scalar shorthand and no per-item
+`slots`.
+
+**Hosts.** Only a concrete `component:` node whose element lays out its
+authored children hosts rows: `section`, `card`, `stack`, `row`, `grid`,
+`split`, `form`, `carousel`, `app_bar`, and `tab_bar` or `bottom_tab_bar`
+without `tabs`. A host can sit in template region children, page slot and
+injection content, overlay content, a component definition, a slot fallback
+and a slot fill. A `use:` node, an injectable marker, a slot placeholder, a
+template region record, an overlay record and any other element is
+`REPEAT_INVALID_HOST`, and its rows never render.
+
+**Rows.** Each item becomes the node an author would write by hand:
+`{ id: <host id>__<item id>, component: <cell>, props }` for an element cell,
+or `use: <cell>` for a component cell. The props are the item without its
+`id`. Rows follow the host's own `children`, in item order. They are expanded
+by the host's author, where hand-written siblings would be:
+* rows in a component definition after its `{{props}}` substitution and before
+  namespacing, so they get the definition's props and become
+  `<instance>__<host>__<item>` per instance;
+* rows in caller content (a page, a template, a fill) before the callee
+  expands. A fill forwarded through another component keeps its rows' page ids
+  and gets no callee substitution.
+
+Rows follow the override rules of hand-written children. In a component
+without slots, instance `children` replace the root's children and its rows. A
+slot fallback the caller fills, or empties with `[]`, never renders, so its
+rows are never made. A row in a definition is stamped with the definition's
+file and path, also when the repeat is on the root.
+
+A sibling in the same scope may refer to a row by its id (`formId: team__ada`,
+an overlay `trigger`), and a form cell's own submit follows its row. Ids are
+checked on the rendered page, so a row id that equals an authored id is
+`DUPLICATE_NODE_ID`, located at the item.
+
+**Budget.** One page expands to at most 50,000 nodes, its regions and overlays
+together, so repeats that share a page share it, as do the hosts of one
+definition. A repeat's whole fan-out, nested components and repeats included,
+is checked before its first row is made: `REPEAT_BUDGET_EXCEEDED`, at the
+outermost repeat. A fallback the caller replaces costs nothing. The build,
+`wf validate` and the in-memory `validateProject` apply the same budget.
+`assertComponentExpansion` counts the rows too. The page limits in §16 (5,000
+nodes, depth 100) still apply to the result.
+
+**Binding.** `repeat` is for fixed inline content; `binding` stays the dataset
+mechanism. A repeat under a collection binding, on a node with one, or with a
+cell whose root has one, is `REPEAT_WITH_BINDING`, since the binding would
+clone the rows. The rule crosses component boundaries:
+* a binding on or above an instance clones every repeat its definition
+  renders, and each is reported where the definition writes it;
+* a binding on a definition's root, or on the root it delegates to with
+  `use:`, clones the content an instance gives it, and so does a binding above
+  the placeholder a fill lands in;
+* a cell whose root delegates to a bound root counts as a bound cell.
+
+Only a repeat that renders is checked, by the override rules above: rows that
+instance `children` replace, or that sit in a filled fallback, are not cloned.
+The binding that counts is the one that renders. A `binding` written on an
+instance, or on a root that delegates with `use:`, replaces the one on the root
+below it, so an expression there means no collection. A single-value `{{…}}`
+binding is fine. Items are plain props: `{{item.…}}`
+inside an item is not interpreted (`REPEAT_ITEM_TOKEN`, info). Below a row, an
+`{{item.…}}` token renders as written, unless a collection inside the row
+gives it an item.
+
+**Checks.** On the authored YAML: `UNKNOWN_REPEAT_CELL` (with the nearest
+name), `REPEAT_INVALID_HOST`, `DUPLICATE_REPEAT_ITEM_ID`, `REPEAT_WITH_BINDING`,
+and a component cell counts as a usage and a dependency edge. On the rendered
+page: ids, form references and overlay triggers. A row that cannot be
+expanded, for example because its cell uses an unknown component, is
+`REPEAT_ROW_FAILED` at its item. Lint runs element prop contracts on each row
+that renders, with the values it renders with (after a definition's
+`{{props}}`), and reports `…props.<key>` at `…repeat.items[i].<key>`, once
+per place. A row that never renders, such as one in a replaced fallback, is not
+checked. A component cell's items follow the component-input policy. When one
+entry of a page cannot be expanded, it is reported where it is written, and the
+rest of the page, its rows included, is still checked. A form or trigger id
+missing from such a page is not reported, since it may be in what failed.
+`items: []` is `EMPTY_REPEAT` (info). Shape and the 200 limit are schema
+errors.
+
+**Editing.** A row is addressed by its id under its host
+(`wf://page/home#main.team.team__ada`). The address finds the item by its id
+wherever it sits, so reordering never retargets it and a stale id fails. See
+`wf inspect` and `wf node` in brief.md.
+
 ---
 
 # 15. Elements
@@ -366,6 +486,131 @@ rules, not a line of boxes.
 A `role` drives size: see [schema.md §4.3](schema.md) for the token table and
 the three override levels, and §4.4 for `viewport.platform`.
 
+## 15.4 Items
+
+Collection elements share one item shape. A registry prop marked
+`{ type: 'array', items: true }` takes it, and `wf llm` lists that prop as
+`name (items)`. The generated schema keeps item arrays open, so YAML that is
+valid today stays valid; the model is applied at render time by
+`normalizeItems(value, profile)` in `engine/renderer/items.js`.
+
+**Canonical keys:**
+
+| Key | Meaning |
+|---|---|
+| `label` | Primary text. |
+| `description` | Secondary line. |
+| `value` | Identity. |
+| `icon`, `iconStyle`, `avatar`, `badge`, `meta`, `shortcut`, `route` | Decorations and navigation. |
+| `tone` | `neutral`, `info`, `success`, `warning` or `danger`. |
+| `selected`, `current`, `checked`, `disabled`, `expanded` | State. `checked` may also be `mixed`. |
+| `items` | Nested items. |
+| `type` | `item` (default), `separator`, `heading` or `group` (a label plus nested `items`). |
+
+A string or number entry is `{ label: String(v) }`; choice elements also set
+`value`. Booleans, `null`, arrays and other non-objects are dropped, except in
+`select`, which keeps rendering boolean options literally. Keys outside the
+model pass through untouched, so element data such as a list row's `side` stays
+available. A state the author leaves out stays absent: each element applies its
+own default.
+
+```yaml
+items:
+  - Inbox
+  - { label: Drafts, value: drafts, icon: file, badge: 3 }
+  - { type: separator }
+  - { type: heading, label: Labels }
+  - { type: group, label: Team, items: [Ada, Grace] }
+  - { label: Archive, route: archive, disabled: true }
+```
+
+**Legacy keys.** Each element keeps reading the keys it read before the model,
+with the same precedence, so older YAML renders exactly as it did. Canonical
+keys work everywhere. When an entry has both, the older precedence below wins.
+
+| Profile | Used by | Legacy keys |
+|---|---|---|
+| `basic` | `breadcrumb`, `stepper`, `page_header.breadcrumb`, actions | `title` fills an absent `label`; an explicit `label` is kept even when blank. |
+| `list` | `list`, `carousel` | A nonblank `title` before `label`; `text` before `description`. |
+| `accordion` | `accordion` | As `list`, plus `open` → `expanded` (closed unless `true`). |
+| `tree` | `tree` | A nonblank `label` before `title`; `children` → `items`; `open` → `expanded` (open unless `false`). |
+| `nav` | `nav` | As `basic`; `children` → `items`; a top-level `{group}` or `{heading}` entry is a heading. Legacy `active` is not an alias of `selected`: it stays in nav's own rule (step 3 below), where `active: true` turns a row on next to route inference and `active: false` never turns off the row for the current route. |
+| `menu` | `menu`, `action_sheet` | As `basic`; `{divider: true}` is a separator; `danger: true` is `tone: danger`. |
+| `tabs` | `tab_bar`, `bottom_tab_bar`, `page_header.tabs` | As `basic`; `active` → `selected`. |
+| `choice` | `segmented`, `choice_group`, `picker` | As `basic`; a scalar also sets `value`. |
+| `select` | `select` | No legacy keys; scalars, booleans included, set `label` and `value`. |
+| `canonical` | `command`, `menubar` | None: these elements are new and read the model keys only. |
+
+These stay element-specific data and do not take the model: table `columns` and
+`rows`, chart `data` and `series`, calendar `events`, kanban `columns` and
+`cards`, `tags_input.tags`, `upload.files`, `avatar.group`, and app-bar
+`actions` (glyphs).
+
+**Selection.** An item's identity is its `value`, else its `label`, compared as
+trimmed strings; a blank identity never matches. Precedence, highest first:
+
+1. Items marked `selected: true` are exactly the selection.
+2. Otherwise the element `value` (a list when `multiple: true`) selects the
+   matching items, skipping any marked `selected: false`. A single-choice
+   element selects only the first match, and `wf lint` reports
+   `AMBIGUOUS_VALUE` (info).
+3. Otherwise the element's own rule applies: nav's legacy `active: true`
+   rows plus route inference, stepper `current`, pagination `page`, or the
+   picker's first option whose label is the `value` text (with no `value`, the
+   first blank option), else its first option. It never selects an item marked
+   `selected: false`.
+4. Otherwise nothing is selected.
+
+Runtime binding payloads are unchanged: tab and segmented changes still send
+labels.
+
+**Routes.** An item `route` renders a link only in elements that already
+navigate: `nav`, `breadcrumb`, `tab_bar`, `bottom_tab_bar`, `menu`, `list`,
+`command` and actions. A `disabled` item never navigates: it renders without
+`href` and with `aria-disabled`. An unknown route id renders as plain text
+(an action renders as a plain button). An item route is ignored when the
+element itself carries an interaction, so anchors never nest.
+
+**Actions.** Action rows (`page_header.actions`, the `actions` drawn in the
+head of `card`, `section` and `form`, `alert.actions` below the alert text,
+and overlay footer `actions`) take
+`{ label, icon, variant, route, disabled, pressed, tone }`; the overlay schema
+allows only `label`, `variant`, `route`, `disabled` and `tone`. A disabled action
+is a button with `aria-disabled="true"` and no link; `pressed` (true or false)
+makes it a toggle button with `aria-pressed`; `tone` adds the shared
+`wf-tone-*` class. Rendering details are in
+[rendering-states.md](rendering-states.md).
+
+## 15.5 Fields and states
+
+Form controls share the field props in
+`engine/schema/primitive-registry/shared.js` (`FIELD_PROPS`): `label`, `help`,
+`error`, `required`, `disabled` and `readonly`.
+
+- `error` replaces `help` and marks the field invalid.
+- Help and error get ids and are linked to the focusable control with
+  `aria-describedby`.
+- `required` adds a marker to the visible label.
+- `disabled` keeps the native attribute where one exists, so disabled values
+  are not submitted. `readonly` values stay bound and are submitted.
+- With both `readonly` and `disabled`, `disabled` wins visually and both are
+  written.
+
+| Widget | Field label | Help and error | `readonly` |
+|---|---|---|---|
+| `input`, `textarea` | Above | Below | Native `readonly`. |
+| `select`, `picker`, `segmented`, `choice_group` | Above; `segmented` gains it | Below | `data-wf-readonly`, plus `aria-readonly` where the role supports it (`select`, a radio group, each checkbox in a checkbox group); the runtime ignores changes. |
+| `checkbox`, `radio`, `toggle` | Inline; `help` is an alias of the inline `description` | Error below the row | `aria-readonly` (a radio, which has none, gets `data-wf-readonly` only); the runtime ignores toggles. |
+| `tags_input`, `editor` | Above | Below | Drawn without input affordances. |
+| `upload` | `label` stays the action copy; `fieldLabel` goes above | Below | Dropzone drawn without its action. |
+
+**States.** The element that owns a state carries it as a presence-only data
+attribute, next to the native or ARIA attribute its role supports:
+`data-wf-disabled`, `-readonly`, `-required`, `-invalid`, `-loading`,
+`-pressed`, `-checked` (`="mixed"` when indeterminate), `-selected`, `-current`
+and `-expanded`. One serializer writes them all; the conventions are in
+[rendering-states.md](rendering-states.md).
+
 ---
 
 # 16. Validation Requirements
@@ -392,6 +637,25 @@ Blocking errors:
 * Invalid targetOverlay reference (overlay does not exist in page or inherited template overlays)
 * Invalid actionId reference (action not defined in page)
 * Invalid formId reference (node does not exist)
+* Component slots (§3.3 of the schema brief):
+  * `UNKNOWN_COMPONENT_SLOT`: a fill names a slot the component does not declare,
+    or an instance passes `children` and the component has no `default` slot.
+    The message lists the valid slot names.
+  * `DUPLICATE_COMPONENT_SLOT`: two placeholders in one component share a name.
+  * `DUPLICATE_DEFAULT_SLOT_FILL`: an instance gives both `children` and `slots.default`.
+  * `SLOT_OUTSIDE_COMPONENT`: a placeholder is a component root, or sits in a
+    page, a template or an overlay.
+  * `SLOTS_WITHOUT_USE`: a node has `slots` but no `use:`.
+* Repeat (§14.1):
+  * `UNKNOWN_REPEAT_CELL`: the cell is neither an element nor a component the
+    document can reach. The message suggests the nearest name.
+  * `REPEAT_INVALID_HOST`: `repeat` on a node or record that cannot host rows.
+  * `DUPLICATE_REPEAT_ITEM_ID`: two items in one repeat share an `id`.
+  * `REPEAT_WITH_BINDING`: a collection binding on, above or in the cell of a
+    repeat, including one that reaches it across a component boundary.
+  * `REPEAT_BUDGET_EXCEEDED`: the fan-out passes the page's 50,000-node budget.
+  * `REPEAT_ROW_FAILED`: a row cannot be expanded, for example because its cell
+    uses an unknown component. It is reported at the item.
 
 Warnings:
 
@@ -410,6 +674,18 @@ Info diagnostics:
 * Input/select/textarea without `label` (`UNLABELED_FIELD`)
 * Text primitive using `label` alias instead of canonical `text` (`TEXT_PROP_ALIAS`)
 * Demoted nested section with explicit width or height (`NESTED_SURFACE`)
+* A component slot that gets neither content nor a fallback
+  (`EMPTY_COMPONENT_SLOT`). An explicit `[]` fill is intentional and reports nothing.
+* A document that imports components under the alias `std`, whose components
+  win over the built-in std patterns of the same id (`STD_ALIAS_SHADOWED`;
+  see [stdlib.md](stdlib.md)).
+* A repeat with `items: []` (`EMPTY_REPEAT`), and an item value holding an
+  `{{item.…}}` token, which is not interpreted (`REPEAT_ITEM_TOKEN`). Both are lint info.
+
+The slot and authored repeat checks run in `wf validate` and in the in-memory
+`validateProject` entry point the browser and API use; `validateProject`
+returns its info diagnostics in `info`, and checks each page against the
+expansion budget as the build does.
 
 Safety limits:
 

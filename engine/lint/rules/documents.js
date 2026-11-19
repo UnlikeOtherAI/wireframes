@@ -5,7 +5,9 @@
 // `lintSources` runs it on text.
 
 const { appendPath } = require('../../schema/validator');
+const { childNodeEntries } = require('../../component-registry/child-nodes');
 const { validatePrimitiveProps } = require('./primitive-props');
+const { lintRenderedRows } = require('./repeat-rows');
 
 const RESERVED_KEYWORDS = new Set([
   'page',
@@ -115,9 +117,10 @@ function validateNodeIds(result, node, context, document, segments) {
     validateIdentifier(result, context, node.id, place(document, [...segments, 'id']));
   }
 
-  if (Array.isArray(node.children)) {
-    node.children.forEach((child, index) => {
-      validateNodeIds(result, child, `${context} > ${node.id ?? 'node'}`, document, [...segments, 'children', index]);
+  // Children, and the named fills of a component instance.
+  for (const list of childNodeEntries(node)) {
+    list.nodes.forEach((child, index) => {
+      validateNodeIds(result, child, `${context} > ${node.id ?? 'node'}`, document, [...segments, ...list.segments, index]);
     });
   }
 
@@ -234,8 +237,10 @@ function lintPage(result, pageDoc) {
  * @param {object|null} documents.components
  * @param {object[]} documents.datasets
  * @param {object[]} documents.pages
+ * @param {object[]} [documents.renderedPages]  the pages as they render, from the doctor's
+ *   `onRenderedPage`, whose repeat rows get their element contract
  */
-function lintDocuments(result, { manifest, sitemap, templates, components, datasets = [], pages = [] }) {
+function lintDocuments(result, { manifest, sitemap, templates, components, datasets = [], pages = [], renderedPages = [] }) {
   const routeEntries = sitemap?.sitemap?.routes || [];
   routeEntries.forEach((route, index) => {
     if (route && typeof route.id === 'string') {
@@ -266,6 +271,8 @@ function lintDocuments(result, { manifest, sitemap, templates, components, datas
   for (const pageDoc of pages) {
     lintPage(result, pageDoc);
   }
+
+  lintRenderedRows(result, renderedPages);
 }
 
 module.exports = {

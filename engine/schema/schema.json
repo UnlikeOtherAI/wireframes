@@ -510,7 +510,7 @@
         "content": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/Node"
+            "$ref": "#/$defs/NodeOrSlot"
           }
         },
         "wireframeStyle": {
@@ -541,11 +541,31 @@
                       "danger",
                       "link"
                     ]
+                  },
+                  "route": {
+                    "type": "string"
+                  },
+                  "disabled": {
+                    "type": "boolean"
+                  },
+                  "tone": {
+                    "type": "string",
+                    "enum": [
+                      "neutral",
+                      "info",
+                      "success",
+                      "warning",
+                      "danger"
+                    ]
                   }
                 }
               }
             }
           }
+        },
+        "repeat": {
+          "$ref": "#/$defs/Repeat",
+          "description": "Accepted so validation can say why it never renders: put the repeat on a node in content (REPEAT_INVALID_HOST)."
         }
       }
     },
@@ -776,6 +796,7 @@
         "checkbox",
         "choice_group",
         "code",
+        "command",
         "divider",
         "editor",
         "empty_state",
@@ -788,6 +809,7 @@
         "kanban",
         "list",
         "menu",
+        "menubar",
         "nav",
         "page_header",
         "pagination",
@@ -812,6 +834,7 @@
         "text",
         "textarea",
         "toggle",
+        "toolbar",
         "tree",
         "upload"
       ]
@@ -1022,8 +1045,22 @@
         "children": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/Node"
+            "$ref": "#/$defs/NodeOrSlot"
           }
+        },
+        "slots": {
+          "type": "object",
+          "description": "Named slot fills, only on a use: node. Each key is a slot the component declares; the value is the nodes that fill it. [] leaves a slot empty on purpose. Instance children fill the \"default\" slot.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/NodeOrSlot"
+            }
+          }
+        },
+        "repeat": {
+          "$ref": "#/$defs/Repeat",
+          "description": "Rows of one cell, keyed by item id, after the node's children."
         },
         "sticky": {
           "type": "string",
@@ -1519,6 +1556,25 @@
           "if": {
             "properties": {
               "component": {
+                "const": "toolbar"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_toolbar"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
                 "const": "segmented"
               }
             },
@@ -1880,6 +1936,44 @@
           "if": {
             "properties": {
               "component": {
+                "const": "menubar"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_menubar"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
+                "const": "command"
+              }
+            },
+            "required": [
+              "component"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PrimitiveProps_command"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "component": {
                 "const": "app_bar"
               }
             },
@@ -2086,6 +2180,81 @@
           }
         }
       ]
+    },
+    "NodeOrSlot": {
+      "description": "A node, or a slot placeholder: any object with a slot key is read as a placeholder.",
+      "if": {
+        "required": [
+          "slot"
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/SlotPlaceholder"
+      },
+      "else": {
+        "$ref": "#/$defs/Node"
+      }
+    },
+    "SlotPlaceholder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "slot"
+      ],
+      "description": "Marks where an instance's content goes inside a reusable component. Valid only inside a component definition, never as its root (SLOT_OUTSIDE_COMPONENT).",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "slot": {
+          "$ref": "#/$defs/Id",
+          "description": "Slot name. Instance children fill \"default\"; slots.<name> fills the others."
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NodeOrSlot"
+          },
+          "description": "Fallback content, used when the instance gives no fill for this slot."
+        },
+        "repeat": {
+          "$ref": "#/$defs/Repeat",
+          "description": "Accepted so validation can say why it never renders: a placeholder is replaced (REPEAT_INVALID_HOST)."
+        }
+      }
+    },
+    "Repeat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cell",
+        "items"
+      ],
+      "description": "One cell rendered once per item, after the node's own children, as if each row were written by hand. A row's id is <node id>__<item id>. Only a concrete element node that lays out its children hosts rows; anywhere else it is REPEAT_INVALID_HOST.",
+      "properties": {
+        "cell": {
+          "$ref": "#/$defs/ComponentRef",
+          "description": "An element name or alias, which wins, else a component reference written as for use: (a local id, alias.id or std.<name>)."
+        },
+        "items": {
+          "type": "array",
+          "maxItems": 200,
+          "description": "One row per item: the cell's props plus the item's id.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/Id",
+                "description": "The item's stable key, unique in this repeat. The row renders as <node id>__<id>."
+              }
+            }
+          }
+        }
+      }
     },
     "ManifestDocument": {
       "type": "object",
@@ -2295,7 +2464,7 @@
                     "children": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/$defs/Node"
+                        "$ref": "#/$defs/NodeOrSlot"
                       }
                     },
                     "role": {
@@ -2358,7 +2527,7 @@
             ],
             "properties": {
               "root": {
-                "$ref": "#/$defs/Node"
+                "$ref": "#/$defs/NodeOrSlot"
               },
               "propDefaults": {
                 "type": "object"
@@ -2464,7 +2633,7 @@
                   "content": {
                     "type": "array",
                     "items": {
-                      "$ref": "#/$defs/Node"
+                      "$ref": "#/$defs/NodeOrSlot"
                     }
                   }
                 }
@@ -2485,7 +2654,7 @@
                   "content": {
                     "type": "array",
                     "items": {
-                      "$ref": "#/$defs/Node"
+                      "$ref": "#/$defs/NodeOrSlot"
                     }
                   }
                 }
@@ -2861,6 +3030,9 @@
         },
         "description": {
           "type": "string"
+        },
+        "actions": {
+          "type": "array"
         },
         "media": {
           "type": "string"
@@ -3319,7 +3491,7 @@
     },
     "PrimitiveProps_button": {
       "type": "object",
-      "description": "Button in five variants, three sizes; iconOnly and fab for icon buttons.",
+      "description": "Button in five variants, three sizes; iconOnly and fab for icon buttons; pressed makes it a toggle.",
       "properties": {
         "label": {
           "type": "string"
@@ -3378,18 +3550,69 @@
         },
         "fab": {
           "type": "boolean"
+        },
+        "pressed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PrimitiveProps_toolbar": {
+      "type": "object",
+      "description": "Row or column of tool buttons with pressed and checked toggles, separators and groups. Never a box: it draws its own button-group outline.",
+      "properties": {
+        "items": {
+          "type": "array"
+        },
+        "size": {
+          "type": "string",
+          "enum": [
+            "sm",
+            "md",
+            "lg"
+          ]
+        },
+        "orientation": {
+          "type": "string",
+          "enum": [
+            "row",
+            "stack"
+          ]
+        },
+        "labels": {
+          "type": "boolean"
         }
       }
     },
     "PrimitiveProps_segmented": {
       "type": "object",
-      "description": "Segmented control; unique option labels are selection values.",
+      "description": "Segmented control; option values (else labels) select, and a label makes it a field.",
       "properties": {
+        "label": {
+          "type": "string"
+        },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
         "options": {
           "type": "array"
         },
         "value": {
-          "type": "string"
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "size": {
           "type": "string",
@@ -3403,10 +3626,25 @@
     },
     "PrimitiveProps_input": {
       "type": "object",
-      "description": "Single-line field. inputType covers search, date, range, otp, colour and more.",
+      "description": "Single-line field. inputType covers search, date, range, otp, colour and more; min, max and step bound number, range and stepper.",
       "properties": {
         "label": {
           "type": "string"
+        },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
         },
         "variant": {
           "type": "string",
@@ -3440,7 +3678,26 @@
         "value": {
           "type": [
             "string",
-            "number"
+            "number",
+            "array"
+          ]
+        },
+        "min": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "max": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "step": {
+          "type": [
+            "number",
+            "string"
           ]
         },
         "icon": {
@@ -3468,18 +3725,6 @@
         "suffix": {
           "type": "string"
         },
-        "help": {
-          "type": "string"
-        },
-        "error": {
-          "type": "string"
-        },
-        "required": {
-          "type": "boolean"
-        },
-        "disabled": {
-          "type": "boolean"
-        },
         "length": {
           "type": "number"
         }
@@ -3492,12 +3737,6 @@
         "label": {
           "type": "string"
         },
-        "placeholder": {
-          "type": "string"
-        },
-        "rows": {
-          "type": "number"
-        },
         "help": {
           "type": "string"
         },
@@ -3509,6 +3748,15 @@
         },
         "disabled": {
           "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "rows": {
+          "type": "number"
         },
         "maxLength": {
           "type": "number"
@@ -3517,22 +3765,10 @@
     },
     "PrimitiveProps_select": {
       "type": "object",
-      "description": "Dropdown field; searchable turns it into a combobox.",
+      "description": "Dropdown field; searchable turns it into a combobox; value (a list with multiple) is the initial selection.",
       "properties": {
         "label": {
           "type": "string"
-        },
-        "placeholder": {
-          "type": "string"
-        },
-        "options": {
-          "type": "array"
-        },
-        "searchable": {
-          "type": "boolean"
-        },
-        "multiple": {
-          "type": "boolean"
         },
         "help": {
           "type": "string"
@@ -3545,24 +3781,61 @@
         },
         "disabled": {
           "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array"
+        },
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "array"
+          ]
+        },
+        "searchable": {
+          "type": "boolean"
+        },
+        "multiple": {
+          "type": "boolean"
         }
       }
     },
     "PrimitiveProps_checkbox": {
       "type": "object",
-      "description": "Single checkbox with optional description.",
+      "description": "Single checkbox with optional description; indeterminate draws the mixed state.",
       "properties": {
         "label": {
           "type": "string"
         },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
         "checked": {
+          "type": "boolean"
+        },
+        "indeterminate": {
           "type": "boolean"
         },
         "description": {
           "type": "string"
-        },
-        "disabled": {
-          "type": "boolean"
         }
       }
     },
@@ -3573,14 +3846,26 @@
         "label": {
           "type": "string"
         },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
         "checked": {
           "type": "boolean"
         },
         "description": {
           "type": "string"
-        },
-        "disabled": {
-          "type": "boolean"
         }
       }
     },
@@ -3591,23 +3876,50 @@
         "label": {
           "type": "string"
         },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
         "checked": {
           "type": "boolean"
         },
         "description": {
           "type": "string"
-        },
-        "disabled": {
-          "type": "boolean"
         }
       }
     },
     "PrimitiveProps_choice_group": {
       "type": "object",
-      "description": "A labelled set of checkboxes or radios in one node.",
+      "description": "A labelled set of checkboxes or radios in one node; a checkbox group takes a list value.",
       "properties": {
         "label": {
           "type": "string"
+        },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
         },
         "kind": {
           "type": "string",
@@ -3620,7 +3932,11 @@
           "type": "array"
         },
         "value": {
-          "type": "string"
+          "type": [
+            "string",
+            "number",
+            "array"
+          ]
         },
         "inline": {
           "type": "boolean"
@@ -3634,6 +3950,21 @@
         "label": {
           "type": "string"
         },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
         "tags": {
           "type": "array"
         },
@@ -3644,9 +3975,27 @@
     },
     "PrimitiveProps_upload": {
       "type": "object",
-      "description": "File dropzone, or a plain upload button with variant: button.",
+      "description": "File dropzone, or a plain upload button with variant: button. label is the action copy; fieldLabel goes above.",
       "properties": {
         "label": {
+          "type": "string"
+        },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
+        "fieldLabel": {
           "type": "string"
         },
         "hint": {
@@ -3671,11 +4020,29 @@
         "label": {
           "type": "string"
         },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
         "options": {
           "type": "array"
         },
         "value": {
-          "type": "string"
+          "type": [
+            "string",
+            "number"
+          ]
         },
         "columns": {
           "type": "number"
@@ -3688,6 +4055,21 @@
       "properties": {
         "label": {
           "type": "string"
+        },
+        "help": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "readonly": {
+          "type": "boolean"
         },
         "toolbar": {
           "type": "boolean"
@@ -3725,7 +4107,7 @@
     },
     "PrimitiveProps_breadcrumb": {
       "type": "object",
-      "description": "Breadcrumb trail.",
+      "description": "Breadcrumb trail; the last crumb is current unless an item says otherwise.",
       "properties": {
         "items": {
           "type": "array"
@@ -3776,13 +4158,14 @@
     },
     "PrimitiveProps_nav": {
       "type": "object",
-      "description": "Side navigation; rail stacks icons above labels; collapsed hides labels.",
+      "description": "Side navigation; rail stacks icons above labels; collapsed hides labels; top is a horizontal site menu whose open item draws its panel.",
       "properties": {
         "variant": {
           "type": "string",
           "enum": [
             "rail",
-            "sidebar"
+            "sidebar",
+            "top"
           ]
         },
         "items": {
@@ -3793,6 +4176,9 @@
         },
         "groups": {
           "type": "boolean"
+        },
+        "open": {
+          "type": "string"
         }
       }
     },
@@ -3802,6 +4188,39 @@
       "properties": {
         "items": {
           "type": "array"
+        }
+      }
+    },
+    "PrimitiveProps_menubar": {
+      "type": "object",
+      "description": "Desktop application menu row; open draws that menu panel under its trigger. Never framed: the bar it sits in owns the frame.",
+      "properties": {
+        "items": {
+          "type": "array"
+        },
+        "open": {
+          "type": "string"
+        }
+      }
+    },
+    "PrimitiveProps_command": {
+      "type": "object",
+      "description": "Command palette: search row, grouped results with icons, descriptions and key-chip shortcuts. Framed on its own; inside a card or modal the container owns the frame.",
+      "properties": {
+        "placeholder": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array"
+        },
+        "empty": {
+          "type": "string"
+        },
+        "footer": {
+          "type": "boolean"
         }
       }
     },
@@ -3926,7 +4345,7 @@
     },
     "PrimitiveProps_chart": {
       "type": "object",
-      "description": "Greeked chart placeholder in nine shapes. Deterministic, never random.",
+      "description": "Greeked chart placeholder in ten shapes. Deterministic, never random. gantt draws data [{ label, start, end, tone }] as bars on one axis labelled by ticks.",
       "properties": {
         "chartType": {
           "type": "string",
@@ -3940,7 +4359,8 @@
             "donut",
             "gauge",
             "sparkline",
-            "heatmap"
+            "heatmap",
+            "gantt"
           ]
         },
         "title": {
@@ -3951,6 +4371,9 @@
           "description": "Accepted alias for title; title wins when both are set."
         },
         "data": {
+          "type": "array"
+        },
+        "ticks": {
           "type": "array"
         },
         "series": {
@@ -3999,7 +4422,7 @@
     },
     "PrimitiveProps_tree": {
       "type": "object",
-      "description": "Nested tree or file browser.",
+      "description": "Nested tree or file browser. Items stay open unless they set expanded: false.",
       "properties": {
         "items": {
           "type": "array"
@@ -4011,7 +4434,7 @@
     },
     "PrimitiveProps_accordion": {
       "type": "object",
-      "description": "Collapsible rows; set open on the item that starts expanded.",
+      "description": "Collapsible rows; set expanded on the item that starts open.",
       "properties": {
         "items": {
           "type": "array"
@@ -4046,6 +4469,9 @@
         },
         "inline": {
           "type": "boolean"
+        },
+        "actions": {
+          "type": "array"
         }
       }
     }

@@ -2,6 +2,7 @@
 
 const { PRIMITIVES, FAMILY_ORDER, ALIASES } = require('./primitive-registry');
 const { ROLES, tokenNames } = require('../renderer/sizing-tokens');
+const { stdPatternsCheatSheet } = require('./llm-components');
 
 const FAMILY_TITLE = {
   containers: 'Containers — layout and framing',
@@ -23,6 +24,7 @@ function propSignature(entry) {
   const parts = Object.entries(entry.props || {}).map(([name, spec]) => {
     if (Array.isArray(spec.enum)) return `${name}: ${spec.enum.join('|')}`;
     if (spec.aliasOf) return `${name} (alias of ${spec.aliasOf})`;
+    if (spec.items === true) return `${name} (items)`;
     return name;
   });
   return parts.length > 0 ? `{ ${parts.join(', ')} }` : '(no props)';
@@ -68,6 +70,12 @@ ${byFamily}
 
 Pick the element that *is* the thing. Do not build a card out of a section and a
 border; use \`card\`. Do not build a nav out of buttons; use \`nav\`.
+
+Three or more similar siblings: write one \`repeat: { cell, items }\` on a stack, row,
+grid or card. \`cell\` is an element or a component; each item is its props plus an \`id\`
+and renders as \`<host>__<id>\`: \`repeat: { cell: stat, items: [{ id: mrr, label: MRR }] }\`.
+
+${stdPatternsCheatSheet()}
 
 ## Boxes: the one rule that matters
 
@@ -206,6 +214,7 @@ you can see what the engine decided without guessing. Turn on
 | \`UNKNOWN_ROLE\` | a role that drives no proportions |
 | \`MISSING_TEXT\` | an element rendering a skeleton you may not have intended |
 | \`UNLABELED_FIELD\` | a field with no label |
+| \`AMBIGUOUS_VALUE\` | a single-choice \`value\` that matches several items, so only the first is selected |
 | \`ORPHAN_LAYOUT\`, \`EMPTY_CONTAINER\`, \`DEEP_NESTING\` | structure that will not render as intended |
 `;
 }

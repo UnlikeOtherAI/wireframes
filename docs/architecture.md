@@ -226,6 +226,18 @@ Key docgen files for reference:
 
 The editor workspace (preview pane, navigation, tree, device controls) must be a self-contained, embeddable component. It will be reused in other projects and controlled externally — including from other systems, websites, or AI chat sessions via tool calls. Design it as a plug-in rendering tool with a clear interface for what is available and controllable.
 
+The control interface is `WorkspaceRef` in `admin/src/features/workspace/Workspace.tsx`:
+
+| Method | Effect |
+|---|---|
+| `navigateTo(pageId)` | Show another page |
+| `setDevice(device)` | Switch the device viewport |
+| `setMode(mode)` | Switch line or card rendering |
+| `highlightNode(address)` | Outline a node in the preview |
+| `setMeasure(on)` | Switch the [measurement overlay](cli/rendering-measure.md). The choice is the viewer's one stored preview setting (`stores/previewMeasureStore.ts`), shared with the editor's Measure toggle and replayed into every preview load. |
+| `getRenderedHtml()` | The current page's HTML |
+| `refresh()` | Re-render the preview |
+
 #### Client-Side Rendering Library
 
 The wireframe engine must be packaged as a super-compressed standalone JavaScript library that runs entirely in the browser. This offloads all rendering cost from the server to the client.
@@ -250,7 +262,7 @@ The wireframe engine must be packaged as a super-compressed standalone JavaScrip
 - Layout engine (stack, row, grid, absolute)
 - Primitive rendering (all built-in components → HTML)
 - Wireframe styles (border, rendering mode, corner style)
-- Interaction runtime (navigation, overlays, state management)
+- Interaction runtime (navigation, overlays, state management, measurement overlay)
 - Data binding and dataset iteration
 
 **What stays server-side:**

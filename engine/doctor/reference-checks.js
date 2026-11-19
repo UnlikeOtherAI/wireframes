@@ -2,27 +2,35 @@
 
 const { PRIMITIVE_COMPONENTS } = require('../schema/primitives');
 const { appendPath } = require('../schema/validator');
+const { childNodeEntries, childNodeLists } = require('../component-registry/child-nodes');
+const { resolveComponentDefinition } = require('../component-registry/definition-lookup');
+const { repeatCellReference } = require('../component-registry/repeat');
 
 /**
  * Reference-checking functions: component refs in nodes, template regions,
  * page slots/injectables/overlays/dataSources, and route diagnostics.
  *
+ * `definitions` is the component registry a document resolves against; built-in
+ * `std.*` patterns are found through `resolveComponentDefinition`.
+ *
  * `at` is where the thing being checked sits: `{ document, path }`. It is optional,
  * and only a caller that has the source text gives one.
  */
+
+const knows = (definitions, id) => resolveComponentDefinition(id, definitions) != null;
 
 function under(at, ...segments) {
   if (!at) return undefined;
   return { document: at.document, path: segments.reduce((path, segment) => appendPath(path, segment), at.path) };
 }
 
-function collectReferencedComponents(node, result, context, componentIds, usage, addDiagnostic, at) {
+function collectReferencedComponents(node, result, context, definitions, usage, addDiagnostic, at) {
   if (!node || typeof node !== 'object' || Array.isArray(node)) {
     return;
   }
 
   if (typeof node.component === 'string') {
-    if (!PRIMITIVE_COMPONENTS.has(node.component) && !componentIds.has(node.component)) {
+    if (!PRIMITIVE_COMPONENTS.has(node.component) && !knows(definitions, node.component)) {
       addDiagnostic(
         result,
         'errors',
@@ -30,13 +38,13 @@ function collectReferencedComponents(node, result, context, componentIds, usage,
         `Unknown component "${node.component}" in ${context}.`,
         under(at, 'component'),
       );
-    } else if (componentIds.has(node.component) && usage?.componentsUsed) {
+    } else if (knows(definitions, node.component) && usage?.componentsUsed) {
       usage.componentsUsed.add(node.component);
     }
   }
 
   if (typeof node.use === 'string') {
-    if (!componentIds.has(node.use)) {
+    if (!knows(definitions, node.use)) {
       addDiagnostic(
         result,
         'errors',
@@ -49,14 +57,20 @@ function collectReferencedComponents(node, result, context, componentIds, usage,
     }
   }
 
-  if (Array.isArray(node.children)) {
-    node.children.forEach((child, index) => {
-      collectReferencedComponents(child, result, context, componentIds, usage, addDiagnostic, under(at, 'children', index));
+  // A component cell is a use of its component; an unknown one is UNKNOWN_REPEAT_CELL.
+  const cell = repeatCellReference(node);
+  if (cell && knows(definitions, cell) && usage?.componentsUsed) {
+    usage.componentsUsed.add(cell);
+  }
+
+  for (const { segments, nodes } of childNodeEntries(node)) {
+    nodes.forEach((child, index) => {
+      collectReferencedComponents(child, result, context, definitions, usage, addDiagnostic, under(at, ...segments, index));
     });
   }
 }
 
-function collectTemplateReferences(templateContent, result, componentIds, seenSlotIds, seenInjectableIds, usage, addDiagnostic, at) {
+function collectTemplateReferences(templateContent, result, definitions, seenSlotIds, seenInjectableIds, usage, addDiagnostic, at) {
   if (!templateContent || typeof templateContent !== 'object') {
     return;
   }
@@ -80,31 +94,31 @@ function collectTemplateReferences(templateContent, result, componentIds, seenSl
           if (child.injectable === true && typeof child.id === 'string') {
             seenInjectableIds.add(child.id);
           }
-          if (Array.isArray(child.children)) {
-            queue.push(...child.children);
+          for (const list of childNodeLists(child)) {
+            queue.push(...list);
           }
         }
       }
       region.children.forEach((child, index) => {
-        collectReferencedComponents(child, result, `template region "${region.id}"`, componentIds, usage, addDiagnostic, under(regionAt, 'children', index));
+        collectReferencedComponents(child, result, `template region "${region.id}"`, definitions, usage, addDiagnostic, under(regionAt, 'children', index));
       });
     }
 
-    collectReferencedComponents(region, result, `template region "${region.id}"`, componentIds, usage, addDiagnostic, regionAt);
+    collectReferencedComponents(region, result, `template region "${region.id}"`, definitions, usage, addDiagnostic, regionAt);
   });
 
   if (Array.isArray(templateContent.overlays)) {
     templateContent.overlays.forEach((overlay, overlayIndex) => {
       if (overlay && Array.isArray(overlay.content)) {
         overlay.content.forEach((node, index) => {
-          collectReferencedComponents(node, result, `template overlay "${overlay.id}"`, componentIds, usage, addDiagnostic, under(at, 'overlays', overlayIndex, 'content', index));
+          collectReferencedComponents(node, result, `template overlay "${overlay.id}"`, definitions, usage, addDiagnostic, under(at, 'overlays', overlayIndex, 'content', index));
         });
       }
     });
   }
 }
 
-function collectPageReferences(pageDocument, result, pageTemplates, componentIds, datasetIds, usage, addDiagnostic) {
+function collectPageReferences(pageDocument, result, pageTemplates, definitions, datasetIds, usage, addDiagnostic) {
   const pageId = pageDocument.id;
   const page = pageDocument.document?.page || {};
   const templateId = page.template;
@@ -145,7 +159,7 @@ function collectPageReferences(pageDocument, result, pageTemplates, componentIds
 
     if (Array.isArray(slot.content)) {
       slot.content.forEach((node, index) => {
-        collectReferencedComponents(node, result, `page "${pageId}" slot "${slotId}"`, componentIds, usage, addDiagnostic, under(slotAt, 'content', index));
+        collectReferencedComponents(node, result, `page "${pageId}" slot "${slotId}"`, definitions, usage, addDiagnostic, under(slotAt, 'content', index));
       });
     }
 
@@ -181,7 +195,7 @@ function collectPageReferences(pageDocument, result, pageTemplates, componentIds
       }
       if (Array.isArray(injectable.content)) {
         injectable.content.forEach((node, index) => {
-          collectReferencedComponents(node, result, `page "${pageId}" injectable "${injectable.injectableId}"`, componentIds, usage, addDiagnostic, under(injectableAt, 'content', index));
+          collectReferencedComponents(node, result, `page "${pageId}" injectable "${injectable.injectableId}"`, definitions, usage, addDiagnostic, under(injectableAt, 'content', index));
         });
       }
     });
@@ -191,7 +205,7 @@ function collectPageReferences(pageDocument, result, pageTemplates, componentIds
     page.overlays.forEach((overlay, overlayIndex) => {
       if (overlay && Array.isArray(overlay.content)) {
         overlay.content.forEach((node, index) => {
-          collectReferencedComponents(node, result, `page "${pageId}" overlay "${overlay.id}"`, componentIds, usage, addDiagnostic, under(at, 'overlays', overlayIndex, 'content', index));
+          collectReferencedComponents(node, result, `page "${pageId}" overlay "${overlay.id}"`, definitions, usage, addDiagnostic, under(at, 'overlays', overlayIndex, 'content', index));
         });
       }
     });

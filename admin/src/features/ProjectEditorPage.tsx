@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronLeft, faCode, faEye, faFloppyDisk, faGear } from '@fortawesome/free-solid-svg-icons'
 import { YamlEditor, type YamlEditorHandle } from './editor/YamlEditor'
 import { DocumentTree } from './editor/DocumentTree'
 import { ProblemsPanel } from './editor/ProblemsPanel'
 import { ConflictDialog } from './editor/ConflictDialog'
+import { EditorHeader, type CenterView } from './editor/EditorHeader'
 import { CreateFileDialog } from './editor/CreateFileDialog'
 import { PreviewBreadcrumb } from './editor/PreviewBreadcrumb'
 import { PreviewToolbar } from './editor/PreviewToolbar'
@@ -20,20 +19,18 @@ import { ChatPopup } from './chat/ChatPopup'
 import { WorkspacePreview } from './workspace/WorkspacePreview'
 import { NodeTree } from './workspace/NodeTree'
 import { SitemapView } from './workspace/SitemapView'
-import { buildNodeIdToAddressMap, useResolvedNodes, useSitemapNodes } from './workspace/useWorkspaceData'
+import { buildNodeIdToAddressMap, useSitemapNodes, useWorkspaceTree } from './workspace/useWorkspaceData'
 import { buildStarterDocument } from './editor/documentTemplates'
 import { ResizeHandle } from './editor/ResizeHandle'
-import { buildYamlFilesMap, problemsToDiagnostics, statusStyles } from './editor/projectEditorUtils'
+import { buildYamlFilesMap, problemsToDiagnostics } from './editor/projectEditorUtils'
 import { usePaneLayout } from './editor/usePaneLayout'
+import { usePreviewMeasureStore } from '../stores/previewMeasureStore'
 import { getCookie, setCookie } from '../utils/cookies'
 import {
   adminColors,
   adminRadii,
   cardSurfaceStyle,
-  secondaryButtonStyle,
 } from '../styles/adminTheme'
-
-type CenterView = 'source' | 'preview'
 
 export function ProjectEditorPage() {
   const { id: projectId } = useParams<{ id: string }>()
@@ -51,6 +48,9 @@ export function ProjectEditorPage() {
   })
   const [previewPageId, setPreviewPageId] = useState<string | null>(null)
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
+  // The rendered node the selection was made on: the preview remounts on every
+  // switch back to it, and outlines the selection in the instance it was made in.
+  const [selectedRenderedId, setSelectedRenderedId] = useState<string | null>(null)
   const [workspaceMode, setWorkspaceMode] = useState<'preview' | 'tree' | 'sitemap'>('preview')
   const [chatPinned, setChatPinned] = useState(() => getCookie('wf_editor_chat_pinned') === 'true')
   const [createFileOpen, setCreateFileOpen] = useState(false)
@@ -59,6 +59,8 @@ export function ProjectEditorPage() {
     return stored === 'source' || stored === 'preview' ? stored : 'preview'
   })
   const { containerRef, navWidth, chatWidth, startResize } = usePaneLayout(chatPinned)
+  const measure = usePreviewMeasureStore((state) => state.measure)
+  const setMeasure = usePreviewMeasureStore((state) => state.setMeasure)
 
   const handleChatPinnedChange = useCallback((nextPinned: boolean) => {
     setChatPinned(nextPinned)
@@ -138,7 +140,7 @@ export function ProjectEditorPage() {
 
   const content = getActiveContent()
   const yamlFiles = useMemo(() => buildYamlFilesMap(docStateRef.current), [docStateRef, documents, previewState])
-  const resolvedNodes = useResolvedNodes(yamlFiles, previewPageId ?? '')
+  const { nodes: resolvedNodes, notice: treeNotice } = useWorkspaceTree(yamlFiles, previewPageId ?? '')
   const sitemapNodes = useSitemapNodes(yamlFiles)
   const nodeIdToAddress = useMemo(() => buildNodeIdToAddressMap(resolvedNodes), [resolvedNodes])
 
@@ -162,6 +164,11 @@ export function ProjectEditorPage() {
     scheduleRender()
   }, [updateContent, scheduleRender])
 
+  const handleNodeSelect = useCallback((address: string, renderedId: string) => {
+    setSelectedNode(address)
+    setSelectedRenderedId(renderedId)
+  }, [])
+
   const handlePreviewNavigate = useCallback((routeId: string) => {
     const page = documents.find(
       (d) => d.documentType === 'page' && d.documentId === routeId,
@@ -169,6 +176,7 @@ export function ProjectEditorPage() {
     if (page) {
       setPreviewPageId(page.documentId)
       setSelectedNode(null)
+      setSelectedRenderedId(null)
     }
   }, [documents])
 
@@ -230,102 +238,17 @@ export function ProjectEditorPage() {
 
   return (
     <main style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-      {/* Editor toolbar */}
-      <header style={headerStyle}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Link to="/" aria-label={t('editor.backToDashboard')} style={iconButtonStyle}>
-            <FontAwesomeIcon icon={faChevronLeft} style={{ fontSize: 14 }} />
-          </Link>
-          <h1 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: adminColors.textPrimary }}>
-            {t('editor.title')}
-          </h1>
-          <Link to={`/projects/${projectId}/settings`} aria-label={t('editor.settings')} style={iconButtonStyle}>
-            <FontAwesomeIcon icon={faGear} style={{ fontSize: 14 }} />
-          </Link>
-
-          {/* Source / Preview toggle */}
-          <div style={viewToggleContainerStyle}>
-            <button
-              type="button"
-              aria-label={t('editor.viewSource')}
-              data-testid="view-source-btn"
-              onClick={() => handleCenterViewChange('source')}
-              style={viewToggleBtnStyle(centerView === 'source')}
-            >
-              <FontAwesomeIcon icon={faCode} />
-            </button>
-            <button
-              type="button"
-              aria-label={t('editor.viewPreview')}
-              data-testid="view-preview-btn"
-              onClick={() => handleCenterViewChange('preview')}
-              style={viewToggleBtnStyle(centerView === 'preview')}
-            >
-              <FontAwesomeIcon icon={faEye} />
-            </button>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', color: adminColors.textSecondary, userSelect: 'none' }}>
-            <input
-              type="checkbox"
-              checked={autoSaveEnabled}
-              onChange={(e) => setAutoSaveEnabled(e.target.checked)}
-              aria-label={t('editor.autoSave')}
-              style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
-            />
-            <span style={{
-              display: 'inline-flex',
-              width: 36,
-              height: 20,
-              borderRadius: 10,
-              background: autoSaveEnabled ? adminColors.primary : adminColors.border,
-              transition: 'background 150ms ease',
-              position: 'relative',
-              flexShrink: 0,
-            }}>
-              <span style={{
-                position: 'absolute',
-                top: 2,
-                left: autoSaveEnabled ? 18 : 2,
-                width: 16,
-                height: 16,
-                borderRadius: '50%',
-                background: '#fff',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                transition: 'left 150ms ease',
-              }} />
-            </span>
-            {t('editor.autoSave')}
-          </label>
-          <button
-            onClick={handleSave}
-            disabled={saveStatus === 'saving' || !activeDoc}
-            style={{
-              ...secondaryButtonStyle,
-              minHeight: 36,
-              padding: '6px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              opacity: (saveStatus === 'saving' || !activeDoc) ? 0.5 : 1,
-              cursor: (saveStatus === 'saving' || !activeDoc) ? 'not-allowed' : 'pointer',
-            }}
-          >
-            <FontAwesomeIcon icon={faFloppyDisk} style={{ fontSize: 13 }} />
-            {saveStatus === 'saving' ? t('editor.saving') : t('common.save')}
-          </button>
-          {displayStatus !== 'idle' && (
-            <span
-              data-testid="save-status"
-              style={{ fontSize: 13, fontWeight: 500, ...statusStyles[displayStatus] }}
-            >
-              {t(`editor.status.${displayStatus}`)}
-            </span>
-          )}
-        </div>
-      </header>
+      <EditorHeader
+        projectId={projectId}
+        centerView={centerView}
+        onCenterViewChange={handleCenterViewChange}
+        autoSaveEnabled={autoSaveEnabled}
+        onAutoSaveChange={setAutoSaveEnabled}
+        onSave={handleSave}
+        saving={saveStatus === 'saving'}
+        canSave={!(saveStatus === 'saving' || !activeDoc)}
+        displayStatus={displayStatus}
+      />
 
       {/* Workspace panes */}
       <div ref={containerRef} style={workspaceStyle}>
@@ -374,6 +297,8 @@ export function ProjectEditorPage() {
                 onDeviceChange={handleDeviceChange}
                 renderMode={renderMode}
                 onRenderModeChange={handleRenderModeChange}
+                measure={measure}
+                onMeasureChange={setMeasure}
               />
               <PreviewBreadcrumb
                 pageId={previewPageId}
@@ -421,9 +346,11 @@ export function ProjectEditorPage() {
                     device={device}
                     renderMode={renderMode}
                     onNavigate={handlePreviewNavigate}
-                    onNodeSelect={setSelectedNode}
+                    onNodeSelect={handleNodeSelect}
                     highlightedNode={selectedNode}
+                    highlightedRenderedId={selectedRenderedId}
                     nodeIdToAddress={nodeIdToAddress}
+                    measure={measure}
                   />
                 </div>
               )}
@@ -431,7 +358,8 @@ export function ProjectEditorPage() {
                 <div style={{ flex: 1, overflow: 'auto' }}>
                   <NodeTree
                     nodes={resolvedNodes}
-                    onNodeSelect={setSelectedNode}
+                    notice={treeNotice}
+                    onNodeSelect={handleNodeSelect}
                     selectedNode={selectedNode}
                   />
                 </div>
@@ -489,57 +417,6 @@ export function ProjectEditorPage() {
       )}
     </main>
   )
-}
-
-const headerStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: 12,
-  padding: '8px 16px',
-  borderBottom: `1px solid ${adminColors.border}`,
-  minHeight: 48,
-  background: adminColors.cardBg,
-}
-
-const iconButtonStyle: React.CSSProperties = {
-  display: 'grid',
-  placeItems: 'center',
-  width: 36,
-  height: 36,
-  borderRadius: adminRadii.button,
-  border: `1px solid ${adminColors.border}`,
-  background: adminColors.cardBg,
-  color: adminColors.textSecondary,
-  textDecoration: 'none',
-  cursor: 'pointer',
-  transition: 'background 150ms ease',
-}
-
-const viewToggleContainerStyle: React.CSSProperties = {
-  display: 'flex',
-  background: adminColors.surfaceMuted,
-  borderRadius: adminRadii.pill,
-  padding: 2,
-  gap: 2,
-  marginLeft: 4,
-}
-
-function viewToggleBtnStyle(active: boolean): React.CSSProperties {
-  return {
-    display: 'grid',
-    placeItems: 'center',
-    width: 32,
-    height: 28,
-    borderRadius: adminRadii.pill,
-    border: 'none',
-    background: active ? adminColors.cardBg : 'transparent',
-    color: active ? adminColors.primary : adminColors.textTertiary,
-    cursor: 'pointer',
-    fontSize: 13,
-    boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-    transition: 'all 150ms ease',
-  }
 }
 
 const workspaceStyle: React.CSSProperties = {

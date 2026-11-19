@@ -181,6 +181,106 @@ Rules:
 * `use` supports alias-qualified component references such as `nav.primary_menu`
 * `{{props.key}}` is resolved during component expansion, including nested
   imported components
+* a root prop written as its own token (`title: "{{props.title}}"`) takes the
+  instance's value, or `propDefaults` when the instance gives none
+
+### Slots
+
+A component can take content from its instances through named slots. A **slot
+placeholder** marks where the content goes:
+
+```yaml
+components:
+  panel:
+    propDefaults: { title: Details }
+    root:
+      id: panel
+      component: card
+      props: { title: "{{props.title}}" }
+      children:
+        - { id: body, slot: default }
+        - id: footer
+          slot: footer
+          children:                              # fallback
+            - { id: close, component: button, props: { label: Close } }
+```
+
+```yaml
+- id: billing_panel
+  use: panel
+  props: { title: Billing }
+  children:                                      # fills `default`
+    - { id: plan_name, component: heading, props: { text: Pro plan } }
+  slots:
+    footer:
+      - { id: upgrade, component: button, props: { label: Upgrade, variant: primary } }
+```
+
+A placeholder has `id`, `slot` (the slot name) and optional `children` (its
+fallback), and no other keys. It may appear anywhere below a component's root:
+in `children`, in another placeholder's fallback, or in a fill the component
+writes for its own nested instance. It may not be the root, and may not appear
+in pages, templates or overlays (`SLOT_OUTSIDE_COMPONENT`). Slot names are
+unique within a component (`DUPLICATE_COMPONENT_SLOT`).
+
+Fill rules:
+
+* Instance `children` fill `default`. `slots.<name>` fills the others. Giving
+  both `children` and `slots.default` is an error.
+* An omitted fill uses the placeholder's fallback.
+* An explicit `[]` leaves the slot empty on purpose: no fallback, no diagnostic.
+* A slot with neither content nor fallback reports `EMPTY_COMPONENT_SLOT` (info).
+* A component with **no** placeholders keeps the plain override path: instance
+  `children` replace the root's children.
+
+Scope by author. Every node is prepared by whoever wrote it:
+
+* A component's own tree (its root, internal nodes, fallbacks and the fills it
+  writes for its nested instances) gets its `{{props}}`, its import aliases,
+  and ids and submit `formId`s namespaced under the instance (`billing_panel__close`).
+* Fill content is prepared by the caller. Page fills keep their page ids and
+  get no substitution. Fills that component A writes for its nested B use A's
+  props and A's namespace, so two instances of A never collide.
+* Fills are spliced in place of the placeholder untouched, and nested `use:`
+  expands after splicing. A component can forward its own placeholder as fill
+  content to a nested instance, so page content passes through two layers.
+* A caller-authored instance of the same component inside a fill is finite
+  nesting. Only definition cycles (A's own tree reaching A) are errors.
+* Ids must be unique in the final resolved tree.
+
+`wf component show <id>` prints a component's props, slots and fallbacks.
+
+### Built-in std patterns
+
+The engine ships screen patterns under the `std.` prefix (`std.login`,
+`std.data_page`, ...; the list and their props are in [stdlib.md](stdlib.md)).
+A page, template, overlay or component uses one like any component, with no
+components document at all:
+
+```yaml
+- id: customers
+  use: std.data_page
+  props: { title: Customers }
+  slots:
+    filters: []
+```
+
+Lookup rule, the same in the CLI, the API and the browser bundle:
+
+* A component id resolves to the project's own definition first. That includes
+  components imported under an alias named `std`: nothing is reserved.
+* Only when the project has no definition with that id does a built-in
+  `std.<name>` answer. Other ids never fall back.
+* Built-ins are looked up on demand and never join the project's registry, so
+  `wf component list`, `wf stats` and `UNUSED_COMPONENT` see only the
+  project's own components.
+* A document that imports components under the alias `std` reports
+  `STD_ALIAS_SHADOWED` (info), naming the built-ins its components hide. Ids the
+  alias does not define still resolve to the built-ins.
+
+Built-in patterns use only primitives and slots, never another component.
+They are read-only: `wf component copy std.<name>` copies one into the project
+to edit (brief, "Components").
 
 ---
 
@@ -442,6 +542,12 @@ component OR use OR injectable: true
 A node with `injectable: true` is a placeholder — it has no component
 of its own. Pages supply its content via the `injectables` section.
 
+The fourth kind of entry in a node array is a **slot placeholder**
+(`SlotPlaceholder`): `id`, `slot` and optional fallback `children`, nothing
+else. Any object with a `slot` key is read as one. The schema accepts it
+wherever a node can appear; validation allows it only inside a component
+definition, below the root (§3.3, Slots).
+
 Optional:
 
 * `role` — semantic role (e.g. "main", "aside", "nav")
@@ -457,7 +563,16 @@ Optional:
 * `stateBindings` — map of property names to state expressions
 * `surface` — explicitly mark a node as framed (`true`) or content-only (`false`)
 * `elevation` — card-mode elevation token (`0-3`), ignored in line mode
-* `children` — child nodes
+* `children` — child nodes; on a `use:` node they fill the `default` slot
+* `slots` — on a `use:` node only: a map from slot name to the nodes that fill
+  it (`SLOTS_WITHOUT_USE` otherwise)
+* `repeat` — `{ cell, items }`: one row of `cell` per keyed item, after the
+  node's `children`, as if each were written by hand. Row `<id>__<item id>`
+  is `{ component: cell }` for an element cell (a name or alias, which wins)
+  or `{ use: cell }` for a component cell, with the item's other keys as its
+  props. `items` holds 0–200 maps, each with a unique `id`. Only a concrete
+  element node that lays out its children hosts rows (schema-systems.md
+  §14.1)
 * `pane` — resizable/collapsible panel metadata
 * `wireframeStyle` — per-node style override
 * `injectable` — marks node as an injection point (template persistent regions only)
@@ -473,7 +588,9 @@ box. `engine/schema/schema.json` is generated from it by
 fails if the two disagree. The table below is generated the same way.
 
 Unknown primitive props are lint warnings rather than schema errors, so custom
-component parameters can keep flowing through `props`.
+component parameters can keep flowing through `props`. List props marked
+`(items)` share one item shape, and form controls share the field props: see
+[schema-systems.md §15.4–15.5](schema-systems.md).
 
 Box column: **always** draws a frame at any depth; **never** is a layout group
 or a control with its own chrome; **edge only** draws one divider edge;
@@ -484,7 +601,7 @@ or a control with its own chrome; **edge only** draws one divider edge;
 | Element | Box | Props |
 |---|---|---|
 | `section` | rules decide | title, description |
-| `card` | always | title, description, media, footer |
+| `card` | always | title, description, actions, media, footer |
 | `stack` | never | gap, padding, align |
 | `row` | never | gap, padding, align, justify, wrap, nowrap |
 | `grid` | never | columns, gap, minItemWidth |
@@ -514,21 +631,24 @@ or a control with its own chrome; **edge only** draws one divider edge;
 
 **controls**
 
+"+ field" is the shared field contract: label, help, error, required, disabled and readonly ([schema-systems.md §15.5](schema-systems.md)). Rendering: [rendering-controls.md](rendering-controls.md).
+
 | Element | Box | Props |
 |---|---|---|
-| `button` | never | label, icon, iconStyle: solid\|regular\|brands, iconSize, variant: primary\|secondary\|ghost\|danger\|link, size: sm\|md\|lg, iconOnly, loading, disabled, fab |
-| `segmented` | never | options, value, size: sm\|md\|lg |
-| `input` | never | label, placeholder, inputType: text\|password\|email\|number\|search\|tel\|url\|date\|time\|datetime\|color\|range\|otp\|stepper, value, prefix, suffix, help, error, required, disabled, length |
-| `textarea` | never | label, placeholder, rows, help, error, required, disabled, maxLength |
-| `select` | never | label, placeholder, options, searchable, multiple, help, error, required, disabled |
-| `checkbox` | never | label, checked, description, disabled |
-| `radio` | never | label, checked, description, disabled |
-| `toggle` | never | label, checked, description, disabled |
-| `choice_group` | never | label, kind: checkbox\|radio, options, value, inline |
-| `tags_input` | never | label, tags, placeholder |
-| `upload` | always | label, hint, files, variant: dropzone\|button |
-| `picker` | always | label, options, value, columns |
-| `editor` | always | label, toolbar, rows |
+| `button` | never | label, icon, iconStyle: solid\|regular\|brands, iconSize, iconPosition: start\|end\|center, route, variant: primary\|secondary\|ghost\|danger\|link, size: sm\|md\|lg, iconOnly, loading, disabled, fab, pressed |
+| `toolbar` | never | items (items), size: sm\|md\|lg, orientation: row\|stack, labels |
+| `segmented` | never | options (items), value, size: sm\|md\|lg, + field |
+| `input` | never | placeholder, inputType: text\|password\|email\|number\|search\|tel\|url\|date\|time\|datetime\|color\|range\|otp\|stepper, value (two numbers on range), min, max, step, prefix, suffix, icon, iconStyle, iconPosition, variant: default\|plain, length, + field |
+| `textarea` | never | placeholder, rows, maxLength, + field |
+| `select` | never | placeholder, options (items), value (a list with multiple), searchable, multiple, + field |
+| `checkbox` | never | checked, indeterminate, description (help is its alias), + field |
+| `radio` | never | checked, description (help is its alias), + field |
+| `toggle` | never | checked, description (help is its alias), + field |
+| `choice_group` | never | kind: checkbox\|radio, options (items), value (a list for checkbox), inline, + field |
+| `tags_input` | never | tags, placeholder, + field |
+| `upload` | always | label (action copy), fieldLabel, hint, files, variant: dropzone\|button, + field |
+| `picker` | always | options (items), value, columns, + field |
+| `editor` | always | toolbar, rows, + field |
 
 **navigation**
 
@@ -539,8 +659,10 @@ or a control with its own chrome; **edge only** draws one divider edge;
 | `breadcrumb` | never | items, separator |
 | `pagination` | never | page, pages, variant: numbers\|simple\|dots |
 | `stepper` | never | steps, current, orientation: row\|stack |
-| `nav` | never | items, collapsed, groups |
+| `nav` | never | variant: rail|sidebar|top, items, collapsed, groups, open |
 | `menu` | never | items |
+| `menubar` | never | items, open |
+| `command` | rules decide | placeholder, query, items, empty, footer |
 | `app_bar` | edge only | title, subtitle, leading, actions |
 | `action_sheet` | never | items, title, cancel |
 | `page_header` | never | title, subtitle, breadcrumb, actions, tabs |
@@ -553,7 +675,7 @@ or a control with its own chrome; **edge only** draws one divider edge;
 |---|---|---|
 | `table` | rules decide | columns, rows, caption, selectable, state: default\|loading\|empty, emptyText, dense, pagination |
 | `list` | rules decide | items, kind: plain\|avatar\|action\|file\|chat\|timeline\|settings, divided, selectable, refreshable |
-| `chart` | rules decide | chartType: bar\|vertical\|horizontal\|line\|area\|pie\|donut\|gauge\|sparkline\|heatmap, title, label, data, series, legend, axes, height |
+| `chart` | rules decide | chartType: bar\|vertical\|horizontal\|line\|area\|pie\|donut\|gauge\|sparkline\|heatmap\|gantt, title, label, data, ticks, series, legend, axes, height |
 | `calendar` | always | view: month\|week\|day\|picker, date, events |
 | `kanban` | never | columns |
 | `tree` | rules decide | items, expanded |
@@ -563,7 +685,7 @@ or a control with its own chrome; **edge only** draws one divider edge;
 
 | Element | Box | Props |
 |---|---|---|
-| `alert` | always | text, title, variant: info\|success\|warning\|error\|neutral, icon, dismissible, inline |
+| `alert` | always | text, title, variant: info\|success\|warning\|error\|neutral, icon, dismissible, inline, actions |
 
 ### Aliases
 

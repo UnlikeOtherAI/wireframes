@@ -1,7 +1,7 @@
 'use strict';
 
 // What a node does and refers to: interactions, conditions, panes, selections and
-// overlay definitions. `semantic-validator.js` walks the tree and calls these.
+// overlay definitions. `node-walker.js` walks the tree and calls these.
 
 const STATE_KEY_PATTERN = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/;
 
@@ -41,9 +41,13 @@ function addWarning(result, code, message, at) {
   result.warnings.push(at && result.locations ? { code, message, at } : { code, message });
 }
 
-/** The node a finding is about, in the document being walked. */
+/**
+ * The node a finding is about, in the document being walked. `within` is the path of
+ * the component definition being walked, when it is one.
+ */
 function atNode(context, nodeId) {
-  return context.document && typeof nodeId === 'string' ? { document: context.document, node: nodeId } : undefined;
+  if (!context.document || typeof nodeId !== 'string') return undefined;
+  return context.within ? { document: context.document, node: nodeId, within: context.within } : { document: context.document, node: nodeId };
 }
 
 function hasStateKey(state, key) {

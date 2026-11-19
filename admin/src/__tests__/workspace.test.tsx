@@ -3,8 +3,9 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import React from 'react'
 import '../i18n'
 
-// Mock the renderer module
-vi.mock('@wireframes/renderer', () => ({
+// Mock the renderer module; the tree keeps the bundle's row and budget rules.
+vi.mock('@wireframes/renderer', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@wireframes/renderer')>(),
   renderPage: vi.fn((_files: Record<string, string>, pageId: string) => {
     return `<html><body><div>Rendered: ${pageId}</div></body></html>`
   }),
@@ -26,6 +27,8 @@ const { PageNavigation } = await import('../features/workspace/PageNavigation')
 const { DeviceControls } = await import('../features/workspace/DeviceControls')
 const { NodeTree } = await import('../features/workspace/NodeTree')
 const { SitemapView } = await import('../features/workspace/SitemapView')
+const { loadRenderer } = await import('../features/workspace/rendererModule')
+await loadRenderer()
 import type { WorkspaceRef } from '../features/workspace/Workspace'
 import type { ResolvedNode, SitemapNode } from '../features/workspace/types'
 
@@ -207,6 +210,7 @@ describe('Workspace', () => {
     window.dispatchEvent(
       new MessageEvent('message', {
         source: iframe.contentWindow,
+        origin: window.location.origin,
         data: {
           type: 'wf:nodeClick',
           nodeId: 'title',
@@ -411,7 +415,7 @@ describe('NodeTree', () => {
     const onNodeSelect = vi.fn()
     render(<NodeTree nodes={sampleNodes} onNodeSelect={onNodeSelect} />)
     fireEvent.click(screen.getByText('title'))
-    expect(onNodeSelect).toHaveBeenCalledWith('wf://page/home#header.title')
+    expect(onNodeSelect).toHaveBeenCalledWith('wf://page/home#header.title', 'title')
   })
 
   it('highlights the selected node by address', () => {

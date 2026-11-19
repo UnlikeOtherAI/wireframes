@@ -1,16 +1,20 @@
 'use strict';
 
 const { PRIMITIVE_COMPONENTS } = require('../../schema/primitives');
-const { getPrimitive, resolvePrimitiveName, knownProps } = require('../../schema/primitive-registry');
+const { resolvePrimitiveName } = require('../../schema/primitive-registry');
 const { appendPath } = require('../../schema/validator');
+const { nearest } = require('../../schema/nearest-name');
 const { decideFrame } = require('../../renderer/frame-rules');
 const { ROLES } = require('../../renderer/sizing-tokens');
+const { childNodeEntries } = require('../../component-registry/child-nodes');
+const { validateElementContract } = require('./element-contract');
+const { lintRepeat } = require('./repeat-rows');
+const { repeatRows } = require('../../component-registry/repeat');
 
-const TEXT_PRIMITIVES = new Set(['heading', 'paragraph', 'text']);
-const FIELD_PRIMITIVES = new Set(['input', 'select', 'textarea', 'picker']);
 const LAYOUT_ONLY = new Set(['row', 'stack', 'grid', 'split']);
 const MAX_CONTAINER_DEPTH = 6;
-const CHILD_LISTS = ['children', 'content', 'nodes'];
+// Beside `children` and a component instance's named fills.
+const OTHER_CHILD_LISTS = ['content', 'nodes'];
 
 function isObject(value) {
   return value != null && typeof value === 'object' && !Array.isArray(value);
@@ -33,94 +37,6 @@ function under(at, segments, key = false) {
 
 function hasNonEmptyString(value) {
   return typeof value === 'string' && value.trim() !== '';
-}
-
-/** Closest known prop name, so an agent gets a fix rather than a rejection. */
-function nearest(candidate, pool) {
-  let best = null;
-  let bestScore = Infinity;
-  for (const option of pool) {
-    const distance = levenshtein(candidate, option);
-    if (distance < bestScore) {
-      bestScore = distance;
-      best = option;
-    }
-  }
-  return bestScore <= Math.max(2, Math.floor(candidate.length / 3)) ? best : null;
-}
-
-function levenshtein(a, b) {
-  const rows = a.length + 1;
-  const cols = b.length + 1;
-  let prev = Array.from({ length: cols }, (_, i) => i);
-  for (let i = 1; i < rows; i += 1) {
-    const current = [i];
-    for (let j = 1; j < cols; j += 1) {
-      current[j] = Math.min(
-        prev[j] + 1,
-        current[j - 1] + 1,
-        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
-      );
-    }
-    prev = current;
-  }
-  return prev[cols - 1];
-}
-
-function validateKnownProps(result, component, props, context, at) {
-  const contract = knownProps(component);
-  if (!contract || !isObject(props)) return;
-
-  for (const propName of Object.keys(props)) {
-    if (contract.has(propName)) continue;
-    const suggestion = nearest(propName, [...contract]);
-    addDiagnostic(
-      result,
-      'warnings',
-      'UNKNOWN_PROP',
-      `${context}: ${component} has no prop "${propName}".${suggestion ? ` Did you mean "${suggestion}"?` : ` Known props: ${[...contract].join(', ')}.`}`,
-      under(at, ['props', propName], true),
-    );
-  }
-}
-
-function validateEnumProps(result, component, props, context, at) {
-  const entry = getPrimitive(component);
-  if (!entry || !isObject(props)) return;
-  for (const [name, spec] of Object.entries(entry.props || {})) {
-    if (!Array.isArray(spec.enum)) continue;
-    const value = props[name];
-    if (typeof value !== 'string' || value.trim() === '') continue;
-    if (spec.enum.includes(value)) continue;
-    const suggestion = nearest(value, spec.enum);
-    addDiagnostic(
-      result,
-      'warnings',
-      'UNKNOWN_PROP_VALUE',
-      `${context}: ${component}.${name} is "${value}".${suggestion ? ` Did you mean "${suggestion}"?` : ''} Allowed: ${spec.enum.join(', ')}.`,
-      under(at, ['props', name]),
-    );
-  }
-}
-
-function validateTextProps(result, component, props, context, at) {
-  if (!TEXT_PRIMITIVES.has(component)) return;
-  const hasText = hasNonEmptyString(props?.text);
-  const hasLabel = hasNonEmptyString(props?.label);
-  // `lines` says the skeleton is deliberate, so do not nag about it.
-  if (!hasText && !hasLabel && props?.lines == null) {
-    addDiagnostic(result, 'info', 'MISSING_TEXT', `${context}: ${component} has no text, so it renders a skeleton bar. Add props.text, or props.lines to say the placeholder is intended.`, at);
-  }
-  if (hasLabel && !hasText) {
-    addDiagnostic(result, 'info', 'TEXT_PROP_ALIAS', `${context}: ${component} uses the label alias; prefer text.`, under(at, ['props', 'label'], true));
-  }
-}
-
-function validateFieldLabel(result, component, props, context, at) {
-  if (!FIELD_PRIMITIVES.has(component)) return;
-  if (!hasNonEmptyString(props?.label)) {
-    addDiagnostic(result, 'info', 'UNLABELED_FIELD', `${context}: ${component} has no label.`, at);
-  }
 }
 
 /** Nudge `section` towards the explicit container that says what was meant. */
@@ -159,7 +75,8 @@ function validateLayoutOnLeaf(result, node, component, context, at) {
 
 function validateEmptyContainer(result, node, component, context, at) {
   if (!LAYOUT_ONLY.has(component) && component !== 'section' && component !== 'card') return;
-  if (childNodes(node).length > 0) return;
+  // A repeat with no items is EMPTY_REPEAT, said once.
+  if (childNodes(node).length > 0 || Object.hasOwn(node, 'repeat')) return;
   addDiagnostic(result, 'info', 'EMPTY_CONTAINER', `${context}: ${component} has no children.`, under(at, ['component']));
 }
 
@@ -170,21 +87,24 @@ function validateRole(result, node, context, at) {
   addDiagnostic(result, 'info', 'UNKNOWN_ROLE', `${context}: role "${role}" is not a known role, so it drives no proportions.${suggestion ? ` Did you mean "${suggestion}"?` : ` Known roles: ${ROLES.join(', ')}.`}`, under(at, ['role']));
 }
 
-function childNodes(node) {
+/** Every node list below a node, each with the path segments that lead to it. */
+function childLists(node) {
   if (!isObject(node)) return [];
-  return CHILD_LISTS.flatMap((list) => (Array.isArray(node[list]) ? node[list] : []));
+  return [
+    ...childNodeEntries(node),
+    ...OTHER_CHILD_LISTS.filter((list) => Array.isArray(node[list])).map((list) => ({ segments: [list], nodes: node[list] })),
+  ];
 }
 
-function validatePrimitiveProps(result, node, context, options = {}) {
-  if (!isObject(node)) return;
+/** A node's children as it renders them: the authored ones, then its repeat rows. */
+function childNodes(node) {
+  return [...childLists(node).flatMap((list) => list.nodes), ...repeatRows(node)];
+}
 
-  const at = options.at;
+/** What the frame and layout rules see of a node, given where it sits. */
+function nodeShape(node, options) {
   const raw = typeof node.component === 'string' ? node.component : '';
   const component = resolvePrimitiveName(raw) || raw;
-  const props = isObject(node.props) ? node.props : {};
-  const isPrimitive = PRIMITIVE_COMPONENTS.has(component);
-
-  const layout = isObject(node.layout) ? node.layout : {};
   const ctx = {
     element: component,
     surfaceDepth: Number.isInteger(options.surfaceDepth) && options.surfaceDepth > 0 ? options.surfaceDepth : 0,
@@ -195,20 +115,29 @@ function validatePrimitiveProps(result, node, context, options = {}) {
   };
   // The renderer and lint must never disagree about the frame, so both call
   // decideFrame rather than keeping their own copy of the rule.
-  const decision = { ...decideFrame(node, ctx), ctx };
+  return { component, isPrimitive: PRIMITIVE_COMPONENTS.has(component), decision: { ...decideFrame(node, ctx), ctx } };
+}
+
+/** The rules on how an element is framed and laid out, as written. */
+function validateShape(result, node, shape, context, at) {
+  if (!shape.isPrimitive) return;
+  validateSectionIntent(result, node, shape.component, shape.decision, context, at);
+  validateRedundantSurface(result, node, shape.decision, context, at);
+  validateLayoutOnLeaf(result, node, shape.component, context, at);
+  validateEmptyContainer(result, node, shape.component, context, at);
+}
+
+function validatePrimitiveProps(result, node, context, options = {}) {
+  if (!isObject(node)) return;
+
+  const at = options.at;
+  const shape = nodeShape(node, options);
+  const { component, decision } = shape;
+  const layout = isObject(node.layout) ? node.layout : {};
 
   validateRole(result, node, context, at);
-
-  if (isPrimitive) {
-    validateKnownProps(result, component, props, context, at);
-    validateEnumProps(result, component, props, context, at);
-    validateTextProps(result, component, props, context, at);
-    validateFieldLabel(result, component, props, context, at);
-    validateSectionIntent(result, node, component, decision, context, at);
-    validateRedundantSurface(result, node, decision, context, at);
-    validateLayoutOnLeaf(result, node, component, context, at);
-    validateEmptyContainer(result, node, component, context, at);
-  }
+  if (shape.isPrimitive) validateElementContract(result, component, node, context, at);
+  validateShape(result, node, shape, context, at);
 
   const containerDepth = (Number.isInteger(options.containerDepth) ? options.containerDepth : 0)
     + (childNodes(node).length > 0 ? 1 : 0);
@@ -217,19 +146,23 @@ function validatePrimitiveProps(result, node, context, options = {}) {
   }
 
   const nextOptions = {
-    surfaceDepth: ctx.surfaceDepth + (decision.frame === 'surface' ? 1 : 0),
+    surfaceDepth: decision.ctx.surfaceDepth + (decision.frame === 'surface' ? 1 : 0),
     parentLayoutIsGrid: layout.type === 'grid' || component === 'grid',
     parentDivides: layout.separatorPolicy === 'divide' || layout.separators === 'between',
     containerDepth,
   };
 
-  for (const list of CHILD_LISTS) {
-    if (!Array.isArray(node[list])) continue;
-    node[list].forEach((child, index) => {
+  for (const { segments, nodes } of childLists(node)) {
+    nodes.forEach((child, index) => {
       const childId = typeof child?.id === 'string' ? child.id : 'node';
-      validatePrimitiveProps(result, child, `${context} > ${childId}`, { ...nextOptions, at: under(at, [list, index]) });
+      validatePrimitiveProps(result, child, `${context} > ${childId}`, { ...nextOptions, at: under(at, [...segments, index]) });
     });
   }
+  // A row's element contract reads the values it renders with, so it is checked
+  // on the rendered page; here a row gets the rules on how it is framed.
+  lintRepeat(result, node, context, at, (rowResult, row, rowContext, rowAt) => {
+    validateShape(rowResult, row, nodeShape(row, nextOptions), rowContext, rowAt);
+  });
 }
 
 module.exports = {

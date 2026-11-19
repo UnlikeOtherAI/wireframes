@@ -25,6 +25,36 @@ const controlStyles = [
   '.wf-mode-card .wf-button-link button,.wf-mode-card .wf-button-link .wf-button-link{background:transparent;color:var(--wf-ink);text-decoration:underline;min-width:0;padding:0}',
 
   '.wf-button button .wf-icon-glyph,.wf-button .wf-button-link .wf-icon-glyph{color:inherit}',
+  // Pressed toggle buttons: a sunken fill, so the state reads without colour.
+  '.wf-mode-card .wf-button button[data-wf-pressed],.wf-mode-card .wf-button .wf-button-link[data-wf-pressed]{background:var(--wf-line);color:var(--wf-ink);box-shadow:inset 0 1px 2px rgba(17,24,39,.18)}',
+  '.wf-mode-card .wf-button-primary button[data-wf-pressed],.wf-mode-card .wf-button-primary .wf-button-link[data-wf-pressed]{background:#111827;color:#ffffff;box-shadow:inset 0 2px 3px rgba(0,0,0,.4)}',
+  '.wf-mode-line .wf-button button[data-wf-pressed],.wf-mode-line .wf-button .wf-button-link[data-wf-pressed]{background:var(--wf-fill);box-shadow:inset 0 0 0 1px var(--wf-line-strong)}',
+  '.wf-button button[data-wf-pressed="mixed"]{background-image:linear-gradient(135deg,transparent 50%,rgba(17,24,39,.08) 50%)}',
+
+  // --- Toolbar ---
+  '.wf-toolbar{width:fit-content;max-width:100%}',
+  '.wf-toolbar-items{display:inline-flex;align-items:center;flex-wrap:wrap;gap:2px;padding:3px}',
+  '.wf-toolbar-stack .wf-toolbar-items{flex-direction:column;align-items:stretch;flex-wrap:nowrap}',
+  '.wf-mode-card .wf-toolbar-items{background:#ffffff;border:1px solid var(--wf-line);border-radius:var(--wf-corner-radius,6px)}',
+  '.wf-mode-line .wf-toolbar-items{border:1px solid var(--wf-line-strong)}',
+  '.wf-toolbar-item{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:32px;min-height:32px;padding:0 10px;'
+    + 'font:inherit;font-size:13px;color:var(--wf-ink-2);background:transparent;border:1px solid transparent;'
+    + 'border-radius:var(--wf-corner-radius,6px);cursor:pointer;white-space:nowrap}',
+  '.wf-toolbar-icon{padding:0}',
+  '.wf-toolbar-stack .wf-toolbar-item{justify-content:flex-start}',
+  '.wf-toolbar-stack .wf-toolbar-icon{justify-content:center}',
+  '.wf-mode-line .wf-toolbar-item{border-radius:0}',
+  '.wf-toolbar-sm .wf-toolbar-item{min-width:28px;min-height:28px;font-size:12px}',
+  '.wf-toolbar-lg .wf-toolbar-item{min-width:40px;min-height:40px;font-size:14px}',
+  '.wf-mode-card .wf-toolbar-item[data-wf-pressed],.wf-mode-card .wf-toolbar-item[data-wf-checked]{background:var(--wf-line);color:var(--wf-ink);box-shadow:inset 0 1px 2px rgba(17,24,39,.15)}',
+  '.wf-mode-line .wf-toolbar-item[data-wf-pressed],.wf-mode-line .wf-toolbar-item[data-wf-checked]{background:var(--wf-fill);border-color:var(--wf-line-strong)}',
+  '.wf-toolbar-item[data-wf-pressed="mixed"],.wf-toolbar-item[data-wf-checked="mixed"]{border-style:dashed}',
+  '.wf-toolbar-item[data-wf-disabled]{opacity:.5;cursor:not-allowed}',
+  '.wf-toolbar-sep{align-self:stretch;width:1px;margin:4px 3px;background:var(--wf-line)}',
+  '.wf-toolbar-stack .wf-toolbar-sep{width:auto;height:1px;margin:3px 4px}',
+  '.wf-mode-line .wf-toolbar-sep{background:var(--wf-line-strong)}',
+  '.wf-toolbar-group{display:inline-flex;align-items:center;gap:2px}',
+  '.wf-toolbar-stack .wf-toolbar-group{flex-direction:column;align-items:stretch}',
 
   // --- Segmented control ---
   '.wf-segmented{display:inline-flex;align-items:stretch;width:fit-content;border-radius:var(--wf-corner-radius,6px);overflow:hidden}',
@@ -37,6 +67,15 @@ const controlStyles = [
   '.wf-segment-on{background:#ffffff;color:var(--wf-choice-accent,var(--wf-ink));font-weight:600}',
   '.wf-mode-line .wf-segment-on{background:var(--wf-fill)}',
   '.wf-segmented-lg .wf-segment{min-height:40px}',
+  // A segmented field: the label above, the segments in their own track.
+  '.wf-segmented.wf-segmented-field,.wf-mode-line .wf-segmented.wf-segmented-field,.wf-mode-card .wf-segmented.wf-segmented-field'
+    + '{display:flex;flex-direction:column;align-items:flex-start;border:none;border-radius:0;background:transparent;overflow:visible}',
+  '.wf-segment-track{display:inline-flex;align-items:stretch;width:fit-content;border-radius:var(--wf-corner-radius,6px);overflow:hidden}',
+  '.wf-mode-line .wf-segment-track{border:1px solid var(--wf-line-strong);border-radius:0}',
+  '.wf-mode-card .wf-segment-track{border:1px solid var(--wf-line);background:var(--wf-fill-2)}',
+  '.wf-field-invalid .wf-segment-track{border-color:var(--wf-tone);border-width:2px}',
+  '.wf-segment-track[data-wf-readonly] .wf-segment{cursor:default}',
+  '.wf-segment-track[data-wf-disabled]{opacity:.5}',
 
   // --- Fields ---
   '.wf-field{width:100%;min-width:0}',
@@ -59,6 +98,11 @@ const controlStyles = [
   '.wf-field-invalid{--wf-tone:var(--wf-danger)}',
   '.wf-field-invalid .wf-control,.wf-field-invalid textarea{border-color:var(--wf-tone);border-width:2px}',
   '.wf-select-searchable .wf-control select{padding-left:0}',
+  // Read-only keeps the value but drops the editable look; disabled wins when both are set.
+  '.wf-mode-card .wf-control:has(>[data-wf-readonly]:not([data-wf-disabled])),.wf-mode-card .wf-textarea textarea[data-wf-readonly]:not([data-wf-disabled])'
+    + '{background:var(--wf-fill-2)}',
+  '.wf-mode-line .wf-control:has(>[data-wf-readonly]:not([data-wf-disabled])),.wf-mode-line .wf-textarea textarea[data-wf-readonly]:not([data-wf-disabled])'
+    + '{border-style:dashed}',
 
   '.wf-control-center{position:relative}',
   '.wf-control-center input{padding-inline-start:36px}',
@@ -76,12 +120,20 @@ const controlStyles = [
   '.wf-range-track{display:block;height:4px;border-radius:2px;background:var(--wf-line-2)}',
   '.wf-range-fill{display:block;height:100%;border-radius:2px;background:var(--wf-ink-3)}',
   '.wf-range-thumb{position:absolute;top:9px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#ffffff;border:1px solid var(--wf-ink-3)}',
+  // Disabled: native fields keep the native look they always had. Drawn
+  // controls fade one layer to half opacity, as disabled buttons and
+  // checkboxes always did.
+  '.wf-range[data-wf-disabled],.wf-otp[data-wf-disabled],.wf-numstepper[data-wf-disabled],.wf-picker-wheel[data-wf-disabled],'
+    + '.wf-editor-body[data-wf-disabled],.wf-choice-list[data-wf-disabled]{opacity:.5}',
+  '.wf-numstepper[data-wf-readonly] .wf-numstepper-btn{color:var(--wf-ink-4);cursor:default}',
+  '.wf-numstepper-btn[data-wf-disabled]{color:var(--wf-ink-4);cursor:not-allowed}',
   '.wf-color{display:flex;align-items:center;gap:0;border:1px solid var(--wf-line);border-radius:var(--wf-corner-radius,6px);overflow:hidden;background:#ffffff}',
   '.wf-mode-line .wf-color{border-color:var(--wf-line-strong);border-radius:0;background:transparent}',
   '.wf-color input[type=color]{width:36px;height:34px;flex:0 0 36px;padding:3px;cursor:pointer}',
   '.wf-color input{border:none;outline:none;font:inherit;font-size:13px;padding:0 10px;min-height:34px;background:transparent;width:100%}',
 
   '@media(pointer:coarse){.wf-segmented .wf-segment,.wf-color input{min-height:44px}.wf-segment{min-width:44px}.wf-color input[type=color]{width:44px;height:44px;flex-basis:44px}}',
+  '@media(pointer:coarse){.wf-toolbar-item{min-width:44px;min-height:44px}}',
 
   // --- Choices ---
   '.wf-choice{display:inline-flex;align-items:flex-start;gap:9px;cursor:pointer;min-height:22px}',
@@ -95,10 +147,16 @@ const controlStyles = [
     + 'border:1px solid var(--wf-ink-3);border-radius:3px;background:#ffffff;position:relative}',
   '.wf-radio-mark{display:inline-block;width:16px;height:16px;flex:0 0 auto;margin-top:2px;'
     + 'border:1px solid var(--wf-ink-3);border-radius:50%;background:#ffffff;position:relative}',
-  '.wf-choice-on .wf-check-mark,.wf-check-on{background:var(--wf-ink);border-color:var(--wf-ink)}',
-  '.wf-choice-on .wf-check-mark:after,.wf-check-on:after{content:"";position:absolute;left:5px;top:1px;width:4px;height:9px;'
+  '.wf-choice-on .wf-check-mark,.wf-check-on,.wf-check-mark[data-wf-checked]{background:var(--wf-ink);border-color:var(--wf-ink)}',
+  '.wf-choice-on .wf-check-mark:after,.wf-check-on:after,.wf-check-mark[data-wf-checked=""]:after{content:"";position:absolute;left:5px;top:1px;width:4px;height:9px;'
     + 'border:solid #ffffff;border-width:0 2px 2px 0;transform:rotate(45deg)}',
-  '.wf-choice-on .wf-radio-mark:after{content:"";position:absolute;left:3px;top:3px;width:8px;height:8px;border-radius:50%;background:var(--wf-ink)}',
+  // Indeterminate: a bar instead of the tick.
+  '.wf-check-mark[data-wf-checked="mixed"]:after{content:"";position:absolute;left:3px;top:6px;width:8px;height:2px;background:#ffffff}',
+  '.wf-choice-on .wf-radio-mark:after,.wf-radio-mark[data-wf-checked]:after{content:"";position:absolute;left:3px;top:3px;width:8px;height:8px;border-radius:50%;background:var(--wf-ink)}',
+  '.wf-field-invalid .wf-check-mark,.wf-field-invalid .wf-radio-mark,.wf-field-invalid .wf-toggle-track{border-color:var(--wf-tone)}',
+  '.wf-choice-list:not([data-wf-disabled]) .wf-choice:has([data-wf-disabled]){opacity:.5}',
+  '.wf-checkbox>.wf-field-error,.wf-radio>.wf-field-error{margin-left:25px}',
+  '.wf-toggle>.wf-field-error{margin-left:45px}',
   '.wf-toggle-track{display:inline-block;width:36px;height:20px;flex:0 0 auto;margin-top:1px;position:relative;'
     + 'border:1px solid var(--wf-ink-3);border-radius:10px;background:var(--wf-line-2)}',
   '.wf-mode-line .wf-toggle-track{background:transparent;border-color:var(--wf-line-strong)}',
@@ -113,6 +171,8 @@ const controlStyles = [
     + 'background:var(--wf-fill);border:1px solid var(--wf-line);border-radius:10px}',
   '.wf-mode-line .wf-tag{background:transparent;border-color:var(--wf-line-strong);border-radius:0}',
   '.wf-tag-x{color:var(--wf-ink-4)}',
+  '.wf-tags input[readonly]{display:none}',
+  '.wf-tags:has(input[data-wf-disabled]){opacity:.5}',
 
   // --- Upload ---
   '.wf-upload{display:flex;flex-direction:column;align-items:center;gap:6px;padding:24px;text-align:center}',
@@ -124,6 +184,16 @@ const controlStyles = [
   '.wf-upload-files{display:flex;flex-direction:column;gap:4px;margin-top:8px;width:100%}',
   '.wf-upload-file{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--wf-ink-2)}',
   '.wf-upload-button{display:flex;align-items:center;gap:8px}',
+  // Upload as a field: fieldLabel above, the dropzone in its own dashed box, help below.
+  '.wf-upload.wf-upload-field{align-items:stretch;gap:0;padding:0;text-align:left}',
+  '.wf-mode-line .wf-upload.wf-upload-field[data-wf-frame="surface"]{outline:none}',
+  '.wf-mode-card .wf-upload.wf-upload-field[data-wf-frame="surface"]{border:none;box-shadow:none;background:transparent}',
+  '.wf-upload-zone{display:flex;flex-direction:column;align-items:center;gap:6px;padding:24px;text-align:center}',
+  '.wf-mode-line .wf-upload-zone{outline:1px dashed var(--wf-line-strong);outline-offset:-1px}',
+  '.wf-mode-card .wf-upload-zone{border:1px dashed var(--wf-line);background:var(--wf-fill-2);border-radius:var(--wf-surface-radius,6px)}',
+  '.wf-upload-field.wf-field-invalid .wf-upload-zone{border-color:var(--wf-tone);outline-color:var(--wf-tone)}',
+  '.wf-upload-row{display:flex;align-items:center;gap:8px}',
+  '.wf-upload-zone[data-wf-disabled],.wf-upload-row[data-wf-disabled]{opacity:.5}',
 
   // --- Numeric stepper ---
   '.wf-numstepper{display:inline-flex;align-items:center;overflow:hidden;border:1px solid var(--wf-line);'

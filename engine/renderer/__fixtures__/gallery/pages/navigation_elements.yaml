@@ -197,3 +197,233 @@ page:
                       - label: Delete
                         icon: trash
                         danger: true
+
+        - id: item_states_card
+          component: card
+          props:
+            title: Item states
+          layout:
+            type: grid
+            columns: 3
+            gap: 28
+          children:
+            - id: states_tabs
+              component: tab_bar
+              props:
+                tabs:
+                  - label: Overview
+                  - label: Usage
+                    selected: true
+                  - label: Billing
+                    disabled: true
+            - id: states_breadcrumb
+              component: breadcrumb
+              props:
+                separator: ›
+                items:
+                  - label: Projects
+                    route: content
+                  - label: Archived
+                    route: content
+                    disabled: true
+                  - label: Acme
+                    current: true
+                  - label: Settings
+                    route: forms
+            - id: states_stepper
+              component: stepper
+              props:
+                steps:
+                  - label: Cart
+                  - label: Plan
+                    selected: true
+                  - label: Pay
+                    disabled: true
+            - id: states_nav
+              component: nav
+              props:
+                items:
+                  - type: heading
+                    label: Workspace
+                  - label: Navigation
+                    icon: compass
+                    route: navigation_elements
+                    selected: false
+                  - label: Reports
+                    icon: chart-simple
+                    expanded: true
+                    items:
+                      - label: Weekly
+                        selected: true
+                      - label: Monthly
+                  - label: Archive
+                    icon: box-archive
+                    expanded: false
+                    items: [2024, 2025]
+                  - type: separator
+                  - label: Billing
+                    icon: credit-card
+                    disabled: true
+                    route: forms
+            - id: states_menu
+              component: menu
+              props:
+                items:
+                  - type: group
+                    label: Document
+                    items:
+                      - label: Open
+                        icon: folder-open
+                        current: true
+                      - label: Rename
+                        icon: pen
+                        shortcut: "⌘R"
+                        selected: true
+                      - label: Share
+                        icon: share-nodes
+                        disabled: true
+                  - type: separator
+                  - label: Delete
+                    icon: trash
+                    tone: danger
+            - id: states_bottom_tabs
+              component: bottom_tab_bar
+              props:
+                tabs:
+                  - label: Home
+                    icon: house
+                  - label: Search
+                    icon: magnifying-glass
+                    current: true
+                  - label: Inbox
+                    icon: inbox
+                    disabled: true
+
+        - id: command_card
+          component: card
+          props:
+            title: Command palette
+          layout:
+            type: grid
+            columns: 2
+            gap: 28
+          children:
+            - id: command_demo
+              component: command
+              props:
+                placeholder: Search or run a command
+                footer: true
+                items:
+                  - type: group
+                    label: Suggestions
+                    items:
+                      - label: New project
+                        icon: plus
+                        shortcut: "⌘N"
+                        selected: true
+                      - label: Invite teammates
+                        icon: user-plus
+                        description: Send an email invite
+                        shortcut: "⌘⇧I"
+                      - label: Billing
+                        icon: credit-card
+                        description: Plan and invoices
+                        disabled: true
+                  - type: group
+                    label: Navigation
+                    items:
+                      - label: Go to dashboard
+                        icon: gauge
+                        route: content
+                        shortcut: G D
+                      - label: Open settings
+                        icon: gear
+                        route: forms
+                        shortcut: "⌘,"
+            - id: command_empty
+              component: command
+              props:
+                query: quarterly forecast
+                empty: No commands match this search.
+
+        - id: menubar_card
+          component: card
+          props:
+            title: Menubar
+          size:
+            minHeight: 300
+          children:
+            - id: menubar_demo
+              component: menubar
+              props:
+                open: Edit
+                items:
+                  - label: File
+                    items: [New, Open, Save]
+                  - label: Edit
+                    items:
+                      - label: Undo
+                        shortcut: "⌘Z"
+                      - label: Redo
+                        shortcut: "⇧⌘Z"
+                        disabled: true
+                      - type: separator
+                      - type: group
+                        label: Clipboard
+                        items:
+                          - label: Cut
+                            shortcut: "⌘X"
+                          - label: Copy
+                            shortcut: "⌘C"
+                            selected: true
+                          - label: Paste
+                            shortcut: "⌘V"
+                      - type: separator
+                      - label: Find
+                        items: [Find…, Replace…]
+                  - label: View
+                    items: [Zoom in, Zoom out]
+                  - label: Window
+                    disabled: true
+                    items: [Minimise]
+                  - label: Help
+
+        - id: top_nav_card
+          component: card
+          props:
+            title: Top navigation
+          size:
+            minHeight: 380
+          children:
+            - id: top_nav_demo
+              component: nav
+              props:
+                variant: top
+                open: Products
+                items:
+                  - label: Products
+                    items:
+                      - label: Analytics
+                        icon: chart-line
+                        description: Dashboards and reports for every team.
+                        route: charts
+                      - label: Automation
+                        icon: bolt
+                        description: Workflows that run on a schedule.
+                        route: forms
+                        current: true
+                      - type: separator
+                      - label: Integrations
+                        icon: plug
+                        description: Coming soon.
+                        disabled: true
+                  - label: Solutions
+                    items: [Startups, Enterprise]
+                  - label: Pricing
+                    route: data
+                  - label: Docs
+                    route: content
+                  - type: separator
+                  - label: Changelog
+                    disabled: true
+                    route: content

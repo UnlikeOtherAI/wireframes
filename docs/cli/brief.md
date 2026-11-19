@@ -162,8 +162,9 @@ Checks naming conventions:
 * No ambiguous names
 * No reserved keywords
 * Unknown props on primitive components (`UNKNOWN_PROP`, warning)
-* Missing text, unlabeled fields, label-alias usage, and demoted nested
-  surfaces (`info`, never strict-fatal)
+* Missing text, unlabeled fields, label-alias usage, demoted nested
+  surfaces, and a single-choice `value` that matches several items
+  (`AMBIGUOUS_VALUE`) (`info`, never strict-fatal)
 
 An editor gets the same findings from YAML text, each with the range it is
 about, from `engine/lint/source`. See [source-lint.md](source-lint.md).
@@ -219,9 +220,81 @@ Template removal:
 wf component add <id>
 wf component remove <id>
 wf component list
+wf component list --std
+wf component show <id>
+wf component copy std.<name> [--as <id>] [--file <path>]
 ```
 
 No mutation logic. Just structure.
+
+`wf component list` prints the project's component ids, sorted, one per line.
+The built-in `std` patterns never appear in it; `wf component list --std`
+prints their ids instead, in the same format. They are described in
+[stdlib.md](stdlib.md).
+
+`wf component remove` refuses a component that any page, template or other
+component still uses, including inside a slot fill.
+
+`wf component show <id>` describes one component, by its registry id
+(imported components read `kit.panel`):
+
+```
+Component: kit.panel
+Source: components/kit.yaml (panel)
+
+Props:
+  title  default: "Details"  hint: Card heading
+
+Slots:
+  default  fallback: none
+  footer   fallback: close (component:button)
+
+Outline:
+  - panel (component:card)
+    - body (slot:default)
+    - footer (slot:footer)
+      - close (component:button)
+```
+
+Props come from `propDefaults`, `propHints` and the `{{props.x}}` tokens the
+component uses. Slots list each placeholder once with its fallback (`none` when
+it has none, `empty` for `children: []`). The outline shows nested instances
+with the named fills the component writes for them (`slots.footer:`). A
+module's `std.<name>` that its own `std` alias lacks means the built-in whatever
+the project's `std` alias defines, and reads `(use:std.<name>, built-in)`. An unknown
+id exits 1; a missing id exits 2. Slots are described in the schema brief,
+§3.3 "Slots".
+
+`show` takes a built-in id too (`wf component show std.login`). Its second line
+is the pattern's summary, and its source reads
+`built-in, read-only (edit a copy: wf component copy std.login)`.
+
+`wf component copy std.<name>` copies a built-in into the project so it can be
+edited like any local component:
+
+* The definition goes into `components.yaml`, which is created when missing, or
+  into the existing components document given by `--file` (relative to the
+  project).
+* The target must be inside the project once `..`, absolute paths and symbolic
+  links are resolved. A path or link that leads outside is refused, and nothing
+  is written.
+* It is stored as `<name>`, or as `--as <id>`, with its root id set to match.
+* An id the target document already has is refused; pick another with `--as`.
+* An existing document keeps its text, comments included: the definition is
+  added after its last component. Nothing is written unless the result
+  validates, and the file is then replaced in one step.
+* It prints the id to use, `use: <id>`, or the alias-qualified id when `--file`
+  names a document the project imports (`use: mk.landing_hero`).
+
+A built-in is read-only only when the project has no component of that id. Then
+`wf component remove std.<name>`, and `wf node` writes to a
+`wf://component/std.<name>` address, fail with a message that points to
+`wf component copy`. `wf inspect` and `wf tree component` read them. A
+`std.<name>` the project defines under a `std` alias is the project's own and
+is read and edited in its file.
+
+`wf component remove` removes components defined in `components.yaml`. For an
+imported id it names the file that defines it.
 
 ---
 
@@ -232,14 +305,18 @@ wf node add <component> --below <address> --id <nodeId>
 wf node add <component> --below <address> --id <nodeId> --props '{"label":"Save"}'
 wf node update <address> --props '{"label":"Cancel"}'
 wf node remove <address>
+wf node rename <repeat-row-address> <item-id>
 ```
 
 Adds, updates, or removes elements and sections within a page or template tree.
 
-Works with both page and template addresses:
+Works with page, template and component addresses:
 
 * `wf://page/dashboard#...` — edits the page YAML
 * `wf://template/app_shell#...` — edits the template YAML
+* `wf://component/kit.panel#...` — edits the file that defines the component.
+  The id resolves like a `use:`, imported ids included. A file outside the
+  project is read, never written.
 
 ### wf node add
 
@@ -250,6 +327,11 @@ Works with both page and template addresses:
 * `--props` — optional JSON props for the new node
 
 Use `--below` to insert after a sibling. Use `--inside` to add the first child to an empty container (section, slot, etc.). Exactly one of `--below` or `--inside` is required.
+
+Addresses reach nodes in a component instance's slot fills by id, so
+`wf://page/billing#main.billing_panel.upgrade` names a node in `slots.footer` of
+`billing_panel`. `--below` such a node inserts into the same fill, and `--inside`
+a `use:` node adds to its `default` fill (its `children`).
 
 Rules:
 
@@ -281,6 +363,18 @@ Rules:
 * Removes the node and all its children
 * Updates the YAML file in place
 * Validates after removal
+
+### Repeat rows
+
+A row of a `repeat` (schema-systems.md §14.1) is addressed by its id under its
+host: `wf://page/home#main.team.team__ada`. It resolves to the item with id
+`ada` wherever it now sits, so reordering never retargets it; a stale id fails.
+
+* `wf node update <row> --props` merges into the item and keeps its `id`
+* `wf node rename <row> <item-id>` changes the item id, so the row becomes `<host>__<item-id>`
+* `wf node remove <row>` removes the item from `repeat.items`
+* `--component`, `--layout`, and `wf node add` inside or below a row are refused: a row
+  takes its cell from the host. `wf node add --inside <host>` adds a static child
 
 This is explicit, deterministic structural editing — not AI patching or live mutation.
 The address determines which file gets modified (page YAML or template YAML).
@@ -507,7 +601,7 @@ you can open in a browser and click through.
 * `--base-path <path>` — base path prefix for URLs (default: `/`)
 
 Pages are grouped by `viewport.device` into platform folders. Project must
-pass `wf validate` before building. See [rendering.md](rendering.md) for the
+pass `wf validate`; if not, the build lists its errors. See [rendering.md](rendering.md) for the
 full rendering specification and output structure.
 
 ---
@@ -528,6 +622,14 @@ Same rendering pipeline as `wf build`. Watches YAML files and hot-reloads.
 * `--platform <value>` — serve only a specific platform (default: `all`)
 * `--open` — open browser on launch
 * `--no-reload` — disable hot reload
+
+Press `m` on a served or built page to toggle the measurement overlay: hover
+shows an element's width and height, a click pins it, and hovering another
+element shows the distance between them. `Esc` unpins. While it is on, clicks
+and keys measure instead of navigating or running interactions. The key is
+ignored in text fields and in pages embedded in another window, whose host
+switches measurement with a `wf:measure` message instead. See
+[rendering-measure.md](rendering-measure.md).
 
 See [rendering.md](rendering.md) for rendering details.
 
@@ -687,7 +789,8 @@ This prints:
 * Children
 * Layout summary
 
-This is useful for debugging.
+A repeat row also prints its item: host, cell, item id, current index, file
+and rendered id. This is useful for debugging.
 
 But no mutation via address.
 

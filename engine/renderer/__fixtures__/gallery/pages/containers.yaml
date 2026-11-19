@@ -242,3 +242,27 @@ page:
               - title: Slide one
               - title: Slide two
               - title: Slide three
+
+        # --- Card actions and canonical carousel items ---
+        - id: card_actions
+          component: card
+          props:
+            title: Card actions
+            description: Routed, disabled and toned actions in the card head.
+            actions:
+              - { label: Open data, route: data }
+              - { label: Archive, route: data, disabled: true }
+              - { label: Delete, tone: danger }
+          children:
+            - id: card_actions_body
+              component: paragraph
+              props:
+                lines: 2
+
+        - id: carousel_canonical
+          component: carousel
+          props:
+            items:
+              - label: First slide
+              - label: Second slide
+              - label: Third slide
