@@ -20,6 +20,7 @@ const { builtinComponentIds } = require('../stdlib');
 const { childNodeEntries } = require('../component-registry/child-nodes');
 const { authoredReference, resolveComponentDefinition } = require('../component-registry/definition-lookup');
 const { isElementCell, repeatHostProblem, repeatOf } = require('../component-registry/repeat');
+const { collectSlotPlaceholders, isSlotPlaceholder } = require('../component-registry/slot-placeholders');
 const { createBindingLookup, isCollectionBinding } = require('./repeat-bindings');
 
 const isObject = (value) => value != null && typeof value === 'object' && !Array.isArray(value);
@@ -101,29 +102,74 @@ function checkHost(node, at, scope, bound, report) {
   }
   // Cloned rows clone whatever their cell renders, its own repeats included.
   const rowsBound = bound || (own ? { id: node.id, where: scope.where } : null);
-  if (rowsBound && !isElementCell(repeat.cell)) checkBoundDefinition(repeat.cell, scope, rowsBound, report);
+  if (rowsBound && !isElementCell(repeat.cell)) checkBoundDefinition({ use: repeat.cell }, scope, rowsBound, report);
 }
 
-/** Walks a definition an instance renders under a collection binding, reporting its repeats where it writes them. */
-function checkBoundDefinition(ref, scope, bound, report) {
+/** The slots an instance fills, as the resolver reads them: `children` fill `default`. */
+function filledSlots(instance) {
+  const names = Array.isArray(instance.children) ? ['default'] : [];
+  if (isObject(instance.slots)) {
+    for (const [name, nodes] of Object.entries(instance.slots)) {
+      if (Array.isArray(nodes) && !names.includes(name)) names.push(name);
+    }
+  }
+  return names.sort();
+}
+
+/** An instance's keys that override its definition's root (`resolver/index.js`). */
+function overridesOf(instance) {
+  const overrides = { ...instance };
+  for (const key of ['use', 'props', 'slots', 'repeat']) delete overrides[key];
+  return overrides;
+}
+
+/**
+ * Walks what a definition renders for `instance` under a collection binding,
+ * reporting its repeats where it writes them. What renders is what the resolver
+ * renders: a filled slot's fallback does not, and in a definition without slots
+ * instance `children` replace the root's children and its rows, so only the
+ * root's own instance (`use:`) and the fills it writes for it are left.
+ */
+function checkBoundDefinition(instance, scope, bound, report) {
+  const ref = instance.use;
   // A built-in owns no repeat, and has no file to point at.
   const definition = isObject(scope.definitions) && hasOwn(scope.definitions, ref) ? scope.definitions[ref] : null;
-  const key = JSON.stringify([ref, bound.where, bound.id]);
-  if (!isObject(definition?.root) || scope.entered.has(key)) return;
+  if (!isObject(definition?.root)) return;
+  const slotted = collectSlotPlaceholders(definition).length > 0;
+  const replaced = slotted ? filledSlots(instance) : [];
+  const overridden = !slotted && hasOwn(instance, 'children');
+  const key = JSON.stringify([ref, bound.where, bound.id, overridden, replaced]);
+  if (scope.entered.has(key)) return;
   scope.entered.add(key);
+
   const source = isObject(scope.sources) ? scope.sources[ref] : null;
-  checkTree(definition.root, rootPlace(ref, source), { ...scope, where: `component "${ref}"` }, { id: bound.id, where: bound.where }, report);
+  const at = rootPlace(ref, source);
+  const inner = { ...scope, where: `component "${ref}"`, replaced: new Set(replaced) };
+  const site = { id: bound.id, where: bound.where };
+  if (!overridden) {
+    checkTree(definition.root, at, inner, site, report);
+    return;
+  }
+  const { root } = definition;
+  if (typeof root.use !== 'string') return;
+  checkBoundDefinition({ ...root, ...overridesOf(instance) }, scope, site, report);
+  for (const { segments, nodes } of childNodeEntries(root)) {
+    if (segments[0] !== 'slots') continue;
+    nodes.forEach((child, index) => checkTree(child, under(at, [...segments, index]), inner, site, report));
+  }
 }
 
 function checkTree(node, at, scope, bound, report) {
   if (!isObject(node)) return;
+  // A fallback the caller replaces never renders.
+  if (isSlotPlaceholder(node) && scope.replaced?.has(node.slot)) return;
   if (hasOwn(node, 'repeat')) checkHost(node, at, scope, bound, report);
   const here = bound || (isCollectionBinding(node.binding) ? { id: node.id, where: scope.where, local: true } : null);
   const use = typeof node.use === 'string' ? node.use : null;
   // A binding on or above an instance lands on its definition's root.
-  if (use && here) checkBoundDefinition(use, scope, here, report);
+  if (use && here) checkBoundDefinition(node, scope, here, report);
   for (const { segments, nodes } of childNodeEntries(node)) {
-    const below = here || (use ? scope.bindings.fill(use, segments) : null);
+    const below = here || (use ? scope.bindings.fill(node, segments) : null);
     nodes.forEach((child, index) => checkTree(child, under(at, [...segments, index]), scope, below, report));
   }
 }
