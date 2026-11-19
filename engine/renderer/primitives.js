@@ -67,6 +67,7 @@ function renderChildren(node, options, layout, bodyStyle) {
   return `<div class="wf-node-children"${style}${divides}>${renderNodes(children, {
     ...options,
     parentLayoutType: layoutType,
+    parentRole: typeof node.role === 'string' ? node.role.trim() : undefined,
     parentLayoutIsGrid: layoutType === 'grid',
     parentDivides: shouldRenderParentSeparators(resolved),
   })}</div>`;
@@ -142,6 +143,7 @@ function renderNode(node, options = {}) {
   const shellCtx = {
     surfaceDepth: surfaceDepthOf(options),
     parentLayoutType,
+    parentRole: options.parentRole,
     parentIsGrid: options.parentLayoutIsGrid === true,
     parentDivides: options.parentDivides === true,
     isOverlayChild: options.isOverlayChild === true,

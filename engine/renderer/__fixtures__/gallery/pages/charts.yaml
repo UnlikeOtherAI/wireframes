@@ -169,11 +169,11 @@ page:
                 title: Release plan
                 ticks: [W1, W2, W3, W4, W5, W6]
                 data:
-                  - { label: Research, start: 0, end: 6 }
-                  - { label: Design review, start: 5, end: 14, tone: info }
-                  - { label: Build, start: 10, end: 30 }
-                  - { label: QA and fixes, start: 26, end: 36, tone: warning }
-                  - { label: Launch, start: 35, end: 36, tone: success }
+                  - { label: Research, start: 0, end: 1 }
+                  - { label: Design review, start: 0.8, end: 2.3, tone: info }
+                  - { label: Build, start: 1.7, end: 5 }
+                  - { label: QA and fixes, start: 4.3, end: 6, tone: warning }
+                  - { label: Launch, start: 5.8, end: 6, tone: success }
             - id: gantt_states_card
               component: card
               props:

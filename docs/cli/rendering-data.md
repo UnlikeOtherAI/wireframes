@@ -178,25 +178,31 @@ shapes and their `data` handling are unchanged.
     title: Release plan
     ticks: [W1, W2, W3, W4]
     data:
-      - { label: Design, start: 0, end: 8 }
-      - { label: Build, start: 6, end: 20, tone: info }
-      - { label: Launch, start: 19, end: 20, tone: success }
+      - { label: Design, start: 0, end: 1.6 }
+      - { label: Build, start: 1.2, end: 4, tone: info }
+      - { label: Launch, start: 3.8, end: 4, tone: success }
 ```
 
 - **Data.** `data` is `[{ label, start, end, tone? }]`. `start` and `end` must
   be finite numbers; a row without them keeps its label and draws no bar.
   `tone` is `info`, `success`, `warning` or `danger`.
-- **Domain.** It runs from the smallest `start` to the largest `end`. A row
+- **Ticks.** `ticks` names the axis's bands, on the same scale as the bars:
+  tick `i` names the band from `i` to `i + 1`. So with `ticks: [Q1, Q2, Q3,
+  Q4]`, `start: 0, end: 1` fills exactly the Q1 band, and `start: 1.5` is the
+  middle of Q2. Each label is centred in its band and ends in an ellipsis if
+  it is wider. A dashed gridline marks each band's edge, from 0 to the tick
+  count.
+- **Domain.** With ticks it runs from 0 to the tick count, widened to the
+  smallest `start` or the largest `end` if a bar lies outside the ticks.
+  Without ticks it runs from the smallest `start` to the largest `end`. A row
   with `start` after `end` is swapped. A zero-width domain is padded by 1 on
   each side.
-- **Ticks.** `ticks` is a list of labels, spaced evenly from the start of the
-  domain to its end, with a dashed gridline at each. The first label is
-  left-aligned and the last right-aligned, so neither leaves the chart.
 - **Rows.** Rows are 28 px high, and the chart grows by one row per entry.
   `height` fixes the plot height instead, and the rows then scroll. The label
   column is `min(140px, 35%)` wide, and long labels end in an ellipsis.
 - **No data.** Without `data`, the chart draws five seeded bars with greeked
-  labels, a pure function of the node id, as the other chart shapes do.
+  labels, a pure function of the node id, as the other chart shapes do. With
+  `ticks`, the seeded bars span the ticks' bands.
   `data: []`, or a list with no usable entries, draws the empty state: "No
   data" in the plot, with the axis still drawn when `ticks` is set.
 - **Modes.** Card mode fills the bars, using the tone colour when there is
@@ -206,7 +212,7 @@ shapes and their `data` handling are unchanged.
 <div class="wf-gantt"><div class="wf-gantt-plot"><div class="wf-gantt-rows">
   <div class="wf-gantt-grid" aria-hidden="true"><span class="wf-gantt-gridline" style="left:0.00%"></span>…</div>
   <div class="wf-gantt-row"><span class="wf-gantt-label">Build</span><span class="wf-gantt-track"><span class="wf-gantt-bar wf-tone-info" style="left:30.00%;width:70.00%"></span></span></div>
-</div></div><div class="wf-gantt-axis"><span class="wf-gantt-tick wf-gantt-tick-start" style="left:0.00%">W1</span>…</div></div>
+</div></div><div class="wf-gantt-axis"><span class="wf-gantt-tick" style="left:0.00%;width:25.00%">W1</span>…</div></div>
 ```
 
 `title` and `legend` work as on every other chart.

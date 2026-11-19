@@ -39,7 +39,8 @@ const dataPrimitives = [
     family: 'data',
     frame: 'C',
     summary: 'Greeked chart placeholder in ten shapes. Deterministic, never random. '
-      + 'gantt draws data [{ label, start, end, tone }] as bars on one axis labelled by ticks.',
+      + 'gantt draws data [{ label, start, end, tone }] as bars on one axis; ticks name its bands, tick i the band '
+      + 'from i to i+1, so start: 0, end: 1 fills the first tick.',
     props: {
       chartType: {
         enum: [

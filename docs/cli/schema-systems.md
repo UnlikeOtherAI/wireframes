@@ -18,6 +18,15 @@ Allowed layout types:
 Layout properties: gap, padding, columns (grid), justify, align,
 separatorPolicy, separators, separatorStyle.
 
+Row:
+
+* a field (`input`, `select`, `textarea`, `tags_input`, `search`) in a row
+  grows into the space, up to 320 px. In a row with `role: toolbar`, such as
+  `std.data_page`'s filter bar, it keeps its natural width instead. An
+  authored `size.width` wins in both
+* a row wraps when it carries `role: toolbar`, sets `props.wrap: true`, or
+  holds only unsized controls; `props.nowrap: true` keeps it on one line
+
 Grid:
 
 * columns defined per context

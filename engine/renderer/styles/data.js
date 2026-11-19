@@ -113,9 +113,8 @@ const dataStyles = [
   '.wf-gantt-empty{display:flex;align-items:center;justify-content:center;min-height:84px;'
     + 'font-size:12px;font-style:italic;color:var(--wf-ink-4)}',
   '.wf-gantt-axis{position:relative;height:16px;margin-left:var(--wf-gantt-label-w);font-size:10px;color:var(--wf-ink-4)}',
-  '.wf-gantt-tick{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}',
-  '.wf-gantt-tick-start{transform:none}',
-  '.wf-gantt-tick-end{transform:translateX(-100%)}',
+  // A tick label fills its band: centred, and cut with an ellipsis if wider.
+  '.wf-gantt-tick{position:absolute;top:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
 
   // --- Calendar ---
   '.wf-calendar{padding:0;min-width:0}',

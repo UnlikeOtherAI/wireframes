@@ -22,9 +22,25 @@ function rows(markup) {
 }
 
 function ticks(markup) {
-  return [...markup.matchAll(/<span class="wf-gantt-tick([^"]*)" style="left:([\d.]+)%">(.*?)<\/span>/g)]
-    .map((m) => ({ edge: m[1].trim(), left: Number(m[2]), label: m[3] }));
+  return [...markup.matchAll(/<span class="wf-gantt-tick" style="left:([\d.]+)%;width:([\d.]+)%">(.*?)<\/span>/g)]
+    .map((m) => ({ left: Number(m[1]), width: Number(m[2]), label: m[3] }));
 }
+
+function gridlines(markup) {
+  return [...markup.matchAll(/wf-gantt-gridline" style="left:([\d.]+)%/g)].map((m) => Number(m[1]));
+}
+
+// The iPad's roadmap, as written: four ticks, one bar per quarter.
+const ROADMAP = {
+  title: 'Release Timeline',
+  ticks: ['Q1', 'Q2', 'Q3', 'Q4'],
+  data: [
+    { label: 'Feature Alpha', start: 0, end: 1 },
+    { label: 'Feature Beta', start: 1, end: 2 },
+    { label: 'Feature Release', start: 2, end: 3 },
+    { label: 'Feature Final', start: 3, end: 4 },
+  ],
+};
 
 test('gantt is a chartType with its own ticks prop; series data is untouched', () => {
   const props = getPrimitive('chart').props;
@@ -82,20 +98,46 @@ test('unknown tones add no class; blank labels draw a skeleton', () => {
   assert.equal(rows(markup).filter((row) => row.includes(lib.renderSkeleton(8))).length, 2);
 });
 
-test('ticks are spaced evenly across the domain, edge labels kept inside', () => {
-  assert.deepEqual(ticks(gantt({ data: [{ label: 'A', start: 0, end: 9 }], ticks: ['Jan', 'Feb', 'Mar', 'Apr', 'May'] }).inner), [
-    { edge: 'wf-gantt-tick-start', left: 0, label: 'Jan' },
-    { edge: '', left: 25, label: 'Feb' },
-    { edge: '', left: 50, label: 'Mar' },
-    { edge: '', left: 75, label: 'Apr' },
-    { edge: 'wf-gantt-tick-end', left: 100, label: 'May' },
+test('tick i names the band from i to i+1, so each roadmap bar fills one quarter', () => {
+  const markup = gantt(ROADMAP).inner;
+  assert.deepEqual(bars(markup).map(({ left, width }) => [left, width]), [[0, 25], [25, 25], [50, 25], [75, 25]]);
+  assert.deepEqual(ticks(markup), [
+    { left: 0, width: 25, label: 'Q1' },
+    { left: 25, width: 25, label: 'Q2' },
+    { left: 50, width: 25, label: 'Q3' },
+    { left: 75, width: 25, label: 'Q4' },
   ]);
-  assert.deepEqual(ticks(gantt({ ticks: ['Only'] }).inner), [{ edge: 'wf-gantt-tick-start', left: 0, label: 'Only' }]);
+  // A gridline at every band edge: the bars start and end on them.
+  assert.deepEqual(gridlines(markup), [0, 25, 50, 75, 100]);
+});
+
+test('with ticks the domain runs from 0 to the tick count, widened only by bars outside it', () => {
+  // A quarter with no work keeps its band.
+  const sparse = gantt({ ticks: ['Q1', 'Q2', 'Q3', 'Q4'], data: [{ label: 'A', start: 1, end: 2 }] }).inner;
+  assert.deepEqual(bars(sparse).map(({ left, width }) => [left, width]), [[25, 25]]);
+  assert.deepEqual(gridlines(sparse), [0, 25, 50, 75, 100]);
+  // A bar past the last tick widens the axis; the bands keep their place on the scale.
+  const past = gantt({ ticks: ['W1', 'W2'], data: [{ label: 'A', start: -1, end: 3 }] }).inner;
+  assert.deepEqual(bars(past).map(({ left, width }) => [left, width]), [[0, 100]]);
+  assert.deepEqual(ticks(past).map(({ left, width }) => [left, width]), [[25, 25], [50, 25]]);
+  assert.deepEqual(gridlines(past), [25, 50, 75]);
+  assert.deepEqual(ticks(gantt({ ticks: ['Only'] }).inner), [{ left: 0, width: 100, label: 'Only' }]);
   // Numbers are labels too; anything else is skipped. Labels are escaped.
   assert.deepEqual(ticks(gantt({ ticks: [0, null, '<b>', { x: 1 }] }).inner).map((tick) => tick.label), ['0', '&lt;b&gt;']);
-  const gridlines = gantt({ ticks: ['a', 'b', 'c'] }).inner.match(/wf-gantt-gridline" style="left:[\d.]+%/g);
-  assert.deepEqual(gridlines, ['wf-gantt-gridline" style="left:0.00%', 'wf-gantt-gridline" style="left:50.00%', 'wf-gantt-gridline" style="left:100.00%']);
   assert.doesNotMatch(gantt({}).inner, /wf-gantt-axis|wf-gantt-grid/);
+});
+
+test('without ticks the domain still runs from the smallest start to the largest end', () => {
+  assert.deepEqual(bars(gantt({ data: [{ label: 'A', start: 10, end: 20 }, { label: 'B', start: 15, end: 30 }] }).inner)
+    .map(({ left, width }) => [Number(left.toFixed(2)), Number(width.toFixed(2))]), [[0, 50], [25, 75]]);
+});
+
+test('seeded bars with ticks span the bands of the ticks', () => {
+  const seeded = gantt({ ticks: ['Q1', 'Q2', 'Q3', 'Q4'] }).inner;
+  assert.equal(bars(seeded).length, 5);
+  assert.ok(bars(seeded).every((bar) => bar.left >= 0 && bar.left + bar.width <= 100.01));
+  assert.ok(Math.max(...bars(seeded).map((bar) => bar.left + bar.width)) > 99, 'the staircase reaches the last band');
+  assert.deepEqual(gridlines(seeded), [0, 25, 50, 75, 100]);
 });
 
 test('rows are fixed-height: the chart grows with its rows unless height is set', () => {

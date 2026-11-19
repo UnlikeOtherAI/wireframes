@@ -63,6 +63,14 @@ routes:
     path: /sidebar-panel
     page: sidebar_panel
     template: sidebar_slot_shell
+  - id: chart_filters
+    path: /chart-filters
+    page: chart_filters
+    template: app_shell
+  - id: line_chart_filters
+    path: /line/chart-filters
+    page: line_chart_filters
+    template: app_shell
   - id: field_frames
     path: /field-frames
     page: field_frames

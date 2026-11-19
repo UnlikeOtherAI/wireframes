@@ -161,7 +161,7 @@ page:
                       - { label: Freeze writes, start: 0, end: 1, tone: warning }
                       - { label: Copy data, start: 1, end: 3 }
                       - { label: Verify, start: 2.5, end: 4, tone: info }
-                      - { label: Switch over, start: 3.6, end: 4, tone: success }
+                      - { label: Switch over, start: 4, end: 5, tone: success }
                 # One cell per keyed item: stat tiles, then a small local component.
                 - id: lnav_kpis
                   component: grid

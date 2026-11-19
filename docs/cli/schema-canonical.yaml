@@ -397,7 +397,8 @@ primitives:
     - table           # columns, rows, caption, selectable, state (default|loading|empty), emptyText, dense, pagination
     - list            # items, kind (plain|avatar|action|file|chat|timeline|settings), divided, selectable, refreshable
     - chart           # chartType (bar|vertical|horizontal|line|area|pie|donut|gauge|sparkline|heatmap|gantt), title, label, data, ticks, series, legend, axes, height
-                      # gantt: data [{ label, start, end, tone }], ticks [labels spaced evenly across the domain]
+                      # gantt: data [{ label, start, end, tone }], ticks [labels]: tick i names the band from i to i+1
+                      #   on the bars' scale, so start: 0, end: 1 fills the first tick's band
     - calendar        # view (month|week|day|picker), date, events
     - kanban          # columns
     - tree            # items (open unless expanded: false), expanded
@@ -547,6 +548,13 @@ layout:
     - separatorPolicy # auto | gutters | divide | none (auto/divide only matter when gap=0)
     - separators     # none | between (draw dividers between siblings; only meaningful when gap=0)
     - separatorStyle # solid | dashed (defaults to solid)
+
+  row:
+    # A field (input, select, textarea, tags_input, search) grows into the row,
+    # up to 320 px; in a row with role: toolbar (a filter bar) it keeps its
+    # natural width. An authored size.width wins in both.
+    # The row wraps with role: toolbar, props.wrap: true, or only unsized
+    # controls; props.nowrap: true keeps it on one line.
 
   grid:
     # Tracks, decided once for every grid host and for adaptive mode:

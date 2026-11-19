@@ -48,12 +48,15 @@ root:
         title: "{{props.title}}"
         subtitle: "{{props.subtitle}}"
         actions: "{{props.actions}}"
-    - id: filters
-      slot: filters
+    # The filter bar holds the slot, so filters a caller passes sit inline at
+    # their natural width and wrap, as the defaults do.
+    - id: filter_bar
+      component: row
+      role: toolbar
+      props: { gap: 8, align: end }
       children:
-        - id: filter_bar
-          component: row
-          props: { gap: 8, align: end }
+        - id: filters
+          slot: filters
           children:
             - id: search
               component: input

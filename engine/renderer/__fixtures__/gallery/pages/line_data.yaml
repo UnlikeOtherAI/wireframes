@@ -110,9 +110,9 @@ page:
             title: Release plan
             ticks: [W1, W2, W3, W4]
             data:
-              - { label: Design, start: 0, end: 8 }
-              - { label: Build, start: 6, end: 20, tone: info }
-              - { label: Launch, start: 19, end: 20, tone: success }
+              - { label: Design, start: 0, end: 1.6 }
+              - { label: Build, start: 1.2, end: 4, tone: info }
+              - { label: Launch, start: 3.8, end: 4, tone: success }
         - id: line_items_grid
           component: grid
           props:
