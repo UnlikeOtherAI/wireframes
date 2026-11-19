@@ -112,7 +112,8 @@ template region with `layout: { type: grid }`, and the page body — takes its
 `min(…,100%)` stops a tile minimum overflowing a container narrower than it.
 `INVALID_GRID_SPAN` is unaffected: auto tiles apply only when no child uses
 `gridItem`. `wf init` no longer writes `defaultGridColumns`. Projects that set
-it keep their equal columns.
+it keep their equal columns wherever `minItemWidth` and adaptive reflow (steps
+2 and 3) do not apply.
 
 ## Repeat rows
 

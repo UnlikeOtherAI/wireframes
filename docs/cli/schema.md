@@ -409,9 +409,12 @@ Rules:
 * `schemaVersion` is REQUIRED
 * `projectId` must match Id format
 * `defaultWireframeStyle` provides inheritable defaults for pages
-* `defaultGridColumns` is optional. Set, it gives every grid without `columns`
-  that many equal columns. Unset (new projects), such a grid lays out tiles
-  that fill the row, unless a child is placed with `gridItem`
+* `defaultGridColumns` is optional. Set, it gives a grid without `columns`
+  that many equal columns, except that an authored `minItemWidth` and adaptive
+  reflow take priority and lay out tiles. It is also the column count for a
+  grid without `columns` whose children are placed with `gridItem`. Unset (new
+  projects), an unplaced grid without `columns` lays out tiles that fill the
+  row, and a placed one uses 12 columns
   ([rendering-data.md § Grid columns](rendering-data.md#grid-columns))
 * Used by `wf info` and future `wf migrate`
 

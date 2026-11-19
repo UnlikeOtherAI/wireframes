@@ -26,8 +26,10 @@ Grid:
 * without `columns`, a grid whose children use no `gridItem` lays out tiles at
   least `grid.minItemWidth` wide (web 220, tablet 200, mobile 150) that fill the
   row and wrap. This applies to the `grid` element and to `layout: { type: grid }`
-  alike. An explicit `manifest.defaultGridColumns`, or any child placed with
-  `gridItem`, keeps the column system (12 when nothing sets it). Precedence:
+  alike. An explicit `manifest.defaultGridColumns` gives such a grid that many
+  equal columns, but an authored `minItemWidth` and adaptive reflow take
+  priority over it. Any child placed with `gridItem` keeps the column system
+  (`columns`, else the manifest default, else 12) in every mode. Precedence:
   [rendering-data.md § Grid columns](rendering-data.md#grid-columns)
 
 Separators:
