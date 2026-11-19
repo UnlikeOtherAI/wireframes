@@ -41,14 +41,20 @@ const rowParts = (page, id) => page.locator(`#${id} .wf-menu-item`).evaluateAll(
   const parts = [...row.querySelectorAll('*')].map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0);
   const part = (selector) => row.querySelector(selector);
   const shortcut = part('.wf-menu-shortcut');
+  const cut = shortcut && shortcut.getBoundingClientRect();
+  // A shortcut outside the row's box (wrapped onto the clipped line) shows nothing: width 0.
+  const shown = cut && cut.width > 0 && cut.top < box.bottom - 1 && cut.bottom > box.top + 1;
+  const text = shortcut && document.createRange();
+  if (text) text.selectNodeContents(shortcut);
   return {
     inside: parts.every((r) => r.left >= box.left - 0.5 && r.right <= box.right + 0.5),
     scroll: row.scrollWidth - row.clientWidth,
     icon: part('.wf-icon-glyph') ? part('.wf-icon-glyph').getBoundingClientRect().width : null,
     label: { width: part('.wf-menu-label').clientWidth, full: part('.wf-menu-label').scrollWidth },
     shortcut: shortcut ? {
-      width: shortcut.clientWidth, full: shortcut.scrollWidth, overflow: getComputedStyle(shortcut).textOverflow,
-      box: shortcut.getBoundingClientRect().width, twoLetters: 2 * parseFloat(getComputedStyle(shortcut).fontSize),
+      width: shown ? shortcut.clientWidth : 0, full: shortcut.scrollWidth, text: text.getBoundingClientRect().width,
+      box: shown ? cut.width : 0, overflow: getComputedStyle(shortcut).textOverflow,
+      twoLetters: 2 * parseFloat(getComputedStyle(shortcut).fontSize),
     } : null,
   };
 }));
@@ -133,7 +139,7 @@ for (const engine of engines()) {
           const [roomy] = await rowParts(page, 'roomy_menu');
           assert.ok(roomy.label.width >= roomy.label.full && roomy.shortcut.width >= roomy.shortcut.full, `${label}: with room nothing truncates`);
           const [short] = await rowParts(page, 'short_menu');
-          assert.ok(short.shortcut.width >= short.shortcut.full && short.shortcut.full < short.shortcut.twoLetters, `${label} ⌘R: the short shortcut fits whole`);
+          assert.ok(short.shortcut.width >= short.shortcut.full && short.shortcut.text < short.shortcut.twoLetters, `${label} ⌘R: the short shortcut fits whole`);
           assert.ok(await shortcutInk(page, 'short_menu') > 0, `${label} ⌘R: a short shortcut that fits is drawn`);
           await page.close();
         }
@@ -182,7 +188,7 @@ for (const engine of engines()) {
     const browser = await engine.launch();
     try {
       for (const mode of ['card', 'line']) {
-        const seen = { whole: 0, sliver: 0, cut: 0 };
+        const seen = { whole: 0, belowTwoLetters: 0, cut: 0 };
         for (const content of pages) {
           const result = renderPage(polishProject(content, { mode, routes: ['docs', 'settings'] }), 'home', { deviceChrome: false, routeTable: ROUTE_TABLE });
           assert.equal(result.ok, true, result.error);
@@ -198,7 +204,7 @@ for (const engine of engines()) {
               seen.whole += 1;
               assert.ok(ink > 0, `${label} fits and is drawn`);
             } else if (box < twoLetters - 1) {
-              if (box > 0) seen.sliver += 1;
+              seen.belowTwoLetters += 1;
               assert.equal(ink, 0, `${label} is cut below two letters and leaves no mark`);
             } else if (box > twoLetters + 1) {
               seen.cut += 1;
@@ -208,6 +214,35 @@ for (const engine of engines()) {
           await page.close();
         }
         for (const [kind, count] of Object.entries(seen)) assert.ok(count > 0, `${engine.name} ${mode}: the sweep reached a ${kind} shortcut`);
+      }
+    } finally {
+      await browser.close();
+    }
+  });
+  // A touch row is 44 px with its label centred, whether the shortcut shows, is
+  // cut, or has wrapped away onto the clipped line.
+  test(`touch rows keep one height and a centred label whatever the shortcut does in ${engine.name}`, { skip: engine.skip }, async () => {
+    const browser = await engine.launch();
+    try {
+      for (const mode of ['card', 'line']) {
+        const result = renderPage(polishProject(CONTENT, { mode, routes: ['docs', 'settings'] }), 'home', { deviceChrome: false, routeTable: ROUTE_TABLE });
+        const page = await browser.newPage({ viewport: { width: 1280, height: 1200 }, hasTouch: true });
+        await page.setContent(result.html);
+        const coarse = await page.evaluate(() => matchMedia('(any-pointer: coarse)').matches);
+        const rows = await page.evaluate(() => [...document.querySelectorAll('#narrow_menu .wf-menu-item, #mid_menu .wf-menu-item, #roomy_menu .wf-menu-item')].map((row) => {
+          const r = row.getBoundingClientRect();
+          const l = row.querySelector('.wf-menu-label').getBoundingClientRect();
+          const s = row.querySelector('.wf-menu-shortcut');
+          return { height: r.height, offCentre: (l.top + l.bottom - r.top - r.bottom) / 2, shortcut: s ? (s.getBoundingClientRect().top < r.bottom - 1 ? 'shown' : 'gone') : 'none' };
+        }));
+        const label = `${engine.name} ${mode} touch (any-pointer coarse: ${coarse})`;
+        assert.deepEqual([...new Set(rows.map((r) => r.shortcut))].sort(), ['gone', 'none', 'shown'], `${label}: rows cover a shortcut shown, gone and none`);
+        for (const row of rows) {
+          assert.ok(Math.abs(row.height - rows[0].height) < 0.5, `${label}: a ${row.shortcut} row is ${row.height}px like the others`);
+          assert.ok(Math.abs(row.offCentre) <= 0.5, `${label}: a ${row.shortcut} row's label sits ${row.offCentre}px off centre`);
+        }
+        if (coarse) assert.equal(Math.round(rows[0].height), 44, `${label}: touch rows are 44px`);
+        await page.close();
       }
     } finally {
       await browser.close();

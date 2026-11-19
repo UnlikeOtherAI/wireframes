@@ -90,13 +90,19 @@ const navigationStyles = [
   '.wf-menu-item{display:flex;align-items:center;gap:10px;padding:7px 12px;font-size:13px;color:var(--wf-ink-2);'
     + 'text-decoration:none;border-radius:4px;min-width:0}',
   // A row too narrow for its parts keeps the label, which is what people read:
-  // the shortcut truncates and then hides (see .wf-menu-shortcut), and only
-  // after that does the label end in an ellipsis, never shorter than a letter.
-  // The label's limit is the row less the 16 px icon and the 10 px gaps beside
-  // it. Icons keep their size.
+  // the shortcut truncates, then hides, and only after that does the label end
+  // in an ellipsis, never shorter than a letter. Icons keep their size.
   '.wf-menu-label{flex:1 1 auto;min-width:min(2em,100%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-  '.wf-menu-label:has(+.wf-menu-shortcut){flex-shrink:0;max-width:calc(100% - 10px)}',
-  '.wf-ico+.wf-menu-label:has(+.wf-menu-shortcut){max-width:calc(100% - 36px)}',
+  // In a row with a shortcut the shortcut needs room for two letters. Given it,
+  // the shortcut grows to its full width or truncates with an ellipsis; without
+  // it, it wraps onto a second line that the one-line row clips, so it is never
+  // drawn as a sliver. The label is capped to the row less the 16 px icon and
+  // its 10 px gap, so it never wraps away, and it shrinks only once the shortcut
+  // has gone. The row's padding, not min-height, makes a touch row 44 px tall,
+  // so the clipped second line cannot push the text off centre.
+  '.wf-menu-item:has(>.wf-menu-shortcut){flex-wrap:wrap;row-gap:1lh;height:calc(1lh + 14px);overflow:hidden}',
+  '.wf-menu-label:has(+.wf-menu-shortcut){flex:0 1 auto;max-width:100%}',
+  '.wf-ico+.wf-menu-label:has(+.wf-menu-shortcut){max-width:calc(100% - 26px)}',
   // On the page (frame T at the top level) a menu is the dropdown panel itself.
   '.wf-menu[data-wf-frame="surface"]{width:max-content;max-width:100%;padding:5px}',
   '.wf-mode-card .wf-menu[data-wf-frame="surface"]{border-radius:8px;box-shadow:0 10px 30px rgba(17,24,39,.12)}',
@@ -130,17 +136,10 @@ const navigationStyles = [
   '.wf-menubar[data-wf-frame="edge"]{align-self:stretch;min-height:36px;padding:0 4px;gap:0;'
     + 'border-top:1px solid var(--wf-panel-edge);border-bottom:1px solid var(--wf-panel-edge)}',
   '.wf-menubar[data-wf-frame="edge"] .wf-menubar-trigger{border-radius:0}',
-  '.wf-menu-shortcut{font-size:11px;color:var(--wf-ink-4);flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;'
-    + 'text-overflow:ellipsis}',
-  // A shortcut cut narrower than two letters would leave a stray mark, so a
-  // mask, opaque only while the box is at least 2em wide, hides it whole. The
-  // mask applies only while the text is cut: the shortcut's own scroll
-  // timeline is active only while its text overflows, so "⌘R" that fits is
-  // never masked. Without scroll timelines there is no mask.
-  '@supports (animation-timeline:scroll()){'
-    + '.wf-menu-shortcut{animation:wf-menu-cut linear both;animation-timeline:scroll(self x)}'
-    + '@keyframes wf-menu-cut{from,to{-webkit-mask-image:linear-gradient(90deg,#000 calc((100% - 2em) * 1000),transparent 0);'
-    + 'mask-image:linear-gradient(90deg,#000 calc((100% - 2em) * 1000),transparent 0)}}}',
+  // At least two letters wide (a shorter shortcut sits right-aligned in that
+  // box), growing to its full width, pushed to the row's end.
+  '.wf-menu-shortcut{font-size:11px;color:var(--wf-ink-4);flex:1 0 2em;min-width:2em;max-width:max-content;margin-left:auto;'
+    + 'text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
   '.wf-menu-danger{color:var(--wf-danger);font-weight:500}',
   '.wf-menu-sep{height:1px;background:var(--wf-line-2);margin:4px 0}',
   '.wf-menu-item .wf-icon-glyph{color:var(--wf-ink-4);width:16px;min-width:16px;font-size:13px}',
@@ -180,6 +179,8 @@ const navigationStyles = [
   '.wf-nav-rail.wf-nav-collapsed .wf-nav-label{display:inline;position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}',
 
   '@media(any-pointer:coarse){.wf-nav:not(.wf-nav-rail) .wf-nav-item,.wf-menu-item{min-height:44px}}',
+  '@media(any-pointer:coarse){.wf-menu-item:has(>.wf-menu-shortcut){height:max(44px,calc(1lh + 14px));'
+    + 'padding-block:max(7px,calc((44px - 1lh) / 2))}}',
 
   // --- Item states (rendering-navigation.md). Legacy markup gains state
   // attributes, so only disabled rows and new classes are styled here. ---
