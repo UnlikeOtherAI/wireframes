@@ -25,6 +25,8 @@ const CONTENT = [
   menuIn('mid_menu', 180),
   menuIn('long_menu', 180, LONG_ITEMS),
   menuIn('roomy_menu', 400),
+  // A shortcut narrower than two letters that fits is drawn whole.
+  menuIn('short_menu', 180, [{ label: 'Rename', icon: 'pen', shortcut: '⌘R' }]),
 ];
 
 const fits = (page, id) => page.locator(`#${id}`).evaluate((el) => {
@@ -130,6 +132,9 @@ for (const engine of engines()) {
           assert.equal(Math.round(long.icon), 16, `${label} long label: the icon keeps its size`);
           const [roomy] = await rowParts(page, 'roomy_menu');
           assert.ok(roomy.label.width >= roomy.label.full && roomy.shortcut.width >= roomy.shortcut.full, `${label}: with room nothing truncates`);
+          const [short] = await rowParts(page, 'short_menu');
+          assert.ok(short.shortcut.width >= short.shortcut.full && short.shortcut.full < short.shortcut.twoLetters, `${label} ⌘R: the short shortcut fits whole`);
+          assert.ok(await shortcutInk(page, 'short_menu') > 0, `${label} ⌘R: a short shortcut that fits is drawn`);
           await page.close();
         }
       }
