@@ -367,3 +367,23 @@ These follow the implementation review (Codex, `c9647ad`):
 - **Item tokens.** Below a row, the renderer prints an `{{item.…}}` token as
   written when no collection gives it an item, matching `REPEAT_ITEM_TOKEN`.
   Outside rows, and inside a collection in a row, tokens resolve as before.
+
+These follow the fix verification (Codex, `7c14f6f`):
+
+- **Bindings on what renders.** The bound walk into a definition takes the
+  instance and applies the resolver's rules: without slots, instance `children`
+  replace the root's children and rows, so only the root's own `use:` (with
+  those children) and the fills it writes are walked; with slots, a filled
+  fallback is skipped. The binding is the effective one: a `binding` key on an
+  instance, or on a delegating root, replaces the root's below it, whatever its
+  value. The check stays authored, so definitions no page renders are still
+  checked.
+- **A page around a failure.** The per-entry retry keeps the entries that
+  expand, rebuilds the regions from them with each injection in place, and
+  keeps the overlay entries that expand, so ids, interactions and row lint are
+  still checked next to the failure. On such a page a missing form or trigger id
+  may be in what failed, so `INVALID_FORM_REFERENCE` and
+  `INVALID_OVERLAY_TRIGGER` are not reported there.
+- **Build output.** When validation stops `wf build`, the error lists the
+  blocking diagnostics as `wf validate` prints them, so a budget failure is
+  named on the build path again.

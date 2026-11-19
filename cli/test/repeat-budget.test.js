@@ -6,6 +6,8 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 const yaml = require('js-yaml');
 
 const { renderPage } = require('../../engine/build');
@@ -14,6 +16,7 @@ const { validateProject } = require('../../engine/validate');
 const { runValidate } = require('../../engine/validate/cli-adapter');
 const { createRepeatProject, documentMap } = require('./fixtures/repeat-project');
 
+const WF = path.resolve(__dirname, '..', 'bin', 'wf.js');
 const dump = (value) => yaml.dump(value, { lineWidth: -1 });
 const items = (count) => Array.from({ length: count }, (_, index) => ({ id: `i${index}` }));
 const rows = (id, cell, list) => ({ id, component: 'stack', repeat: { cell, items: list } });
@@ -84,6 +87,19 @@ test('wf validate refuses what wf build refuses, and the in-memory validation do
   assert.equal(inMemory.ok, false);
   assert.deepEqual(inMemory.errors.map((e) => e.code), ['REPEAT_BUDGET_EXCEEDED']);
   assert.match(inMemory.errors[0].message, /Repeat on "wall" would expand to 160400 more nodes/);
+});
+
+test('wf build names the budget failure that stops it, as wf validate does', () => {
+  const projectPath = createRepeatProject([WALL_A, WALL_B], { components: INNER });
+  const run = (command) => spawnSync(process.execPath, [WF, command], { cwd: projectPath, encoding: 'utf8' });
+  const validate = run('validate');
+  const build = run('build');
+  assert.equal(validate.status, 1);
+  assert.equal(build.status, 1);
+  const diagnostic = '[REPEAT_BUDGET_EXCEEDED] Repeat on "wall_b" would expand to 25400 more nodes; a page may expand to at most 50000.';
+  assert.ok(validate.stdout.includes(diagnostic), validate.stdout);
+  assert.ok(build.stderr.includes(diagnostic), build.stderr);
+  assert.match(build.stderr, /Project validation failed/);
 });
 
 test('a budget failure under an earlier broken entry is still reported', () => {

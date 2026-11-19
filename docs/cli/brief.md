@@ -601,7 +601,7 @@ you can open in a browser and click through.
 * `--base-path <path>` — base path prefix for URLs (default: `/`)
 
 Pages are grouped by `viewport.device` into platform folders. Project must
-pass `wf validate` before building. See [rendering.md](rendering.md) for the
+pass `wf validate`; if not, the build lists its errors. See [rendering.md](rendering.md) for the
 full rendering specification and output structure.
 
 ---
