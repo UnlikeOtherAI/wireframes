@@ -2,14 +2,16 @@
 
 // The page as it renders, resolved as the build resolves it (`build/page-tree.js`):
 // its template's regions with the page's content, then the template's overlays and
-// the page's own, all sharing one expansion budget. Ids and form references are
-// checked on that tree. Content that cannot be expanded is not walked; each
-// authored entry that would render and fails is reported where it is written, so
-// validation fails before the build does. A page over the budget is reported once,
-// and nothing after it is expanded.
+// the page's own, all sharing one expansion budget. Ids, form references and row
+// lint are checked on that tree. Content that cannot be expanded is not walked;
+// each authored entry that would render and fails is reported where it is written,
+// so validation fails before the build does, and the entries around it are still
+// checked. A page over the budget is reported once, and nothing after it is
+// expanded.
 
 const { resolveTemplatePage } = require('../resolver');
 const { resolveNodes } = require('../resolver/nodes');
+const { cloneDeep } = require('../resolver/component-prep');
 const { appendPath } = require('../schema/validator');
 const { childNodeLists } = require('../component-registry/child-nodes');
 const { createExpansionBudget } = require('../component-registry/expansion');
@@ -53,9 +55,9 @@ function entriesOf(nodes, document, path, where) {
 }
 
 /**
- * The authored entries the template's regions render, each with where it is
- * written: a slot region shows the page's content for it, else its own children.
- * As `resolveRegion` chooses.
+ * Each of the template's regions with the authored entries it renders, each with
+ * where it is written: a slot region shows the page's content for it, else its
+ * own children. As `resolveRegion` chooses.
  */
 function regionEntries(page, pageId, template, templateId) {
   const slots = list(page.slots);
@@ -65,11 +67,11 @@ function regionEntries(page, pageId, template, templateId) {
     if (region.kind === 'slot') {
       slots.forEach((slot, index) => { if (isObject(slot) && slot.slotId === region.id) slotIndex = index; });
     }
-    if (slotIndex >= 0) {
-      return entriesOf(slots[slotIndex].content, `page:${pageId}`, `$.page.slots[${slotIndex}].content`, `page "${pageId}" slot "${region.id}"`);
-    }
-    return entriesOf(region.children, 'templates', `${appendPath('$.templates', templateId)}.regions[${regionIndex}].children`,
-      `template "${templateId}" region "${region.id}" of page "${pageId}"`);
+    const entries = slotIndex >= 0
+      ? entriesOf(slots[slotIndex].content, `page:${pageId}`, `$.page.slots[${slotIndex}].content`, `page "${pageId}" slot "${region.id}"`)
+      : entriesOf(region.children, 'templates', `${appendPath('$.templates', templateId)}.regions[${regionIndex}].children`,
+        `template "${templateId}" region "${region.id}" of page "${pageId}"`);
+    return [{ region, entries }];
   });
 }
 
@@ -105,7 +107,37 @@ function expandEntry(node, components, ids, budget) {
     components,
     budget,
   });
-  return resolved.ok ? { ok: true, injected: injectedIds(resolved.roots, []) } : resolved;
+  return resolved.ok ? { ok: true, nodes: resolved.roots[0].children } : resolved;
+}
+
+/**
+ * `value` with each injection's expanded entries where it stands in for itself.
+ * One that reaches itself again renders nothing there, as `inject` in the
+ * resolver does.
+ */
+function placeInjections(value, expandedById, active = new Set()) {
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => {
+      const id = isObject(entry) ? entry[INJECTED] : undefined;
+      if (typeof id !== 'string') return [placeInjections(entry, expandedById, active)];
+      if (active.has(id)) return [];
+      active.add(id);
+      const placed = placeInjections(cloneDeep(expandedById.get(id) || []), expandedById, active);
+      active.delete(id);
+      return placed;
+    });
+  }
+  if (isObject(value)) {
+    for (const key of Object.keys(value)) value[key] = placeInjections(value[key], expandedById, active);
+  }
+  return value;
+}
+
+/** The regions rebuilt from the entries that expanded, each injection in its place. */
+function assembleRegions(regions, injections) {
+  const expanded = (entries) => entries.flatMap((entry) => entry.nodes || []);
+  const byId = new Map([...injections].map(([id, entries]) => [id, expanded(entries)]));
+  return regions.map(({ region, entries }) => ({ ...cloneDeep(region), children: placeInjections(expanded(entries), byId) }));
 }
 
 /** The template's overlays, then the page's, each with where it is written. */
@@ -133,13 +165,16 @@ function overlaysOf(page, pageId, template, templateId) {
  * @param {object} [input.sources]           where each of `components` is written, `{ sourcePath, localId }`
  *
  * The roots are resolved from stamped copies, so a repeat row carries where its
- * item is written (`row-places.js`).
+ * item is written (`row-places.js`). Returns `{ roots, complete }`; `complete` is
+ * false when something failed to expand, so an id missing from `roots` may only
+ * be in what failed.
  */
 function collectRenderedRoots({ result, pageId, page: authoredPage, template: authoredTemplate, components: authoredComponents, projectComponents, sources }) {
   const { page, template, components } = stampRenderedInputs({
     pageId, page: authoredPage, template: authoredTemplate, templateId: authoredPage.template, components: authoredComponents,
   });
   const roots = [];
+  let complete = true;
   let graph = null;
   // The page's regions and overlays share one budget, as they do when it builds.
   let budget = createExpansionBudget();
@@ -151,6 +186,7 @@ function collectRenderedRoots({ result, pageId, page: authoredPage, template: au
   // cycle checks. Anything else that fails inside a row is located at the
   // outermost row's item.
   const reportFailure = (entry, failure) => {
+    complete = false;
     if (failure.reason === 'expansion-budget') {
       addDiagnostic(result, 'MAX_NODES_PER_PAGE_EXCEEDED', `Page "${pageId}" cannot be expanded: ${failure.error}`, pageAt);
       return;
@@ -199,29 +235,34 @@ function collectRenderedRoots({ result, pageId, page: authoredPage, template: au
       roots.push(...templatePage.roots);
     } else if (overBudget(templatePage)) {
       reportFailure(null, templatePage);
-      return roots;
+      return { roots, complete };
     } else {
       // Each entry the regions render is expanded on its own, against a fresh
-      // budget they share. An injection is expanded once a placeholder that
-      // renders reaches it, so one the page's content replaces is never
-      // reported; one reached only through an entry that fails waits until that
-      // entry expands.
+      // budget they share, and the regions are rebuilt from the entries that
+      // expand. An injection is expanded once a placeholder that renders reaches
+      // it, so one the page's content replaces is never reported; one reached
+      // only through an entry that fails waits until that entry expands.
       budget = createExpansionBudget();
       const injections = injectionEntries(page, pageId);
       const ids = [...injections.keys()];
-      const queue = regionEntries(page, pageId, template, page.template);
+      const regions = regionEntries(page, pageId, template, page.template);
+      const queue = regions.flatMap(({ entries }) => entries);
       const reached = new Set();
-      while (queue.length > 0) {
+      let over = false;
+      while (queue.length > 0 && !over) {
         const entry = queue.shift();
         const expanded = expandOne(entry, () => expandEntry(entry.node, components, ids, budget));
-        if (expanded === null) return roots;
-        if (!expanded.ok) continue;
-        for (const id of expanded.injected) {
+        over = expanded === null;
+        if (over || !expanded.ok) continue;
+        entry.nodes = expanded.nodes;
+        for (const id of injectedIds(expanded.nodes, [])) {
           if (reached.has(id)) continue;
           reached.add(id);
           queue.push(...injections.get(id));
         }
       }
+      roots.push(...assembleRegions(regions, injections));
+      if (over) return { roots, complete };
     }
   }
 
@@ -239,11 +280,13 @@ function collectRenderedRoots({ result, pageId, page: authoredPage, template: au
     }
     budget.used = before;
     for (const entry of entriesOf(overlay.content, document, `${path}.content`, where)) {
-      if (expandOne(entry, () => resolveNodes([entry.node], components, budget)) === null) return roots;
+      const expanded = expandOne(entry, () => resolveNodes([entry.node], components, budget));
+      if (expanded === null) return { roots, complete };
+      if (expanded.ok) roots.push(...expanded.nodes);
     }
   }
 
-  return roots;
+  return { roots, complete };
 }
 
 module.exports = { collectRenderedRoots };

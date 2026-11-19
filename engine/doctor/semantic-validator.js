@@ -154,7 +154,7 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
 
   // Ids and form references are checked on the page as it renders, so a submit
   // inside a slotted overlay sees the ids its component renders.
-  const roots = collectRenderedRoots({
+  const { roots, complete } = collectRenderedRoots({
     result, pageId, page: pageDoc, template, components: componentRoots, projectComponents, sources: componentSources,
   });
   for (const root of roots) {
@@ -162,7 +162,7 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
   }
   if (typeof onRenderedPage === 'function') onRenderedPage({ pageId, roots, sources: componentSources });
 
-  reportPageIdChecks(context, pageId, overlayTriggerRefs);
+  reportPageIdChecks(context, pageId, overlayTriggerRefs, { complete });
 }
 
 function runSemanticValidation({

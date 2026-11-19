@@ -265,11 +265,15 @@ function validateNode(node, context, depth = 1) {
   validateTableNode(node, context);
 }
 
-/** The checks that compare ids collected across a whole page walk. */
-function reportPageIdChecks(context, pageId, overlayTriggerRefs) {
+/**
+ * The checks that compare ids collected across a whole page walk. When part of
+ * the page could not be expanded (`complete: false`), an id it lacks may be in
+ * that part, so a missing reference is not reported.
+ */
+function reportPageIdChecks(context, pageId, overlayTriggerRefs, { complete = true } = {}) {
   const { result, document } = context;
 
-  for (const { formId, nodeId } of context.pendingSubmitRefs) {
+  for (const { formId, nodeId } of complete ? context.pendingSubmitRefs : []) {
     if (!context.nodeIds.has(formId)) {
       addDiagnostic(
         result,
@@ -280,7 +284,7 @@ function reportPageIdChecks(context, pageId, overlayTriggerRefs) {
     }
   }
 
-  for (const overlayRef of overlayTriggerRefs) {
+  for (const overlayRef of complete ? overlayTriggerRefs : []) {
     if (typeof overlayRef.trigger === 'string' && !context.nodeIds.has(overlayRef.trigger)) {
       addDiagnostic(
         result,
