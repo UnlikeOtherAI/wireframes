@@ -1,12 +1,12 @@
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { DeviceType, RenderMode } from './types'
+import type { DeviceType, RenderMode, ResolvedNode, SitemapNode, TreeNotice } from './types'
 import { PageNavigation } from './PageNavigation'
 import { DeviceControls } from './DeviceControls'
 import { NodeTree } from './NodeTree'
 import { SitemapView } from './SitemapView'
 import { WorkspacePreview } from './WorkspacePreview'
-import { useResolvedNodes, useSitemapNodes, buildNodeIdToAddressMap } from './useWorkspaceData'
+import { useWorkspaceTree, useSitemapNodes, buildNodeIdToAddressMap } from './useWorkspaceData'
 import { usePreviewMeasureStore } from '../../stores/previewMeasureStore'
 
 export interface WorkspaceProps {
@@ -62,13 +62,15 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
   ref,
 ) {
   const [highlightedNode, setHighlightedNode] = useState<string | null>(null)
+  // The tree node a selection was made on, so the preview outlines that rendering of it.
+  const [highlightedRenderedId, setHighlightedRenderedId] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [zoom, setZoom] = useState(100)
   const renderedHtmlRef = useRef('')
   const measure = usePreviewMeasureStore((state) => state.measure)
   const setMeasure = usePreviewMeasureStore((state) => state.setMeasure)
 
-  const resolvedNodes = useResolvedNodes(yamlFiles, activePage)
+  const { nodes: resolvedNodes, notice: treeNotice } = useWorkspaceTree(yamlFiles, activePage)
   const nodeIdToAddress = useMemo(() => buildNodeIdToAddressMap(resolvedNodes), [resolvedNodes])
   const sitemapNodes = useSitemapNodes(yamlFiles)
 
@@ -76,8 +78,9 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
   const pageIds = externalPageIds ?? derivePageIds(yamlFiles)
 
   const handleNodeSelect = useCallback(
-    (address: string) => {
+    (address: string, renderedId?: string) => {
       setHighlightedNode(address)
+      setHighlightedRenderedId(renderedId ?? null)
       onNodeSelect?.(address)
     },
     [onNodeSelect],
@@ -110,6 +113,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
       },
       highlightNode(address: string) {
         setHighlightedNode(address)
+        setHighlightedRenderedId(null)
       },
       setMeasure(on: boolean) {
         setMeasure(on)
@@ -168,6 +172,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
           onNavigate={handleNavigate}
           onNodeSelect={handleNodeSelect}
           highlightedNode={highlightedNode}
+          highlightedRenderedId={highlightedRenderedId}
           interactive={interactive}
           onHtmlChange={handleHtmlChange}
           zoom={zoom}
@@ -190,6 +195,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
           >
             <TreeSitemapTabs
               resolvedNodes={resolvedNodes}
+              treeNotice={treeNotice}
               sitemapNodes={sitemapNodes}
               activePage={activePage}
               onPageChange={onPageChange}
@@ -215,16 +221,18 @@ function derivePageIds(yamlFiles: Record<string, string>): string[] {
 }
 
 interface TreeSitemapTabsProps {
-  resolvedNodes: import('./types').ResolvedNode[]
-  sitemapNodes: import('./types').SitemapNode[]
+  resolvedNodes: ResolvedNode[]
+  treeNotice: TreeNotice | null
+  sitemapNodes: SitemapNode[]
   activePage: string
   onPageChange: (pageId: string) => void
-  onNodeSelect: (address: string) => void
+  onNodeSelect: (address: string, renderedId: string) => void
   selectedNode: string | null
 }
 
 function TreeSitemapTabs({
   resolvedNodes,
+  treeNotice,
   sitemapNodes,
   activePage,
   onPageChange,
@@ -285,6 +293,7 @@ function TreeSitemapTabs({
         {activeTab === 'tree' ? (
           <NodeTree
             nodes={resolvedNodes}
+            notice={treeNotice}
             onNodeSelect={onNodeSelect}
             selectedNode={selectedNode}
           />

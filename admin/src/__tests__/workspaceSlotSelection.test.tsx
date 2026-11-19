@@ -3,11 +3,15 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 import { stringify } from 'yaml'
 import '../i18n'
 
-vi.mock('@wireframes/renderer', () => ({
+vi.mock('@wireframes/renderer', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@wireframes/renderer')>(),
   renderPage: vi.fn(() => '<html><body></body></html>'),
 }))
 
 const { Workspace } = await import('../features/workspace/Workspace')
+const { loadRenderer } = await import('../features/workspace/rendererModule')
+// The tree is resolved with the renderer bundle's row and budget rules; load it once up front.
+await loadRenderer()
 
 const yamlFiles: Record<string, string> = {
   'components.yaml': stringify({

@@ -30,7 +30,10 @@ const {
 
 export { parseYaml } from './parser.js';
 // @ts-expect-error Shared CJS engine module has no TypeScript declarations.
-export { assertComponentExpansion } from '../../engine/component-registry/expansion.js';
+export { assertComponentExpansion, createExpansionBudget, repeatNodeCount } from '../../engine/component-registry/expansion.js';
+// A host's rows as the resolver makes them, for tools that list a page's nodes.
+// @ts-expect-error Shared CJS engine module has no TypeScript declarations.
+export { repeatRows } from '../../engine/component-registry/repeat.js';
 
 export type { DocumentMap } from './document-map.js';
 export type { InteractionRuntimeOptions } from './interactions.js';

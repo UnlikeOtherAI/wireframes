@@ -3,6 +3,10 @@ import { renderHook } from '@testing-library/react'
 import { stringify } from 'yaml'
 import { useResolvedNodes, buildNodeIdToAddressMap } from '../features/workspace/useWorkspaceData'
 import type { ResolvedNode } from '../features/workspace/types'
+import { loadRenderer } from '../features/workspace/rendererModule'
+
+// The tree is resolved with the renderer bundle's row and budget rules; load it once up front.
+await loadRenderer()
 
 const components = {
   documentType: 'components',

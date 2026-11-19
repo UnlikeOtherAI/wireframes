@@ -1,206 +1,332 @@
-// The admin's node tree, resolved the way the engine resolver scopes content:
-// definition content is namespaced under the rendered instance id, an
-// instance's fills replace its placeholders, and a `repeat` host lists one row
-// per keyed item after its children. Each node records who wrote it, so a
-// selection edits the document the node is written in.
+import { parse as parseYaml } from 'yaml'
+import type { ExpansionBudget } from '@wireframes/renderer'
+import type { RendererModule } from './rendererModule'
+import type { ResolvedNode, WorkspaceTree } from './types'
 
-function isObject(value: unknown): value is Record<string, unknown> {
+// The admin's node tree, resolved the way the engine resolver scopes content.
+// Every node is resolved in the scope of the document that writes it: page
+// content in the page, template regions in the template, injected content in
+// the page's injection, definition content in the definition, namespaced under
+// its instance. An instance's fills are resolved where they are written and
+// replace its placeholders. A `repeat` host lists its rows after its children,
+// made by the engine itself, so a cell is classified as the engine classifies
+// it and the page's expansion is charged against the engine's own budget.
+
+type Doc = Record<string, unknown>
+type Engine = Pick<RendererModule, 'createExpansionBudget' | 'repeatNodeCount' | 'repeatRows'>
+
+function isObject(value: unknown): value is Doc {
   return value != null && typeof value === 'object' && !Array.isArray(value)
 }
 
-export function buildAddress(docType: string, docId: string, pathParts: string[]): string {
-  return `wf://${docType}/${docId}#${pathParts.join('.')}`
+/** The document nodes are written in, and the path there of what they are written under. */
+interface Author {
+  docType: 'page' | 'template' | 'component'
+  docId: string
+  path: string[]
 }
 
-// Who wrote a node in the tree. Page nodes are edited in the page document; a
-// fill sits inside its component's content in the tree but is still written on
-// its instance. Component-internal nodes are edited in the component document,
-// so selecting one selects the closest page-authored instance, or the repeat
-// row it renders inside. A row of a repeat written in a definition is edited in
-// that definition's document; `item` marks a row and names its item.
-export type Authorship =
-  | { kind: 'page'; authorParent?: object; item?: string }
-  | { kind: 'internal'; owner: object; renderedId: string }
-  | { kind: 'definition'; address: string; renderedId: string; item: string }
-
-const AUTHOR = Symbol('wfAuthor')
-// A row before it is resolved: its item, and its definition address when it is written in one.
-const ROW = Symbol('wfRepeatRow')
-
-type Authored = Record<string, unknown> & { [AUTHOR]?: Authorship; [ROW]?: { item: string; address?: string } }
-
-export function authorshipOf(node: unknown): Authorship | undefined {
-  return isObject(node) ? (node as Authored)[AUTHOR] : undefined
-}
-
-// `definition` is the definition being resolved and the path, in it, of the
-// node whose children are being resolved: the address of what it writes.
 interface Scope {
-  owner: object | null
+  author: Author
+  /** In a definition: the nearest node the tree selects, which the definition's content selects. */
+  owner: ResolvedNode | null
+  /** In a definition: its instance's rendered id, which prefixes the rendered ids of its content. */
   namespace: string | null
-  fills: Map<string, unknown[]> | null
-  definition: { id: string; path: string[] } | null
+  /** In a definition with placeholders: the caller's fills, resolved where they are written. */
+  fills: Map<string, ResolvedNode[]> | null
 }
 
-const PAGE_SCOPE: Scope = { owner: null, namespace: null, fills: null, definition: null }
-
-/** The scope of what `id`'s node writes below itself. */
-function below(scope: Scope, id: unknown): Scope {
-  if (!scope.definition || typeof id !== 'string') return scope
-  return { ...scope, definition: { ...scope.definition, path: [...scope.definition.path, id] } }
+/** What resolving one page shares. */
+interface Walk {
+  engine: Engine
+  pageId: string
+  definitions: Doc
+  injections: Map<string, unknown[]>
+  budget: ExpansionBudget
 }
 
-const isPlaceholder = (node: Record<string, unknown>) => Object.prototype.hasOwnProperty.call(node, 'slot')
+/** The page expands past the budget; `host` is the repeat that would pass it. */
+class TooLarge extends Error {
+  host: string | null
+  max: number
 
-/** Whether a definition root declares slots anywhere below it. */
-function hasPlaceholders(root: Record<string, unknown>): boolean {
-  const visit = (node: unknown): boolean => {
-    if (!isObject(node)) return false
-    if (isPlaceholder(node)) return true
-    const lists = [node.children, ...(node.use != null && isObject(node.slots) ? Object.values(node.slots) : [])]
-    return lists.some((list) => Array.isArray(list) && list.some(visit))
+  constructor(host: string | null, max: number) {
+    super(`Expanded wireframe is too large: a page may expand to at most ${max} nodes.`)
+    this.host = host
+    this.max = max
   }
-  const lists = [root.children, ...(root.use != null && isObject(root.slots) ? Object.values(root.slots) : [])]
-  return lists.some((list) => Array.isArray(list) && list.some(visit))
 }
 
-function authorIn(node: Record<string, unknown>, scope: Scope): Authored {
-  const copy: Authored = { ...node }
-  const id = typeof node.id === 'string' ? node.id : ''
-  const row = (node as Authored)[ROW]
-  const renderedId = scope.namespace ? `${scope.namespace}__${id}` : id
-  if (row?.address) copy[AUTHOR] = { kind: 'definition', address: row.address, renderedId, item: row.item }
-  else if (scope.owner && scope.namespace) copy[AUTHOR] = { kind: 'internal', owner: scope.owner, renderedId }
-  else copy[AUTHOR] = row ? { kind: 'page', item: row.item } : { kind: 'page' }
-  return copy
+const addressOf = (author: Author, id: string) =>
+  `wf://${author.docType}/${author.docId}#${[...author.path, id].join('.')}`
+
+const scopeAt = (docType: Author['docType'], docId: string, path: string[]): Scope =>
+  ({ author: { docType, docId, path }, owner: null, namespace: null, fills: null })
+
+/** The scope of what the node `id` writes below itself. */
+function below(scope: Scope, id: unknown): Scope {
+  if (typeof id !== 'string') return scope
+  return { ...scope, author: { ...scope.author, path: [...scope.author.path, id] } }
+}
+
+const isPlaceholder = (node: Doc) => Object.prototype.hasOwnProperty.call(node, 'slot')
+const slotName = (node: Doc) => (typeof node.slot === 'string' ? node.slot : '')
+
+function layoutOf(node: Doc): string | undefined {
+  if (isObject(node.layout) && typeof node.layout.type === 'string') return node.layout.type
+  return typeof node.layout === 'string' ? node.layout : undefined
+}
+
+/** The node lists below a node, as the engine walks them: its children and a use: node's fills. */
+function childLists(node: Doc): unknown[][] {
+  const lists: unknown[][] = Array.isArray(node.children) ? [node.children] : []
+  if (node.use != null && isObject(node.slots)) {
+    for (const fill of Object.values(node.slots)) if (Array.isArray(fill)) lists.push(fill)
+  }
+  return lists
+}
+
+function hasPlaceholders(root: Doc): boolean {
+  return childLists(root).some((list) => list.some((node) => isObject(node) && (isPlaceholder(node) || hasPlaceholders(node))))
+}
+
+/** An instance's fills by slot name. Children fill `default`. */
+function fillLists(node: Doc): Array<[string, unknown[]]> {
+  const lists: Array<[string, unknown[]]> = Array.isArray(node.children) ? [['default', node.children]] : []
+  if (isObject(node.slots)) {
+    for (const [name, fill] of Object.entries(node.slots)) {
+      if (Array.isArray(fill) && !(name === 'default' && Array.isArray(node.children))) lists.push([name, fill])
+    }
+  }
+  return lists
+}
+
+function charge(walk: Walk) {
+  walk.budget.used += 1
+  if (walk.budget.used > walk.budget.max) throw new TooLarge(null, walk.budget.max)
+}
+
+/** Refuses a host whose rows would pass the budget before any of them is listed, as the resolver does. */
+function checkRows(host: Doc, hostId: string, walk: Walk) {
+  if (walk.engine.repeatRows(host, hostId).length === 0) return
+  const need = walk.engine.repeatNodeCount(host, walk.definitions, walk.budget)
+  if (walk.budget.used + need > walk.budget.max) throw new TooLarge(hostId, walk.budget.max)
 }
 
 /**
- * A host's rows, as the engine writes them: `<host>__<item>` with the cell as
- * its component and the item's other keys as props, one per keyed item. `scope`
- * is the host's own scope, so a definition row is addressed in its definition.
+ * The resolver materializes a definition's rows when its instance expands, so
+ * every host the instance renders is checked then. A filled placeholder's
+ * fallback does not render, so its hosts are not.
  */
-function repeatRows(host: Record<string, unknown>, hostId: string, scope: Scope): Authored[] {
-  if (host.use != null || host.injectable === true || isPlaceholder(host) || typeof host.component !== 'string') return []
-  const repeat = isObject(host.repeat) ? host.repeat : null
-  if (!repeat || typeof repeat.cell !== 'string' || !Array.isArray(repeat.items)) return []
-  const seen = new Set<string>()
-  const rows: Authored[] = []
-  for (const item of repeat.items) {
-    if (!isObject(item) || typeof item.id !== 'string' || seen.has(item.id)) continue
-    seen.add(item.id)
-    const { id: itemId, ...props } = item
-    const id = `${hostId}__${itemId}`
-    const row: Authored = { id, component: repeat.cell, ...(Object.keys(props).length > 0 ? { props } : {}) }
-    row[ROW] = scope.definition
-      ? { item: itemId as string, address: buildAddress('component', scope.definition.id, [...scope.definition.path, id]) }
-      : { item: itemId as string }
-    rows.push(row)
+function checkDefinitionRows(root: Doc, rootId: string, fills: Map<string, ResolvedNode[]> | null, walk: Walk) {
+  const visit = (node: unknown, hostId: unknown) => {
+    if (!isObject(node) || (isPlaceholder(node) && fills?.has(slotName(node)))) return
+    if (typeof hostId === 'string') checkRows(node, hostId, walk)
+    for (const list of childLists(node)) for (const child of list) visit(child, isObject(child) ? child.id : undefined)
   }
-  return rows
+  visit(root, rootId)
 }
 
-/** An instance's fills, resolved in the scope that wrote them. Children fill `default`. */
-function resolveFills(
-  node: Record<string, unknown>,
-  instance: Authored,
-  componentDefs: Record<string, unknown>,
-  componentStack: Set<string>,
-  scope: Scope,
-): Map<string, unknown[]> {
-  const authored: Array<[string, unknown[]]> = []
-  if (Array.isArray(node.children)) authored.push(['default', node.children])
-  if (isObject(node.slots)) {
-    for (const [name, fill] of Object.entries(node.slots)) {
-      if (Array.isArray(fill) && !(name === 'default' && Array.isArray(node.children))) authored.push([name, fill])
-    }
+/** A node as the tree lists it, before its children. */
+function entry(node: Doc, scope: Scope, fallbackId: string): ResolvedNode {
+  const id = typeof node.id === 'string' ? node.id : fallbackId
+  const item = isObject(node.__repeat) && typeof node.__repeat.item === 'string' ? node.__repeat.item : undefined
+  // A definition's content is edited in the definition, so it selects its owner. Its rows are its own.
+  const internal = scope.author.docType === 'component' && !item
+  const result: ResolvedNode = {
+    id,
+    address: internal && scope.owner ? scope.owner.address : addressOf(scope.author, id),
+    renderedId: scope.namespace ? `${scope.namespace}__${id}` : id,
+    type: typeof node.type === 'string' ? node.type : '',
+    children: [],
   }
-  const fills = new Map<string, unknown[]>()
-  for (const [name, fill] of authored) {
-    const entries = resolveComponents(fill, componentDefs, componentStack, scope)
-    for (const entry of entries) {
-      // A page fill is written on its instance, wherever it renders. Forwarded
-      // page content already names the page instance it was written on.
-      const authorship = (entry as Authored)[AUTHOR]
-      if (authorship?.kind === 'page' && !authorship.authorParent) {
-        (entry as Authored)[AUTHOR] = { ...authorship, authorParent: instance }
-      }
-    }
-    fills.set(name, entries)
-  }
-  return fills
+  if (internal) result.internal = true
+  if (typeof node.component === 'string') result.component = node.component
+  const layout = layoutOf(node)
+  if (layout) result.layout = layout
+  if (item) result.repeatItem = item
+  return result
 }
 
-export function resolveComponents(
-  nodes: unknown[],
-  componentDefs: Record<string, unknown>,
-  componentStack: Set<string>,
-  scope: Scope = PAGE_SCOPE,
-): unknown[] {
-  const resolved: unknown[] = []
-  for (const node of nodes) {
-    if (!isObject(node)) continue
+function resolveList(nodes: unknown[], scope: Scope, walk: Walk, stack: Set<string>, parentId: string): ResolvedNode[] {
+  return nodes.flatMap((node, index) => resolveNode(node, scope, walk, stack, `${parentId}_${index}`))
+}
 
-    if (scope.fills && isPlaceholder(node)) {
-      const fill = scope.fills.get(typeof node.slot === 'string' ? node.slot : '')
-      if (fill) resolved.push(...fill)
-      else if (Array.isArray(node.children)) resolved.push(...resolveComponents(node.children, componentDefs, componentStack, below(scope, node.id)))
-      continue
-    }
+function resolveNode(node: unknown, scope: Scope, walk: Walk, stack: Set<string>, fallbackId: string): ResolvedNode[] {
+  if (!isObject(node)) return []
 
-    const useRef = typeof node.use === 'string' ? node.use.trim() : ''
-    const compRef = typeof node.component === 'string' ? node.component.trim() : ''
-    const lookupKey = useRef || compRef
-    const merged = authorIn(node, scope)
+  if (scope.fills && isPlaceholder(node)) {
+    const fill = scope.fills.get(slotName(node))
+    if (fill) return fill
+    return Array.isArray(node.children) ? resolveList(node.children, below(scope, node.id), walk, stack, fallbackId) : []
+  }
+  if (node.injectable === true && typeof node.id === 'string' && scope.author.docType !== 'component') {
+    return [injectionPoint(node, node.id, scope, walk, stack)]
+  }
 
-    if (lookupKey && isObject(componentDefs[lookupKey]) && !componentStack.has(lookupKey)) {
-      const def = componentDefs[lookupKey] as Record<string, unknown>
-      const root = isObject(def.root) ? def.root : def
-      const rootId = typeof root.id === 'string' ? root.id : 'root'
-      for (const key of Object.keys(merged)) delete merged[key]
-      Object.assign(merged, root)
-      delete merged.repeat
-      if (typeof node.id === 'string') merged.id = node.id
-      if (isObject(node.props) && isObject(root.props)) {
-        merged.props = { ...(root.props as Record<string, unknown>), ...(node.props as Record<string, unknown>) }
-      }
-      const fills = hasPlaceholders(root) ? resolveFills(node, merged, componentDefs, componentStack, below(scope, node.id)) : null
-      const authorship = merged[AUTHOR]
-      const renderedId = authorship && authorship.kind !== 'page' ? authorship.renderedId : String(merged.id ?? '')
-      const newStack = new Set(componentStack)
-      newStack.add(lookupKey)
-      // A row's internals select the row; any other instance's select the page instance.
-      const rootScope: Scope = {
-        owner: authorship && 'item' in authorship && authorship.item ? merged : scope.owner ?? merged,
-        namespace: renderedId,
-        fills,
-        definition: { id: lookupKey, path: [rootId] },
-      }
-      merged.children = [
-        ...resolveComponents(Array.isArray(root.children) ? root.children as unknown[] : [], componentDefs, newStack, rootScope),
-        ...resolveComponents(repeatRows(root, rootId, rootScope), componentDefs, newStack, rootScope),
-      ]
-      resolved.push(merged)
-    } else {
-      const childArr = Array.isArray(node.children) ? node.children
-        : Array.isArray(node.body) ? node.body
-        : null
-      // An instance whose definition this tree cannot see (imported, or a
-      // built-in std pattern) still lists what its author wrote on it: the
-      // default fill and every named fill, addressed under the instance.
-      const namedFills = useRef && isObject(node.slots)
-        ? Object.values(node.slots).filter((fill): fill is unknown[] => Array.isArray(fill)).flat()
-        : []
-      const hostScope = below(scope, node.id)
-      const rows = typeof node.id === 'string' ? repeatRows(node, node.id, hostScope) : []
-      if (childArr || namedFills.length > 0 || rows.length > 0) {
-        merged.children = [
-          ...resolveComponents([...(childArr ?? []), ...namedFills], componentDefs, componentStack, hostScope),
-          ...resolveComponents(rows, componentDefs, componentStack, hostScope),
-        ]
-      }
-      resolved.push(merged)
+  charge(walk)
+  const self = entry(node, scope, fallbackId)
+  const use = typeof node.use === 'string' ? node.use.trim() : ''
+  if (use && isObject(walk.definitions[use]) && !stack.has(use)) {
+    expandInstance(self, node, use, scope, walk, stack)
+    return [self]
+  }
+
+  // A use: node whose definition the tree cannot see (imported, or a built-in
+  // std pattern) still lists the fills its author wrote on it.
+  const lists = use ? fillLists(node).map(([, fill]) => fill)
+    : [Array.isArray(node.children) ? node.children : Array.isArray(node.body) ? node.body : []]
+  const rows = typeof node.id === 'string' ? walk.engine.repeatRows(node, node.id) : []
+  // Caller content is checked as it is reached; a definition's hosts were checked with their instance.
+  if (rows.length > 0 && scope.author.docType !== 'component') checkRows(node, self.id, walk)
+  const inner = below(scope, node.id)
+  self.children = [
+    ...lists.flatMap((list) => resolveList(list, inner, walk, stack, self.id)),
+    ...rows.flatMap((row) => resolveNode(row, inner, walk, stack, row.id)),
+  ]
+  return [self]
+}
+
+function expandInstance(self: ResolvedNode, node: Doc, use: string, scope: Scope, walk: Walk, stack: Set<string>) {
+  const definition = walk.definitions[use] as Doc
+  const root = isObject(definition.root) ? definition.root : definition
+  const rootId = typeof root.id === 'string' ? root.id : 'root'
+  // The instance renders as its definition's root.
+  self.type = typeof root.type === 'string' ? root.type : ''
+  if (typeof root.component === 'string') self.component = root.component
+  const layout = layoutOf(root)
+  if (layout) self.layout = layout
+
+  const fills = hasPlaceholders(root) ? new Map(fillLists(node).map(([name, fill]) =>
+    [name, resolveList(fill, below(scope, node.id), walk, stack, self.id)] as const)) : null
+  const inner: Scope = {
+    author: { docType: 'component', docId: use, path: [rootId] },
+    // The definition's content selects this instance (a page node or a row), or,
+    // when the instance is itself a definition's content, that content's owner.
+    owner: self.internal ? scope.owner : self,
+    namespace: self.renderedId ?? self.id,
+    fills,
+  }
+  checkDefinitionRows(root, rootId, fills, walk)
+  const nested = new Set(stack).add(use)
+  self.children = [
+    ...resolveList(Array.isArray(root.children) ? root.children : [], inner, walk, nested, rootId),
+    ...walk.engine.repeatRows(root, rootId).flatMap((row) => resolveNode(row, inner, walk, nested, row.id)),
+  ]
+}
+
+/**
+ * A template's injectable marker lists the content the page injects into it.
+ * That content is written in the page's injection, wherever the marker sits.
+ */
+function injectionPoint(marker: Doc, markerId: string, scope: Scope, walk: Walk, stack: Set<string>): ResolvedNode {
+  const self = entry(marker, scope, markerId)
+  const content = walk.injections.get(markerId)
+  if (content && content.length > 0) {
+    self.children = resolveList(content, scopeAt('page', walk.pageId, [markerId]), walk, stack, markerId)
+  }
+  return self
+}
+
+function container(id: string, address: string, layout: string | undefined, type: string, children: ResolvedNode[]): ResolvedNode {
+  return { id, address, renderedId: id, type, ...(layout ? { layout } : {}), children }
+}
+
+/** Content arrays by id: a page's slot fills or its injections. */
+function contentMap(list: unknown, idField: string): Map<string, unknown[]> {
+  const map = new Map<string, unknown[]>()
+  for (const entry of Array.isArray(list) ? list : []) {
+    if (!isObject(entry) || typeof entry[idField] !== 'string') continue
+    map.set(entry[idField] as string, Array.isArray(entry.content) ? entry.content : Array.isArray(entry.body) ? entry.body : [])
+  }
+  return map
+}
+
+function definitionsIn(parsed: unknown): Doc {
+  if (!isObject(parsed)) return {}
+  const comps = isObject(parsed.components) ? parsed.components : parsed
+  const result: Doc = {}
+  for (const [key, val] of Object.entries(comps)) {
+    if (key === 'documentType' || key === 'specVersion' || key === 'id' || key === 'imports') continue
+    if (isObject(val)) result[key] = val
+  }
+  return result
+}
+
+/**
+ * A template's regions. A slot region lists the page's content for it, or,
+ * when the page has none, the template's fallback; any other region lists
+ * what the template writes in it.
+ */
+function resolveRegions(template: Doc, templateId: string, page: Doc, walk: Walk): ResolvedNode[] {
+  const slots = contentMap(page.slots, 'slotId')
+  const result: ResolvedNode[] = []
+  for (const region of Array.isArray(template.regions) ? template.regions : []) {
+    if (!isObject(region)) continue
+    const kind = typeof region.kind === 'string' ? region.kind : 'slot'
+    const id = typeof region.id === 'string' ? region.id : ''
+    const content = kind === 'slot' ? slots.get(id) : undefined
+    if (content) {
+      if (content.length === 0) continue
+      const children = resolveList(content, scopeAt('page', walk.pageId, [id]), walk, new Set(), id)
+      result.push(container(id, `wf://page/${walk.pageId}#${id}`, layoutOf(region), 'region', children))
+    } else if (kind !== 'slot' || Array.isArray(region.children)) {
+      const authored = Array.isArray(region.children) ? region.children : []
+      const children = resolveList(authored, scopeAt('template', templateId, [id]), walk, new Set(), id)
+      result.push(container(id, `wf://template/${templateId}#${id}`, layoutOf(region), 'region', children))
     }
   }
-  return resolved
+  return result
+}
+
+function resolvePage(yamlFiles: Record<string, string>, pageId: string, engine: Engine): ResolvedNode[] {
+  const pageFile = yamlFiles[`pages/${pageId}.yaml`]
+  if (!pageFile) return []
+  const parsed = parseYaml(pageFile)
+  if (!isObject(parsed)) return []
+  const page = isObject(parsed.page) ? parsed.page : parsed
+
+  const definitions: Doc = {}
+  if (yamlFiles['components.yaml']) Object.assign(definitions, definitionsIn(parseYaml(yamlFiles['components.yaml'])))
+
+  const templateId = typeof page.template === 'string' ? page.template : ''
+  let template: Doc | null = null
+  if (templateId && yamlFiles['templates.yaml']) {
+    const templatesParsed = parseYaml(yamlFiles['templates.yaml'])
+    if (isObject(templatesParsed)) {
+      Object.assign(definitions, definitionsIn(templatesParsed))
+      const templates = isObject(templatesParsed.templates) ? templatesParsed.templates : templatesParsed
+      template = isObject(templates[templateId]) ? templates[templateId] as Doc : null
+    }
+  }
+
+  // The regions and every overlay share one budget, as they do in the resolver.
+  const walk: Walk = { engine, pageId, definitions, injections: contentMap(page.injectables, 'injectableId'), budget: engine.createExpansionBudget() }
+  const body = Array.isArray(page.body) ? page.body : Array.isArray(page.children) ? page.children : []
+  const nodes = template ? resolveRegions(template, templateId, page, walk) : resolveList(body, scopeAt('page', pageId, []), walk, new Set(), 'root')
+
+  // An overlay is a root of the page document, so its content is addressed under it.
+  const overlays = Array.isArray(page.overlays) ? page.overlays : []
+  const first = nodes.length
+  overlays.forEach((overlay, index) => {
+    if (!isObject(overlay)) return
+    const id = typeof overlay.id === 'string' ? overlay.id : `root_${first + index}`
+    const content = Array.isArray(overlay.content) ? overlay.content : []
+    const children = resolveList(content, scopeAt('page', pageId, [id]), walk, new Set(), id)
+    nodes.push(container(id, `wf://page/${pageId}#${id}`, layoutOf(overlay), typeof overlay.type === 'string' ? overlay.type : '', children))
+  })
+  return nodes
+}
+
+/**
+ * The page's node tree. A page that would expand past the engine's budget is
+ * not listed: the tree says so instead.
+ */
+export function resolveWorkspaceTree(yamlFiles: Record<string, string>, pageId: string, engine: Engine): WorkspaceTree {
+  try {
+    return { nodes: resolvePage(yamlFiles, pageId, engine), notice: null }
+  } catch (error) {
+    if (error instanceof TooLarge) return { nodes: [], notice: { kind: 'too-large', max: error.max, host: error.host } }
+    return { nodes: [], notice: null }
+  }
 }
