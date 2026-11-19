@@ -62,7 +62,7 @@ If `--platform` is specified, only matching pages are built.
 
 ### Pre-conditions
 
-* Project must pass `wf validate` (blocking errors abort build)
+* Project must pass `wf validate` (blocking errors abort the build, which lists them as `wf validate` does)
 * All referenced templates, components, datasets must resolve
 * Schema version must be compatible with CLI
 

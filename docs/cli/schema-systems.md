@@ -413,7 +413,12 @@ clone the rows. The rule crosses component boundaries:
   the placeholder a fill lands in;
 * a cell whose root delegates to a bound root counts as a bound cell.
 
-A single-value `{{…}}` binding is fine. Items are plain props: `{{item.…}}`
+Only a repeat that renders is checked, by the override rules above: rows that
+instance `children` replace, or that sit in a filled fallback, are not cloned.
+The binding that counts is the one that renders. A `binding` written on an
+instance, or on a root that delegates with `use:`, replaces the one on the root
+below it, so an expression there means no collection. A single-value `{{…}}`
+binding is fine. Items are plain props: `{{item.…}}`
 inside an item is not interpreted (`REPEAT_ITEM_TOKEN`, info). Below a row, an
 `{{item.…}}` token renders as written, unless a collection inside the row
 gives it an item.
@@ -427,7 +432,10 @@ expanded, for example because its cell uses an unknown component, is
 that renders, with the values it renders with (after a definition's
 `{{props}}`), and reports `…props.<key>` at `…repeat.items[i].<key>`, once
 per place. A row that never renders, such as one in a replaced fallback, is not
-checked. A component cell's items follow the component-input policy.
+checked. A component cell's items follow the component-input policy. When one
+entry of a page cannot be expanded, it is reported where it is written, and the
+rest of the page, its rows included, is still checked. A form or trigger id
+missing from such a page is not reported, since it may be in what failed.
 `items: []` is `EMPTY_REPEAT` (info). Shape and the 200 limit are schema
 errors.
 
