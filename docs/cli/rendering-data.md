@@ -105,6 +105,10 @@ mode. With source annotation, a row carries
 `data-wf-source-path="…repeat.items[<index>]"`; a component cell's internals
 point at the cell's definition, as for any instance.
 
+Item values are plain props, so below a row an `{{item.…}}` token renders as
+written instead of as a skeleton bar or an empty attribute. A collection
+`binding` inside the row still gives its own tokens their dataset item.
+
 ## Table loading state
 
 `state: loading` marks the table body, which is the region that is loading:
