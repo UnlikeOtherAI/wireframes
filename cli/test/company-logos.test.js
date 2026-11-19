@@ -85,3 +85,17 @@ test('reusable logo metadata retains resolved authored dimensions before respons
   assert.match(rendered.html,/data-wf-logo-width="600" data-wf-logo-height="64"/);
   assert.match(rendered.html,/width:600px;height:64px;max-width:100%/);
 });
+
+test('an unsized missing slot fits its name; an unsized skin logo keeps the default box', () => {
+  const map = project();
+  map.pages.get('home').page.slots[0].content.at(-1).props = { kind: 'logo', slot: 'logo_1', alt: 'Happy Paws with Your Dog Walker', height: 40 };
+  const withLogo = renderPage(map, 'home');
+  assert.equal(withLogo.ok, true, withLogo.error);
+  assert.match(withLogo.html, /data-wf-logo-width="160" data-wf-logo-height="40"/);
+  assert.match(withLogo.html, /width:160px;height:40px;max-width:100%/);
+  const missing = renderPage(updateDesignSystem(map, { activeSkin: 'wireframe' }).documentMap, 'home');
+  assert.equal(missing.ok, true, missing.error);
+  // One line up to 24rem, never narrower than the default box, taller when it wraps.
+  assert.match(missing.html, /style="display:flex;width:max-content;max-width:min\(100%,24rem\);min-height:40px;flex:none;align-self:flex-start;overflow:hidden"/);
+  assert.match(missing.html, /class="wf-image-placeholder"[^>]*style="flex:1 1 auto;min-width:160px;min-height:0;padding:4px"/);
+});

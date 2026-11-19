@@ -240,7 +240,8 @@ with a result count.
 
 Marketing site header: a logo, a top navigation menu (`nav` with
 `variant: top`) and actions. The logo is the `logo_1` company logo slot, so a
-project with a manifest logo shows it.
+project with a manifest logo shows it. Without one, the logo box fits the brand on one
+line, up to 24rem, and wraps only beyond that.
 
 | Prop | Default | Sets |
 |---|---|---|
@@ -298,7 +299,9 @@ Marketing site footer: logo and tagline, three link columns, a copyright line
 and social links. At the top of a page it is one full-width panel; inside a
 framed footer region the region draws the frame. A blank `tagline`, an empty
 link list or `social: []` is left out, so a brand and a copyright line alone
-still make a full-width footer.
+still make a full-width footer. Without a manifest logo the logo box fits the
+brand on one line, up to 24rem; the brand column follows it, from 240 to 384
+pixels, and the tagline wraps to that width.
 
 | Prop | Default | Sets |
 |---|---|---|

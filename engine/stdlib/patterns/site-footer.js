@@ -28,14 +28,17 @@ root:
       component: row
       props: { gap: 48, align: start, justify: space-between }
       children:
+        # The brand column follows the brand box, 240 to 384 px (24rem), and
+        # the tagline wraps to it.
         - id: brand
           component: stack
-          size: { width: 240 }
+          size: { width: min-content, minWidth: 240, maxWidth: 384 }
           props: { gap: 8 }
           children:
+            # No width: without a skin logo the box fits the brand on one line.
             - id: logo
               component: image
-              props: { kind: logo, slot: logo_1, alt: "{{props.brand}}", width: 160, height: 40 }
+              props: { kind: logo, slot: logo_1, alt: "{{props.brand}}", height: 40 }
             - id: tagline
               component: text
               when: "{{props.tagline}}"
