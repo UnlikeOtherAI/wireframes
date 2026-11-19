@@ -320,12 +320,14 @@ The iPad's `std.site_footer` had a blank tagline, empty link lists and `social: 
 Codex reviewed the implementation and found eight problems. All are adopted. Each test failed before its fix, except where noted.
 
 1. **A sidebar fits its slot.** A standalone sidebar is `min(--wf-sidebar-w, 100%)` wide and can shrink, so a 120 px stack or a narrow grid track does not overflow. An authored `size.width` is inline and still wins. Tested in both modes.
-2. **A narrow menu row gives way in order:**
-   - the label shortens to a letter and its ellipsis (`min-width: min(2em, 100%)`; a zero-width label would show nothing);
-   - then the shortcut truncates with an ellipsis and finally hides;
-   - icons and chevrons keep their size.
+2. **A narrow menu row keeps its label, which is what people read.** Space runs out in this order:
+   - the shortcut truncates with an ellipsis;
+   - then it hides entirely;
+   - only then does the label end in an ellipsis, never shorter than a letter (`min-width: min(2em, 100%)`).
 
-   The test checks every descendant against the row, using a long shortcut in a 120 px stack, on the web and an adaptive phone, in both modes. Key chips in command and menubar panels are unchanged, because those panels size to their content.
+   Icons keep their size. In a row with a shortcut, the label does not shrink. Its limit is the row less the 16 px icon and the 10 px gaps, so the shortcut takes the squeeze first. Squeezing alone would leave a stray sliver of the shortcut at 1–20 px, so a mask hides the shortcut whole while its box is narrower than 2em. The mask is a `linear-gradient` with its stop at `calc((100% - 2em) * 1000)`. Wrapping the shortcut onto a clipped second line was rejected for two reasons: the row height depends on the font's `normal` line height, and the 44 px touch minimum would push the label off centre.
+
+   The test runs on the web and an adaptive phone, in both modes. It checks every descendant against the row and that the icon keeps its size. A 180 px row must show the full "Rename" and a truncated "Ctrl+Shift+Alt+F12". In any row, a cut label must mean a hidden shortcut. A shortcut narrower than two letters must draw no pixels, and a long label hides the shortcut and ends in an ellipsis. The first version of this fix had the order backwards, cutting the label first; the brief asked for that, and the correction came after review. Key chips in command and menubar panels are unchanged, because those panels size to their content.
 3. **The read-only lock is an inline SVG** in `currentColor`. Before this, the bundle's default mount dropped the icon stylesheet and the lock drew nothing. `renderer/test/fontless-lock.test.mjs` mounts the bundle without icons in both modes.
 4. **Export parity extracts reliably.** Windows and macOS extract with bsdtar: System32 `tar.exe` on Windows, because a POSIX shell's GNU `tar` cannot read a ZIP. Linux uses `unzip`. A failed extraction fails the test, which checks that the archive holds every project file and that the page renders before comparing. The old fallback exited 0 with an empty folder.
 5. **Read-only controls are named.** A labelled select, textarea or tags input points at its visible label with `aria-labelledby`. An `id` would change its submit key. The guard test tries every listed control by tap, click, Escape, focus, Space, ArrowDown and typing.

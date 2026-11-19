@@ -89,10 +89,14 @@ const navigationStyles = [
   '.wf-menu{display:flex;flex-direction:column;gap:1px;min-width:min(180px,100%)}',
   '.wf-menu-item{display:flex;align-items:center;gap:10px;padding:7px 12px;font-size:13px;color:var(--wf-ink-2);'
     + 'text-decoration:none;border-radius:4px;min-width:0}',
-  // A row too narrow for its parts gives way in order: the label shortens to a
-  // letter and its ellipsis, then the shortcut truncates and finally hides.
-  // Icons and chevrons keep their size.
-  '.wf-menu-label{flex:1 1000 auto;min-width:min(2em,100%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+  // A row too narrow for its parts keeps the label, which is what people read:
+  // the shortcut truncates and then hides (see .wf-menu-shortcut), and only
+  // after that does the label end in an ellipsis, never shorter than a letter.
+  // The label's limit is the row less the 16 px icon and the 10 px gaps beside
+  // it. Icons keep their size.
+  '.wf-menu-label{flex:1 1 auto;min-width:min(2em,100%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+  '.wf-menu-label:has(+.wf-menu-shortcut){flex-shrink:0;max-width:calc(100% - 10px)}',
+  '.wf-ico+.wf-menu-label:has(+.wf-menu-shortcut){max-width:calc(100% - 36px)}',
   // On the page (frame T at the top level) a menu is the dropdown panel itself.
   '.wf-menu[data-wf-frame="surface"]{width:max-content;max-width:100%;padding:5px}',
   '.wf-mode-card .wf-menu[data-wf-frame="surface"]{border-radius:8px;box-shadow:0 10px 30px rgba(17,24,39,.12)}',
@@ -126,8 +130,11 @@ const navigationStyles = [
   '.wf-menubar[data-wf-frame="edge"]{align-self:stretch;min-height:36px;padding:0 4px;gap:0;'
     + 'border-top:1px solid var(--wf-panel-edge);border-bottom:1px solid var(--wf-panel-edge)}',
   '.wf-menubar[data-wf-frame="edge"] .wf-menubar-trigger{border-radius:0}',
+  // A shortcut cut narrower than two letters would leave a stray mark, so the
+  // mask, opaque only while the box is at least 2em wide, hides it whole.
   '.wf-menu-shortcut{font-size:11px;color:var(--wf-ink-4);flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;'
-    + 'text-overflow:ellipsis}',
+    + 'text-overflow:ellipsis;-webkit-mask-image:linear-gradient(90deg,#000 calc((100% - 2em) * 1000),transparent 0);'
+    + 'mask-image:linear-gradient(90deg,#000 calc((100% - 2em) * 1000),transparent 0)}',
   '.wf-menu-danger{color:var(--wf-danger);font-weight:500}',
   '.wf-menu-sep{height:1px;background:var(--wf-line-2);margin:4px 0}',
   '.wf-menu-item .wf-icon-glyph{color:var(--wf-ink-4);width:16px;min-width:16px;font-size:13px}',
