@@ -619,7 +619,8 @@ Blocking errors:
     document can reach. The message suggests the nearest name.
   * `REPEAT_INVALID_HOST`: `repeat` on a node or record that cannot host rows.
   * `DUPLICATE_REPEAT_ITEM_ID`: two items in one repeat share an `id`.
-  * `REPEAT_WITH_BINDING`: a collection binding on, above or in the cell of a repeat.
+  * `REPEAT_WITH_BINDING`: a collection binding on, above or in the cell of a
+    repeat, including one that reaches it across a component boundary.
   * `REPEAT_BUDGET_EXCEEDED`: the fan-out passes the page's 50,000-node budget.
   * `REPEAT_ROW_FAILED`: a row cannot be expanded, for example because its cell
     uses an unknown component. It is reported at the item.
