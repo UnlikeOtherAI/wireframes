@@ -20,10 +20,10 @@ propDefaults:
   cta: Get started
 propHints:
   brand: Company name, used as the logo's text
-  items: Top-level menu items; an item with items opens a panel
+  items: Top-level menu items; an item with items opens a panel; [] leaves the menu out
   open: Label of the menu item whose panel is drawn open
-  signIn: Label of the secondary action
-  cta: Label of the primary action
+  signIn: Label of the secondary action; blank leaves it out
+  cta: Label of the primary action; blank leaves it out
   signInRoute: Route id the secondary action opens
   ctaRoute: Route id the primary action opens
 root:
@@ -37,9 +37,13 @@ root:
       children:
         - id: logo
           component: image
-          props: { kind: logo, slot: logo_1, alt: "{{props.brand}}", width: 112, height: 32 }
+          props: { kind: logo, slot: logo_1, alt: "{{props.brand}}", width: 160, height: 40 }
+        # The header is the bar, so its menu draws no bar of its own; an empty
+        # items list leaves the menu out.
         - id: menu
           component: nav
+          when: "{{props.items}}"
+          surface: false
           props:
             variant: top
             items: "{{props.items}}"
@@ -53,12 +57,14 @@ root:
           children:
             - id: sign_in
               component: button
+              when: "{{props.signIn}}"
               props:
                 label: "{{props.signIn}}"
                 variant: ghost
                 route: "{{props.signInRoute}}"
             - id: cta
               component: button
+              when: "{{props.cta}}"
               props:
                 label: "{{props.cta}}"
                 variant: primary

@@ -11,11 +11,11 @@ propDefaults:
   secondaryAction: Watch the demo
   mediaAlt: Product screenshot of the dashboard
 propHints:
-  eyebrow: Small badge above the headline
+  eyebrow: Small badge above the headline; blank leaves it out
   title: Headline
-  text: Intro paragraph
-  primaryAction: Label of the primary call to action
-  secondaryAction: Label of the secondary call to action
+  text: Intro paragraph; blank leaves it out
+  primaryAction: Label of the primary call to action; blank leaves it out
+  secondaryAction: Label of the secondary call to action; blank leaves it out
   primaryRoute: Route id the primary call to action opens
   secondaryRoute: Route id the secondary call to action opens
   mediaAlt: Describes the fallback image
@@ -31,12 +31,15 @@ root:
       children:
         - id: eyebrow
           component: badge
+          when: "{{props.eyebrow}}"
           props: { text: "{{props.eyebrow}}", variant: outline }
         - id: title
           component: heading
+          when: "{{props.title}}"
           props: { text: "{{props.title}}", level: 1 }
         - id: text
           component: paragraph
+          when: "{{props.text}}"
           props: { text: "{{props.text}}" }
         - id: actions
           slot: actions
@@ -47,6 +50,7 @@ root:
               children:
                 - id: primary
                   component: button
+                  when: "{{props.primaryAction}}"
                   props:
                     label: "{{props.primaryAction}}"
                     variant: primary
@@ -54,6 +58,7 @@ root:
                     route: "{{props.primaryRoute}}"
                 - id: secondary
                   component: button
+                  when: "{{props.secondaryAction}}"
                   props:
                     label: "{{props.secondaryAction}}"
                     variant: secondary

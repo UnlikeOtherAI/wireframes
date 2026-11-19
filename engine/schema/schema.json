@@ -1074,6 +1074,9 @@
         "scroll": {
           "type": "boolean",
           "description": "Opt into native overflow scrolling without resizing. Bound the node with size.height/maxHeight or width/maxWidth; sticky children use this scroll boundary."
+        },
+        "when": {
+          "description": "Draw this node only when the value has content. In a component, write a prop token (\"{{props.tagline}}\"): a caller who leaves the prop blank, null, false or an empty list gets no node. Evaluated after props, slots and repeat rows resolve."
         }
       },
       "allOf": [

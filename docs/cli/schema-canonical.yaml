@@ -205,6 +205,7 @@ node:
     - scroll          # boolean; native overflow:auto, no resize handle
     - position        # for absolute layout children only
     - visibility
+    - when            # draw only when the value has content; in a component, "{{props.x}}" (blank, [], null, false → no node)
     - accessibility
     - binding
     - interaction

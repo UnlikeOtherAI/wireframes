@@ -34,6 +34,12 @@ A pattern is used like any component (schema brief §3.3):
 
 * `props` override its `propDefaults`. A prop without a default (the `*Route`
   props) is empty until you set it, so the button it feeds is not a link.
+* A prop you set to a blank string or an empty list leaves out what it feeds:
+  no skeleton bar, empty column or label-less button. This applies to the
+  header's menu and actions, the hero's badge, title, intro and calls to
+  action, and the footer's tagline, link columns and copyright. Each part
+  carries `when: "{{props.<name>}}"`, which works in your own components too
+  ([schema.md §4](schema.md)). A prop you leave out keeps its default.
 * `slots.<name>` replaces a slot's fallback with your nodes. Instance
   `children` fill the `default` slot. Leave a fill out to keep the fallback;
   `slots.<name>: []` leaves that slot empty.
@@ -289,7 +295,10 @@ media, side by side.
 ## std.site_footer
 
 Marketing site footer: logo and tagline, three link columns, a copyright line
-and social links.
+and social links. At the top of a page it is one full-width panel; inside a
+framed footer region the region draws the frame. A blank `tagline`, an empty
+link list or `social: []` is left out, so a brand and a copyright line alone
+still make a full-width footer.
 
 | Prop | Default | Sets |
 |---|---|---|

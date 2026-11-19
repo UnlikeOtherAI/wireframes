@@ -559,6 +559,10 @@ Optional:
 * `scroll` — boolean; opt into native overflow scrolling, bounded by existing size dimensions, without a resize handle
 * `gridItem` — grid positioning (span, offset, row, column)
 * `visibility` — conditional visibility via a Condition
+* `when` — draw the node only when the value has content. In a component,
+  write a prop token (`when: "{{props.tagline}}"`). A caller who passes a
+  blank string, an empty list, `null` or `false` gets no node. It is evaluated
+  after props, slots and repeat rows resolve, and never reaches the output
 * `accessibility` — label, role, description for accessibility annotations
 * `binding` — data source binding (source expression, itemVar for collections)
 * `interaction` — array of Interaction objects (navigation, overlays, state changes, etc.)

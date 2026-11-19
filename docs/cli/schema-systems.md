@@ -450,6 +450,18 @@ errors.
 wherever it sits, so reordering never retargets it and a stale id fails. See
 `wf inspect` and `wf node` in brief.md.
 
+## 14.2 Leaving out empty parts
+
+`when` on a node keeps it only when its value has content. A component writes
+a prop token (`when: "{{props.tagline}}"`), and a caller who passes a blank
+string, an empty list, `null` or `false` gets no node, rather than a skeleton
+bar or an empty column. The resolver evaluates it once, on the resolved tree
+(`engine/resolver/when.js`). By then props, slot fills and fallbacks and repeat
+rows are all substituted, so a row's own values decide its parts. The key is
+removed from every node it keeps. Validation and rendering see the pruned tree.
+A prop the caller leaves out keeps its `propDefaults` value. The std patterns
+use it for optional parts ([stdlib.md](stdlib.md#using-a-pattern)).
+
 ---
 
 # 15. Elements
