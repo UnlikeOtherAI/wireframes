@@ -214,7 +214,8 @@ describe('Form primitives', () => {
                 value: a
               - label: Option B
                 value: b`);
-    assert.ok(html.includes('<select>'), 'should render select');
+    assert.ok(html.includes('<select aria-labelledby="sel1__label">'), 'should render a select named by its label');
+    assert.ok(html.includes('id="sel1__label"'), 'should give the label the id the select points at');
     assert.ok(html.includes('Choice'), 'should include field label text');
     assert.ok(html.includes('Option A'), 'should have options');
     assert.ok(html.includes('wf-select'), 'should have select class');
