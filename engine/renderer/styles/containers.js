@@ -6,6 +6,9 @@ const containerStyles = [
   '.wf-card-media{margin:-16px -16px 0;overflow:hidden;border-radius:var(--wf-surface-radius,6px) var(--wf-surface-radius,6px) 0 0}',
   '.wf-card-media img{width:100%;display:block;border:none;border-radius:0}',
   '.wf-row>.wf-node-children{display:flex;flex-direction:inherit;gap:inherit;align-items:inherit;justify-content:inherit;flex-wrap:inherit;flex:1 1 auto;min-width:0}',
+  // A toolbar row left empty, such as std.data_page's filter bar with `filters: []`,
+  // draws nothing and adds no gap; `important` beats the row's inline display.
+  '.wf-row.wf-role-toolbar:empty{display:none!important}',
   '.wf-form-actions{display:flex;justify-content:flex-end;gap:8px;padding-top:4px}',
   '.wf-split>.wf-node-children{display:flex;flex-direction:inherit;gap:inherit;align-items:stretch;flex:1 1 auto;min-width:0}',
   '.wf-split>.wf-node-children>.wf-node:not(.wf-pane){flex:1 1 0;min-width:0}',

@@ -33,8 +33,10 @@ test('std patterns resolve in the browser bundle for a project with no component
   assert.match(html, /Plan the launch/);
   assert.match(html, /id="hero_chart"/, 'a page fill replaces the media fallback');
   assert.doesNotMatch(html, /id="hero__media_image"/, 'the fallback is not drawn when the slot is filled');
-  assert.match(html, /id="customers__filter_bar"/, 'an omitted fill draws the fallback');
-  assert.doesNotMatch(html, /id="orders__filter_bar"/, 'an empty fill leaves the slot empty');
+  assert.match(html, /id="customers__search"/, 'an omitted fill draws the fallback');
+  // The filter bar holds the slot, so an empty fill leaves it empty, and an empty toolbar row draws nothing.
+  assert.match(html, /<div id="orders__filter_bar" [^>]*><\/div>/, 'an empty fill leaves the slot empty');
+  assert.doesNotMatch(html, /id="orders__search"/);
   assert.match(html, /id="customers__table"/);
   assert.match(html, /id="orders__table"/, 'the same pattern twice gets separate ids');
   assert.match(html, /Orders/);

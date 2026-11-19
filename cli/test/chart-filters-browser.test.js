@@ -104,18 +104,41 @@ for (const engine of engines()) {
           assert.ok(status.width < table.width / 2, `${label}: Status is ${status.width}px, not the page's ${table.width}px`);
           assert.ok(status.width <= Math.max(natural, 60) + 8, `${label}: Status is its natural width (${status.width} vs ${natural}px)`);
           assert.ok(Math.abs(status.left - table.left) <= 1, `${label}: the filter bar starts at the content edge`);
-          assert.ok(Math.abs(status.top - plan.top) <= 1 && plan.left > status.right, `${label}: the filters sit inline on one row`);
+          // The bar aligns its controls at the bottom (align: end), so one row shares a bottom edge.
+          assert.ok(Math.abs(status.bottom - plan.bottom) <= 1 && plan.left > status.right, `${label}: the filters sit inline on one row`);
           // The default filters keep their authored widths and wrap when the row is too narrow.
           const search = await box('plain__search');
           const defaults = [search, await box('plain__status'), await box('plain__plan')];
           assert.equal(Math.round(search.width), 280, `${label}: the default search keeps 280px`);
           const plainTable = await box('plain__table');
           for (const filter of defaults) assert.ok(filter.right <= plainTable.right + 1, `${label}: a default filter stays inside the content`);
-          if (name === 'web') assert.equal(new Set(defaults.map((f) => Math.round(f.top))).size, 1, `${label}: the defaults share one row`);
-          else assert.ok(defaults[2].top > defaults[0].top, `${label}: the defaults wrap on a phone`);
+          if (name === 'web') {
+            assert.ok(defaults.every((f) => Math.abs(f.bottom - search.bottom) <= 1), `${label}: the defaults share one row`);
+            assert.ok(defaults[1].left > defaults[0].right && defaults[2].left > defaults[1].right, `${label}: the defaults run left to right`);
+          } else {
+            assert.ok(defaults[2].top >= search.bottom - 1, `${label}: the defaults wrap on a phone`);
+          }
           assert.ok(await overflow(page) <= 0, `${label}: no horizontal overflow`);
           await page.close();
         }
+      }
+    } finally {
+      await browser.close();
+    }
+  });
+
+  test(`an empty filters slot draws no filter bar and adds no gap in ${engine.name}`, { skip: engine.skip }, async () => {
+    const browser = await engine.launch();
+    try {
+      for (const mode of ['card', 'line']) {
+        const page = await open(browser, [{ id: 'orders', use: 'std.data_page', slots: { filters: [] } }], mode, 1280, {});
+        const m = await page.evaluate(() => {
+          const rect = (id) => document.getElementById(id).getBoundingClientRect();
+          return { header: rect('orders__header').bottom, table: rect('orders__table').top, bar: getComputedStyle(document.getElementById('orders__filter_bar')).display };
+        });
+        assert.equal(m.bar, 'none', `${engine.name} ${mode}: the empty filter bar is not drawn`);
+        assert.ok(Math.abs(m.table - m.header - 16) <= 1, `${engine.name} ${mode}: one 16px gap between header and table (${m.table - m.header}px)`);
+        await page.close();
       }
     } finally {
       await browser.close();
