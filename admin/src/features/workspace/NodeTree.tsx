@@ -67,7 +67,8 @@ function NodeTreeItem({ node, depth, onNodeSelect, selectedNode }: NodeTreeItemP
     onNodeSelect?.(node.address)
   }, [onNodeSelect, node.address])
 
-  const label = buildNodeLabel(node)
+  const label = [buildNodeLabel(node), node.repeatItem ? t('workspace.repeatItem', { item: node.repeatItem }) : '']
+    .filter(Boolean).join(' ')
 
   return (
     <div role="treeitem" aria-expanded={hasChildren ? expanded : undefined}>

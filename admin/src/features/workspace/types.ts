@@ -43,6 +43,8 @@ export interface ResolvedNode {
   type: string
   component?: string
   layout?: string
+  /** The item id, when the node is a row of a `repeat`. */
+  repeatItem?: string
   children: ResolvedNode[]
 }
 
