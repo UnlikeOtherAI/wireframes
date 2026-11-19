@@ -542,7 +542,8 @@ button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));bac
 .wf-nav-rail .wf-icon-glyph{font-size:20px;width:24px;text-align:center}
 .wf-nav-rail .wf-nav-label{flex:0 0 auto;width:100%;font-size:11px;line-height:13px;text-align:center}
 .wf-nav-rail .wf-nav-on,.wf-mode-line .wf-nav-rail .wf-nav-on{background:transparent;outline:none;border-color:transparent}
-.wf-nav-rail .wf-nav-on .wf-ico{background:var(--wf-ink);color:var(--wf-bg)}
+.wf-nav-rail .wf-nav-on .wf-ico{background:var(--wf-fill);box-shadow:inset 0 0 0 1.5px var(--wf-line-strong)}
+.wf-mode-line .wf-nav-rail .wf-nav-on .wf-ico{background:transparent}
 .wf-nav-rail.wf-nav-collapsed .wf-nav-label{display:inline;position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @media(any-pointer:coarse){.wf-nav:not(.wf-nav-rail) .wf-nav-item,.wf-menu-item{min-height:44px}}
 @media(any-pointer:coarse){.wf-menu-item:has(>.wf-menu-shortcut){height:max(44px,calc(1lh + 14px));padding-block:max(7px,calc((44px - 1lh) / 2))}}
