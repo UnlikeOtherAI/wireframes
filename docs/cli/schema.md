@@ -395,7 +395,6 @@ manifest:
   name: Wireframe Builder
   schemaVersion: "1.1"
   createdWithCLI: "wf 0.3.0"
-  defaultGridColumns: 12
   defaultWireframeStyle:
     border:
       style: solid
@@ -410,6 +409,10 @@ Rules:
 * `schemaVersion` is REQUIRED
 * `projectId` must match Id format
 * `defaultWireframeStyle` provides inheritable defaults for pages
+* `defaultGridColumns` is optional. Set, it gives every grid without `columns`
+  that many equal columns. Unset (new projects), such a grid lays out tiles
+  that fill the row, unless a child is placed with `gridItem`
+  ([rendering-data.md § Grid columns](rendering-data.md#grid-columns))
 * Used by `wf info` and future `wf migrate`
 
 ---
@@ -604,7 +607,7 @@ or a control with its own chrome; **edge only** draws one divider edge;
 | `card` | always | title, description, actions, media, footer |
 | `stack` | never | gap, padding, align |
 | `row` | never | gap, padding, align, justify, wrap, nowrap |
-| `grid` | never | columns, gap, minItemWidth |
+| `grid` | never | columns, gap, minItemWidth (no columns: tiles that fill the row) |
 | `split` | never | gap, orientation: row\|stack |
 | `form` | never | title, submit, columns |
 | `carousel` | rules decide | dots, arrows, items |

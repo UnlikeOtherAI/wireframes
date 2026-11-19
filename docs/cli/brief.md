@@ -98,7 +98,8 @@ Creates:
 
 Also generates:
 
-* manifest with project metadata and schema version
+* manifest with project metadata and schema version. It no longer writes
+  `defaultGridColumns`, so a grid without `columns` lays out tiles
 * CLI config with validation defaults
 * default public template
 * default editor template
@@ -128,7 +129,7 @@ Prints project metadata from manifest.yaml:
 * project name
 * schema version
 * CLI version used to create
-* default grid columns
+* default grid columns (`auto` when the manifest leaves it unset)
 * default wireframe style
 
 ### wf doctor

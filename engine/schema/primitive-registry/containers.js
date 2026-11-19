@@ -60,12 +60,13 @@ const containerPrimitives = [
     name: 'grid',
     family: 'containers',
     frame: 'N',
-    summary: 'Grid layout group. Never framed; its children become framed tiles.',
+    summary: 'Grid layout group. Never framed; its children become framed tiles. Without columns the tiles fill the row and wrap.',
     props: {
       columns: { type: 'number' },
       gap: { type: 'number' },
       minItemWidth: { type: 'number' },
     },
+    sizing: ['grid.gap', 'grid.minItemWidth'],
     example: '- grid: { columns: 3, children: [...] }',
   },
   {

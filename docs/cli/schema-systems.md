@@ -23,6 +23,12 @@ Grid:
 * columns defined per context
 * spans must not exceed columns
 * span cannot coexist with explicit width
+* without `columns`, a grid whose children use no `gridItem` lays out tiles at
+  least `grid.minItemWidth` wide (web 220, tablet 200, mobile 150) that fill the
+  row and wrap. This applies to the `grid` element and to `layout: { type: grid }`
+  alike. An explicit `manifest.defaultGridColumns`, or any child placed with
+  `gridItem`, keeps the column system (12 when nothing sets it). Precedence:
+  [rendering-data.md § Grid columns](rendering-data.md#grid-columns)
 
 Separators:
 

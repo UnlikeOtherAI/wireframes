@@ -18,6 +18,8 @@ const TOKENS = {
   'card.padding': { web: 16, tablet: 16, mobile: 12 },
   'card.gap': { web: 16, tablet: 16, mobile: 12 },
   'grid.gap': { web: 16, tablet: 16, mobile: 12 },
+  // The narrowest tile a grid without columns or placed children lays out.
+  'grid.minItemWidth': { web: 220, tablet: 200, mobile: 150 },
   'control.height': { web: 36, tablet: 40, mobile: 44 },
   'control.minWidth': { web: 88, tablet: 88, mobile: 88 },
   'row.height': { web: 44, tablet: 44, mobile: 48 },

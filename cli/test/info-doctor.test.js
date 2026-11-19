@@ -37,7 +37,8 @@ test('wf info reads and reports manifest metadata', () => {
   assert.equal(info.projectName, 'Info Project');
   assert.equal(info.schemaVersion, '1.1');
   assert.equal(info.createdWithCLI, `wf ${SUPPORTED_CLI_VERSION}`);
-  assert.equal(info.defaultGridColumns, 12);
+  // New scaffolds leave the grid default unset, so grids lay out tiles.
+  assert.equal(info.defaultGridColumns, undefined);
   assert.equal(typeof info.defaultWireframeStyle, 'object');
 });
 

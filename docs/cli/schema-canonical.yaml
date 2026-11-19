@@ -516,6 +516,7 @@ sizingTokens:
   - card.padding
   - card.gap
   - grid.gap
+  - grid.minItemWidth   # web 220, tablet 200, mobile 150: the narrowest auto tile
   - control.height
   - control.minWidth
   - row.height
@@ -546,7 +547,15 @@ layout:
     - separatorStyle # solid | dashed (defaults to solid)
 
   grid:
-    defaultColumns: 12
+    # Tracks, decided once for every grid host and for adaptive mode:
+    #   1. a child placed with gridItem (span, offset, row, column): columns, else
+    #      manifest.defaultGridColumns, else 12. Adaptive mode never reflows it.
+    #   2. minItemWidth: tiles of at least that width.
+    #   3. adaptive mode: tiles at the shown device's grid.minItemWidth.
+    #   4. columns, then an explicit manifest.defaultGridColumns.
+    #   5. otherwise tiles at grid.minItemWidth that fill the row and wrap.
+    # Every track is minmax(0,1fr), and a tile minimum never exceeds the container.
+    placementColumns: 12
     rules:
       - span must not exceed column count
       - span cannot coexist with explicit width

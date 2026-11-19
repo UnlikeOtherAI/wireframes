@@ -27,12 +27,12 @@ test('layoutToCss reads sizing from size object', () => {
   assert.equal(css.includes('height:50%'), true);
 });
 
-test('layoutToCss uses manifest default grid columns when columns omitted', () => {
+test('layoutToCss uses an explicit manifest default and lays out tiles without one', () => {
   const explicit = layoutToCss({ type: 'grid' }, {}, { defaultGridColumns: 9 });
   const fallback = layoutToCss({ type: 'grid' });
 
-  assert.equal(explicit.includes('grid-template-columns:repeat(9,1fr)'), true);
-  assert.equal(fallback.includes('grid-template-columns:repeat(12,1fr)'), true);
+  assert.equal(explicit.includes('grid-template-columns:repeat(9,minmax(0,1fr))'), true);
+  assert.equal(fallback.includes('grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr))'), true);
 });
 
 test('layoutItemCss uses gridItem keys', () => {
@@ -65,7 +65,7 @@ test('renderNode applies layout size and grid item fields', () => {
 
   const html = renderNode(node, { defaultGridColumns: 8 });
 
-  assert.equal(html.includes('grid-template-columns:repeat(8,1fr)'), true);
+  assert.equal(html.includes('grid-template-columns:repeat(8,minmax(0,1fr))'), true);
   assert.equal(html.includes('width:120px'), true);
   assert.equal(html.includes('grid-column:span 4'), true);
   assert.equal(html.includes('grid-column-start:1'), true);

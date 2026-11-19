@@ -14,7 +14,8 @@ const adaptiveStyles = [
   '.wf-adapt-mobile .wf-role-sidebar .wf-nav-item{flex:0 0 auto;white-space:nowrap}',
   '.wf-adapt-mobile .wf-role-sidebar .wf-nav-label{flex:0 0 auto;overflow:visible}',
   '.wf-adapt-mobile .wf-role-main{width:auto!important;min-width:0!important;flex:1 1 auto!important}',
-  '.wf-adapt-mobile .wf-grid,.wf-adapt-mobile .wf-form{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important}',
+  // Grids reflow in the renderer, not here: layout.gridTemplateColumns gives
+  // every grid host tiles at the shown device's grid.minItemWidth.
   // A row of panels stacks. A row of small things wraps and stays together.
   '.wf-adapt-mobile .wf-row{flex-wrap:wrap!important}',
   '.wf-adapt-mobile .wf-row>.wf-card,.wf-adapt-mobile .wf-row>.wf-section,.wf-adapt-mobile .wf-row>.wf-stack,'
@@ -27,7 +28,6 @@ const adaptiveStyles = [
   '.wf-adapt-mobile .wf-table{overflow-x:auto!important}',
   '.wf-adapt-mobile .wf-table-grid{min-width:520px}',
   // A tablet keeps the page's structure. Only what would not fit gives way.
-  '.wf-adapt-tablet .wf-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))!important}',
   '.wf-adapt-tablet .wf-row{flex-wrap:wrap!important}',
 ].join('\n');
 

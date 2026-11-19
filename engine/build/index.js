@@ -4,6 +4,7 @@ const { documentAppearance } = require('../design-system/resolve');
 const { validateDesignSystem } = require('../design-system/validate');
 
 const { normalizePlatform: resolveChromePlatform } = require('../renderer/platform');
+const { resolveDefaultGridColumns } = require('../renderer/layout');
 const { resolvePageTree } = require('./page-tree');
 const { stampDocumentSources } = require('./source-stamps');
 const {
@@ -235,10 +236,7 @@ function renderPage(documentMap, pageId, options = {}) {
       : {};
   const defaultWireframeStyle = manifest.defaultWireframeStyle || {};
   const manifestSizing = isObject(manifest.sizing) ? manifest.sizing : {};
-  const parsedDefaultGridColumns = Number(manifest.defaultGridColumns);
-  const defaultGridColumns = Number.isInteger(parsedDefaultGridColumns) && parsedDefaultGridColumns > 0
-    ? parsedDefaultGridColumns
-    : 12;
+  const defaultGridColumns = resolveDefaultGridColumns(manifest);
 
   const sitemap = isObject(documentMap.sitemap?.sitemap)
     ? documentMap.sitemap.sitemap
@@ -299,10 +297,7 @@ function buildProject(documentMap, options = {}) {
       : {};
   const defaultWireframeStyle = manifest.defaultWireframeStyle || {};
   const manifestSizing = isObject(manifest.sizing) ? manifest.sizing : {};
-  const parsedDefaultGridColumns = Number(manifest.defaultGridColumns);
-  const defaultGridColumns = Number.isInteger(parsedDefaultGridColumns) && parsedDefaultGridColumns > 0
-    ? parsedDefaultGridColumns
-    : 12;
+  const defaultGridColumns = resolveDefaultGridColumns(manifest);
 
   const sitemap = isObject(documentMap.sitemap?.sitemap)
     ? documentMap.sitemap.sitemap

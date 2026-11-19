@@ -1,6 +1,7 @@
 'use strict';
 const { pageAppearance } = require('../design-system/resolve');
 const { normalizePlatform } = require('../renderer/platform');
+const { resolveDefaultGridColumns } = require('../renderer/layout');
 const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
@@ -276,10 +277,7 @@ function resolvePageTargets(projectPath, pageId) {
   const manifest = loadDocumentFromFile(path.join(projectPath, 'manifest.yaml'), { supportedSpecVersion: SUPPORTED_SPEC_VERSION });
   const manifestData = manifest.document?.manifest || {};
   const manifestSizing = isObject(manifestData.sizing) ? manifestData.sizing : {};
-  const parsedDefaultGridColumns = Number(manifestData.defaultGridColumns);
-  const defaultGridColumns = Number.isInteger(parsedDefaultGridColumns) && parsedDefaultGridColumns > 0
-    ? parsedDefaultGridColumns
-    : 12;
+  const defaultGridColumns = resolveDefaultGridColumns(manifestData);
 
   const pageIds = pageId ? [pageId] : listPages(projectPath);
   if (pageId && !pageIds.includes(pageId)) return { ok: false, error: `Page "${pageId}" does not exist.` };

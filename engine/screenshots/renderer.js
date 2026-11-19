@@ -54,6 +54,19 @@ function separatorClass(layout) {
   return type === 'row' ? ' wf-divide-x' : ' wf-divide-y';
 }
 
+// What a region or page body needs to lay its children out as a grid, decided
+// exactly as an element's grid is (layout.gridTemplateColumns).
+function gridHost(options, children) {
+  return {
+    defaultGridColumns: options.defaultGridColumns,
+    density: options.density,
+    children,
+    adaptive: options.adaptive,
+    viewport: options.viewport,
+    sizing: options.sizing,
+  };
+}
+
 function renderRoot(root, options) {
   if (!isObject(root)) {
     return '';
@@ -138,7 +151,7 @@ function renderRoot(root, options) {
     isObject(child) && resolvePrimitiveName(child.component) === 'bottom_tab_bar'
   ));
   const tabBarClass = hasTabBar ? ' wf-root-has-tabbar' : '';
-  const bodyLayoutCss = layoutToCss(rootLayout, {}, { density: options.density });
+  const bodyLayoutCss = layoutToCss(rootLayout, {}, gridHost(options, children));
   const bodyDividerClass = separatorClass(rootLayout);
   const bodyDivides = shouldRenderParentSeparators(rootLayout)
     ? ` data-wf-divides="${rootLayoutType === 'row' ? 'row' : 'stack'}"`
@@ -177,11 +190,7 @@ function renderPageShell(roots, viewportWidth, viewportHeight, renderOptions, bo
   const bodyHtml = bodyRoots.map((r) => renderRoot(r, renderOptions)).join('\n');
 
   const bodyClass = bodyLayoutType === 'stack' ? 'wf-body-column' : 'wf-body-row';
-  const bodyLayoutCss = layoutToCss(
-    isObject(bodyLayout) ? bodyLayout : {},
-    {},
-    { defaultGridColumns: renderOptions.defaultGridColumns, density: renderOptions.density },
-  );
+  const bodyLayoutCss = layoutToCss(isObject(bodyLayout) ? bodyLayout : {}, {}, gridHost(renderOptions, bodyRoots));
   const bodyStyle = bodyLayoutCss ? ` style="${escapeAttr(bodyLayoutCss)}"` : '';
 
   return `<div class="wf-page" style="width:${viewportWidth}px;min-height:${viewportHeight}px;${pageInsetStyle(renderOptions.pageInset)}">
@@ -222,7 +231,7 @@ function renderWireframeMarkup({
   pageStateDefaults = {},
   pageStyle = {},
   skin = null,
-  defaultGridColumns = 12,
+  defaultGridColumns = null,
   projectPath,
   dataSources = {},
   frame = null,
@@ -260,6 +269,7 @@ function renderWireframeMarkup({
     projectPath,
     dataSources,
     defaultGridColumns,
+    adaptive: adaptTo != null,
     assetUrlPrefix,
     routeId: pageRouteId,
     routeTable,

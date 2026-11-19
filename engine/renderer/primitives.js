@@ -147,6 +147,7 @@ function renderNode(node, options = {}) {
     isOverlayChild: options.isOverlayChild === true,
     paneData,
     defaultGridColumns: Number.isInteger(options.defaultGridColumns) ? options.defaultGridColumns : undefined,
+    adaptive: options.adaptive === true,
     density: options.density,
     rendering: options.rendering,
     pageStyle: options.pageStyle,

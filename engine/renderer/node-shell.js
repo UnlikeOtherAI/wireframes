@@ -120,12 +120,6 @@ function wrapStyle(element, node, decision, ctx) {
   if (layoutType === 'row' && props.nowrap !== true) {
     if (props.wrap === true || isToolbarRow(node)) parts.push('flex-wrap:wrap');
   }
-  if (element === 'grid' && props.minItemWidth != null) {
-    const min = Number(props.minItemWidth);
-    if (Number.isFinite(min)) {
-      parts.push(`grid-template-columns:repeat(auto-fit,minmax(${min}px,1fr))`);
-    }
-  }
   // A frame needs breathing room, unless the element draws its own insets.
   const SELF_PADDED = new Set(['table', 'list', 'calendar', 'accordion', 'tree', 'code', 'carousel', 'alert', 'upload', 'editor', 'empty_state', 'stat']);
   if (decision.frame === 'surface' && !SELF_PADDED.has(element)) {
@@ -166,9 +160,15 @@ function buildShell(node, element, ctx) {
   // A leaf with no authored layout has nothing to lay out; emitting flexbox for
   // it only fights the element's own CSS.
   const wantsLayout = (hasChildren(node) && element !== 'app_bar') || isObject(node.layout) || LAYOUT_DEFAULTS[element] != null;
-  const layoutCss = wantsLayout
-    ? layoutToCss(layout, size, { defaultGridColumns: ctx.defaultGridColumns, density: ctx.density })
-    : layoutToCss({ type: 'none' }, size, { defaultGridColumns: ctx.defaultGridColumns, density: ctx.density });
+  const layoutCss = layoutToCss(wantsLayout ? layout : { type: 'none' }, size, {
+    defaultGridColumns: ctx.defaultGridColumns,
+    density: ctx.density,
+    children: node.children,
+    minItemWidth: element === 'grid' ? node.props?.minItemWidth : undefined,
+    adaptive: ctx.adaptive,
+    viewport: ctx.viewport,
+    sizing: ctx.sizing,
+  });
 
   const appearance = resolveAppearance(node, ctx);
   const outerOnly = [

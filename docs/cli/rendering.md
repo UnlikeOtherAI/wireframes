@@ -538,8 +538,8 @@ Layouts map to CSS layout mechanisms.
 ```
 stack     → display: flex; flex-direction: column;
 row       → display: flex; flex-direction: row;
-grid      → display: grid; grid-template-columns: repeat({columns}, 1fr);
-             If columns is omitted, defaults to manifest.defaultGridColumns (default: 12).
+grid      → display: grid; grid-template-columns: repeat({columns}, minmax(0,1fr)),
+             or auto-fit tiles without columns (rendering-data.md § Grid columns).
 absolute  → position: relative; (children get position: absolute)
              Children positioned via node `position` property:
                position.top    → top: {value}px
@@ -556,7 +556,7 @@ overlay   → position: relative; (children stack with z-index)
 |------|-----|
 | `gap` | `gap: {value}px` |
 | `padding` | `padding: {value}px` |
-| `columns` | `grid-template-columns: repeat({value}, 1fr)` |
+| `columns` | `grid-template-columns: repeat({value}, minmax(0,1fr))` |
 | `justify` | `justify-content: {value}` |
 | `align` | `align-items: {value}` |
 | `separatorPolicy: auto \| divide` + `gap: 0` | `data-wf-divides="row\|stack"` on the children wrapper, `data-wf-edge="after"` on every child but the last |

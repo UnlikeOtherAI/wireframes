@@ -88,6 +88,32 @@ No keyboard behaviour ships with tree rows or accordion heads.
 Slides read the `list` profile, so `{ label: Slide }` works as well as
 `{ title: Slide }` and plain strings.
 
+## Grid columns
+
+Every grid host — the `grid` element, `form` with `columns`, any node or
+template region with `layout: { type: grid }`, and the page body — takes its
+`grid-template-columns` from one function, `gridTemplateColumns` in
+`engine/renderer/layout.js`. It sees the host's rendered children, after
+`repeat` and component expansion. In order:
+
+1. A child placed with `gridItem` (`span`, `offset`, `row` or `column`):
+   `repeat(N, minmax(0,1fr))`, where N is `columns`, else
+   `manifest.defaultGridColumns`, else 12. Adaptive mode never reflows a
+   placed grid.
+2. `minItemWidth` (on `grid`): `repeat(auto-fit, minmax(min(<min>px,100%), 1fr))`.
+3. Adaptive mode (the renderer's `adaptive` option, on a smaller device than
+   the page was designed for): the same auto-fit at the shown device's
+   `grid.minItemWidth`. This covers every host, not only `.wf-grid`.
+4. `columns`, then an explicit `manifest.defaultGridColumns`: `repeat(N, minmax(0,1fr))`.
+5. Otherwise tiles at the page device's `grid.minItemWidth` (web 220, tablet
+   200, mobile 150; `manifest.sizing` overrides it) that fill the row and wrap.
+
+`minmax(0,1fr)` stops a long word or URL from widening its track, and
+`min(…,100%)` stops a tile minimum overflowing a container narrower than it.
+`INVALID_GRID_SPAN` is unaffected: auto tiles apply only when no child uses
+`gridItem`. `wf init` no longer writes `defaultGridColumns`. Projects that set
+it keep their equal columns.
+
 ## Repeat rows
 
 `repeat` (schema-systems.md §14.1) adds no markup of its own. The resolver

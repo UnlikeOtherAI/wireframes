@@ -2814,6 +2814,10 @@
           "type": "number",
           "minimum": 0
         },
+        "grid.minItemWidth": {
+          "type": "number",
+          "minimum": 0
+        },
         "header.height": {
           "type": "number",
           "minimum": 0
@@ -3083,7 +3087,7 @@
     },
     "PrimitiveProps_grid": {
       "type": "object",
-      "description": "Grid layout group. Never framed; its children become framed tiles.",
+      "description": "Grid layout group. Never framed; its children become framed tiles. Without columns the tiles fill the row and wrap.",
       "properties": {
         "columns": {
           "type": "number"
