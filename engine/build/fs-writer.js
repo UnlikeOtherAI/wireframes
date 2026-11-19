@@ -5,6 +5,7 @@ const path = require('node:path');
 const yaml = require('js-yaml');
 
 const { runValidate } = require(path.resolve(__dirname, '..', 'validate', 'cli-adapter'));
+const { formatGroupedIssues } = require(path.resolve(__dirname, '..', 'validate', 'format'));
 const {
   resolvePageTargets,
 } = require(path.resolve(__dirname, '..', 'screenshots'));
@@ -275,9 +276,11 @@ function runBuild({
     strict: shouldFailOnWarnings,
   });
   if (!validationResult.ok) {
+    // What stops the build is listed as `wf validate` lists it.
+    const issues = formatGroupedIssues(validationResult.errors, 'issues');
     return {
       ok: false,
-      error: 'Project validation failed. Run wf validate before building.',
+      error: ['Project validation failed. Run wf validate before building.', issues].filter(Boolean).join('\n'),
       details: validationResult,
     };
   }
