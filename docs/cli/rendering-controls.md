@@ -65,8 +65,25 @@ Every control except `button` and `toolbar` spreads `FIELD_PROPS`: `label`,
 | `upload` | `label` stays the action copy; `fieldLabel` goes above | below | with any field prop, an inner `.wf-upload-zone` (or `.wf-upload-row` for `variant: button`) carries the state and the dashed box | drawn without its action: the files only, or "No files" |
 
 `error` replaces `help` and adds `wf-field-invalid` to the node, which
-paints the invalid edge through `--wf-tone`. Read-only native fields get a
-flat fill (card mode) or a dashed edge (line mode). Disabled native fields
+paints the invalid edge through `--wf-tone`. Read-only has one look for
+every control. The node gets `wf-field-readonly`; the state attributes stay
+on the owner listed above, and the runtime guards are unchanged:
+
+- a lock (`.wf-field-lock`, `aria-hidden`) after the label text, so the
+  accessible name stays the label;
+- a dashed edge on the field box: inputs, `textarea`, `select`, tags, colour,
+  the otp boxes, the stepper, the segment track, the upload zone, the
+  checkbox, radio and toggle marks, and the picker and editor frames.
+  It is `--wf-ink-3` over a `--wf-fill-2` fill in card mode and
+  `--wf-line-strong` in line mode. The edge and the lock reach at least 3:1
+  against the page. An invalid read-only field keeps its toned edge, dashed;
+- no affordance that suggests a change: no select chevron, no textarea
+  resize handle, no stepper buttons, a dashed range thumb and a default
+  cursor;
+- the value at full contrast.
+
+Disabled native fields
+
 (text types, number, colour, `textarea`, `select`) keep the browser's
 disabled look, as they always did. Drawn controls fade one layer to half
 opacity, as disabled buttons and checkboxes always have: range, otp,

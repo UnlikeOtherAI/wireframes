@@ -601,6 +601,9 @@ Form controls share the field props in
   are not submitted. `readonly` values stay bound and are submitted.
 - With both `readonly` and `disabled`, `disabled` wins visually and both are
   written.
+- Every read-only control draws the same cue, distinct from disabled: a lock
+  after the label and a dashed field edge, with the value at full contrast
+  ([rendering-controls.md](rendering-controls.md)).
 
 | Widget | Field label | Help and error | `readonly` |
 |---|---|---|---|

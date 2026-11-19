@@ -9,7 +9,13 @@ const { decideFrame } = require('./frame-rules');
 const { token, scale } = require('./sizing-tokens');
 const { buildNodeDataAttributes, joinAttrs, navigationAttrs, sourceAttrs } = require('./render-attrs');
 const { isObject, toSafeClass, paneMetaToStyle, escapeHtml } = require('./render-utils');
-const { frameClass, resolvePrimitiveName } = require('../schema/primitive-registry');
+const { frameClass, getPrimitive, resolvePrimitiveName } = require('../schema/primitive-registry');
+
+// A field the author made read-only draws the read-only look; disabled wins
+// when both are set. The state attributes themselves stay with each control.
+function isReadonlyField(element, props) {
+  return props.readonly === true && props.disabled !== true && getPrimitive(element)?.props?.readonly != null;
+}
 
 // Elements that get a structural size from a token rather than from the author.
 const ELEMENT_SIZING = {
@@ -197,6 +203,7 @@ function buildShell(node, element, ctx) {
   if (decision.frame === 'surface') classes.push('wf-surface');
   else if (decision.frame === 'group') classes.push('wf-group');
   if (Array.isArray(node.interaction) && node.interaction.length > 0) classes.push('wf-interactive');
+  if (isReadonlyField(element, isObject(node.props) ? node.props : {})) classes.push('wf-field-readonly');
   if (isObject(node.selection)) classes.push('wf-selectable');
   if (paneData && typeof paneData.side === 'string') {
     classes.push('wf-pane', `wf-pane-${toSafeClass(paneData.side)}`);

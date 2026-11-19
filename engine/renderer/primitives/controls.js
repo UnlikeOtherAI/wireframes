@@ -37,7 +37,7 @@ function renderUploadField(node, ctx, lib, files) {
   const label = lib.str(props.label) || 'Drop files here';
   const hint = lib.str(props.hint);
   const state = fieldState(props, lib);
-  const heading = fieldLabel({ label: props.fieldLabel, required: props.required }, ctx, lib);
+  const heading = fieldLabel({ label: props.fieldLabel, required: props.required, readonly: props.readonly, disabled: props.disabled }, ctx, lib);
   const help = fieldHelp(props, ctx, lib, node);
   const button = props.variant === 'button';
   let body;

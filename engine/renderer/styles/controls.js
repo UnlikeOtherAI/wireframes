@@ -98,11 +98,28 @@ const controlStyles = [
   '.wf-field-invalid{--wf-tone:var(--wf-danger)}',
   '.wf-field-invalid .wf-control,.wf-field-invalid textarea{border-color:var(--wf-tone);border-width:2px}',
   '.wf-select-searchable .wf-control select{padding-left:0}',
-  // Read-only keeps the value but drops the editable look; disabled wins when both are set.
-  '.wf-mode-card .wf-control:has(>[data-wf-readonly]:not([data-wf-disabled])),.wf-mode-card .wf-textarea textarea[data-wf-readonly]:not([data-wf-disabled])'
-    + '{background:var(--wf-fill-2)}',
-  '.wf-mode-line .wf-control:has(>[data-wf-readonly]:not([data-wf-disabled])),.wf-mode-line .wf-textarea textarea[data-wf-readonly]:not([data-wf-disabled])'
-    + '{border-style:dashed}',
+  // Read-only, one look for every control: a lock after the label, a dashed
+  // edge on the field box, no editing affordances, the value at full contrast.
+  // The edge and the lock reach at least 3:1 in both modes. Disabled wins, so
+  // `.wf-field-readonly` is never set on a disabled field.
+  '.wf-field-lock{display:inline-flex;align-items:center;margin-left:6px;color:var(--wf-ink-3);vertical-align:-1px}',
+  '.wf-field-lock .wf-icon-glyph{width:auto;min-width:0;font-size:10px;color:inherit}',
+  '.wf-field-readonly :is(.wf-control,.wf-color,.wf-numstepper,.wf-otp-box,.wf-segment-track,.wf-check-mark,.wf-radio-mark,.wf-toggle-track),'
+    + '.wf-field-readonly.wf-textarea textarea{border-style:dashed}',
+  '.wf-mode-card .wf-field-readonly:not(.wf-field-invalid) :is(.wf-control,.wf-color,.wf-numstepper,.wf-otp-box,.wf-segment-track,.wf-upload-zone),'
+    + '.wf-mode-card .wf-field-readonly.wf-textarea:not(.wf-field-invalid) textarea{border-color:var(--wf-ink-3);background:var(--wf-fill-2)}',
+  '.wf-mode-line .wf-field-readonly:not(.wf-field-invalid) :is(.wf-control,.wf-color,.wf-numstepper,.wf-otp-box,.wf-segment-track),'
+    + '.wf-mode-line .wf-field-readonly.wf-textarea:not(.wf-field-invalid) textarea{border-color:var(--wf-line-strong)}',
+  // Surfaces draw their own edge: a border in card mode, an outline in line mode.
+  '.wf-mode-card .wf-field-readonly[data-wf-frame="surface"]:is(.wf-picker,.wf-editor){border-style:dashed;border-color:var(--wf-ink-3)}',
+  '.wf-mode-line .wf-field-readonly[data-wf-frame="surface"]:is(.wf-picker,.wf-editor){outline-style:dashed}',
+  // No affordance suggests the value can change.
+  '.wf-field-readonly select{appearance:none;-webkit-appearance:none}',
+  '.wf-field-readonly textarea{resize:none}',
+  '.wf-field-readonly .wf-numstepper-btn{display:none}',
+  '.wf-field-readonly .wf-numstepper-value{display:inline-flex;align-items:center;justify-content:center;min-height:var(--wf-control-h,36px)}',
+  '.wf-field-readonly .wf-range-thumb{border-style:dashed}',
+  '.wf-field-readonly :is(select,.wf-choice,.wf-segment,input[type=color],.wf-range){cursor:default}',
 
   '.wf-control-center{position:relative}',
   '.wf-control-center input{padding-inline-start:36px}',

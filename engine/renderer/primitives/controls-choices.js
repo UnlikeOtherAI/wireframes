@@ -1,6 +1,6 @@
 'use strict';
 
-const { partId, fieldState, fieldLabel, fieldHelp, describedBy, optionValueAttr } = require('./controls-field');
+const { partId, fieldState, fieldLabel, readonlyLock, fieldHelp, describedBy, optionValueAttr } = require('./controls-field');
 
 const MARK_ROLE = { checkbox: 'checkbox', radio: 'radio', toggle: 'switch' };
 // A radio announces checked and disabled; read-only belongs to its group.
@@ -81,7 +81,7 @@ function renderChoice(kind) {
       ? `<span class="wf-toggle-track${checked === true ? ' wf-toggle-on' : ''}"${attrs}><span class="wf-toggle-thumb"></span></span>`
       : choiceMark(kind, attrs);
     const on = checked === true ? ' wf-choice-on' : '';
-    const required = state.required ? '<span class="wf-req">*</span>' : '';
+    const required = `${state.required ? '<span class="wf-req">*</span>' : ''}${readonlyLock(props, lib)}`;
     const body = `<span class="wf-choice-text"><span class="wf-choice-label" id="${lib.escapeAttr(labelId)}">${lib.bound(label, ctx)}${required}</span>${
       description ? `<span class="wf-choice-desc" id="${lib.escapeAttr(partId(node, 'help'))}">${lib.bound(description, ctx)}</span>` : ''
     }</span>`;

@@ -21,6 +21,17 @@ function fieldState(props, lib) {
 }
 
 /**
+ * The lock after a read-only field's label, the cue every control shares.
+ * Decorative: the control's own read-only state is what assistive tech reads.
+ * Disabled wins, so a disabled field shows no lock.
+ */
+function readonlyLock(props, lib) {
+  return props?.readonly === true && props.disabled !== true
+    ? `<span class="wf-field-lock">${lib.icon('lock')}</span>`
+    : '';
+}
+
+/**
  * The visible label above a control; `required` adds the marker. `inputId`
  * associates a native control, `labelId` lets a group name itself with
  * aria-labelledby.
@@ -28,7 +39,7 @@ function fieldState(props, lib) {
 function fieldLabel(props, ctx, lib, inputId, labelId) {
   const label = lib.str(props?.label);
   if (!label) return '';
-  const required = props.required === true ? '<span class="wf-req">*</span>' : '';
+  const required = `${props.required === true ? '<span class="wf-req">*</span>' : ''}${readonlyLock(props, lib)}`;
   const forAttr = inputId ? ` for="${lib.escapeAttr(inputId)}"` : '';
   const idAttr = labelId ? ` id="${lib.escapeAttr(labelId)}"` : '';
   return `<label class="wf-field-label"${forAttr}${idAttr}>${lib.bound(label, ctx)}${required}</label>`;
@@ -70,6 +81,7 @@ module.exports = {
   partId,
   fieldState,
   fieldLabel,
+  readonlyLock,
   fieldHelp,
   describedBy,
   optionValueAttr,

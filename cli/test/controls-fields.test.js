@@ -75,7 +75,8 @@ test('readonly plus disabled: both written, on the element that owns them', () =
   assert.match(html('choice_group', { kind: 'checkbox', readonly: true, options: ['A'] }), /role="checkbox" aria-readonly="true" aria-checked="false" data-wf-readonly/);
   const segmented = html('segmented', { options: ['A', 'B'], readonly: true, value: 'A' });
   assert.match(segmented, /<div class="wf-segment-track" role="group" data-wf-readonly>/);
-  assert.match(segmented, /class="wf-node wf-segmented wf-segmented-md wf-segmented-field"/);
+  // Read-only adds the node class that draws the read-only look (rendering-controls.md).
+  assert.match(segmented, /class="wf-node wf-segmented wf-field-readonly wf-segmented-md wf-segmented-field"/);
   const off = html('segmented', { options: ['A'], disabled: true });
   assert.match(off, /<div class="wf-segment-track" role="group" data-wf-disabled><button type="button" class="wf-segment" data-wf-choice-value="&quot;A&quot;" disabled aria-pressed="false" data-wf-disabled>/);
   assert.match(html('picker', { options: ['A'], readonly: true }), /<div class="wf-picker-wheel" data-wf-readonly>/);
@@ -93,8 +94,9 @@ test('readonly tags, editor and upload drop their input affordances but keep the
   assert.doesNotMatch(editor, /wf-editor-toolbar/);
   assert.match(editor, /<div class="wf-editor-body" data-wf-readonly style=/);
   const upload = html('upload', { label: 'Drop here', fieldLabel: 'Files', readonly: true, files: ['a.pdf'] });
-  assert.match(upload, /^<div id="f" class="wf-node wf-upload wf-surface wf-upload-field" data-wf-frame="surface"/);
-  assert.match(upload, /<label class="wf-field-label">Files<\/label><div class="wf-upload-zone" data-wf-readonly><div class="wf-upload-files">/);
+  assert.match(upload, /^<div id="f" class="wf-node wf-upload wf-surface wf-field-readonly wf-upload-field" data-wf-frame="surface"/);
+  // The decorative lock follows the label text.
+  assert.match(upload, /<label class="wf-field-label">Files<span class="wf-field-lock"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-lock"[^>]*><\/i><\/span><\/label><div class="wf-upload-zone" data-wf-readonly><div class="wf-upload-files">/);
   assert.doesNotMatch(upload, /Drop here|cloud-arrow-up/);
   const field = html('upload', { label: 'Drop here', fieldLabel: 'Files', help: 'PDF only', disabled: true });
   assert.match(field, /<div class="wf-upload-zone" data-wf-disabled><span class="wf-upload-glyph">.*Drop here.*<\/div><span class="wf-field-help" id="f__help">PDF only<\/span>/);

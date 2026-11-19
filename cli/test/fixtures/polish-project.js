@@ -36,4 +36,23 @@ function polishProject(content, { device = 'web', mode = 'card', manifest = {}, 
 
 const ROUTE_TABLE = { home: '#home', docs: '#docs', settings: '#settings' };
 
-module.exports = { polishProject, ROUTE_TABLE };
+/**
+ * The same project on disk, for `runBuild`: a built page links the bundled
+ * icon font, which `setContent` pages cannot reach.
+ */
+function writePolishProject(dir, content, options = {}) {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const yaml = require('js-yaml');
+  const map = polishProject(content, options);
+  const write = (rel, doc) => {
+    fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
+    fs.writeFileSync(path.join(dir, rel), yaml.dump(doc, { lineWidth: -1 }));
+  };
+  write('.wfrc.yaml', { cli: { strictValidation: false } });
+  for (const key of ['manifest', 'sitemap', 'templates', 'components']) write(`${key}.yaml`, map[key]);
+  for (const [id, page] of map.pages) write(`pages/${id}.yaml`, page);
+  return dir;
+}
+
+module.exports = { polishProject, writePolishProject, ROUTE_TABLE };
