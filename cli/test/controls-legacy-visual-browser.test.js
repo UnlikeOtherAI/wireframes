@@ -51,6 +51,8 @@ const LEGACY = [
 ];
 // Stepper help is a deliberate change (design §10): authored help used to be dropped.
 const STEPPER_HELP = { id: 'st_help', component: 'input', props: { label: 'Rooms', inputType: 'stepper', value: 2, help: 'Per night' } };
+// Single selects restyled on purpose: their box keeps its size, the drawing inside it changed.
+const RESTYLED_SELECTS = new Set(['sel_plain', 'sel_disabled']);
 
 // Controls that gained `disabled` on this branch, plus the legacy drawn ones.
 const DISABLED = [
@@ -141,7 +143,10 @@ for (const mode of ['card', 'line']) {
       await useLegacy(page, [...LEGACY, STEPPER_HELP]);
       const changed = [];
       for (const node of LEGACY) {
-        if (differentPixels(shots[node.id], await page.locator(`#${node.id}`).screenshot()) > 0) changed.push(node.id);
+        const diff = differentPixels(shots[node.id], await page.locator(`#${node.id}`).screenshot());
+        // A single select now draws its own chevron, with its text on the inputs'
+        // inset (rendering-controls.md), so only its box must stay the same size.
+        if (RESTYLED_SELECTS.has(node.id) ? diff === Infinity : diff > 0) changed.push(node.id);
       }
       assert.deepEqual(changed, [], 'these legacy controls look different now');
       assert.equal(await page.locator('#st_help .wf-field-help').count(), 0, 'the legacy stepper dropped its help');
