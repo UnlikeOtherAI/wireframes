@@ -296,3 +296,33 @@ orchestrator's scratchpad.
 | 8 | major | Collection binding can clone rows after validation. | **Adopt**: reject cloning combinations, keep single-value bindings, add `REPEAT_ITEM_TOKEN` lint, correct §2. |
 | 9 | minor | Keep keyed maps only, and measure the real authoring task. | **Adopt**: keyed maps only; the §4.6 comparison with insertion and edits. |
 | 10 | minor | The doc and verification checklist misses surfaces. | **Adopt**: §4.5. |
+
+## 9. Implementation Decisions
+
+The code and `docs/cli/` are authoritative.
+
+- **Cell grammar.** `cell` takes the `ComponentRef` pattern of `use:`. That keeps it
+  non-empty, and it refuses an authored `builtin:` at the schema. After registry
+  rewriting, a module's `std` miss is `builtin:` too, so the doctor cannot tell an
+  authored one apart.
+- **Hosts.** `engine/renderer/child-hosts.js` lists the elements whose renderer lays
+  out children (`useChildren`). `button` and `input` only append children after their
+  own markup, so they are not hosts, as §4.1 says. A test checks the list against
+  every renderer.
+- **Duplicate item ids.** Only the first item with an id makes a row, so
+  `DUPLICATE_REPEAT_ITEM_ID` is not reported again as `DUPLICATE_NODE_ID`.
+- **Budget.** The 50,000 limit counts materialized nodes per page; regions and
+  overlays share it. Each repeat is checked first against a static count of its
+  fan-out. A page that passes the limit without a repeat is
+  `MAX_NODES_PER_PAGE_EXCEEDED`. To count each node once, the resolver no longer
+  resolves already resolved children a second time. That work doubled per level
+  of nesting; output is unchanged, and the gallery renders byte-identically.
+  `assertComponentExpansion` keeps its value count and adds the rows.
+- **Provenance.** Validation resolves stamped copies of the page, its template and
+  its definitions, the build's source stamps, so a row knows where its item is
+  written. `__repeat` records the host, item and index.
+- **Rename.** The explicit rename is `wf node rename <row> <item-id>`. `--props`
+  with an `id` is refused and points there.
+- **Admin.** The tree sees `components.yaml` only. Rows inside built-in or imported
+  definitions are not listed and select their page instance, which keeps them
+  read-only.

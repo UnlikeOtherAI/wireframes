@@ -16,8 +16,11 @@ function childPath(path, key) {
 }
 
 // Props hold element data such as tree items, which can carry ids of their own
-// but are never rendered as nodes. The path is where the node is written in
-// its document, so a slot fill reads `...slots.footer[0]`.
+// but are never rendered as nodes; repeat items are a cell's props. The path is
+// where the node is written in its document, so a slot fill reads
+// `...slots.footer[0]` and a repeat row `...repeat.items[2]`.
+const UNSTAMPED_KEYS = new Set(['props', 'repeat']);
+
 function stampNodes(value, documentAddress, path = '') {
   if (Array.isArray(value)) {
     return value.map((entry, index) => stampNodes(entry, documentAddress, childPath(path, index)));
@@ -27,7 +30,7 @@ function stampNodes(value, documentAddress, path = '') {
   }
   const stamped = {};
   for (const [key, entry] of Object.entries(value)) {
-    stamped[key] = key === 'props' ? entry : stampNodes(entry, documentAddress, childPath(path, key));
+    stamped[key] = UNSTAMPED_KEYS.has(key) ? entry : stampNodes(entry, documentAddress, childPath(path, key));
     if (key === 'overlays' && Array.isArray(stamped[key])) {
       stamped[key] = stamped[key].map(overlay => isObject(overlay) && typeof overlay.id === 'string'
         ? { ...overlay, __source: `${documentAddress}#${overlay.id}` } : overlay);
@@ -86,4 +89,4 @@ function stampDocumentSources(documentMap) {
   };
 }
 
-module.exports = { stampDocumentSources };
+module.exports = { stampDocumentSources, stampNodes };

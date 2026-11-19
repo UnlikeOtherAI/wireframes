@@ -10,6 +10,8 @@ const {
   resolveComponentPropTemplates,
 } = require('./component-prep');
 const { placeFills, prepareSlottedInstance } = require('./slotted-instance');
+const { createExpansionBudget } = require('../component-registry/expansion');
+const { expandHostRows, materializeDefinitionRows, origin } = require('./repeat-rows');
 
 function buildContentMap(list, idField) {
   const map = new Map();
@@ -28,11 +30,20 @@ function buildContentMap(list, idField) {
   return map;
 }
 
-function resolveComponentNode(node, components, componentStack, injectableMap) {
+function resolveComponentNode(node, components, componentStack, injectableMap, budget) {
   if (!isObject(node)) {
     return {
       ok: true,
       nodes: [cloneDeep(node)],
+    };
+  }
+
+  budget.used += 1;
+  if (budget.used > budget.max) {
+    return {
+      ok: false,
+      error: `Expanded wireframe is too large: a page may expand to at most ${budget.max} nodes.`,
+      reason: 'expansion-budget',
     };
   }
 
@@ -44,9 +55,14 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
   }
 
   if (!node.use) {
+    // Caller content: its rows join its children before anything below expands.
     const resolvedNode = cloneDeep(node);
+    const rows = expandHostRows(resolvedNode, components, budget);
+    if (!rows.ok) {
+      return rows;
+    }
     if (Array.isArray(resolvedNode.children)) {
-      const childResult = resolveInjectableNodes(resolvedNode.children, injectableMap, components, componentStack);
+      const childResult = resolveInjectableNodes(resolvedNode.children, injectableMap, components, componentStack, budget);
       if (!childResult.ok) {
         return childResult;
       }
@@ -66,6 +82,7 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
       error: `Unknown component reference "${node.use}".`,
       reason: 'unknown-component',
       componentId: node.use,
+      ...(node.__repeat ? { repeatCell: true } : {}),
     };
   }
 
@@ -79,7 +96,7 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
   }
 
   if (collectSlotPlaceholders(componentDoc).length > 0) {
-    return resolveSlottedInstance(node, componentDoc, components, componentStack, injectableMap);
+    return resolveSlottedInstance(node, componentDoc, components, componentStack, injectableMap, budget);
   }
 
   const { props, id } = node;
@@ -87,6 +104,8 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
   delete instanceOverrides.use;
   delete instanceOverrides.props;
   delete instanceOverrides.slots;
+  // A use: node hosts no rows (REPEAT_INVALID_HOST), so its repeat never renders.
+  delete instanceOverrides.repeat;
 
   const resolvedNode = {
     ...cloneDeep(componentDoc.root),
@@ -104,6 +123,12 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
     resolvedNode[key] = value;
   }
 
+  // The definition's rows are its own content: substituted above, namespaced below.
+  const rows = materializeDefinitionRows(resolvedNode, components, budget, componentDoc.root.id);
+  if (!rows.ok) {
+    return rows;
+  }
+
   namespaceDescendants(resolvedNode, id, componentDoc.root.id);
   // Interactions written on the instance are the caller's, in the caller's
   // scope: only the definition's own references follow its renamed ids.
@@ -111,7 +136,7 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
     resolvedNode.interaction = resolveComponentPropTemplates(instanceOverrides.interaction, mergedProps);
   }
 
-  return expandDefinitionTree(resolvedNode, node.use, components, componentStack, injectableMap);
+  return expandDefinitionTree(resolvedNode, node.use, components, componentStack, injectableMap, budget);
 }
 
 /**
@@ -120,7 +145,7 @@ function resolveComponentNode(node, components, componentStack, injectableMap) {
  * is on the stack: a caller-authored instance of the same component inside a
  * fill is finite nesting, not recursion.
  */
-function resolveSlottedInstance(node, componentDoc, components, componentStack, injectableMap) {
+function resolveSlottedInstance(node, componentDoc, components, componentStack, injectableMap, budget) {
   const authored = [];
   if (Array.isArray(node.children)) {
     authored.push(['default', node.children]);
@@ -135,7 +160,7 @@ function resolveSlottedInstance(node, componentDoc, components, componentStack, 
 
   const fills = new Map();
   for (const [name, nodes] of authored) {
-    const expanded = resolveInjectableNodes(nodes, injectableMap, components, componentStack);
+    const expanded = resolveInjectableNodes(nodes, injectableMap, components, componentStack, budget);
     if (!expanded.ok) {
       return expanded;
     }
@@ -143,8 +168,12 @@ function resolveSlottedInstance(node, componentDoc, components, componentStack, 
   }
 
   const token = Symbol('slot fills');
-  const prepared = prepareSlottedInstance(node, componentDoc, fills, token);
-  const expanded = expandDefinitionTree(prepared, node.use, components, componentStack, injectableMap);
+  const prepared = prepareSlottedInstance(node, componentDoc, fills, token,
+    (tree) => materializeDefinitionRows(tree, components, budget, componentDoc.root.id));
+  if (!prepared.ok) {
+    return prepared;
+  }
+  const expanded = expandDefinitionTree(prepared.node, node.use, components, componentStack, injectableMap, budget);
   if (!expanded.ok) {
     return expanded;
   }
@@ -152,7 +181,7 @@ function resolveSlottedInstance(node, componentDoc, components, componentStack, 
 }
 
 /** Expand the nested instances a prepared definition tree contains, with the definition on the stack. */
-function expandDefinitionTree(resolvedNode, use, components, componentStack, injectableMap) {
+function expandDefinitionTree(resolvedNode, use, components, componentStack, injectableMap, budget) {
   componentStack.add(use);
   if (Array.isArray(resolvedNode.children)) {
     const childResult = resolveInjectableNodes(
@@ -160,6 +189,7 @@ function expandDefinitionTree(resolvedNode, use, components, componentStack, inj
       injectableMap,
       components,
       componentStack,
+      budget,
     );
     if (!childResult.ok) {
       componentStack.delete(use);
@@ -174,6 +204,7 @@ function expandDefinitionTree(resolvedNode, use, components, componentStack, inj
       components,
       componentStack,
       injectableMap,
+      budget,
     );
     componentStack.delete(use);
     if (!nestedResult.ok) {
@@ -190,7 +221,7 @@ function expandDefinitionTree(resolvedNode, use, components, componentStack, inj
   };
 }
 
-function resolveInjectableNodes(nodes, injectableMap, components, componentStack) {
+function resolveInjectableNodes(nodes, injectableMap, components, componentStack, budget) {
   if (!Array.isArray(nodes)) {
     return {
       ok: true,
@@ -209,7 +240,7 @@ function resolveInjectableNodes(nodes, injectableMap, components, componentStack
     if (node.injectable === true && typeof node.id === 'string') {
       const injected = injectableMap.get(node.id);
       if (Array.isArray(injected) && injected.length > 0) {
-        const injectedNodes = resolveInjectableNodes(injected, injectableMap, components, componentStack);
+        const injectedNodes = resolveInjectableNodes(injected, injectableMap, components, componentStack, budget);
         if (!injectedNodes.ok) {
           return injectedNodes;
         }
@@ -218,27 +249,14 @@ function resolveInjectableNodes(nodes, injectableMap, components, componentStack
       continue;
     }
 
-    const resolvedNode = resolveComponentNode(node, components, componentStack, injectableMap);
+    // A resolved node comes back with its children resolved, so nothing is
+    // expanded twice and the budget counts each node once.
+    const resolvedNode = resolveComponentNode(node, components, componentStack, injectableMap, budget);
     if (!resolvedNode.ok) {
-      return resolvedNode;
+      // A failure is located at the outermost row it passes through.
+      return node.__repeat ? { ...resolvedNode, row: origin(node) } : resolvedNode;
     }
-
-    for (const singleResolved of resolvedNode.nodes) {
-      if (!isObject(singleResolved)) {
-        output.push(singleResolved);
-        continue;
-      }
-
-      if (Array.isArray(singleResolved.children)) {
-        const childResolved = resolveInjectableNodes(singleResolved.children, injectableMap, components, componentStack);
-        if (!childResolved.ok) {
-          return childResolved;
-        }
-        singleResolved.children = childResolved.nodes;
-      }
-
-      output.push(singleResolved);
-    }
+    output.push(...resolvedNode.nodes);
   }
 
   return {
@@ -247,7 +265,7 @@ function resolveInjectableNodes(nodes, injectableMap, components, componentStack
   };
 }
 
-function resolveRegion(region, slotMap, injectableMap, components, componentStack) {
+function resolveRegion(region, slotMap, injectableMap, components, componentStack, budget) {
   if (!isObject(region) || typeof region.id !== 'string' || typeof region.kind !== 'string') {
     return {
       ok: false,
@@ -261,7 +279,7 @@ function resolveRegion(region, slotMap, injectableMap, components, componentStac
     ? (Array.isArray(slotContent) ? slotContent : (Array.isArray(region.children) ? region.children : []))
     : (Array.isArray(region.children) ? region.children : []);
 
-  const resolvedChildren = resolveInjectableNodes(baseChildren, injectableMap, components, componentStack);
+  const resolvedChildren = resolveInjectableNodes(baseChildren, injectableMap, components, componentStack, budget);
   if (!resolvedChildren.ok) {
     return resolvedChildren;
   }
@@ -273,7 +291,11 @@ function resolveRegion(region, slotMap, injectableMap, components, componentStac
   };
 }
 
-function resolveTemplatePage({ template, page }) {
+/**
+ * `budget` is what the page may still expand to. One page's calls share it
+ * (its regions and its overlays); a fresh one is used when none is given.
+ */
+function resolveTemplatePage({ template, page, budget = createExpansionBudget() }) {
   const components = isObject(arguments[0]?.components) ? arguments[0].components : null;
 
   if (!isObject(template)) {
@@ -291,7 +313,7 @@ function resolveTemplatePage({ template, page }) {
   const componentStack = new Set();
 
   for (const region of regions) {
-    const resolvedRegion = resolveRegion(region, slotMap, injectableMap, components, componentStack);
+    const resolvedRegion = resolveRegion(region, slotMap, injectableMap, components, componentStack, budget);
     if (!resolvedRegion.ok) {
       return resolvedRegion;
     }

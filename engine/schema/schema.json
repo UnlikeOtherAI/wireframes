@@ -562,6 +562,10 @@
               }
             }
           }
+        },
+        "repeat": {
+          "$ref": "#/$defs/Repeat",
+          "description": "Accepted so validation can say why it never renders: put the repeat on a node in content (REPEAT_INVALID_HOST)."
         }
       }
     },
@@ -1053,6 +1057,10 @@
               "$ref": "#/$defs/NodeOrSlot"
             }
           }
+        },
+        "repeat": {
+          "$ref": "#/$defs/Repeat",
+          "description": "Rows of one cell, keyed by item id, after the node's children."
         },
         "sticky": {
           "type": "string",
@@ -2209,6 +2217,42 @@
             "$ref": "#/$defs/NodeOrSlot"
           },
           "description": "Fallback content, used when the instance gives no fill for this slot."
+        },
+        "repeat": {
+          "$ref": "#/$defs/Repeat",
+          "description": "Accepted so validation can say why it never renders: a placeholder is replaced (REPEAT_INVALID_HOST)."
+        }
+      }
+    },
+    "Repeat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cell",
+        "items"
+      ],
+      "description": "One cell rendered once per item, after the node's own children, as if each row were written by hand. A row's id is <node id>__<item id>. Only a concrete element node that lays out its children hosts rows; anywhere else it is REPEAT_INVALID_HOST.",
+      "properties": {
+        "cell": {
+          "$ref": "#/$defs/ComponentRef",
+          "description": "An element name or alias, which wins, else a component reference written as for use: (a local id, alias.id or std.<name>)."
+        },
+        "items": {
+          "type": "array",
+          "maxItems": 200,
+          "description": "One row per item: the cell's props plus the item's id.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/Id",
+                "description": "The item's stable key, unique in this repeat. The row renders as <node id>__<id>."
+              }
+            }
+          }
         }
       }
     },

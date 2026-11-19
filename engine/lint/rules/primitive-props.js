@@ -3,11 +3,14 @@
 const { PRIMITIVE_COMPONENTS } = require('../../schema/primitives');
 const { getPrimitive, resolvePrimitiveName, knownProps } = require('../../schema/primitive-registry');
 const { appendPath } = require('../../schema/validator');
+const { nearest } = require('../../schema/nearest-name');
 const { decideFrame } = require('../../renderer/frame-rules');
 const { ROLES } = require('../../renderer/sizing-tokens');
 const { childNodeEntries } = require('../../component-registry/child-nodes');
 const { validateAmbiguousValue } = require('./ambiguous-value');
 const { validateControlProps } = require('./control-props');
+const { lintRepeat } = require('./repeat-rows');
+const { repeatRows } = require('../../component-registry/repeat');
 
 const TEXT_PRIMITIVES = new Set(['heading', 'paragraph', 'text']);
 const FIELD_PRIMITIVES = new Set(['input', 'select', 'textarea', 'picker']);
@@ -37,38 +40,6 @@ function under(at, segments, key = false) {
 
 function hasNonEmptyString(value) {
   return typeof value === 'string' && value.trim() !== '';
-}
-
-/** Closest known prop name, so an agent gets a fix rather than a rejection. */
-function nearest(candidate, pool) {
-  let best = null;
-  let bestScore = Infinity;
-  for (const option of pool) {
-    const distance = levenshtein(candidate, option);
-    if (distance < bestScore) {
-      bestScore = distance;
-      best = option;
-    }
-  }
-  return bestScore <= Math.max(2, Math.floor(candidate.length / 3)) ? best : null;
-}
-
-function levenshtein(a, b) {
-  const rows = a.length + 1;
-  const cols = b.length + 1;
-  let prev = Array.from({ length: cols }, (_, i) => i);
-  for (let i = 1; i < rows; i += 1) {
-    const current = [i];
-    for (let j = 1; j < cols; j += 1) {
-      current[j] = Math.min(
-        prev[j] + 1,
-        current[j - 1] + 1,
-        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
-      );
-    }
-    prev = current;
-  }
-  return prev[cols - 1];
 }
 
 function validateKnownProps(result, component, props, context, at) {
@@ -163,7 +134,8 @@ function validateLayoutOnLeaf(result, node, component, context, at) {
 
 function validateEmptyContainer(result, node, component, context, at) {
   if (!LAYOUT_ONLY.has(component) && component !== 'section' && component !== 'card') return;
-  if (childNodes(node).length > 0) return;
+  // A repeat with no items is EMPTY_REPEAT, said once.
+  if (childNodes(node).length > 0 || Object.hasOwn(node, 'repeat')) return;
   addDiagnostic(result, 'info', 'EMPTY_CONTAINER', `${context}: ${component} has no children.`, under(at, ['component']));
 }
 
@@ -183,8 +155,9 @@ function childLists(node) {
   ];
 }
 
+/** A node's children as it renders them: the authored ones, then its repeat rows. */
 function childNodes(node) {
-  return childLists(node).flatMap((list) => list.nodes);
+  return [...childLists(node).flatMap((list) => list.nodes), ...repeatRows(node)];
 }
 
 function validatePrimitiveProps(result, node, context, options = {}) {
@@ -243,6 +216,9 @@ function validatePrimitiveProps(result, node, context, options = {}) {
       validatePrimitiveProps(result, child, `${context} > ${childId}`, { ...nextOptions, at: under(at, [...segments, index]) });
     });
   }
+  lintRepeat(result, node, context, at, (rowResult, row, rowContext, rowAt) => {
+    validatePrimitiveProps(rowResult, row, rowContext, { ...nextOptions, at: rowAt });
+  });
 }
 
 module.exports = {

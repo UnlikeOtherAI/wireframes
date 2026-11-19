@@ -88,6 +88,23 @@ No keyboard behaviour ships with tree rows or accordion heads.
 Slides read the `list` profile, so `{ label: Slide }` works as well as
 `{ title: Slide }` and plain strings.
 
+## Repeat rows
+
+`repeat` (schema-systems.md §14.1) adds no markup of its own. The resolver
+(`engine/resolver/repeat-rows.js`) turns each item into the child node an
+author would have written, after the host's own `children`, so the renderer
+draws rows exactly as it draws hand-written siblings: the same ids, classes,
+frames, grid cells and separators, byte for byte. A grid of `stat` rows
+therefore lays out like a grid of hand-written `stat` children.
+
+Only an element that lays out its authored children hosts rows (the list is in
+`engine/renderer/child-hosts.js`, checked against each renderer's
+`useChildren`). Rows on any other element are never made, in either rendering
+mode. With source annotation, a row carries
+`data-wf-source="<document>#<host>__<item>"` and
+`data-wf-source-path="…repeat.items[<index>]"`; a component cell's internals
+point at the cell's definition, as for any instance.
+
 ## Table loading state
 
 `state: loading` marks the table body, which is the region that is loading:

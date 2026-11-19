@@ -305,6 +305,7 @@ wf node add <component> --below <address> --id <nodeId>
 wf node add <component> --below <address> --id <nodeId> --props '{"label":"Save"}'
 wf node update <address> --props '{"label":"Cancel"}'
 wf node remove <address>
+wf node rename <repeat-row-address> <item-id>
 ```
 
 Adds, updates, or removes elements and sections within a page or template tree.
@@ -362,6 +363,18 @@ Rules:
 * Removes the node and all its children
 * Updates the YAML file in place
 * Validates after removal
+
+### Repeat rows
+
+A row of a `repeat` (schema-systems.md §14.1) is addressed by its id under its
+host: `wf://page/home#main.team.team__ada`. It resolves to the item with id
+`ada` wherever it now sits, so reordering never retargets it; a stale id fails.
+
+* `wf node update <row> --props` merges into the item and keeps its `id`
+* `wf node rename <row> <item-id>` changes the item id, so the row becomes `<host>__<item-id>`
+* `wf node remove <row>` removes the item from `repeat.items`
+* `--component`, `--layout`, and `wf node add` inside or below a row are refused: a row
+  takes its cell from the host. `wf node add --inside <host>` adds a static child
 
 This is explicit, deterministic structural editing — not AI patching or live mutation.
 The address determines which file gets modified (page YAML or template YAML).
@@ -776,7 +789,8 @@ This prints:
 * Children
 * Layout summary
 
-This is useful for debugging.
+A repeat row also prints its item: host, cell, item id, current index, file
+and rendered id. This is useful for debugging.
 
 But no mutation via address.
 

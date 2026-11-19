@@ -181,6 +181,7 @@
     "pageNavigation": "Page navigation",
     "nodeTree": "Node tree",
     "noNodes": "No nodes to display",
+    "repeatItem": "item {{item}}",
     "noRoutes": "No routes defined",
     "sitemapDiagram": "Sitemap diagram",
     "deviceControls": "Device controls",

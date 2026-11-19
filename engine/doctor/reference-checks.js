@@ -4,6 +4,7 @@ const { PRIMITIVE_COMPONENTS } = require('../schema/primitives');
 const { appendPath } = require('../schema/validator');
 const { childNodeEntries, childNodeLists } = require('../component-registry/child-nodes');
 const { resolveComponentDefinition } = require('../component-registry/definition-lookup');
+const { repeatCellReference } = require('../component-registry/repeat');
 
 /**
  * Reference-checking functions: component refs in nodes, template regions,
@@ -54,6 +55,12 @@ function collectReferencedComponents(node, result, context, definitions, usage, 
     } else if (usage?.componentsUsed) {
       usage.componentsUsed.add(node.use);
     }
+  }
+
+  // A component cell is a use of its component; an unknown one is UNKNOWN_REPEAT_CELL.
+  const cell = repeatCellReference(node);
+  if (cell && knows(definitions, cell) && usage?.componentsUsed) {
+    usage.componentsUsed.add(cell);
   }
 
   for (const { segments, nodes } of childNodeEntries(node)) {

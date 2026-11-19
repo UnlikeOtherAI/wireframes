@@ -566,6 +566,13 @@ Optional:
 * `children` — child nodes; on a `use:` node they fill the `default` slot
 * `slots` — on a `use:` node only: a map from slot name to the nodes that fill
   it (`SLOTS_WITHOUT_USE` otherwise)
+* `repeat` — `{ cell, items }`: one row of `cell` per keyed item, after the
+  node's `children`, as if each were written by hand. Row `<id>__<item id>`
+  is `{ component: cell }` for an element cell (a name or alias, which wins)
+  or `{ use: cell }` for a component cell, with the item's other keys as its
+  props. `items` holds 0–200 maps, each with a unique `id`. Only a concrete
+  element node that lays out its children hosts rows (schema-systems.md
+  §14.1)
 * `pane` — resizable/collapsible panel metadata
 * `wireframeStyle` — per-node style override
 * `injectable` — marks node as an injection point (template persistent regions only)

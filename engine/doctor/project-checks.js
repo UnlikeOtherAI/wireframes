@@ -10,6 +10,7 @@ const { compareVersions } = require('../schema');
 const { appendPath } = require('../schema/validator');
 const { runSemanticValidation } = require('./semantic-validator');
 const { checkComponentSlots } = require('./component-slots');
+const { checkRepeats } = require('./repeat-checks');
 const { checkStdAlias } = require('./std-alias');
 const {
   collectComponentUseGraph,
@@ -181,6 +182,7 @@ function checkProject({
     sitemap: sitemap?.document?.sitemap || sitemap?.document || {},
     templates: templateDefinitions,
     components: componentMap,
+    componentSources,
     pages: Array.from(pages.values()),
     resolveComponentsForPage: scopeFor,
   });
@@ -195,14 +197,15 @@ function checkProject({
       sources: scoped?.ok ? scoped.sources : componentSources,
     };
   });
-  const slotDiagnostics = checkComponentSlots({
+  const authoredScopes = {
     definitions: componentMap,
     sources: componentSources,
     templates: templateDefinitions,
     templateDefinitions: templateScope.components,
     templateSources: templateScope.sources,
     pages: pageEntries,
-  });
+  };
+  const slotDiagnostics = [...checkComponentSlots(authoredScopes), ...checkRepeats(authoredScopes)];
   const stdAliasDiagnostics = checkStdAlias([
     { label: nameOf(components, 'components'), document: components?.document, definitions: componentMap, documentLabel: 'components' },
     { label: nameOf(templates, 'templates'), document: templates?.document, definitions: templateScope.components, documentLabel: 'templates' },

@@ -12,6 +12,10 @@
 Pick the element that *is* the thing. Do not build a card out of a section and a
 border; use `card`. Do not build a nav out of buttons; use `nav`.
 
+Three or more similar siblings: write one `repeat: { cell, items }` on a stack, row,
+grid or card. `cell` is an element or a component; each item is its props plus an `id`
+and renders as `<host>__<id>`: `repeat: { cell: stat, items: [{ id: mrr, label: MRR }] }`.
+
 ## Screen patterns
 
 Whole screens ship built in. Use one before building it by hand: `use: std.login`.

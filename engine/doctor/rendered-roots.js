@@ -10,15 +10,18 @@ const { resolveTemplatePage } = require('../resolver');
 const { resolveNodes } = require('../resolver/nodes');
 const { appendPath } = require('../schema/validator');
 const { childNodeLists } = require('../component-registry/child-nodes');
+const { createExpansionBudget } = require('../component-registry/expansion');
+const { repeatCellReference } = require('../component-registry/repeat');
 const { collectComponentUseGraph } = require('./component-graph');
 const { isObject, addDiagnostic } = require('./semantic-interactions');
+const { placeOf, stampRenderedInputs } = require('./row-places');
 
 const list = (value) => (Array.isArray(value) ? value : []);
 
-/** Whether `node` or anything written below it has `use: id`. */
+/** Whether `node` or anything written below it has `use: id`, or `id` as its repeat cell. */
 function usesDirectly(node, id) {
   if (!isObject(node)) return false;
-  if (node.use === id) return true;
+  if (node.use === id || repeatCellReference(node) === id) return true;
   return childNodeLists(node).some((nodes) => nodes.some((child) => usesDirectly(child, id)));
 }
 
@@ -124,32 +127,53 @@ function overlaysOf(page, pageId, template, templateId) {
  * @param {object|null} input.template       its template, when it has one
  * @param {object} input.components          what the page resolves against
  * @param {object} input.projectComponents   the project's own components, whose cycles the cycle check reports
+ * @param {object} [input.sources]           where each of `components` is written, `{ sourcePath, localId }`
+ *
+ * The roots are resolved from stamped copies, so a repeat row carries where its
+ * item is written (`row-places.js`).
  */
-function collectRenderedRoots({ result, pageId, page, template, components, projectComponents }) {
+function collectRenderedRoots({ result, pageId, page: authoredPage, template: authoredTemplate, components: authoredComponents, projectComponents, sources }) {
+  const { page, template, components } = stampRenderedInputs({
+    pageId, page: authoredPage, template: authoredTemplate, templateId: authoredPage.template, components: authoredComponents,
+  });
   const roots = [];
   let graph = null;
+  // The page's regions and overlays share one budget, as they do when it builds.
+  const budget = createExpansionBudget();
+  const tooLarge = (failure) => addDiagnostic(result, 'MAX_NODES_PER_PAGE_EXCEEDED',
+    `Page "${pageId}" cannot be expanded: ${failure.error}`, { document: `page:${pageId}`, path: '$.page' });
 
-  // An unknown id written in the entry itself, and a cycle among the project's own
-  // components, are already reported by the reference and cycle checks.
+  // An unknown id written in the entry itself, an unknown repeat cell, and a
+  // cycle among the project's own components are already reported by the
+  // reference, repeat and cycle checks. Anything else that fails inside a row is
+  // located at the outermost row's item.
   const reportFailure = (entry, failure) => {
-    if (failure.reason === 'unknown-component' && usesDirectly(entry.node, failure.componentId)) return;
+    if (failure.reason === 'unknown-component' && (failure.repeatCell || usesDirectly(entry.node, failure.componentId))) return;
     if (failure.reason === 'circular-component') {
       graph = graph || collectComponentUseGraph(projectComponents);
       if (onCycle(graph, failure.componentId)) return;
+    }
+    if (failure.reason === 'repeat-budget') {
+      const at = placeOf(failure.host, sources, ['repeat']);
+      addDiagnostic(result, 'REPEAT_BUDGET_EXCEEDED', `${failure.error} Fewer items, or fewer repeats inside the cell, bring it back under.`,
+        at ? { ...at, key: true } : entry.at);
+      return;
     }
     const id = typeof entry.node?.id === 'string' ? entry.node.id : '<unnamed>';
     addDiagnostic(
       result,
       failure.reason === 'circular-component' ? 'CIRCULAR_TEMPLATE_REFERENCE' : 'BROKEN_COMPONENT_REFERENCE',
       `Node "${id}" in ${entry.where} cannot be expanded: ${failure.error}`,
-      entry.at,
+      placeOf(failure.row, sources) || entry.at,
     );
   };
 
   if (isObject(template)) {
-    const templatePage = resolveTemplatePage({ template, page, components });
+    const templatePage = resolveTemplatePage({ template, page, components, budget });
     if (templatePage.ok) {
       roots.push(...templatePage.roots);
+    } else if (templatePage.reason === 'expansion-budget') {
+      tooLarge(templatePage);
     } else {
       // Each entry the regions render is expanded on its own. An injection is
       // expanded once a placeholder that renders reaches it, so one the page's
@@ -177,10 +201,14 @@ function collectRenderedRoots({ result, pageId, page, template, components, proj
 
   for (const { overlay, document, path, where } of overlaysOf(page, pageId, template, page.template)) {
     if (!isObject(overlay) || !Array.isArray(overlay.content)) continue;
-    const resolved = resolveNodes(overlay.content, components);
+    const resolved = resolveNodes(overlay.content, components, budget);
     if (resolved.ok) {
       roots.push(...resolved.nodes);
       continue;
+    }
+    if (resolved.reason === 'expansion-budget') {
+      tooLarge(resolved);
+      break;
     }
     entriesOf(overlay.content, document, `${path}.content`, where).forEach((entry) => {
       const failure = resolveNodes([entry.node], components);

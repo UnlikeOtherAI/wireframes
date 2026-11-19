@@ -57,9 +57,10 @@ const COMMANDS = [
   },
   {
     name: 'node',
-    args: '<add|update|remove>',
-    summary: 'Add, update and remove nodes',
-    usage: 'wf node <add|update|remove> ...',
+    args: '<add|update|remove|rename>',
+    summary: 'Add, update and remove nodes; rename a repeat row',
+    usage: 'wf node <add|update|remove> ...\n'
+      + 'wf node rename <repeat-row-address> <item-id>',
   },
   {
     name: 'overlay',

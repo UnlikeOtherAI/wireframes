@@ -11,6 +11,7 @@
 const { childNodeLists } = require('../component-registry/child-nodes');
 const { resolveComponentDefinition } = require('../component-registry/definition-lookup');
 const { resolvePrimitiveName } = require('../schema/primitive-registry');
+const { placeOf } = require('./row-places');
 const {
   isObject,
   hasOwn,
@@ -58,6 +59,7 @@ function createNodeContext(options) {
     actionIds,
     overlayIds,
     componentRoots,
+    componentSources,
     defaultGridColumns,
     validateDepthAndNodes,
   } = options;
@@ -75,8 +77,12 @@ function createNodeContext(options) {
     actionIds,
     overlayIds,
     componentRoots,
+    componentSources,
     defaultGridColumns,
     validateDepthAndNodes,
+    // Rendered repeat rows by id, to where their item is written: a row's id is
+    // written nowhere, so a finding about it is located at the item.
+    rowPlaces: new Map(),
     nodeIds: new Set(),
     duplicateNodeIds: new Set(),
     pendingSubmitRefs: [],
@@ -184,6 +190,8 @@ function validateNode(node, context, depth = 1) {
     } else {
       context.nodeIds.add(nodeId);
     }
+    const rowAt = node.__repeat ? placeOf(node, context.componentSources, ['id']) : undefined;
+    if (rowAt) context.rowPlaces.set(nodeId, rowAt);
   }
 
   if (typeof node.component === 'string'
@@ -302,7 +310,8 @@ function reportPageIdChecks(context, pageId, overlayTriggerRefs) {
   }
 
   for (const duplicate of context.duplicateNodeIds) {
-    addDiagnostic(result, 'DUPLICATE_NODE_ID', `Page "${pageId}" has duplicate node id "${duplicate}".`, atNode(context, duplicate));
+    const at = context.rowPlaces.get(duplicate) || atNode(context, duplicate);
+    addDiagnostic(result, 'DUPLICATE_NODE_ID', `Page "${pageId}" has duplicate node id "${duplicate}".`, at);
   }
 }
 

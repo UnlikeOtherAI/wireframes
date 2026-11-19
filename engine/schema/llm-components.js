@@ -55,6 +55,31 @@ components:
 - wf component show <id> prints a component's props, slots and fallbacks.`;
 }
 
+/** One cell for many similar siblings. */
+function repeatSection() {
+  return `## Repeat
+
+Three or more similar siblings, such as people, plans or stat tiles: write one
+cell and a list of keyed items instead of copies.
+
+\`\`\`yaml
+- id: team
+  component: grid
+  layout: { type: grid, columns: 3 }
+  repeat:
+    cell: person_card                     # an element (stat, card, …) or a component (id, alias.id, std.<name>)
+    items:
+      - { id: ada, name: Ada Lovelace, role: Admin }      # renders as team__ada
+      - { id: grace, name: Grace Hopper, role: Editor }
+\`\`\`
+
+- Each item is the cell's props plus a short id, unique in the repeat. Rows render after the host's children, in item order, as <host>__<id>.
+- The host is a stack, row, grid, card, section, form, split, carousel or app_bar: never a use: node, a button or another leaf.
+- Add a row by adding an item; put it before another item to place it. Edit or remove an item by its id: ids stay stable when items move.
+- Items are plain props. {{item.x}} is not read; bind a dataset with binding for data that varies.
+- A row's address is the host's plus <host>__<id>; wf node update, rename and remove act on its item.`;
+}
+
 function defaultText(value) {
   if (Array.isArray(value)) return `list of ${value.length}`;
   if (value != null && typeof value === 'object') return 'object';
@@ -121,4 +146,4 @@ ${builtinComponentIds().map((id) => `\`${id}\``).join(', ')}.
 std.<name>\` makes an editable copy in components.yaml.`;
 }
 
-module.exports = { componentSlotsSection, stdPatternsCheatSheet, stdPatternsSection };
+module.exports = { componentSlotsSection, repeatSection, stdPatternsCheatSheet, stdPatternsSection };

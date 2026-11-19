@@ -14,6 +14,7 @@ const {
 
 const { PRIMITIVE_COMPONENTS } = require(path.resolve(__dirname, '..', 'schema', 'primitives'));
 const { childNodeLists } = require(path.resolve(__dirname, '..', 'component-registry', 'child-nodes'));
+const { repeatRows } = require(path.resolve(__dirname, '..', 'component-registry', 'repeat'));
 const { resolveAuthoredComponent } = require(path.resolve(__dirname, '..', 'component-registry', 'definition-lookup'));
 const { loadProjectComponentRegistry } = require(path.resolve(__dirname, '..', 'component-registry'));
 
@@ -63,6 +64,10 @@ function collectNodeIds(nodes, set) {
 
     if (typeof node.id === 'string') {
       set.add(node.id);
+    }
+
+    for (const row of repeatRows(node)) {
+      set.add(row.id);
     }
 
     for (const list of childNodeLists(node)) {
@@ -117,6 +122,14 @@ function resolveTarget(projectPath, address) {
   return target.ok && target.readOnly ? { ok: false, error: target.readOnly } : target;
 }
 
+/** Why an operation cannot apply to a repeat row: it would make the row a different node. */
+function repeatRowRefusal(resolved, advice) {
+  return {
+    ok: false,
+    error: `Node "${resolved.rowId}" is a repeat row: item "${resolved.item.id}" of repeat on "${resolved.host.id}", drawn with cell "${resolved.cell}". ${advice}`,
+  };
+}
+
 module.exports = {
   componentsFilePath,
   collectNodeIds,
@@ -127,6 +140,7 @@ module.exports = {
   parseNodeId,
   pageFilePath,
   resolveAddressInRoots,
+  repeatRowRefusal,
   resolveComponentBinding,
   resolveTarget,
   templatesFilePath,

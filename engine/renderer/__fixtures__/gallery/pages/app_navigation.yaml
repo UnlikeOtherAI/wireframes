@@ -167,3 +167,24 @@ page:
                       - { label: Design, start: 0, end: 8 }
                       - { label: Build, start: 6, end: 20, tone: info }
                       - { label: Launch, start: 19, end: 20, tone: success }
+                # One cell per keyed item: stat tiles, then a small local component.
+                - id: appnav_kpis
+                  component: grid
+                  props:
+                    columns: 3
+                  repeat:
+                    cell: stat
+                    items:
+                      - { id: seats, label: Seats, value: "48" }
+                      - { id: active, label: Active, value: "41" }
+                      - { id: invited, label: Invited, value: "7" }
+                - id: appnav_members
+                  component: row
+                  props:
+                    gap: 16
+                  repeat:
+                    cell: member_chip
+                    items:
+                      - { id: ada, name: Ada Lovelace }
+                      - { id: grace, name: Grace Hopper }
+                      - { id: alan, name: Alan Turing }

@@ -7,7 +7,7 @@ const { SUPPORTED_SPEC_VERSION, DEFAULT_SPEC_VERSION } = require('./constants');
 const schemaPath = path.resolve(__dirname, 'schema.json');
 
 const { elementCatalogue, elementCheatSheet } = require('./element-reference');
-const { componentSlotsSection, stdPatternsSection } = require('./llm-components');
+const { componentSlotsSection, repeatSection, stdPatternsSection } = require('./llm-components');
 
 function loadSchema() {
   return JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
@@ -244,6 +244,8 @@ ${itemsSection()}
 ${fieldsSection()}
 
 ${componentSlotsSection()}
+
+${repeatSection()}
 
 ${stdPatternsSection()}
 
