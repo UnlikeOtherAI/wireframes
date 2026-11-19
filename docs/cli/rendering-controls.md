@@ -60,7 +60,7 @@ Every control except `button` and `toolbar` spreads `FIELD_PROPS`: `label`,
 | `choice_group` | `<label>` above, naming the list | below | the list: `role="radiogroup"` (radio) or `role="group"` (checkbox); each mark is `role="radio"`/`"checkbox"` with `aria-checked` | radio: `aria-readonly` on the group; checkbox: on each mark |
 | `checkbox`, `radio`, `toggle` | inline; `required` marks it | `help` is the inline description (it wins over `description`); an error goes below the row; both are in `aria-describedby` | the mark: `role="checkbox"`, `"radio"` or `"switch"`, named by the label with `aria-labelledby` | `aria-readonly` on checkbox and switch; `data-wf-readonly` on radio |
 | `tags_input` | above | below, in the text box's `aria-describedby` | the text box | chips drawn without their remove marks; the text box stays (native `readonly`) but is hidden |
-| `editor` | above | below | the body (data attributes only) | drawn without the toolbar |
+| `editor` | above; with a label, help or an error an inner `.wf-editor-box` holds the toolbar and body and draws the surface, and the frame draws nothing (as for `upload`); without them the frame is the box | below the box | the body (data attributes only) | drawn without the toolbar |
 | `picker` | above | below | the wheel (data attributes only) | `data-wf-readonly` |
 | `upload` | `label` stays the action copy; `fieldLabel` goes above | below | with any field prop, an inner `.wf-upload-zone` (or `.wf-upload-row` for `variant: button`) carries the state and the dashed box | drawn without its action: the files only, or "No files" |
 
@@ -73,7 +73,8 @@ on the owner listed above, and the runtime guards are unchanged:
   accessible name stays the label;
 - a dashed edge on the field box: inputs, `textarea`, `select`, tags, colour,
   the otp boxes, the stepper, the segment track, the upload zone, the
-  checkbox, radio and toggle marks, and the picker and editor frames.
+  checkbox, radio and toggle marks, the picker frame, and the editor's box
+  (its frame when it has no label or note).
   It is `--wf-ink-3` over a `--wf-fill-2` fill in card mode and
   `--wf-line-strong` in line mode. The edge and the lock reach at least 3:1
   against the page. An invalid read-only field keeps its toned edge, dashed;

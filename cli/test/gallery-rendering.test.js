@@ -20,6 +20,8 @@ const PAGE_IDS = [
   'app_navigation', 'line_navigation',
   // Render polish: tiles, text, line breaks, read-only, menubar leaves and navigation kinds; the sidebar slot panel.
   'polish', 'line_polish', 'sidebar_panel',
+  // A labelled editor is a field: its label above its box, in both modes.
+  'field_frames', 'line_field_frames',
 ];
 const MAX_DIFF_PIXEL_RATIO = 0.01;
 

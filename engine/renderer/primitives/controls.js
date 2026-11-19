@@ -84,7 +84,12 @@ function renderUpload(node, ctx, lib) {
 
 const EDITOR_TOOLS = ['bold', 'italic', 'list-ul', 'link', 'image', 'code'];
 
-/** Rich-text placeholder. Read-only draws the body without the toolbar. */
+/**
+ * Rich-text placeholder. With a label, help or an error it is a field, drawn
+ * as every field is: the label above the box and the note below it. The box
+ * draws the surface, since the editor pads itself and its frame adds no inset.
+ * Read-only draws the body without the toolbar.
+ */
 function renderEditor(node, ctx, lib) {
   const props = node.props || {};
   const state = fieldState(props, lib);
@@ -95,10 +100,14 @@ function renderEditor(node, ctx, lib) {
   const lines = Array.from({ length: Math.min(rows, 5) }, (_, i) => (
     `<span class="wf-skeleton-row">${lib.renderSkeleton(i === 4 ? '45%' : '100%')}</span>`
   )).join('');
-  return {
-    inner: `${fieldLabel(props, ctx, lib)}${toolbar}<div class="wf-editor-body"${lib.stateAttrs(state)} style="min-height:${rows * 22}px">${lines}</div>${fieldHelp(props, ctx, lib)}`,
-    ...(state.invalid ? { className: 'wf-field-invalid' } : {}),
-  };
+  const body = `${toolbar}<div class="wf-editor-body"${lib.stateAttrs(state)} style="min-height:${rows * 22}px">${lines}</div>`;
+  const label = fieldLabel(props, ctx, lib);
+  const help = fieldHelp(props, ctx, lib);
+  const invalid = state.invalid ? ' wf-field-invalid' : '';
+  if (label || help) {
+    return { inner: `${label}<div class="wf-editor-box">${body}</div>${help}`, className: `wf-editor-field${invalid}` };
+  }
+  return { inner: body, ...(invalid ? { className: invalid.trim() } : {}) };
 }
 
 module.exports = {

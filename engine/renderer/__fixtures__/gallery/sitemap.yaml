@@ -63,6 +63,14 @@ routes:
     path: /sidebar-panel
     page: sidebar_panel
     template: sidebar_slot_shell
+  - id: field_frames
+    path: /field-frames
+    page: field_frames
+    template: app_shell
+  - id: line_field_frames
+    path: /line/field-frames
+    page: line_field_frames
+    template: app_shell
   - id: mobile
     path: /mobile
     page: mobile

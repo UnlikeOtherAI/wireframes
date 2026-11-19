@@ -124,6 +124,19 @@ test('select.value: initial selection, a list with multiple, and selection prece
   assert.match(html('select', { options: ['A'], value: '{{state.choice}}' }), /data-wf-state-bindings="\{&quot;value&quot;:&quot;\{\{state.choice\}\}&quot;\}"/);
 });
 
+test('a labelled editor is a field: label, a box with the toolbar and body, then the note', () => {
+  const labelled = html('editor', { label: 'Document', help: 'Kept on paste.' });
+  assert.match(labelled, /^<div id="f" class="wf-node wf-editor wf-surface wf-editor-field" data-wf-frame="surface"/);
+  assert.match(labelled, /<label class="wf-field-label">Document<\/label><div class="wf-editor-box"><div class="wf-editor-toolbar">/);
+  assert.match(labelled, /<\/div><\/div><span class="wf-field-help">Kept on paste\.<\/span><\/div>$/);
+  assert.match(html('editor', { help: 'Kept on paste.' }), /class="[^"]*wf-editor-field"[^>]*><div class="wf-editor-box">/);
+  assert.match(html('editor', { label: 'Summary', error: 'Too short.' }), /class="[^"]*wf-editor-field wf-field-invalid"/);
+  // Without a label or a note the editor stays one box, as before.
+  const plain = html('editor', {});
+  assert.doesNotMatch(plain, /wf-editor-box|wf-editor-field|wf-field-label/);
+  assert.match(plain, /data-wf-frame="surface"[^>]*><div class="wf-editor-toolbar">/);
+});
+
 test('choice selection: values first, labels otherwise, and item selected wins', () => {
   const pressed = (props) => (html('segmented', props).match(/aria-pressed="true"[^>]*>[^<]*</g) || []).join('|');
   assert.match(pressed({ options: [{ label: 'Day', value: 'd' }, { label: 'Week', value: 'w' }], value: 'w' }), />Week</);

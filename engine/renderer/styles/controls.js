@@ -111,8 +111,11 @@ const controlStyles = [
   '.wf-mode-line .wf-field-readonly:not(.wf-field-invalid) :is(.wf-control,.wf-color,.wf-numstepper,.wf-otp-box,.wf-segment-track),'
     + '.wf-mode-line .wf-field-readonly.wf-textarea:not(.wf-field-invalid) textarea{border-color:var(--wf-line-strong)}',
   // Surfaces draw their own edge: a border in card mode, an outline in line mode.
-  '.wf-mode-card .wf-field-readonly[data-wf-frame="surface"]:is(.wf-picker,.wf-editor){border-style:dashed;border-color:var(--wf-ink-3)}',
-  '.wf-mode-line .wf-field-readonly[data-wf-frame="surface"]:is(.wf-picker,.wf-editor){outline-style:dashed}',
+  // A labelled editor's edge is its box, not its frame.
+  '.wf-mode-card .wf-field-readonly[data-wf-frame="surface"]:is(.wf-picker,.wf-editor:not(.wf-editor-field)),'
+    + '.wf-mode-card .wf-field-readonly .wf-editor-box{border-style:dashed;border-color:var(--wf-ink-3)}',
+  '.wf-mode-line .wf-field-readonly[data-wf-frame="surface"]:is(.wf-picker,.wf-editor:not(.wf-editor-field)),'
+    + '.wf-mode-line .wf-field-readonly .wf-editor-box{outline-style:dashed}',
   // No affordance suggests the value can change.
   '.wf-field-readonly select{appearance:none;-webkit-appearance:none}',
   '.wf-field-readonly textarea{resize:none}',
@@ -234,6 +237,15 @@ const controlStyles = [
   '.wf-mode-line .wf-editor-toolbar{border-bottom-color:var(--wf-line-strong)}',
   '.wf-editor-tool{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;color:var(--wf-ink-3)}',
   '.wf-editor-body{padding:12px}',
+  // A labelled editor is a field: its frame draws nothing, and the box under
+  // the label draws the surface the frame would have (base.js frame contract).
+  '.wf-mode-card .wf-editor-field[data-wf-frame="surface"]{border:none;box-shadow:none;background:transparent}',
+  '.wf-mode-line .wf-editor-field[data-wf-frame="surface"]{outline:none}',
+  '.wf-mode-card .wf-editor-box{background:#ffffff;border:var(--wf-border-width,1px) var(--wf-border-style,solid) var(--wf-line-2);'
+    + 'box-shadow:var(--wf-surface-shadow,0 1px 2px rgba(17,24,39,0.06));border-radius:var(--wf-surface-radius,6px)}',
+  '.wf-mode-line .wf-editor-box{outline:var(--wf-border-width,1px) var(--wf-border-style,dashed) var(--wf-line-strong);'
+    + 'outline-offset:-1px;border-radius:var(--wf-surface-radius,0px)}',
+  '.wf-field-invalid .wf-editor-box{border-color:var(--wf-tone);outline-color:var(--wf-tone)}',
   '@media(any-pointer:coarse){.wf-page .wf-button button,.wf-page .wf-button .wf-button-link{min-height:44px;min-width:44px}}',
 ].join('\n');
 
