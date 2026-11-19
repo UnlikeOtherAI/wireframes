@@ -120,6 +120,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-block-title,.wf-section-title,.wf-card-title,.wf-form-title{margin:0;color:var(--wf-ink);font-size:14px;font-weight:600;line-height:1.3}
 .wf-block-desc{margin-top:2px;color:var(--wf-ink-3);font-size:12px;line-height:1.45}
 .wf-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+[data-wf-frame="surface"]>.wf-block-head,[data-wf-frame="surface"]>.wf-node-children>:is(.wf-heading,.wf-paragraph,.wf-text){overflow-wrap:break-word}
 .wf-act{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;min-width:var(--wf-control-min,80px);padding:6px 14px;font:inherit;font-size:13px;font-weight:500;line-height:1.2;white-space:nowrap;cursor:pointer}
 .wf-act-icon{min-width:32px;padding:6px}
 .wf-mode-line .wf-act{background:transparent;border:1px solid var(--wf-line-strong);color:var(--wf-ink);border-radius:0}
@@ -189,9 +190,10 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-stat{display:flex;flex-direction:column;gap:6px;justify-content:center;min-width:0}
 .wf-stat[data-wf-frame="surface"]{padding:16px}
 .wf-stat-head{display:flex;align-items:center;gap:8px;min-width:0}
-.wf-stat-label{font-size:12px;font-weight:500;color:var(--wf-ink-3);text-transform:uppercase;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wf-stat-label{font-size:12px;font-weight:500;color:var(--wf-ink-3);text-transform:uppercase;letter-spacing:.04em;min-width:0;overflow-wrap:anywhere}
 .wf-stat-head .wf-icon-glyph{color:var(--wf-ink-4)}
-.wf-stat-value{display:flex;align-items:baseline;gap:10px;font-size:24px;font-weight:650;color:var(--wf-ink);line-height:1.15}
+.wf-stat-value{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;min-width:0;font-size:24px;font-weight:650;color:var(--wf-ink);line-height:1.15}
+.wf-stat-number{min-width:0;overflow-wrap:anywhere}
 .wf-stat-delta{font-size:12px;font-weight:500;color:var(--wf-ink-3);white-space:nowrap}
 .wf-stat-spark{width:100%;height:22px;display:block;fill:none;stroke:var(--wf-ink-4);stroke-width:1.5}
 .wf-progress{display:flex;flex-direction:column;gap:5px;min-width:0}
@@ -609,7 +611,8 @@ button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:
 .wf-list-lead{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
 .wf-list-lead .wf-icon-glyph{color:var(--wf-ink-4);font-size:17px}
 .wf-list-body{display:flex;flex-direction:column;gap:2px;flex:1 1 auto;min-width:0}
-.wf-list-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--wf-ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wf-list-title{display:block;font-size:13px;font-weight:500;color:var(--wf-ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wf-list-title>.wf-badge{margin-left:8px;vertical-align:middle}
 .wf-list-text{font-size:12px;color:var(--wf-ink-3);line-height:1.45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wf-list-meta{font-size:11px;color:var(--wf-ink-4);flex:0 0 auto;white-space:nowrap}
 .wf-list-trail{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto}
@@ -816,7 +819,7 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
     <span class="cat-frame">always draws a box</span>
   </div>
   <p class="cat-summary">Always a framed card, at any nesting depth.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_card" class="wf-node wf-card wf-surface" style="display:flex;flex-direction:column;gap:16px;padding:16px" data-wf-frame="surface" data-wf-state-bindings="{}"><header class="wf-block-head"><div class="wf-block-text"><div class="wf-card-title">Revenue</div></div></header><div class="wf-node-children" style="display:flex;flex-direction:column;gap:16px"><div id="demo_card_0" class="wf-node wf-stat wf-group" style="min-height:96px" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">This month</span></div><div class="wf-stat-value">$12.4k</div></div></div></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_card" class="wf-node wf-card wf-surface" style="display:flex;flex-direction:column;gap:16px;padding:16px" data-wf-frame="surface" data-wf-state-bindings="{}"><header class="wf-block-head"><div class="wf-block-text"><div class="wf-card-title">Revenue</div></div></header><div class="wf-node-children" style="display:flex;flex-direction:column;gap:16px"><div id="demo_card_0" class="wf-node wf-stat wf-group" style="min-height:96px" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">This month</span></div><div class="wf-stat-value"><span class="wf-stat-number">$12.4k</span></div></div></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- card: { title: Revenue, children: [{ stat: { label: This month, value: $12.4k } }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">title</td><td>string</td></tr><tr><td class="">description</td><td>string</td></tr><tr><td class="">actions</td><td>array</td></tr><tr><td class="">media</td><td>string</td></tr><tr><td class="">footer</td><td>boolean</td></tr></tbody></table></div>
@@ -854,9 +857,9 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
     <span class="cat-frame">never draws a box</span>
   </div>
   <p class="cat-summary">Grid layout group. Never framed; its children become framed tiles. Without columns the tiles fill the row and wrap.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_grid" class="wf-node wf-grid wf-group" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="demo_grid_0" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">One</span></div><div class="wf-stat-value">128</div></div>
-<div id="demo_grid_1" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">Two</span></div><div class="wf-stat-value">64</div></div>
-<div id="demo_grid_2" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">Three</span></div><div class="wf-stat-value">9</div></div></div></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_grid" class="wf-node wf-grid wf-group" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="demo_grid_0" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">One</span></div><div class="wf-stat-value"><span class="wf-stat-number">128</span></div></div>
+<div id="demo_grid_1" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">Two</span></div><div class="wf-stat-value"><span class="wf-stat-number">64</span></div></div>
+<div id="demo_grid_2" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">Three</span></div><div class="wf-stat-value"><span class="wf-stat-number">9</span></div></div></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- grid: { columns: 3, children: [{ stat: { label: One, value: &quot;128&quot; } }, { stat: { label: Two, value: &quot;64&quot; } }, { stat: { label: Three, value: &quot;9&quot; } }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="">columns</td><td>number</td></tr><tr><td class="">gap</td><td>number</td></tr><tr><td class="">minItemWidth</td><td>number</td></tr></tbody></table></div>
@@ -1015,7 +1018,7 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
     <span class="cat-frame">the frame rules decide</span>
   </div>
   <p class="cat-summary">KPI tile: label, value, optional delta/trend/sparkline.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_stat" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">Revenue</span></div><div class="wf-stat-value">$12.4k<span class="wf-stat-delta wf-trend-up">↑ +8%</span></div></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_stat" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">Revenue</span></div><div class="wf-stat-value"><span class="wf-stat-number">$12.4k</span><span class="wf-stat-delta wf-trend-up">↑ +8%</span></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- stat: { label: Revenue, value: $12.4k, delta: +8%, trend: up }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">label</td><td>string</td></tr><tr><td class="">value</td><td>string,number</td></tr><tr><td class="">delta</td><td>string</td></tr><tr><td class="">trend</td><td>up | down | flat</td></tr><tr><td class="">icon</td><td>string</td></tr><tr><td class="">sparkline</td><td>boolean</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>kpi</code>, <code>metric</code>.</p></div>

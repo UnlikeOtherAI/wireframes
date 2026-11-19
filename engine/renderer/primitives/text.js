@@ -160,9 +160,11 @@ function renderStat(node, ctx, lib) {
   const head = `<div class="wf-stat-head">${glyph}<span class="wf-stat-label">${
     label ? lib.bound(label, ctx) : lib.renderSkeleton(9)
   }</span></div>`;
+  // The number has its own box so it can wrap between digits inside a narrow
+  // tile instead of painting past it; the delta wraps below it as one unit.
   const figure = value == null || value === ''
     ? lib.renderSkeleton(6)
-    : lib.bound(String(value), ctx);
+    : `<span class="wf-stat-number">${lib.bound(String(value), ctx)}</span>`;
   const trend = lib.str(node.props?.trend);
   const delta = lib.str(node.props?.delta);
   const deltaMarkup = delta

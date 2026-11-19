@@ -108,6 +108,12 @@ const baseStyles = [
   '.wf-block-title,.wf-section-title,.wf-card-title,.wf-form-title{margin:0;color:var(--wf-ink);font-size:14px;font-weight:600;line-height:1.3}',
   '.wf-block-desc{margin-top:2px;color:var(--wf-ink-3);font-size:12px;line-height:1.45}',
   '.wf-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}',
+  // A word wider than a framed box breaks inside it rather than painting past
+  // its edge: the box's own title and description, and text placed straight
+  // in it. break-word leaves min-content sizing alone, so no box resizes, and
+  // text in unframed groups keeps its natural word widths.
+  '[data-wf-frame="surface"]>.wf-block-head,[data-wf-frame="surface"]>.wf-node-children>:is(.wf-heading,.wf-paragraph,.wf-text)'
+    + '{overflow-wrap:break-word}',
 
   // --- The shared action button, used inside composite elements ---
   '.wf-act{display:inline-flex;align-items:center;justify-content:center;gap:6px;'
