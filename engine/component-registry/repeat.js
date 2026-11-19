@@ -7,8 +7,8 @@
  * A row is the node an author would have written by hand:
  * `{ id: <host>__<item>, component: <cell>, props }` for an element cell, or
  * the same with `use: <cell>` for a component cell. `__repeat` records which
- * host and item it came from, and a stamped host passes its source on, so a
- * rendered row points at `…repeat.items[i]`.
+ * host, item and cell it came from, and a stamped host passes its source on, so
+ * a rendered row points at `…repeat.items[i]`.
  */
 
 const { resolvePrimitiveName } = require('../schema/primitive-registry');
@@ -95,7 +95,7 @@ function repeatRows(host, hostId = host?.id, written = host) {
   if (!repeat || typeof hostId !== 'string' || repeatHostProblem(host) != null) return [];
   return keyedItems(repeat.items).map(({ item, index }) => {
     const row = repeatRowNode(hostId, repeat.cell, item);
-    row.__repeat = { host: hostId, item: item.id, index };
+    row.__repeat = { host: hostId, item: item.id, index, cell: repeat.cell };
     if (typeof written?.__source === 'string') row.__source = `${written.__source.split('#')[0]}#${row.id}`;
     if (typeof written?.__sourcePath === 'string') row.__sourcePath = `${written.__sourcePath}.repeat.items[${index}]`;
     return row;

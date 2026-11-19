@@ -98,7 +98,7 @@ function collectComponentRoots(componentMap, result, routeIds, defaultGridColumn
   }
 }
 
-function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, appState, componentRoots, result, defaultGridColumns, projectComponents, componentSources) {
+function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, appState, componentRoots, result, defaultGridColumns, projectComponents, componentSources, onRenderedPage) {
   const pageDoc = isObject(pageLoaded.document) ? pageLoaded.document.page : null;
   if (!isObject(pageDoc)) {
     return;
@@ -160,6 +160,7 @@ function validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, 
   for (const root of roots) {
     validateNode(root, context, 1);
   }
+  if (typeof onRenderedPage === 'function') onRenderedPage({ pageId, roots, sources: componentSources });
 
   reportPageIdChecks(context, pageId, overlayTriggerRefs);
 }
@@ -173,6 +174,7 @@ function runSemanticValidation({
   componentSources = {},
   pages = [],
   resolveComponentsForPage = null,
+  onRenderedPage = null,
 }) {
   const routeIds = collectRouteIds(sitemap.routes);
   const appState = isObject(sitemap.appState) ? sitemap.appState : {};
@@ -203,7 +205,7 @@ function runSemanticValidation({
       }
     }
 
-    validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, appState, pageComponents, result, defaultGrid, globalComponents, pageSources);
+    validatePageNodes(pageLoaded, templates, templateOverlayMap, routeIds, appState, pageComponents, result, defaultGrid, globalComponents, pageSources, onRenderedPage);
   }
 }
 
