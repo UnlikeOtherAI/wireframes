@@ -59,6 +59,21 @@ const OWNERS = [
 const EDGES = ['#email .wf-control', '#notes textarea', '#plan .wf-control', '#view .wf-segment-track', '#tags .wf-control',
   '#when .wf-control', '#seats .wf-numstepper', '#code .wf-otp-box', '#accent .wf-color'];
 
+// Every control the design lists, and the part a user would press or type into.
+const MUTATIONS = [
+  ['email', 'input'], ['notes', 'textarea'], ['plan', 'select'], ['view', '.wf-segment:not(.wf-segment-on)'],
+  ['subscribe', '.wf-choice'], ['monthly', '.wf-choice'], ['dark', '.wf-choice'], ['size', '.wf-choice:not(.wf-radio-on)'],
+  ['tags', '.wf-tags'], ['when', 'input'], ['volume', '.wf-range'], ['seats', '.wf-numstepper'], ['code', '.wf-otp'],
+  ['accent', '[data-wf-color-hex]'], ['repeat', '.wf-picker-wheel'], ['files', '.wf-upload-zone'], ['body', '.wf-editor-body'],
+];
+
+// The control's markup and the live values of its native fields.
+const snapshot = (page, id) => page.locator(`#${id}`).evaluate((node) => ({
+  html: node.innerHTML,
+  values: [...node.querySelectorAll('input,textarea,select')].map((field) => (field.tagName === 'SELECT'
+    ? [...field.options].map((option) => option.selected) : field.value)),
+}));
+
 function luminance(value) {
   return value.match(/[\d.]+/g).slice(0, 3).map(Number).map((v) => v / 255)
     .map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
@@ -77,16 +92,19 @@ for (const engine of engines()) {
       for (const mode of ['card', 'line']) {
         const result = renderPage(polishProject(CONTENT, { mode }), 'home', { deviceChrome: false });
         assert.equal(result.ok, true, result.error);
-        const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+        const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, hasTouch: true });
         await page.setContent(result.html);
         const label = `${engine.name} ${mode}`;
 
         for (const [selector, attr, value] of OWNERS) {
           assert.equal(await page.locator(selector).first().getAttribute(attr), value, `${label}: ${selector} ${attr}`);
         }
-        // The lock is decorative: names stay exactly the label.
-        assert.equal(await page.getByLabel('Email', { exact: true }).count(), 1, `${label}: Email keeps its name`);
-        assert.equal(await page.getByRole('checkbox', { name: 'Subscribe', exact: true }).count(), 1);
+        // The lock is decorative: each real control is named exactly by its label.
+        for (const [role, name] of [['textbox', 'Email'], ['textbox', 'Notes'], ['combobox', 'Plan'], ['textbox', 'Tags'],
+          ['textbox', 'Date'], ['checkbox', 'Subscribe'], ['switch', 'Dark mode'], ['radio', 'Monthly'], ['radiogroup', 'Size'],
+          ['group', 'View']]) {
+          assert.equal(await page.getByRole(role, { name, exact: true, includeHidden: true }).count(), 1, `${label}: ${role} "${name}" is named`);
+        }
 
         const classes = await page.evaluate(() => Object.fromEntries(['email', 'both', 'off', 'open', 'wrong']
           .map((id) => [id, document.getElementById(id).classList.contains('wf-field-readonly')])));
@@ -116,24 +134,24 @@ for (const engine of engines()) {
         assert.equal(await page.locator('#seats .wf-numstepper-btn').first().isVisible(), false);
         assert.equal(await page.locator('#off .wf-control input').evaluate((el) => getComputedStyle(el.closest('.wf-control')).borderTopStyle), 'solid');
 
-        // Pointer and keyboard leave every value where it was.
-        await page.getByText('Subscribe', { exact: true }).click();
-        await page.getByText('Dark mode', { exact: true }).click();
-        await page.locator('#size').getByText('S', { exact: true }).click();
-        await page.locator('#view').getByRole('button', { name: 'Grid', exact: true }).click();
-        await page.locator('#view').getByRole('button', { name: 'Grid', exact: true }).press('Space');
-        await page.locator('#email input').press('End');
-        await page.keyboard.type('x');
-        await page.locator('#notes textarea').focus();
-        await page.keyboard.type('typed');
-        await page.locator('#plan select').focus();
-        await page.keyboard.press('ArrowDown');
-        assert.equal(await page.locator('#subscribe [role=checkbox]').getAttribute('aria-checked'), 'true');
-        assert.equal(await page.locator('#dark [role=switch]').getAttribute('aria-checked'), 'true');
-        assert.deepEqual(await page.locator('#size [role=radio]').evaluateAll((els) => els.map((el) => el.getAttribute('aria-checked'))), ['false', 'true']);
-        assert.deepEqual(await page.locator('#view button').evaluateAll((els) => els.map((el) => el.getAttribute('aria-pressed'))), ['true', 'false']);
-        assert.equal(await page.locator('#email input').inputValue(), 'ada@example.com');
-        assert.equal(await page.locator('#notes textarea').inputValue(), '');
+        // Pointer, touch and keyboard leave every control as it was.
+        for (const [id, target] of MUTATIONS) {
+          const before = await snapshot(page, id);
+          const part = page.locator(`#${id} ${target}`).first();
+          await part.scrollIntoViewIfNeeded();
+          await part.tap({ force: true });
+          await part.click({ force: true });
+          // A select's click opens its popup; close it before the keys.
+          await page.keyboard.press('Escape');
+          await part.focus().catch(() => {});
+          await page.keyboard.press('Space');
+          await page.keyboard.press('ArrowDown');
+          await page.keyboard.type('x');
+          if (id === 'accent') {
+            await page.locator('#accent [data-wf-color-picker]').evaluate((el) => { el.value = '#ff0000'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+          }
+          assert.deepEqual(await snapshot(page, id), before, `${label}: ${id} is unchanged by click, tap and keys`);
+        }
         assert.equal(await page.locator('#plan select').inputValue(), 'Free');
 
         // Read-only values are submitted, with an error too; disabled wins over read-only.
@@ -154,25 +172,34 @@ for (const engine of engines()) {
     }
   });
 
-  test(`the lock glyph draws from the bundled icon font in ${engine.name}`, { skip: engine.skip }, async () => {
+  // The lock is drawn inline, so it shows with the icon font (a built page) and
+  // without it (an in-memory page, as the bundle's default mount renders).
+  test(`the lock draws with and without the icon font in ${engine.name}`, { skip: engine.skip }, async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'wf-lock-'));
     const browser = await engine.launch();
     try {
       const project = writePolishProject(path.join(root, 'project'), CONTENT);
       const built = runBuild({ projectPath: project, output: path.join(root, 'build'), platform: 'web', clean: true });
       assert.equal(built.ok, true, built.error);
-      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-      await page.goto(pathToFileURL(path.join(root, 'build', 'web', 'home.html')).href, { waitUntil: 'load' });
-      await page.evaluate(() => document.fonts.ready);
-      const glyph = await page.locator('#plan .wf-field-lock .wf-icon-glyph').evaluate((el) => ({
-        content: getComputedStyle(el, '::before').content,
-        width: el.getBoundingClientRect().width,
-        font: document.fonts.check('900 10px "Font Awesome 7 Free"'),
-      }));
-      assert.notEqual(glyph.content, 'none', `${engine.name}: the lock has a glyph`);
-      assert.ok(glyph.width > 4, `${engine.name}: the lock draws (${glyph.width}px)`);
-      assert.equal(glyph.font, true, `${engine.name}: the icon font loaded`);
-      await page.close();
+      for (const mode of ['card', 'line']) {
+        const fontless = renderPage(polishProject(CONTENT, { mode }), 'home', { deviceChrome: false });
+        for (const [source, open] of [
+          ['built', (page) => page.goto(pathToFileURL(path.join(root, 'build', 'web', 'home.html')).href, { waitUntil: 'load' })],
+          ['fontless', (page) => page.setContent(fontless.html.replace(/<link rel="stylesheet" href="[^"]*fa\/css\/all\.min\.css"\s*\/>/, ''))],
+        ]) {
+          if (source === 'built' && mode === 'line') continue;
+          const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+          await open(page);
+          for (const id of ['plan', 'subscribe', 'view', 'files']) {
+            const lock = await page.locator(`#${id} .wf-field-lock`).evaluate((el) => ({
+              width: el.getBoundingClientRect().width,
+              drawn: [...el.querySelectorAll('path, rect')].some((part) => part.getBBox().width > 0),
+            }));
+            assert.ok(lock.width >= 8 && lock.drawn, `${engine.name} ${mode} ${source}: ${id} lock draws (${lock.width}px)`);
+          }
+          await page.close();
+        }
+      }
     } finally {
       await browser.close();
       fs.rmSync(root, { recursive: true, force: true });

@@ -103,7 +103,7 @@ const controlStyles = [
   // The edge and the lock reach at least 3:1 in both modes. Disabled wins, so
   // `.wf-field-readonly` is never set on a disabled field.
   '.wf-field-lock{display:inline-flex;align-items:center;margin-left:6px;color:var(--wf-ink-3);vertical-align:-1px}',
-  '.wf-field-lock .wf-icon-glyph{width:auto;min-width:0;font-size:10px;color:inherit}',
+  '.wf-field-lock svg{display:block;width:10px;height:12px;flex:0 0 auto}',
   '.wf-field-readonly :is(.wf-control,.wf-color,.wf-numstepper,.wf-otp-box,.wf-segment-track,.wf-check-mark,.wf-radio-mark,.wf-toggle-track),'
     + '.wf-field-readonly.wf-textarea textarea{border-style:dashed}',
   '.wf-mode-card .wf-field-readonly:not(.wf-field-invalid) :is(.wf-control,.wf-color,.wf-numstepper,.wf-otp-box,.wf-segment-track,.wf-upload-zone),'

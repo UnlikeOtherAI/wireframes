@@ -39,8 +39,9 @@ test('help plus error: the error replaces the help and the control names it', ()
   assert.match(tag(input, /<input [^>]*>/), /aria-invalid="true" data-wf-invalid aria-describedby="f__error"/);
   assert.match(input, /class="wf-node wf-input wf-field wf-field-invalid"/);
   assert.match(tag(html('input', { label: 'Ref', help: 'Shown on invoices' }), /<input [^>]*>/), /aria-describedby="f__help"/);
-  assert.match(tag(html('textarea', props), /<textarea[^>]*>/), /aria-invalid="true" data-wf-invalid aria-describedby="f__error"/);
-  assert.match(tag(html('select', props), /<select[^>]*>/), /aria-invalid="true" data-wf-invalid aria-describedby="f__error"/);
+  // The visible label names the textarea (an id on it would change its submit key).
+  assert.match(tag(html('textarea', props), /<textarea[^>]*>/), /aria-invalid="true" data-wf-invalid aria-labelledby="f__label" aria-describedby="f__error"/);
+  assert.match(tag(html('select', props), /<select[^>]*>/), /aria-invalid="true" data-wf-invalid aria-labelledby="f__label" aria-describedby="f__error"/);
   assert.match(tag(html('tags_input', props), /<input [^>]*>/), /aria-describedby="f__error"/);
   const group = html('choice_group', { ...props, kind: 'radio', options: ['A'] });
   assert.match(group, /role="radiogroup" aria-labelledby="f__label" aria-describedby="f__error" aria-invalid="true" data-wf-invalid/);
@@ -66,7 +67,7 @@ test('readonly plus disabled: both written, on the element that owns them', () =
   assert.match(tag(html('input', both), /<input [^>]*>/), / value="ABC" disabled readonly data-wf-disabled data-wf-readonly \/>/);
   assert.match(tag(html('input', { ...both, disabled: false }), /<input [^>]*>/), / value="ABC" readonly data-wf-readonly \/>/);
   assert.match(tag(html('textarea', both), /<textarea[^>]*>/), / disabled readonly data-wf-disabled data-wf-readonly/);
-  assert.match(tag(html('select', { ...both, options: ['A'] }), /<select[^>]*>/), /<select disabled aria-readonly="true" data-wf-disabled data-wf-readonly>/);
+  assert.match(tag(html('select', { ...both, options: ['A'] }), /<select[^>]*>/), /<select disabled aria-readonly="true" data-wf-disabled data-wf-readonly aria-labelledby="f__label">/);
   assert.match(html('checkbox', { label: 'Lock', readonly: true, disabled: true }),
     /role="checkbox"[^>]*aria-disabled="true" aria-readonly="true" aria-checked="false" data-wf-disabled data-wf-readonly/);
   // A radio has no aria-readonly; its data attribute still says so.
@@ -89,14 +90,15 @@ test('readonly plus disabled: both written, on the element that owns them', () =
 test('readonly tags, editor and upload drop their input affordances but keep the content', () => {
   const tags = html('tags_input', { label: 'Labels', tags: ['urgent'], readonly: true });
   assert.doesNotMatch(tags, /wf-tag-x/);
-  assert.match(tags, /<span class="wf-tag">urgent<\/span><input type="text" placeholder="" readonly data-wf-readonly \/>/);
+  assert.match(tags, /<span class="wf-tag">urgent<\/span><input type="text" placeholder="" readonly data-wf-readonly aria-labelledby="f__label" \/>/);
   const editor = html('editor', { label: 'Body', readonly: true });
   assert.doesNotMatch(editor, /wf-editor-toolbar/);
   assert.match(editor, /<div class="wf-editor-body" data-wf-readonly style=/);
   const upload = html('upload', { label: 'Drop here', fieldLabel: 'Files', readonly: true, files: ['a.pdf'] });
   assert.match(upload, /^<div id="f" class="wf-node wf-upload wf-surface wf-field-readonly wf-upload-field" data-wf-frame="surface"/);
   // The decorative lock follows the label text.
-  assert.match(upload, /<label class="wf-field-label">Files<span class="wf-field-lock"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-lock"[^>]*><\/i><\/span><\/label><div class="wf-upload-zone" data-wf-readonly><div class="wf-upload-files">/);
+  // The lock is drawn inline, so it needs no icon font.
+  assert.match(upload, /<label class="wf-field-label">Files<span class="wf-field-lock" aria-hidden="true"><svg [^>]*>.*?<\/svg><\/span><\/label><div class="wf-upload-zone" data-wf-readonly><div class="wf-upload-files">/);
   assert.doesNotMatch(upload, /Drop here|cloud-arrow-up/);
   const field = html('upload', { label: 'Drop here', fieldLabel: 'Files', help: 'PDF only', disabled: true });
   assert.match(field, /<div class="wf-upload-zone" data-wf-disabled><span class="wf-upload-glyph">.*Drop here.*<\/div><span class="wf-field-help" id="f__help">PDF only<\/span>/);
@@ -108,7 +110,7 @@ test('select.value: initial selection, a list with multiple, and selection prece
   assert.match(options({ options: ['A', 'B'], value: 'B' }), /<option value="A">A<\/option><option value="B" selected>B<\/option>/);
   assert.match(options({ options: [{ label: 'One', value: 1 }, { label: 'Two', value: 2 }], value: 2 }), /<option value="2" selected>Two/);
   const multi = options({ options: ['A', 'B', 'C'], value: ['A', 'C'], multiple: true });
-  assert.match(multi, /<select multiple>.*value="A" selected.*value="B">.*value="C" selected/);
+  assert.match(multi, /<select multiple aria-labelledby="f__label">.*value="A" selected.*value="B">.*value="C" selected/);
   // Single choice keeps the first match only.
   assert.equal((options({ options: ['A', 'B', 'C'], value: ['A', 'C'] }).match(/ selected/g) || []).length, 1);
   // An item's own selected wins over the element value, and selected: false beats a match.

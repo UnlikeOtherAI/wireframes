@@ -76,7 +76,7 @@ function renderSegmented(node, ctx, lib) {
   const labelId = lib.str(props.label) ? partId(node, 'label') : '';
   const name = labelId ? ` aria-labelledby="${lib.escapeAttr(labelId)}"` : '';
   const label = labelId
-    ? `<span class="wf-field-label" id="${lib.escapeAttr(labelId)}">${lib.bound(props.label, ctx)}${state.required ? '<span class="wf-req">*</span>' : ''}${readonlyLock(props, lib)}</span>`
+    ? `<span class="wf-field-label" id="${lib.escapeAttr(labelId)}">${lib.bound(props.label, ctx)}${state.required ? '<span class="wf-req">*</span>' : ''}${readonlyLock(props)}</span>`
     : '';
   return {
     inner: `${label}<div class="wf-segment-track" role="group"${name}${describedBy(props, lib, node)}${lib.stateAttrs(state)}>${buttons}</div>${fieldHelp(props, ctx, lib, node)}`,

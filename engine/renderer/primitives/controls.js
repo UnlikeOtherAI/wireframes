@@ -1,6 +1,6 @@
 'use strict';
 
-const { fieldState, fieldLabel, fieldHelp, describedBy } = require('./controls-field');
+const { partId, fieldState, fieldLabel, fieldHelp, describedBy } = require('./controls-field');
 const { buttonRenderers } = require('./controls-buttons');
 const { inputRenderers } = require('./controls-inputs');
 const { choiceRenderers } = require('./controls-choices');
@@ -14,10 +14,11 @@ function renderTagsInput(node, ctx, lib) {
     `<span class="wf-tag">${lib.escapeHtml(lib.str(tag.label))}${remove}</span>`
   )).join('');
   const placeholder = lib.str(props.placeholder);
+  const labelId = lib.str(props.label) ? partId(node, 'label') : '';
   const input = `<input type="text" placeholder="${lib.escapeAttr(placeholder)}"${
-    lib.stateAttrs(state, { owner: lib.STATE_OWNERS.field })}${describedBy(props, lib, node)} />`;
+    lib.stateAttrs(state, { owner: lib.STATE_OWNERS.field })}${labelId ? ` aria-labelledby="${lib.escapeAttr(labelId)}"` : ''}${describedBy(props, lib, node)} />`;
   return {
-    inner: `${fieldLabel(props, ctx, lib)}<span class="wf-control wf-tags">${tags}${input}</span>${fieldHelp(props, ctx, lib, node)}`,
+    inner: `${fieldLabel(props, ctx, lib, null, labelId)}<span class="wf-control wf-tags">${tags}${input}</span>${fieldHelp(props, ctx, lib, node)}`,
     className: `wf-field${state.invalid ? ' wf-field-invalid' : ''}`,
   };
 }
