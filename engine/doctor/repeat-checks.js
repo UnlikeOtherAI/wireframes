@@ -2,7 +2,7 @@
 
 /**
  * Repeat rules checked on authored, unresolved documents (design
- * `docs/plans/2026-11-19-repeat-cells.md` §4.3): the cell resolves
+ * `docs/done/2026-11-19-repeat-cells.md` §4.3): the cell resolves
  * (UNKNOWN_REPEAT_CELL), the node can host rows (REPEAT_INVALID_HOST), item ids
  * are unique (DUPLICATE_REPEAT_ITEM_ID), and no collection binding can clone the
  * rows (REPEAT_WITH_BINDING), including one that reaches the repeat across a

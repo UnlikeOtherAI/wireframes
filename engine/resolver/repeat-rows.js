@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Materializing `repeat` rows (design `docs/plans/2026-11-19-repeat-cells.md`
+ * Materializing `repeat` rows (design `docs/done/2026-11-19-repeat-cells.md`
  * §4.2). A host's author expands its rows where hand-written siblings would be
  * processed:
  * - caller content (a page, a template, a fill) as the caller prepares it,
