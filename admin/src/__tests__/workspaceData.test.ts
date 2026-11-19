@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useResolvedNodes, useSitemapNodes, buildNodeIdToAddressMap } from '../features/workspace/useWorkspaceData'
+import { loadRenderer } from '../features/workspace/rendererModule'
+
+// The tree is resolved with the renderer bundle's row and budget rules; load it once up front.
+await loadRenderer()
 
 describe('useResolvedNodes', () => {
   it('returns empty array when page file is missing', () => {

@@ -19,7 +19,7 @@ import { ChatPopup } from './chat/ChatPopup'
 import { WorkspacePreview } from './workspace/WorkspacePreview'
 import { NodeTree } from './workspace/NodeTree'
 import { SitemapView } from './workspace/SitemapView'
-import { buildNodeIdToAddressMap, useResolvedNodes, useSitemapNodes } from './workspace/useWorkspaceData'
+import { buildNodeIdToAddressMap, useSitemapNodes, useWorkspaceTree } from './workspace/useWorkspaceData'
 import { buildStarterDocument } from './editor/documentTemplates'
 import { ResizeHandle } from './editor/ResizeHandle'
 import { buildYamlFilesMap, problemsToDiagnostics } from './editor/projectEditorUtils'
@@ -137,7 +137,7 @@ export function ProjectEditorPage() {
 
   const content = getActiveContent()
   const yamlFiles = useMemo(() => buildYamlFilesMap(docStateRef.current), [docStateRef, documents, previewState])
-  const resolvedNodes = useResolvedNodes(yamlFiles, previewPageId ?? '')
+  const { nodes: resolvedNodes, notice: treeNotice } = useWorkspaceTree(yamlFiles, previewPageId ?? '')
   const sitemapNodes = useSitemapNodes(yamlFiles)
   const nodeIdToAddress = useMemo(() => buildNodeIdToAddressMap(resolvedNodes), [resolvedNodes])
 
@@ -348,6 +348,7 @@ export function ProjectEditorPage() {
                 <div style={{ flex: 1, overflow: 'auto' }}>
                   <NodeTree
                     nodes={resolvedNodes}
+                    notice={treeNotice}
                     onNodeSelect={setSelectedNode}
                     selectedNode={selectedNode}
                   />

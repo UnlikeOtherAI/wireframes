@@ -1,27 +1,33 @@
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ResolvedNode } from './types'
+import type { ResolvedNode, TreeNotice } from './types'
+
+/** A selection is the address it edits and the rendered node it was made on. */
+type NodeSelect = (address: string, renderedId: string) => void
 
 interface NodeTreeProps {
   nodes: ResolvedNode[]
-  onNodeSelect?: (address: string) => void
+  onNodeSelect?: NodeSelect
   selectedNode?: string | null
+  /** Why the page lists no nodes, when it has some. */
+  notice?: TreeNotice | null
 }
 
-export function NodeTree({ nodes, onNodeSelect, selectedNode }: NodeTreeProps) {
+export function NodeTree({ nodes, onNodeSelect, selectedNode, notice }: NodeTreeProps) {
   const { t } = useTranslation()
 
   if (nodes.length === 0) {
     return (
       <div
         data-testid="workspace-node-tree"
+        role={notice ? 'status' : undefined}
         style={{
           padding: '12px',
-          color: '#888',
+          color: notice?.kind === 'too-large' ? '#991b1b' : '#666',
           fontSize: '13px',
         }}
       >
-        {t('workspace.noNodes')}
+        {noticeText(notice ?? null, t)}
       </div>
     )
   }
@@ -35,7 +41,7 @@ export function NodeTree({ nodes, onNodeSelect, selectedNode }: NodeTreeProps) {
     >
       {nodes.map((node) => (
         <NodeTreeItem
-          key={node.address}
+          key={node.renderedId ?? node.address}
           node={node}
           depth={0}
           onNodeSelect={onNodeSelect}
@@ -49,7 +55,7 @@ export function NodeTree({ nodes, onNodeSelect, selectedNode }: NodeTreeProps) {
 interface NodeTreeItemProps {
   node: ResolvedNode
   depth: number
-  onNodeSelect?: (address: string) => void
+  onNodeSelect?: NodeSelect
   selectedNode?: string | null
 }
 
@@ -57,15 +63,16 @@ function NodeTreeItem({ node, depth, onNodeSelect, selectedNode }: NodeTreeItemP
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(depth < 2)
   const hasChildren = node.children.length > 0
-  const isSelected = selectedNode === node.address
+  // A node a component renders selects its owner, which shows as selected instead.
+  const isSelected = !node.internal && selectedNode === node.address
 
   const handleToggle = useCallback(() => {
     setExpanded((prev) => !prev)
   }, [])
 
   const handleSelect = useCallback(() => {
-    onNodeSelect?.(node.address)
-  }, [onNodeSelect, node.address])
+    onNodeSelect?.(node.address, node.renderedId ?? node.id)
+  }, [onNodeSelect, node.address, node.renderedId, node.id])
 
   const label = [buildNodeLabel(node), node.repeatItem ? t('workspace.repeatItem', { item: node.repeatItem }) : '']
     .filter(Boolean).join(' ')
@@ -137,7 +144,7 @@ function NodeTreeItem({ node, depth, onNodeSelect, selectedNode }: NodeTreeItemP
         <div role="group">
           {node.children.map((child) => (
             <NodeTreeItem
-              key={child.address}
+              key={child.renderedId ?? child.address}
               node={child}
               depth={depth + 1}
               onNodeSelect={onNodeSelect}
@@ -148,6 +155,21 @@ function NodeTreeItem({ node, depth, onNodeSelect, selectedNode }: NodeTreeItemP
       )}
     </div>
   )
+}
+
+function noticeText(notice: TreeNotice | null, t: (key: string, options?: Record<string, unknown>) => string): string {
+  switch (notice?.kind) {
+    case 'loading':
+      return t('common.loading')
+    case 'unavailable':
+      return t('workspace.rendererUnavailable')
+    case 'too-large':
+      return notice.host
+        ? t('workspace.treeTooLargeRepeat', { host: notice.host, max: notice.max })
+        : t('workspace.treeTooLarge', { max: notice.max })
+    default:
+      return t('workspace.noNodes')
+  }
 }
 
 function buildNodeLabel(node: ResolvedNode): string {

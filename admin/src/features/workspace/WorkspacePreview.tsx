@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DEVICE_VIEWPORTS, type DeviceType, type RenderMode } from './types'
 import { postMeasure } from './postMeasure'
+import { loadRenderer } from './rendererModule'
 
 interface WorkspacePreviewProps {
   yamlFiles: Record<string, string>
@@ -37,7 +38,6 @@ export function WorkspacePreview({
   const [html, setHtml] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [srcdoc, setSrcdoc] = useState<string>('')
-  const rendererRef = useRef<typeof import('@wireframes/renderer') | null>(null)
   const renderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const viewport = DEVICE_VIEWPORTS[device]
   const scale = zoom / 100
@@ -69,18 +69,6 @@ export function WorkspacePreview({
     return () => window.removeEventListener('message', handleMessage)
   }, [onNavigate, onNodeSelect, nodeIdToAddress, activePage])
 
-  // Lazy-load renderer
-  const getRenderer = useCallback(async () => {
-    if (rendererRef.current) return rendererRef.current
-    try {
-      const mod = await import('@wireframes/renderer')
-      rendererRef.current = mod
-      return mod
-    } catch {
-      return null
-    }
-  }, [])
-
   const doRender = useCallback(async () => {
     if (!activePage) {
       setHtml(null)
@@ -88,7 +76,7 @@ export function WorkspacePreview({
       return
     }
 
-    const renderer = await getRenderer()
+    const renderer = await loadRenderer()
     if (!renderer) {
       setError(t('workspace.rendererUnavailable'))
       return
@@ -104,7 +92,7 @@ export function WorkspacePreview({
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
     }
-  }, [yamlFiles, activePage, renderMode, getRenderer, t])
+  }, [yamlFiles, activePage, renderMode, t])
 
   // Debounced render
   useEffect(() => {

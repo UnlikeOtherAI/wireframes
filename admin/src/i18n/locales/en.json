@@ -181,6 +181,8 @@
     "pageNavigation": "Page navigation",
     "nodeTree": "Node tree",
     "noNodes": "No nodes to display",
+    "treeTooLarge": "This page expands to more than {{max, number}} nodes, so the tree cannot list it. Split the page into smaller pages, or reuse fewer components inside one another.",
+    "treeTooLargeRepeat": "The repeat on \"{{host}}\" would take this page past {{max, number}} nodes, so the tree cannot list it. Give it fewer items, or use a smaller cell.",
     "repeatItem": "item {{item}}",
     "noRoutes": "No routes defined",
     "sitemapDiagram": "Sitemap diagram",

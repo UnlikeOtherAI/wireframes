@@ -1,12 +1,12 @@
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { DeviceType, RenderMode } from './types'
+import type { DeviceType, RenderMode, ResolvedNode, SitemapNode, TreeNotice } from './types'
 import { PageNavigation } from './PageNavigation'
 import { DeviceControls } from './DeviceControls'
 import { NodeTree } from './NodeTree'
 import { SitemapView } from './SitemapView'
 import { WorkspacePreview } from './WorkspacePreview'
-import { useResolvedNodes, useSitemapNodes, buildNodeIdToAddressMap } from './useWorkspaceData'
+import { useWorkspaceTree, useSitemapNodes, buildNodeIdToAddressMap } from './useWorkspaceData'
 import { usePreviewMeasureStore } from '../../stores/previewMeasureStore'
 
 export interface WorkspaceProps {
@@ -68,7 +68,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
   const measure = usePreviewMeasureStore((state) => state.measure)
   const setMeasure = usePreviewMeasureStore((state) => state.setMeasure)
 
-  const resolvedNodes = useResolvedNodes(yamlFiles, activePage)
+  const { nodes: resolvedNodes, notice: treeNotice } = useWorkspaceTree(yamlFiles, activePage)
   const nodeIdToAddress = useMemo(() => buildNodeIdToAddressMap(resolvedNodes), [resolvedNodes])
   const sitemapNodes = useSitemapNodes(yamlFiles)
 
@@ -190,6 +190,7 @@ export const Workspace = forwardRef<WorkspaceRef, WorkspaceProps>(function Works
           >
             <TreeSitemapTabs
               resolvedNodes={resolvedNodes}
+              treeNotice={treeNotice}
               sitemapNodes={sitemapNodes}
               activePage={activePage}
               onPageChange={onPageChange}
@@ -215,16 +216,18 @@ function derivePageIds(yamlFiles: Record<string, string>): string[] {
 }
 
 interface TreeSitemapTabsProps {
-  resolvedNodes: import('./types').ResolvedNode[]
-  sitemapNodes: import('./types').SitemapNode[]
+  resolvedNodes: ResolvedNode[]
+  treeNotice: TreeNotice | null
+  sitemapNodes: SitemapNode[]
   activePage: string
   onPageChange: (pageId: string) => void
-  onNodeSelect: (address: string) => void
+  onNodeSelect: (address: string, renderedId: string) => void
   selectedNode: string | null
 }
 
 function TreeSitemapTabs({
   resolvedNodes,
+  treeNotice,
   sitemapNodes,
   activePage,
   onPageChange,
@@ -285,6 +288,7 @@ function TreeSitemapTabs({
         {activeTab === 'tree' ? (
           <NodeTree
             nodes={resolvedNodes}
+            notice={treeNotice}
             onNodeSelect={onNodeSelect}
             selectedNode={selectedNode}
           />
