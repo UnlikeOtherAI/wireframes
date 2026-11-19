@@ -55,7 +55,7 @@ Every control except `button` and `toolbar` spreads `FIELD_PROPS`: `label`,
 |---|---|---|---|---|
 | `input` (text types, number, colour), `textarea` | `<label>` above | below; the `<input>`/`<textarea>` names it in `aria-describedby` | the native control | native `readonly` |
 | `input` range, otp, stepper | above | below | the drawn `.wf-range`, `.wf-otp`, `.wf-numstepper` (data attributes only); stepper buttons take native `disabled` | `data-wf-readonly` |
-| `select` | above | below, in `aria-describedby` | the `<select>` | `aria-readonly`, `data-wf-readonly`; the runtime puts back any change |
+| `select` | above | below, in `aria-describedby` | the `<select>`, drawn with `appearance: none` at the control height (so WebKit draws it as tall as an input) with its own chevron; `multiple` stays a native list box | `aria-readonly`, `data-wf-readonly`; the runtime puts back any change |
 | `segmented` | with any field prop, a label above and a `role="group"` track named by it | below, in the track's `aria-describedby` | the track; each segment keeps `aria-pressed` | `data-wf-readonly` (a group or button has no ARIA read-only) |
 | `choice_group` | `<label>` above, naming the list | below | the list: `role="radiogroup"` (radio) or `role="group"` (checkbox); each mark is `role="radio"`/`"checkbox"` with `aria-checked` | radio: `aria-readonly` on the group; checkbox: on each mark |
 | `checkbox`, `radio`, `toggle` | inline; `required` marks it | `help` is the inline description (it wins over `description`); an error goes below the row; both are in `aria-describedby` | the mark: `role="checkbox"`, `"radio"` or `"switch"`, named by the label with `aria-labelledby` | `aria-readonly` on checkbox and switch; `data-wf-readonly` on radio |
@@ -85,8 +85,10 @@ on the owner listed above, and the runtime guards are unchanged:
 
 Disabled native fields
 
-(text types, number, colour, `textarea`, `select`) keep the browser's
-disabled look, as they always did. Drawn controls fade one layer to half
+(text types, number, colour, `textarea`) keep the browser's disabled look,
+as they always did. A disabled `select` and its chevron dim to 0.7, which is
+what Chromium's native select did, now in every engine. A field box shows a
+2 px focus ring while its input or select has focus. Drawn controls fade one layer to half
 opacity, as disabled buttons and checkboxes always have: range, otp,
 stepper, picker, editor, tags, the upload zone, the segment track, a choice
 list (or one disabled row in it) and a toolbar item. With both `readonly`

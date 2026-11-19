@@ -321,6 +321,12 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-field-invalid{--wf-tone:var(--wf-danger)}
 .wf-field-invalid .wf-control,.wf-field-invalid textarea{border-color:var(--wf-tone);border-width:2px}
 .wf-select-searchable .wf-control select{padding-left:0}
+.wf-control select:not([multiple]){appearance:none;-webkit-appearance:none;padding-right:32px}
+.wf-control:has(>select:not([multiple])){position:relative}
+.wf-control:has(>select:not([multiple]))::after{content:"";position:absolute;right:14px;top:50%;width:6px;height:6px;margin-top:-5px;border:solid var(--wf-ink-3);border-width:0 1.5px 1.5px 0;transform:rotate(45deg);pointer-events:none}
+.wf-field-readonly .wf-control::after{display:none}
+.wf-control select:disabled,.wf-control:has(>select:disabled)::after{opacity:.7}
+.wf-control:focus-within{outline:2px solid var(--wf-ink-3);outline-offset:1px}
 .wf-field-lock{display:inline-flex;align-items:center;margin-left:6px;color:var(--wf-ink-3);vertical-align:-1px}
 .wf-field-lock svg{display:block;width:10px;height:12px;flex:0 0 auto}
 .wf-field-readonly :is(.wf-control,.wf-color,.wf-numstepper,.wf-otp-box,.wf-segment-track,.wf-check-mark,.wf-radio-mark,.wf-toggle-track),.wf-field-readonly.wf-textarea textarea{border-style:dashed}

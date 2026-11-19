@@ -98,6 +98,18 @@ const controlStyles = [
   '.wf-field-invalid{--wf-tone:var(--wf-danger)}',
   '.wf-field-invalid .wf-control,.wf-field-invalid textarea{border-color:var(--wf-tone);border-width:2px}',
   '.wf-select-searchable .wf-control select{padding-left:0}',
+  // A select draws its own box, so WebKit's native menulist, which ignores
+  // min-height, cannot make it shorter than an input. Its chevron is drawn here
+  // and lets clicks through; read-only draws none. A multiple select stays a
+  // native list box. Disabled dims to .7, as Chromium's native select does.
+  '.wf-control select:not([multiple]){appearance:none;-webkit-appearance:none;padding-right:32px}',
+  '.wf-control:has(>select:not([multiple])){position:relative}',
+  '.wf-control:has(>select:not([multiple]))::after{content:"";position:absolute;right:14px;top:50%;width:6px;height:6px;'
+    + 'margin-top:-5px;border:solid var(--wf-ink-3);border-width:0 1.5px 1.5px 0;transform:rotate(45deg);pointer-events:none}',
+  '.wf-field-readonly .wf-control::after{display:none}',
+  '.wf-control select:disabled,.wf-control:has(>select:disabled)::after{opacity:.7}',
+  // The field box shows focus; its input or select draws no outline of its own.
+  '.wf-control:focus-within{outline:2px solid var(--wf-ink-3);outline-offset:1px}',
   // Read-only, one look for every control: a lock after the label, a dashed
   // edge on the field box, no editing affordances, the value at full contrast.
   // The edge and the lock reach at least 3:1 in both modes. Disabled wins, so
