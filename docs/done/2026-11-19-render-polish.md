@@ -301,3 +301,34 @@ Codex reviewed `2e90056`. Decisions, by finding:
 - **Menubar `selected` counts like `current`** for top-level titles (nav's rule). Panel rows still keep `selected` and `current` apart.
 - **Keyboard checks are engine-aware.** Safari's WebKit moves focus between links with Option-Tab, so the menubar keyboard test presses Alt+Tab there.
 - **Not changed.** A page designed for a phone with a side-by-side template keeps the region's 280 px sidebar width. That is pre-existing region sizing; the `adaptive` option reflows it.
+
+### 10.1 Follow-up: empty stdlib values
+
+The iPad's `std.site_footer` had a blank tagline, empty link lists and `social: []`. It drew as a 112 px logo box with the brand wrapped inside it, plus a skeleton bar, three empty 160 px columns and a rule.
+
+- **A new node key, `when`, leaves empty parts out.** A node keeps its place only when its value has content. A blank string, `[]`, `null`, `undefined` or `false` removes it. `engine/resolver/when.js` evaluates the key once on the resolved tree, after props, slots and repeat rows, and strips it from the nodes it keeps. The key is in all four schema files.
+- **`std.site_footer`:**
+  - the tagline, each link column and the copyright carry `when`;
+  - the root is a `section`, so at the top of a page the footer is one full-width panel, and inside a framed footer region it is plain;
+  - the logo is 160×40, so a brand fits on one line.
+
+  A fixed-size logo box stays as it was, because `company-logos.test.js` pins the missing-slot box.
+- **`std.site_header` and `std.hero` had the same stubs.** In the header, the menu and both actions carry `when`, and the menu is `surface: false`, because the header is already the bar. In the hero, the badge, title, intro and both calls to action carry `when`. A bare `use:` still draws every part.
+
+### 10.2 Implementation review
+
+Codex reviewed the implementation and found eight problems. All are adopted. Each test failed before its fix, except where noted.
+
+1. **A sidebar fits its slot.** A standalone sidebar is `min(--wf-sidebar-w, 100%)` wide and can shrink, so a 120 px stack or a narrow grid track does not overflow. An authored `size.width` is inline and still wins. Tested in both modes.
+2. **A narrow menu row gives way in order:**
+   - the label shortens to a letter and its ellipsis (`min-width: min(2em, 100%)`; a zero-width label would show nothing);
+   - then the shortcut truncates with an ellipsis and finally hides;
+   - icons and chevrons keep their size.
+
+   The test checks every descendant against the row, using a long shortcut in a 120 px stack, on the web and an adaptive phone, in both modes. Key chips in command and menubar panels are unchanged, because those panels size to their content.
+3. **The read-only lock is an inline SVG** in `currentColor`. Before this, the bundle's default mount dropped the icon stylesheet and the lock drew nothing. `renderer/test/fontless-lock.test.mjs` mounts the bundle without icons in both modes.
+4. **Export parity extracts reliably.** Windows and macOS extract with bsdtar: System32 `tar.exe` on Windows, because a POSIX shell's GNU `tar` cannot read a ZIP. Linux uses `unzip`. A failed extraction fails the test, which checks that the archive holds every project file and that the page renders before comparing. The old fallback exited 0 with an empty folder.
+5. **Read-only controls are named.** A labelled select, textarea or tags input points at its visible label with `aria-labelledby`. An `id` would change its submit key. The guard test tries every listed control by tap, click, Escape, focus, Space, ArrowDown and typing.
+6. **An adaptive phone sidebar faces the content.** A sidebar slot authored after `main` stacks below it and draws its rule on top. One authored before `main` keeps the bottom rule. Both orders are tested.
+7. **The grid tests prove their names.** The repeat test's cell root is placed, so only expanded rows carry a placement, and a decision that saw no rows fails it. The determinism test asserts that both renders succeed. These are test fixes; each new test was checked against an engine change that brings back the gap it closes.
+8. **The schema prose says what comes before the manifest default.** `schema.md`, `schema-systems.md` and `rendering-data.md` now say that an authored `minItemWidth` and adaptive reflow come before `manifest.defaultGridColumns`, as the canonical YAML already did. This is a documentation fix, so there is no test.
