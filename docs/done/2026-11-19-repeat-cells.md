@@ -1,7 +1,7 @@
 # Repeat: one cell, an array of keyed items
 
-Status: designed and reviewed (§8). Builds on
-[2026-11-18-component-library-expansion.md](../done/2026-11-18-component-library-expansion.md),
+Status: implemented on 19 November 2026 (branch `claude/component-library`); §8 is the design review and §9 the implementation decisions. Builds on
+[2026-11-18-component-library-expansion.md](2026-11-18-component-library-expansion.md),
 including slots with author scope, the definition lookup, `std.*` patterns and the item
 model.
 
