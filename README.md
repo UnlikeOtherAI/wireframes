@@ -343,9 +343,9 @@ fills. Same YAML, same elements.
 
 ## Mobile
 
-Set `viewport.platform` to `ios` or `android`. The elements do not change — only
-the chrome a native user expects: control heights, corner radii, where the title
-sits, the status bar, the home indicator.
+To render a mobile wireframe, set `viewport.platform` to `ios` or `android`.
+The elements do not change — only the chrome a native user expects: control
+heights, corner radii, where the title sits, the status bar, the home indicator.
 
 | iOS | Android | A menu, anchored |
 |---|---|---|
@@ -556,3 +556,9 @@ overflow) are asserted directly.
 | [docs/cli/wf-format.md](docs/cli/wf-format.md) | the `.wf` container and the browser renderer |
 | [docs/architecture.md](docs/architecture.md) | engine, CLI, API, admin, web |
 | [AGENTS.md](AGENTS.md) | the rules this repo is built under |
+
+## License
+
+The Wireframes core repository is available under the [MIT License](LICENSE).
+Third-party materials retain their own terms. The native iOS and Android apps
+are maintained separately and remain private.
