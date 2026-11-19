@@ -102,7 +102,7 @@ describe('Measure state in previews', () => {
 
     rerender(<WorkspacePreview {...props} measure={false} />)
     nodeClickFrom(frame)
-    expect(onNodeSelect).toHaveBeenCalledWith('wf://page/home#home')
+    expect(onNodeSelect).toHaveBeenCalledWith('wf://page/home#home', 'home')
   })
 
   it('PreviewPane replays the state into every page it writes', () => {

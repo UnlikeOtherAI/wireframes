@@ -10,9 +10,14 @@ interface WorkspacePreviewProps {
   device: DeviceType
   renderMode: RenderMode
   onNavigate?: (routeId: string) => void
-  onNodeSelect?: (address: string) => void
+  /** A selection: the address it edits and the rendered node it was made on. */
+  onNodeSelect?: (address: string, renderedId: string) => void
   highlightedNode?: string | null
-  /** The rendered node the highlighted selection was made on, when it renders more than once. */
+  /**
+   * The rendered node the highlighted selection was made on, so a node that
+   * renders more than once is outlined where it was selected. The caller keeps
+   * it, so it outlasts this preview.
+   */
   highlightedRenderedId?: string | null
   interactive?: boolean
   onHtmlChange?: (html: string) => void
@@ -41,8 +46,6 @@ export function WorkspacePreview({
   const [html, setHtml] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [srcdoc, setSrcdoc] = useState<string>('')
-  // The selection a click in the preview made, and the rendered node it outlines.
-  const [clicked, setClicked] = useState<{ address: string; renderedId: string } | null>(null)
   // Each load is a fresh page, which the outline has to be drawn on again.
   const [loads, setLoads] = useState(0)
   const renderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -69,10 +72,7 @@ export function WorkspacePreview({
       }
       if (event.data?.type === 'wf:nodeClick' && !measureRef.current) {
         const selection = clickedSelection(event.data, nodeIdToAddress, activePage)
-        if (selection) {
-          setClicked(selection)
-          onNodeSelect?.(selection.address)
-        }
+        if (selection) onNodeSelect?.(selection.address, selection.renderedId)
       }
     }
     window.addEventListener('message', handleMessage)
@@ -142,15 +142,14 @@ export function WorkspacePreview({
       highlightedRef.current.style.outline = ''
       highlightedRef.current.style.outlineOffset = ''
     }
-    const anchor = highlightedRenderedId ?? (clicked?.address === highlightedNode ? clicked?.renderedId : null)
-    const el = highlightedNode ? selectionElement(doc, highlightedNode, nodeIdToAddress, anchor ?? null) : null
+    const el = highlightedNode ? selectionElement(doc, highlightedNode, nodeIdToAddress, highlightedRenderedId ?? null) : null
     if (el) {
       el.style.outline = '2px solid #1976d2'
       el.style.outlineOffset = '2px'
       el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
     highlightedRef.current = el
-  }, [highlightedNode, highlightedRenderedId, clicked, nodeIdToAddress, html, loads])
+  }, [highlightedNode, highlightedRenderedId, nodeIdToAddress, html, loads])
 
   return (
     <div

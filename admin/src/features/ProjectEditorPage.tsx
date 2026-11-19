@@ -48,6 +48,9 @@ export function ProjectEditorPage() {
   })
   const [previewPageId, setPreviewPageId] = useState<string | null>(null)
   const [selectedNode, setSelectedNode] = useState<string | null>(null)
+  // The rendered node the selection was made on: the preview remounts on every
+  // switch back to it, and outlines the selection in the instance it was made in.
+  const [selectedRenderedId, setSelectedRenderedId] = useState<string | null>(null)
   const [workspaceMode, setWorkspaceMode] = useState<'preview' | 'tree' | 'sitemap'>('preview')
   const [chatPinned, setChatPinned] = useState(() => getCookie('wf_editor_chat_pinned') === 'true')
   const [createFileOpen, setCreateFileOpen] = useState(false)
@@ -161,6 +164,11 @@ export function ProjectEditorPage() {
     scheduleRender()
   }, [updateContent, scheduleRender])
 
+  const handleNodeSelect = useCallback((address: string, renderedId: string) => {
+    setSelectedNode(address)
+    setSelectedRenderedId(renderedId)
+  }, [])
+
   const handlePreviewNavigate = useCallback((routeId: string) => {
     const page = documents.find(
       (d) => d.documentType === 'page' && d.documentId === routeId,
@@ -168,6 +176,7 @@ export function ProjectEditorPage() {
     if (page) {
       setPreviewPageId(page.documentId)
       setSelectedNode(null)
+      setSelectedRenderedId(null)
     }
   }, [documents])
 
@@ -337,8 +346,9 @@ export function ProjectEditorPage() {
                     device={device}
                     renderMode={renderMode}
                     onNavigate={handlePreviewNavigate}
-                    onNodeSelect={setSelectedNode}
+                    onNodeSelect={handleNodeSelect}
                     highlightedNode={selectedNode}
+                    highlightedRenderedId={selectedRenderedId}
                     nodeIdToAddress={nodeIdToAddress}
                     measure={measure}
                   />
@@ -349,7 +359,7 @@ export function ProjectEditorPage() {
                   <NodeTree
                     nodes={resolvedNodes}
                     notice={treeNotice}
-                    onNodeSelect={setSelectedNode}
+                    onNodeSelect={handleNodeSelect}
                     selectedNode={selectedNode}
                   />
                 </div>

@@ -8,9 +8,12 @@ import type { ResolvedNode, WorkspaceTree } from './types'
 // content in the page, template regions in the template, injected content in
 // the page's injection, definition content in the definition, namespaced under
 // its instance. An instance's fills are resolved where they are written and
-// replace its placeholders. A `repeat` host lists its rows after its children,
+// replace its placeholders; without placeholders, its children replace the
+// root's children and rows. A `repeat` host lists its rows after its children,
 // made by the engine itself, so a cell is classified as the engine classifies
-// it and the page's expansion is charged against the engine's own budget.
+// it and the page's expansion is charged against the engine's own budget. A
+// marker, written or a component's root, lists what the page injects for the
+// id it renders with.
 
 type Doc = Record<string, unknown>
 type Engine = Pick<RendererModule, 'createExpansionBudget' | 'repeatNodeCount' | 'repeatRows'>
@@ -42,6 +45,8 @@ interface Walk {
   pageId: string
   definitions: Doc
   injections: Map<string, unknown[]>
+  /** The injections being listed: one that reaches its own marker again lists nothing there. */
+  active: Set<string>
   budget: ExpansionBudget
 }
 
@@ -106,22 +111,29 @@ function charge(walk: Walk) {
   if (walk.budget.used > walk.budget.max) throw new TooLarge(null, walk.budget.max)
 }
 
-/** Refuses a host whose rows would pass the budget before any of them is listed, as the resolver does. */
-function checkRows(host: Doc, hostId: string, walk: Walk) {
-  if (walk.engine.repeatRows(host, hostId).length === 0) return
+/**
+ * Refuses a host whose rows would pass the budget before any of them is listed,
+ * as the resolver does. `reserved` is what rows made beside it will expand to.
+ * Returns what its rows expand to.
+ */
+function checkRows(host: Doc, hostId: string, walk: Walk, reserved = 0): number {
+  if (walk.engine.repeatRows(host, hostId).length === 0) return 0
   const need = walk.engine.repeatNodeCount(host, walk.definitions, walk.budget)
-  if (walk.budget.used + need > walk.budget.max) throw new TooLarge(hostId, walk.budget.max)
+  if (walk.budget.used + reserved + need > walk.budget.max) throw new TooLarge(hostId, walk.budget.max)
+  return need
 }
 
 /**
- * The resolver materializes a definition's rows when its instance expands, so
- * every host the instance renders is checked then. A filled placeholder's
- * fallback does not render, so its hosts are not.
+ * The resolver materializes the rows of what an instance renders when the
+ * instance expands, so every host there is checked then, and the hosts reserve
+ * their fan-out together. A filled placeholder's fallback does not render, so
+ * its hosts are not checked.
  */
 function checkDefinitionRows(root: Doc, rootId: string, fills: Map<string, ResolvedNode[]> | null, walk: Walk) {
+  let reserved = 0
   const visit = (node: unknown, hostId: unknown) => {
     if (!isObject(node) || (isPlaceholder(node) && fills?.has(slotName(node)))) return
-    if (typeof hostId === 'string') checkRows(node, hostId, walk)
+    if (typeof hostId === 'string') reserved += checkRows(node, hostId, walk, reserved)
     for (const list of childLists(node)) for (const child of list) visit(child, isObject(child) ? child.id : undefined)
   }
   visit(root, rootId)
@@ -160,8 +172,11 @@ function resolveNode(node: unknown, scope: Scope, walk: Walk, stack: Set<string>
     if (fill) return fill
     return Array.isArray(node.children) ? resolveList(node.children, below(scope, node.id), walk, stack, fallbackId) : []
   }
-  if (node.injectable === true && typeof node.id === 'string' && scope.author.docType !== 'component') {
-    return [injectionPoint(node, node.id, scope, walk, stack)]
+  if (node.injectable === true && typeof node.id === 'string') {
+    // A marker is not charged: it renders as its injection.
+    const marker = entry(node, scope, node.id)
+    marker.children = injected(marker.renderedId ?? marker.id, walk, stack)
+    return [marker]
   }
 
   charge(walk)
@@ -177,8 +192,8 @@ function resolveNode(node: unknown, scope: Scope, walk: Walk, stack: Set<string>
   const lists = use ? fillLists(node).map(([, fill]) => fill)
     : [Array.isArray(node.children) ? node.children : Array.isArray(node.body) ? node.body : []]
   const rows = typeof node.id === 'string' ? walk.engine.repeatRows(node, node.id) : []
-  // Caller content is checked as it is reached; a definition's hosts were checked with their instance.
-  if (rows.length > 0 && scope.author.docType !== 'component') checkRows(node, self.id, walk)
+  // Caller content is checked as it is reached; what an instance namespaces was checked when it expanded.
+  if (rows.length > 0 && scope.namespace === null) checkRows(node, self.id, walk)
   const inner = below(scope, node.id)
   self.children = [
     ...lists.flatMap((list) => resolveList(list, inner, walk, stack, self.id)),
@@ -199,33 +214,51 @@ function expandInstance(self: ResolvedNode, node: Doc, use: string, scope: Scope
 
   const fills = hasPlaceholders(root) ? new Map(fillLists(node).map(([name, fill]) =>
     [name, resolveList(fill, below(scope, node.id), walk, stack, self.id)] as const)) : null
-  const inner: Scope = {
-    author: { docType: 'component', docId: use, path: [rootId] },
-    // The definition's content selects this instance (a page node or a row), or,
-    // when the instance is itself a definition's content, that content's owner.
-    owner: self.internal ? scope.owner : self,
-    namespace: self.renderedId ?? self.id,
-    fills,
-  }
-  checkDefinitionRows(root, rootId, fills, walk)
+  const namespace = self.renderedId ?? self.id
   const nested = new Set(stack).add(use)
-  self.children = [
-    ...resolveList(Array.isArray(root.children) ? root.children : [], inner, walk, nested, rootId),
-    ...walk.engine.repeatRows(root, rootId).flatMap((row) => resolveNode(row, inner, walk, nested, row.id)),
-  ]
+  // Without placeholders, the instance's children replace the root's children and its rows.
+  const replacement = !fills && Array.isArray(node.children) ? node.children : null
+  if (replacement) {
+    const rendered: Doc = { ...root, children: replacement }
+    delete rendered.repeat
+    checkDefinitionRows(rendered, rootId, null, walk)
+    // They are written where the instance is, and render namespaced under it, as its content does.
+    const written = below(scope, node.id)
+    const replacing = { ...written, namespace: scope.namespace ? `${namespace}__${scope.namespace}` : namespace }
+    self.children = resolveList(replacement, replacing, walk, nested, self.id)
+  } else {
+    const inner: Scope = {
+      author: { docType: 'component', docId: use, path: [rootId] },
+      // The definition's content selects this instance (a page node or a row), or,
+      // when the instance is itself a definition's content, that content's owner.
+      owner: self.internal ? scope.owner : self,
+      namespace,
+      fills,
+    }
+    checkDefinitionRows(root, rootId, fills, walk)
+    self.children = [
+      ...resolveList(Array.isArray(root.children) ? root.children : [], inner, walk, nested, rootId),
+      ...walk.engine.repeatRows(root, rootId).flatMap((row) => resolveNode(row, inner, walk, nested, row.id)),
+    ]
+  }
+  // A definition whose root is a marker expands to one, which renders as what
+  // the page injects for the instance's id. What it rendered is charged, as the
+  // resolver charges it, but not listed.
+  if (root.injectable === true) self.children = injected(namespace, walk, stack)
 }
 
 /**
- * A template's injectable marker lists the content the page injects into it.
- * That content is written in the page's injection, wherever the marker sits.
+ * What the page injects into a marker that renders as `id`, written in the
+ * page's injection wherever the marker sits. An injection that reaches its own
+ * marker again renders nothing there, so it lists nothing there.
  */
-function injectionPoint(marker: Doc, markerId: string, scope: Scope, walk: Walk, stack: Set<string>): ResolvedNode {
-  const self = entry(marker, scope, markerId)
-  const content = walk.injections.get(markerId)
-  if (content && content.length > 0) {
-    self.children = resolveList(content, scopeAt('page', walk.pageId, [markerId]), walk, stack, markerId)
-  }
-  return self
+function injected(id: string, walk: Walk, stack: Set<string>): ResolvedNode[] {
+  const content = walk.injections.get(id)
+  if (!content || content.length === 0 || walk.active.has(id)) return []
+  walk.active.add(id)
+  const nodes = resolveList(content, scopeAt('page', walk.pageId, [id]), walk, stack, id)
+  walk.active.delete(id)
+  return nodes
 }
 
 function container(id: string, address: string, layout: string | undefined, type: string, children: ResolvedNode[]): ResolvedNode {
@@ -301,7 +334,7 @@ function resolvePage(yamlFiles: Record<string, string>, pageId: string, engine: 
   }
 
   // The regions and every overlay share one budget, as they do in the resolver.
-  const walk: Walk = { engine, pageId, definitions, injections: contentMap(page.injectables, 'injectableId'), budget: engine.createExpansionBudget() }
+  const walk: Walk = { engine, pageId, definitions, injections: contentMap(page.injectables, 'injectableId'), active: new Set(), budget: engine.createExpansionBudget() }
   const body = Array.isArray(page.body) ? page.body : Array.isArray(page.children) ? page.children : []
   const nodes = template ? resolveRegions(template, templateId, page, walk) : resolveList(body, scopeAt('page', pageId, []), walk, new Set(), 'root')
 
