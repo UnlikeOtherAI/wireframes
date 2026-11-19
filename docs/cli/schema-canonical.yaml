@@ -253,6 +253,7 @@ repeat:
     - caller rows (page, template, fill) before the callee expands; forwarded fills keep page ids
     - ids are checked on the rendered page; a collision is DUPLICATE_NODE_ID at the item
     - one page expands to at most 50,000 nodes; a fan-out over it is REPEAT_BUDGET_EXCEEDED at the outermost repeat
+    - instance children replace a slotless root's rows; a replaced slot fallback makes no rows
   example:
     - id: team
       component: grid

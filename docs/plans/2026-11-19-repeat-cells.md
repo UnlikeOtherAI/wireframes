@@ -326,3 +326,44 @@ The code and `docs/cli/` are authoritative.
 - **Admin.** The tree sees `components.yaml` only. Rows inside built-in or imported
   definitions are not listed and select their page instance, which keeps them
   read-only.
+
+These follow the implementation review (Codex, `c9647ad`):
+
+- **Injected markers.** Dropping the second pass also dropped a legacy effect: a
+  component that expands to an injectable marker took its injection. The marker
+  is now handled where expansion produces it, like a written one, so each injected
+  node is still charged once. That also covers a produced marker directly in a
+  region or overlay list, which the old second pass left unresolved. An injection
+  that reaches its own marker again renders nothing there, where it used to
+  overflow the stack.
+- **Shared budget.** The hosts of one definition reserve their fan-out together
+  before any row is made. Validation reports a budget failure as it happens and
+  expands nothing after it. When another entry fails first, the per-entry retry
+  keeps one budget for the page. A failure inside a row is reported at the
+  outermost repeat. In-memory `validateProject` runs the build's page tree for
+  the budget, so `wf validate`, the browser and the API refuse what the build
+  refuses. The advice in the message now comes from the resolver, so the build
+  prints it too.
+- **What renders.** A filled or emptied slot fallback makes no rows and costs
+  nothing, both at materialization and in the static count of an enclosing
+  repeat. In a component without slots, instance `children` replace the root's
+  rows with its children, and the root's rows are stamped with the definition.
+- **Bindings across boundaries.** `REPEAT_WITH_BINDING` stays an authored check
+  (`doctor/repeat-bindings.js`), now composition-aware:
+  - a binding on or above an instance is followed into the definition, and each
+    repeat it would clone is reported where the definition writes it;
+  - content placed under a bound root (directly or through root `use:`) or
+    under a bound placeholder ancestor is checked as bound;
+  - a cell is bound when its root, or the root it delegates to, is bound.
+  Built-in definitions own no repeat, so the walk does not enter them.
+- **Row lint.** Element prop contracts (`lint/rules/element-contract.js`) run on
+  the rows the doctor's rendered pages contain, with substituted values, mapped
+  to the item and reported once per place and message. Rows in definitions no
+  page renders are not contract-checked. The authored pass keeps `EMPTY_REPEAT`,
+  `REPEAT_ITEM_TOKEN` and the frame rules on rows.
+- **Row failures.** An expansion failure that passes through a row is
+  `REPEAT_ROW_FAILED` at the outermost row's item. Unknown cells and the project's
+  own cycles are still reported once, by their own checks.
+- **Item tokens.** Below a row, the renderer prints an `{{item.…}}` token as
+  written when no collection gives it an item, matching `REPEAT_ITEM_TOKEN`.
+  Outside rows, and inside a collection in a row, tokens resolve as before.
