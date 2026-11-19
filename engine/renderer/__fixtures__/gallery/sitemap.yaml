@@ -51,6 +51,18 @@ routes:
     path: /line/navigation
     page: line_navigation
     template: app_shell
+  - id: polish
+    path: /polish
+    page: polish
+    template: app_shell
+  - id: line_polish
+    path: /line/polish
+    page: line_polish
+    template: app_shell
+  - id: sidebar_panel
+    path: /sidebar-panel
+    page: sidebar_panel
+    template: sidebar_slot_shell
   - id: mobile
     path: /mobile
     page: mobile

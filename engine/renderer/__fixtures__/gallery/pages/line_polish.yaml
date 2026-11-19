@@ -1,0 +1,109 @@
+documentType: page
+specVersion: "1.1"
+id: line_polish
+page:
+  id: line_polish
+  template: app_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: line
+  slots:
+    - slotId: main
+      content:
+        # A menubar strip: leaf titles are links, the page's title is current.
+        - id: line_polish_menubar
+          component: menubar
+          props:
+            items:
+              - { label: Overview, route: line_polish }
+              - { label: Reports, route: data }
+              - label: Edit
+                items:
+                  - { label: Undo, shortcut: "⌘Z" }
+                  - { label: Redo }
+        # A grid without columns lays out tiles that fill the row.
+        - id: line_polish_tiles
+          component: grid
+          repeat:
+            cell: card
+            items:
+              - { id: basic, title: Basic, description: "$10/mo" }
+              - { id: pro, title: Pro, description: "$29/month" }
+              - { id: enterprise, title: Enterprise, description: "$500/month for every team" }
+        - id: line_polish_stats
+          component: grid
+          repeat:
+            cell: stat
+            items:
+              - { id: sales, label: Sales, value: "15000" }
+              - { id: orders, label: Orders, value: "850" }
+              - { id: revenue, label: Monthly recurring revenue, value: "$1,250,000", delta: "+4%" }
+        # Text stays in its box, and authored line breaks show.
+        - id: line_polish_text
+          component: row
+          layout: { type: row, gap: 16, align: start }
+          children:
+            - id: line_polish_word
+              component: card
+              size: { width: 120 }
+              props: { title: Supercalifragilistic, description: "https://example.com/a/long/path" }
+            - id: line_polish_rows
+              component: list
+              size: { width: 160 }
+              props:
+                items:
+                  - { title: Internationalisation, text: Every locale }
+                  - { title: Notifications, text: Everything }
+            - id: line_polish_hours
+              component: section
+              props:
+                title: Opening hours
+                description: |-
+                  Monday - Friday: 7:00 AM - 5:00 PM
+                  Saturday - Sunday: 8:00 AM - 4:00 PM
+        # Read-only beside disabled.
+        - id: line_polish_fields
+          component: card
+          props: { title: Account }
+          layout: { type: grid, columns: 4, gap: 16 }
+          children:
+            - { id: line_polish_email, component: input, props: { label: Email, value: ada@example.com, readonly: true } }
+            - { id: line_polish_plan, component: select, props: { label: Plan, options: [Free, Pro], value: Free, readonly: true } }
+            - { id: line_polish_terms, component: checkbox, props: { label: Accepted terms, checked: true, readonly: true } }
+            - { id: line_polish_off, component: input, props: { label: Disabled, value: Locked, disabled: true } }
+        # Each navigation kind at the top level.
+        - id: line_polish_top
+          component: nav
+          props:
+            variant: top
+            items:
+              - { label: Product, route: line_polish }
+              - { label: Pricing, route: data }
+              - { label: Docs, route: forms }
+        - id: line_polish_navs
+          component: row
+          layout: { type: row, gap: 24, align: start }
+          children:
+            - id: line_polish_sidebar
+              component: nav
+              props:
+                variant: sidebar
+                items:
+                  - { label: Overview, route: line_polish }
+                  - { label: Reports, route: data }
+                  - { label: Settings, route: forms }
+            - id: line_polish_rail
+              component: nav
+              props:
+                variant: rail
+                items:
+                  - { label: Home, icon: house, route: line_polish }
+                  - { label: Inbox, route: data }
+            - id: line_polish_menu
+              component: menu
+              props:
+                items:
+                  - { label: Rename, shortcut: "⌘R" }
+                  - { label: Duplicate }
+                  - { label: Delete, danger: true }
