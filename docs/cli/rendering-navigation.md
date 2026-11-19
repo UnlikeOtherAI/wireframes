@@ -29,7 +29,7 @@ depth 0), in card and line mode:
 | Kind | Draws | Frame |
 |---|---|---|
 | `nav variant: sidebar` | a panel at `sidebar.width` (`--wf-sidebar-w`), white in card mode, one edge on the right, 8px inset | `B` → `edge` |
-| `nav variant: rail` | a narrow strip of icon tiles with a right edge. An item without an `icon` keeps an empty, `aria-hidden` tile, so the current tile stays filled | `B` → `edge` |
+| `nav variant: rail` | a narrow strip of icon tiles with a right edge. The current tile is plain: the light current fill in card mode (none in line mode) inside a strong 1.5 px solid edge, with its icon in ink, so the icon reaches 3:1 on the tile and the edge 3:1 on the rail. An item without an `icon` keeps an empty, `aria-hidden` tile, so the current one still shows its edge | `B` → `edge` |
 | `nav variant: top` | a bar across the width, `header.height` tall, with a bottom rule | `B` → `edge` |
 | `menubar` | a compact strip of menu titles, ruled above and below | `B` → `edge` |
 | `menu` | the dropdown panel: 5px inset, radius 8 and a shadow in card mode, a solid edge in line mode. `min-width: min(180px, 100%)` and `max-width: 100%`, so it never overflows a narrow container; long labels end in an ellipsis, while shortcuts and chevrons never shrink | `T` → `surface` |
