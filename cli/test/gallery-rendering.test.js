@@ -18,6 +18,8 @@ const BASELINES = path.join(__dirname, '__screenshots__', 'gallery', ...(process
 const PAGE_IDS = [
   'containers', 'content', 'forms', 'data', 'charts', 'navigation_elements', 'line_structure', 'line_forms', 'auth',
   'app_navigation', 'line_navigation',
+  // Render polish: tiles, text, line breaks, read-only, menubar leaves and navigation kinds; the sidebar slot panel.
+  'polish', 'line_polish', 'sidebar_panel',
 ];
 const MAX_DIFF_PIXEL_RATIO = 0.01;
 

@@ -102,6 +102,8 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-text-label{font-size:12px;font-weight:600;color:var(--wf-ink-3);text-transform:uppercase;letter-spacing:.04em}
 .wf-text-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
 .wf-inline-link{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.wf-heading :is(h1,h2,h3,h4,h5,h6),.wf-paragraph p,.wf-text,.wf-block-title,.wf-section-title,.wf-card-title,.wf-form-title,.wf-block-desc,.wf-alert-title,.wf-alert-text,.wf-empty-title,.wf-empty-text{white-space:pre-line}
+.wf-text>.wf-node-children{white-space:normal}
 .wf-interactive{cursor:pointer}
 .wf-bar{display:inline-block;height:.85em;min-width:1.5em;border-radius:2px;background:var(--wf-skeleton-bg,var(--wf-line-2));vertical-align:middle}
 .wf-mode-line .wf-bar{background:transparent;border:1px dashed var(--wf-line)}
@@ -120,6 +122,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-block-title,.wf-section-title,.wf-card-title,.wf-form-title{margin:0;color:var(--wf-ink);font-size:14px;font-weight:600;line-height:1.3}
 .wf-block-desc{margin-top:2px;color:var(--wf-ink-3);font-size:12px;line-height:1.45}
 .wf-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+[data-wf-frame="surface"]>.wf-block-head,[data-wf-frame="surface"]>.wf-node-children>:is(.wf-heading,.wf-paragraph,.wf-text){overflow-wrap:break-word}
 .wf-act{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;min-width:var(--wf-control-min,80px);padding:6px 14px;font:inherit;font-size:13px;font-weight:500;line-height:1.2;white-space:nowrap;cursor:pointer}
 .wf-act-icon{min-width:32px;padding:6px}
 .wf-mode-line .wf-act{background:transparent;border:1px solid var(--wf-line-strong);color:var(--wf-ink);border-radius:0}
@@ -189,9 +192,10 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-stat{display:flex;flex-direction:column;gap:6px;justify-content:center;min-width:0}
 .wf-stat[data-wf-frame="surface"]{padding:16px}
 .wf-stat-head{display:flex;align-items:center;gap:8px;min-width:0}
-.wf-stat-label{font-size:12px;font-weight:500;color:var(--wf-ink-3);text-transform:uppercase;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wf-stat-label{font-size:12px;font-weight:500;color:var(--wf-ink-3);text-transform:uppercase;letter-spacing:.04em;min-width:0;overflow-wrap:anywhere}
 .wf-stat-head .wf-icon-glyph{color:var(--wf-ink-4)}
-.wf-stat-value{display:flex;align-items:baseline;gap:10px;font-size:24px;font-weight:650;color:var(--wf-ink);line-height:1.15}
+.wf-stat-value{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;min-width:0;font-size:24px;font-weight:650;color:var(--wf-ink);line-height:1.15}
+.wf-stat-number{min-width:0;overflow-wrap:anywhere}
 .wf-stat-delta{font-size:12px;font-weight:500;color:var(--wf-ink-3);white-space:nowrap}
 .wf-stat-spark{width:100%;height:22px;display:block;fill:none;stroke:var(--wf-ink-4);stroke-width:1.5}
 .wf-progress{display:flex;flex-direction:column;gap:5px;min-width:0}
@@ -316,8 +320,19 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#3
 .wf-field-invalid{--wf-tone:var(--wf-danger)}
 .wf-field-invalid .wf-control,.wf-field-invalid textarea{border-color:var(--wf-tone);border-width:2px}
 .wf-select-searchable .wf-control select{padding-left:0}
-.wf-mode-card .wf-control:has(>[data-wf-readonly]:not([data-wf-disabled])),.wf-mode-card .wf-textarea textarea[data-wf-readonly]:not([data-wf-disabled]){background:var(--wf-fill-2)}
-.wf-mode-line .wf-control:has(>[data-wf-readonly]:not([data-wf-disabled])),.wf-mode-line .wf-textarea textarea[data-wf-readonly]:not([data-wf-disabled]){border-style:dashed}
+.wf-field-lock{display:inline-flex;align-items:center;margin-left:6px;color:var(--wf-ink-3);vertical-align:-1px}
+.wf-field-lock svg{display:block;width:10px;height:12px;flex:0 0 auto}
+.wf-field-readonly :is(.wf-control,.wf-color,.wf-numstepper,.wf-otp-box,.wf-segment-track,.wf-check-mark,.wf-radio-mark,.wf-toggle-track),.wf-field-readonly.wf-textarea textarea{border-style:dashed}
+.wf-mode-card .wf-field-readonly:not(.wf-field-invalid) :is(.wf-control,.wf-color,.wf-numstepper,.wf-otp-box,.wf-segment-track,.wf-upload-zone),.wf-mode-card .wf-field-readonly.wf-textarea:not(.wf-field-invalid) textarea{border-color:var(--wf-ink-3);background:var(--wf-fill-2)}
+.wf-mode-line .wf-field-readonly:not(.wf-field-invalid) :is(.wf-control,.wf-color,.wf-numstepper,.wf-otp-box,.wf-segment-track),.wf-mode-line .wf-field-readonly.wf-textarea:not(.wf-field-invalid) textarea{border-color:var(--wf-line-strong)}
+.wf-mode-card .wf-field-readonly[data-wf-frame="surface"]:is(.wf-picker,.wf-editor){border-style:dashed;border-color:var(--wf-ink-3)}
+.wf-mode-line .wf-field-readonly[data-wf-frame="surface"]:is(.wf-picker,.wf-editor){outline-style:dashed}
+.wf-field-readonly select{appearance:none;-webkit-appearance:none}
+.wf-field-readonly textarea{resize:none}
+.wf-field-readonly .wf-numstepper-btn{display:none}
+.wf-field-readonly .wf-numstepper-value{display:inline-flex;align-items:center;justify-content:center;min-height:var(--wf-control-h,36px)}
+.wf-field-readonly .wf-range-thumb{border-style:dashed}
+.wf-field-readonly :is(select,.wf-choice,.wf-segment,input[type=color],.wf-range){cursor:default}
 .wf-control-center{position:relative}
 .wf-control-center input{padding-inline-start:36px}
 .wf-affix-center{position:absolute;inset:0;gap:6px;pointer-events:none;justify-content:center}
@@ -463,10 +478,30 @@ button.wf-tab{font-family:inherit;color:var(--wf-choice-ink,var(--wf-ink-3));bac
 .wf-nav-child{padding-left:38px;font-size:12.5px}
 .wf-nav-collapsed .wf-nav-label,.wf-nav-collapsed .wf-nav-badge,.wf-nav-collapsed .wf-nav-group{display:none}
 .wf-nav-collapsed .wf-nav-item{justify-content:center;padding:8px}
-.wf-menu{display:flex;flex-direction:column;gap:1px;min-width:180px}
+.wf-menu{display:flex;flex-direction:column;gap:1px;min-width:min(180px,100%)}
 .wf-menu-item{display:flex;align-items:center;gap:10px;padding:7px 12px;font-size:13px;color:var(--wf-ink-2);text-decoration:none;border-radius:4px;min-width:0}
-.wf-menu-label{flex:1 1 auto;min-width:0;white-space:nowrap}
-.wf-menu-shortcut{font-size:11px;color:var(--wf-ink-4);flex:0 0 auto}
+.wf-menu-label{flex:1 1 auto;min-width:min(2em,100%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wf-menu-label:has(+.wf-menu-shortcut){flex-shrink:0;max-width:calc(100% - 10px)}
+.wf-ico+.wf-menu-label:has(+.wf-menu-shortcut){max-width:calc(100% - 36px)}
+.wf-menu[data-wf-frame="surface"]{width:max-content;max-width:100%;padding:5px}
+.wf-mode-card .wf-menu[data-wf-frame="surface"]{border-radius:8px;box-shadow:0 10px 30px rgba(17,24,39,.12)}
+.wf-mode-line .wf-menu[data-wf-frame="surface"]{outline:none;border:1px solid var(--wf-line-strong);border-radius:0}
+.wf-mode-card{--wf-panel-edge:var(--wf-line)}
+.wf-mode-line{--wf-panel-edge:var(--wf-line-strong)}
+.wf-mode-card .wf-root.wf-role-sidebar[data-wf-frame="edge"],.wf-mode-card .wf-nav-sidebar[data-wf-frame="edge"],.wf-mode-card .wf-nav-rail[data-wf-frame="edge"],.wf-mode-card .wf-nav-top[data-wf-frame="edge"],.wf-mode-card .wf-menubar[data-wf-frame="edge"]{background:#ffffff}
+.wf-root.wf-role-sidebar[data-wf-edge-side="end"],.wf-nav-sidebar[data-wf-frame="edge"],.wf-nav-rail[data-wf-frame="edge"]{border-right:1px solid var(--wf-panel-edge)}
+.wf-root.wf-role-sidebar[data-wf-edge-side="start"]{border-left:1px solid var(--wf-panel-edge)}
+.wf-root.wf-role-sidebar[data-wf-edge-side="bottom"]{border-bottom:1px solid var(--wf-panel-edge)}
+.wf-root.wf-role-sidebar[data-wf-edge-side="top"]{border-top:1px solid var(--wf-panel-edge)}
+.wf-nav-sidebar[data-wf-frame="edge"]{width:min(var(--wf-sidebar-w,256px),100%);flex:0 1 auto;min-width:0;align-self:stretch;padding:8px}
+.wf-nav-rail[data-wf-frame="edge"]{align-self:stretch;padding:8px 0}
+.wf-nav-rail .wf-ico-placeholder{border:1px dashed var(--wf-line)}
+.wf-mode-line .wf-nav-rail .wf-ico-placeholder{border-color:var(--wf-line-strong)}
+.wf-nav-rail .wf-nav-on .wf-ico-placeholder{border-color:transparent}
+.wf-nav-top[data-wf-frame="edge"]{align-self:stretch;min-height:var(--wf-header-h,56px);padding:0 12px;border-bottom:1px solid var(--wf-panel-edge)}
+.wf-menubar[data-wf-frame="edge"]{align-self:stretch;min-height:36px;padding:0 4px;gap:0;border-top:1px solid var(--wf-panel-edge);border-bottom:1px solid var(--wf-panel-edge)}
+.wf-menubar[data-wf-frame="edge"] .wf-menubar-trigger{border-radius:0}
+.wf-menu-shortcut{font-size:11px;color:var(--wf-ink-4);flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-mask-image:linear-gradient(90deg,#000 calc((100% - 2em) * 1000),transparent 0);mask-image:linear-gradient(90deg,#000 calc((100% - 2em) * 1000),transparent 0)}
 .wf-menu-danger{color:var(--wf-danger);font-weight:500}
 .wf-menu-sep{height:1px;background:var(--wf-line-2);margin:4px 0}
 .wf-menu-item .wf-icon-glyph{color:var(--wf-ink-4);width:16px;min-width:16px;font-size:13px}
@@ -541,6 +576,9 @@ button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:
 .wf-menubar-menu{position:relative;display:flex}
 .wf-menubar-trigger{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;font:inherit;font-size:13px;font-weight:500;color:var(--wf-ink-2);background:transparent;border:0;border-radius:var(--wf-corner-radius,6px);cursor:pointer}
 .wf-menubar-trigger[data-wf-expanded]{background:var(--wf-fill);color:var(--wf-ink)}
+a.wf-menubar-trigger,span.wf-menubar-trigger{text-decoration:none}
+span.wf-menubar-trigger{cursor:default}
+.wf-menubar-trigger[data-wf-current]{color:var(--wf-ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--wf-ink)}
 .wf-mode-line .wf-menubar-trigger{border-radius:0}
 .wf-mode-line .wf-menubar-trigger[data-wf-expanded]{background:transparent;outline:1px dashed var(--wf-line-strong);outline-offset:-1px}
 .wf-menubar-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:30;min-width:220px;padding:5px;background:#ffffff;border:1px solid var(--wf-line-2);border-radius:8px;box-shadow:0 10px 30px rgba(17,24,39,.12)}
@@ -609,7 +647,8 @@ button.wf-nav-trigger{font:inherit;font-size:13px;background:transparent;border:
 .wf-list-lead{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
 .wf-list-lead .wf-icon-glyph{color:var(--wf-ink-4);font-size:17px}
 .wf-list-body{display:flex;flex-direction:column;gap:2px;flex:1 1 auto;min-width:0}
-.wf-list-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--wf-ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wf-list-title{display:block;font-size:13px;font-weight:500;color:var(--wf-ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wf-list-title>.wf-badge{margin-left:8px;vertical-align:middle}
 .wf-list-text{font-size:12px;color:var(--wf-ink-3);line-height:1.45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wf-list-meta{font-size:11px;color:var(--wf-ink-4);flex:0 0 auto;white-space:nowrap}
 .wf-list-trail{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto}
@@ -816,7 +855,7 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
     <span class="cat-frame">always draws a box</span>
   </div>
   <p class="cat-summary">Always a framed card, at any nesting depth.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_card" class="wf-node wf-card wf-surface" style="display:flex;flex-direction:column;gap:16px;padding:16px" data-wf-frame="surface" data-wf-state-bindings="{}"><header class="wf-block-head"><div class="wf-block-text"><div class="wf-card-title">Revenue</div></div></header><div class="wf-node-children" style="display:flex;flex-direction:column;gap:16px"><div id="demo_card_0" class="wf-node wf-stat wf-group" style="min-height:96px" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">This month</span></div><div class="wf-stat-value">$12.4k</div></div></div></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_card" class="wf-node wf-card wf-surface" style="display:flex;flex-direction:column;gap:16px;padding:16px" data-wf-frame="surface" data-wf-state-bindings="{}"><header class="wf-block-head"><div class="wf-block-text"><div class="wf-card-title">Revenue</div></div></header><div class="wf-node-children" style="display:flex;flex-direction:column;gap:16px"><div id="demo_card_0" class="wf-node wf-stat wf-group" style="min-height:96px" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">This month</span></div><div class="wf-stat-value"><span class="wf-stat-number">$12.4k</span></div></div></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- card: { title: Revenue, children: [{ stat: { label: This month, value: $12.4k } }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">title</td><td>string</td></tr><tr><td class="">description</td><td>string</td></tr><tr><td class="">actions</td><td>array</td></tr><tr><td class="">media</td><td>string</td></tr><tr><td class="">footer</td><td>boolean</td></tr></tbody></table></div>
@@ -853,10 +892,10 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
     <span class="cat-name">grid</span>
     <span class="cat-frame">never draws a box</span>
   </div>
-  <p class="cat-summary">Grid layout group. Never framed; its children become framed tiles.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_grid" class="wf-node wf-grid wf-group" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="demo_grid_0" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">One</span></div><div class="wf-stat-value">128</div></div>
-<div id="demo_grid_1" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">Two</span></div><div class="wf-stat-value">64</div></div>
-<div id="demo_grid_2" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">Three</span></div><div class="wf-stat-value">9</div></div></div></div></div>
+  <p class="cat-summary">Grid layout group. Never framed; its children become framed tiles. Without columns the tiles fill the row and wrap.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_grid" class="wf-node wf-grid wf-group" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="demo_grid_0" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">One</span></div><div class="wf-stat-value"><span class="wf-stat-number">128</span></div></div>
+<div id="demo_grid_1" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">Two</span></div><div class="wf-stat-value"><span class="wf-stat-number">64</span></div></div>
+<div id="demo_grid_2" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">Three</span></div><div class="wf-stat-value"><span class="wf-stat-number">9</span></div></div></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- grid: { columns: 3, children: [{ stat: { label: One, value: &quot;128&quot; } }, { stat: { label: Two, value: &quot;64&quot; } }, { stat: { label: Three, value: &quot;9&quot; } }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="">columns</td><td>number</td></tr><tr><td class="">gap</td><td>number</td></tr><tr><td class="">minItemWidth</td><td>number</td></tr></tbody></table></div>
@@ -1015,7 +1054,7 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
     <span class="cat-frame">the frame rules decide</span>
   </div>
   <p class="cat-summary">KPI tile: label, value, optional delta/trend/sparkline.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_stat" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">Revenue</span></div><div class="wf-stat-value">$12.4k<span class="wf-stat-delta wf-trend-up">↑ +8%</span></div></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_stat" class="wf-node wf-stat wf-surface" style="min-height:96px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-stat-head"><span class="wf-stat-label">Revenue</span></div><div class="wf-stat-value"><span class="wf-stat-number">$12.4k</span><span class="wf-stat-delta wf-trend-up">↑ +8%</span></div></div></div>
   <div class="cat-split">
     <pre class="cat-code">- stat: { label: Revenue, value: $12.4k, delta: +8%, trend: up }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">label</td><td>string</td></tr><tr><td class="">value</td><td>string,number</td></tr><tr><td class="">delta</td><td>string</td></tr><tr><td class="">trend</td><td>up | down | flat</td></tr><tr><td class="">icon</td><td>string</td></tr><tr><td class="">sparkline</td><td>boolean</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>kpi</code>, <code>metric</code>.</p></div>
@@ -1136,7 +1175,7 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
     <span class="cat-frame">never draws a box</span>
   </div>
   <p class="cat-summary">Multi-line field.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_textarea" class="wf-node wf-textarea wf-field" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label">Notes</label><textarea rows="4" placeholder=""></textarea></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_textarea" class="wf-node wf-textarea wf-field" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label" id="demo_textarea__label">Notes</label><textarea rows="4" placeholder="" aria-labelledby="demo_textarea__label"></textarea></div></div>
   <div class="cat-split">
     <pre class="cat-code">- textarea: { label: Notes, rows: 4 }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">label</td><td>string</td></tr><tr><td class="">help</td><td>string</td></tr><tr><td class="">error</td><td>string</td></tr><tr><td class="">required</td><td>boolean</td></tr><tr><td class="">disabled</td><td>boolean</td></tr><tr><td class="">readonly</td><td>boolean</td></tr><tr><td class="">placeholder</td><td>string</td></tr><tr><td class="">rows</td><td>number</td></tr><tr><td class="">maxLength</td><td>number</td></tr></tbody></table></div>
@@ -1148,7 +1187,7 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
     <span class="cat-frame">never draws a box</span>
   </div>
   <p class="cat-summary">Dropdown field; searchable turns it into a combobox; value (a list with multiple) is the initial selection.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_select" class="wf-node wf-select wf-field wf-select-searchable" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label">Status</label><span class="wf-control"><span class="wf-affix wf-affix-start"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-magnifying-glass" data-wf-glyph="M"></i></span><select><option value="">Select</option><option value="Draft">Draft</option><option value="Ready">Ready</option></select></span></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_select" class="wf-node wf-select wf-field wf-select-searchable" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label" id="demo_select__label">Status</label><span class="wf-control"><span class="wf-affix wf-affix-start"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-magnifying-glass" data-wf-glyph="M"></i></span><select aria-labelledby="demo_select__label"><option value="">Select</option><option value="Draft">Draft</option><option value="Ready">Ready</option></select></span></div></div>
   <div class="cat-split">
     <pre class="cat-code">- select: { label: Status, options: [Draft, Ready], searchable: true }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">label</td><td>string</td></tr><tr><td class="">help</td><td>string</td></tr><tr><td class="">error</td><td>string</td></tr><tr><td class="">required</td><td>boolean</td></tr><tr><td class="">disabled</td><td>boolean</td></tr><tr><td class="">readonly</td><td>boolean</td></tr><tr><td class="">placeholder</td><td>string</td></tr><tr><td class="">options</td><td>array</td></tr><tr><td class="">value</td><td>string,number,array</td></tr><tr><td class="">searchable</td><td>boolean</td></tr><tr><td class="">multiple</td><td>boolean</td></tr></tbody></table><p class="cat-aliases">Also answers to <code>combobox</code>, <code>autocomplete</code>.</p></div>
@@ -1208,7 +1247,7 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
     <span class="cat-frame">never draws a box</span>
   </div>
   <p class="cat-summary">Chips inside a field.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_tags_input" class="wf-node wf-tags_input wf-field" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label">Labels</label><span class="wf-control wf-tags"><span class="wf-tag">urgent<span class="wf-tag-x">×</span></span><span class="wf-tag">billing<span class="wf-tag-x">×</span></span><input type="text" placeholder="" /></span></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_tags_input" class="wf-node wf-tags_input wf-field" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label" id="demo_tags_input__label">Labels</label><span class="wf-control wf-tags"><span class="wf-tag">urgent<span class="wf-tag-x">×</span></span><span class="wf-tag">billing<span class="wf-tag-x">×</span></span><input type="text" placeholder="" aria-labelledby="demo_tags_input__label" /></span></div></div>
   <div class="cat-split">
     <pre class="cat-code">- tags_input: { label: Labels, tags: [urgent, billing] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">label</td><td>string</td></tr><tr><td class="">help</td><td>string</td></tr><tr><td class="">error</td><td>string</td></tr><tr><td class="">required</td><td>boolean</td></tr><tr><td class="">disabled</td><td>boolean</td></tr><tr><td class="">readonly</td><td>boolean</td></tr><tr><td class="">tags</td><td>array</td></tr><tr><td class="">placeholder</td><td>string</td></tr></tbody></table></div>
@@ -1314,9 +1353,9 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
 <article class="cat-item" id="el-nav">
   <div class="cat-head">
     <span class="cat-name">nav</span>
-    <span class="cat-frame">never draws a box</span>
+    <span class="cat-frame">draws its own bar edge at the top level (variant sidebar|rail|top)</span>
   </div>
-  <p class="cat-summary">Side navigation; rail stacks icons above labels; collapsed hides labels; top is a horizontal site menu whose open item draws its panel.</p>
+  <p class="cat-summary">Side navigation; rail stacks icons above labels; collapsed hides labels; top is a horizontal site menu whose open item draws its panel. Put a sidebar or rail in a template region with role: sidebar beside main.</p>
   <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><nav id="demo_nav" class="wf-node wf-nav" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-nav-item wf-nav-on" aria-current="page" data-wf-current><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-gauge" data-wf-glyph="G"></i></span><span class="wf-nav-label">Dashboard</span></span><span class="wf-nav-item"><span class="wf-nav-label">Settings</span></span></nav></div>
   <div class="cat-split">
     <pre class="cat-code">- nav: { items: [{ icon: gauge, label: Dashboard, active: true }, { label: Settings }] }</pre>
@@ -1326,10 +1365,10 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
 <article class="cat-item" id="el-menu">
   <div class="cat-head">
     <span class="cat-name">menu</span>
-    <span class="cat-frame">never draws a box</span>
+    <span class="cat-frame">draws a box at the top level only</span>
   </div>
-  <p class="cat-summary">Menu item list for a dropdown or context overlay; the overlay owns the frame.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_menu" class="wf-node wf-menu" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-menu-item"><span class="wf-menu-label">Rename</span></span><span class="wf-menu-item wf-menu-danger"><span class="wf-menu-label">Delete</span></span></div></div>
+  <p class="cat-summary">Menu item list. On the page it draws as a dropdown panel; in a dropdown, card or modal the container owns the frame.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_menu" class="wf-node wf-menu wf-surface" data-wf-frame="surface" data-wf-state-bindings="{}"><span class="wf-menu-item"><span class="wf-menu-label">Rename</span></span><span class="wf-menu-item wf-menu-danger"><span class="wf-menu-label">Delete</span></span></div></div>
   <div class="cat-split">
     <pre class="cat-code">- menu: { items: [Rename, { label: Delete, danger: true }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr></tbody></table></div>
@@ -1338,12 +1377,12 @@ a.wf-list-row:hover{background:var(--wf-fill-2)}
 <article class="cat-item" id="el-menubar">
   <div class="cat-head">
     <span class="cat-name">menubar</span>
-    <span class="cat-frame">never draws a box</span>
+    <span class="cat-frame">draws its own bar edge at the top level</span>
   </div>
-  <p class="cat-summary">Desktop application menu row; open draws that menu panel under its trigger. Never framed: the bar it sits in owns the frame.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_menubar" class="wf-node wf-menubar" data-wf-frame="content" data-wf-state-bindings="{}"><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">File</button></div><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">Edit</button></div><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">View</button></div></div></div>
+  <p class="cat-summary">Desktop application menu row. A title with items is a menu; open draws its panel. A title without items is a plain link: give it a route, never a one-item menu repeating its name. Mark the page with current, not open. At the top level it draws as a menu strip; in a framed bar the bar owns it.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="demo_menubar" class="wf-node wf-menubar" data-wf-frame="edge" data-wf-state-bindings="{}"><div class="wf-menubar-menu"><span class="wf-menubar-trigger" aria-current="page" data-wf-current>Home</span></div><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">File</button></div><div class="wf-menubar-menu"><button type="button" class="wf-menubar-trigger" aria-expanded="false">Edit</button></div></div></div>
   <div class="cat-split">
-    <pre class="cat-code">- menubar: { items: [{ label: File, items: [New, Open] }, { label: Edit, items: [{ label: Undo, shortcut: &quot;⌘Z&quot; }, { label: Redo, shortcut: &quot;⇧⌘Z&quot; }] }, { label: View, items: [Zoom in] }] }</pre>
+    <pre class="cat-code">- menubar: { items: [{ label: Home, route: home, current: true }, { label: File, items: [New, Open] }, { label: Edit, items: [{ label: Undo, shortcut: &quot;⌘Z&quot; }, { label: Redo, shortcut: &quot;⇧⌘Z&quot; }] }] }</pre>
     <div><table class="cat-props"><thead><tr><th>Prop</th><th>Accepts</th></tr></thead><tbody><tr><td class="cat-primary">items</td><td>array</td></tr><tr><td class="">open</td><td>string</td></tr></tbody></table></div>
   </div>
 </article>
@@ -1537,7 +1576,7 @@ wf component copy std.data_page --as my_data_page</pre>
 
 wf component show std.hero
 wf component copy std.hero --as my_hero</pre>
-    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Default</th><th>What it sets</th></tr></thead><tbody><tr><td>eyebrow</td><td>New in 2.0</td><td>Small badge above the headline</td></tr><tr><td>title</td><td>Wireframes your whole team can click through</td><td>Headline</td></tr><tr><td>text</td><td>Describe each screen in YAML, review it in the browser and keep every flow in sync with the brief.</td><td>Intro paragraph</td></tr><tr><td>primaryAction</td><td>Get started</td><td>Label of the primary call to action</td></tr><tr><td>secondaryAction</td><td>Watch the demo</td><td>Label of the secondary call to action</td></tr><tr><td>mediaAlt</td><td>Product screenshot of the dashboard</td><td>Describes the fallback image</td></tr><tr><td>primaryRoute</td><td>—</td><td>Route id the primary call to action opens</td></tr><tr><td>secondaryRoute</td><td>—</td><td>Route id the secondary call to action opens</td></tr></tbody></table><p class="cat-aliases">Slots: <code>actions</code> falls back to action_row; <code>media</code> falls back to media_image. Fill one with <code>slots.&lt;name&gt;</code> (instance <code>children</code> fill <code>default</code>); <code>[]</code> leaves it empty.</p></div>
+    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Default</th><th>What it sets</th></tr></thead><tbody><tr><td>eyebrow</td><td>New in 2.0</td><td>Small badge above the headline; blank leaves it out</td></tr><tr><td>title</td><td>Wireframes your whole team can click through</td><td>Headline</td></tr><tr><td>text</td><td>Describe each screen in YAML, review it in the browser and keep every flow in sync with the brief.</td><td>Intro paragraph; blank leaves it out</td></tr><tr><td>primaryAction</td><td>Get started</td><td>Label of the primary call to action; blank leaves it out</td></tr><tr><td>secondaryAction</td><td>Watch the demo</td><td>Label of the secondary call to action; blank leaves it out</td></tr><tr><td>mediaAlt</td><td>Product screenshot of the dashboard</td><td>Describes the fallback image</td></tr><tr><td>primaryRoute</td><td>—</td><td>Route id the primary call to action opens</td></tr><tr><td>secondaryRoute</td><td>—</td><td>Route id the secondary call to action opens</td></tr></tbody></table><p class="cat-aliases">Slots: <code>actions</code> falls back to action_row; <code>media</code> falls back to media_image. Fill one with <code>slots.&lt;name&gt;</code> (instance <code>children</code> fill <code>default</code>); <code>[]</code> leaves it empty.</p></div>
   </div>
 </article>
 <article class="cat-item" id="pattern-std-login">
@@ -1592,7 +1631,7 @@ wf component copy std.not_found --as my_not_found</pre>
   <p class="cat-summary">Settings screen: page header, a section nav on the left and setting cards on the right (the default slot).</p>
   <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="settings_page" class="wf-node wf-stack wf-group" style="display:flex;flex-direction:column;gap:24px" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><header id="settings_page__header" class="wf-node wf-page_header" data-wf-frame="content" data-wf-state-bindings="{}"><div class="wf-ph-main"><div class="wf-ph-text"><h1 class="wf-ph-title">Settings</h1><p class="wf-ph-sub">Manage your profile, notifications and security.</p></div></div></header>
 <div id="settings_page__body" class="wf-node wf-row wf-group" style="display:flex;flex-direction:row;gap:24px;align-items:start" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><nav id="settings_page__section_nav" class="wf-node wf-nav" style="width:220px;flex:0 1 auto" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-nav-item wf-nav-on" aria-current="page" data-wf-current><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-user" data-wf-glyph="U"></i></span><span class="wf-nav-label">Profile</span></span><span class="wf-nav-item"><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-bell" data-wf-glyph="B"></i></span><span class="wf-nav-label">Notifications</span></span><span class="wf-nav-item"><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-lock" data-wf-glyph="L"></i></span><span class="wf-nav-label">Security</span></span><span class="wf-nav-item"><span class="wf-ico"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-credit-card" data-wf-glyph="C"></i></span><span class="wf-nav-label">Billing</span></span></nav>
-<div id="settings_page__content" class="wf-node wf-stack wf-group" style="display:flex;flex-direction:column;gap:16px;width:100%;flex:0 1 auto" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="settings_page__profile" class="wf-node wf-card wf-surface" style="display:flex;flex-direction:column;gap:16px;padding:16px" data-wf-frame="surface" data-wf-state-bindings="{}"><header class="wf-block-head"><div class="wf-block-text"><div class="wf-card-title">Profile</div><div class="wf-block-desc">How other people see you.</div></div></header><div class="wf-node-children" style="display:flex;flex-direction:column;gap:16px"><form id="settings_page__profile_form" class="wf-node wf-form wf-group" style="display:flex;flex-direction:column;gap:16px" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px"><div id="settings_page__full_name" class="wf-node wf-input wf-field" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label" for="settings_page__full_name__input">Full name</label><span class="wf-control"><input id="settings_page__full_name__input" type="text" placeholder="" value="Ada Lovelace" /></span></div>
+<div id="settings_page__content" class="wf-node wf-stack wf-group" style="display:flex;flex-direction:column;gap:16px;width:100%;flex:0 1 auto" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="settings_page__profile" class="wf-node wf-card wf-surface" style="display:flex;flex-direction:column;gap:16px;padding:16px" data-wf-frame="surface" data-wf-state-bindings="{}"><header class="wf-block-head"><div class="wf-block-text"><div class="wf-card-title">Profile</div><div class="wf-block-desc">How other people see you.</div></div></header><div class="wf-node-children" style="display:flex;flex-direction:column;gap:16px"><form id="settings_page__profile_form" class="wf-node wf-form wf-group" style="display:flex;flex-direction:column;gap:16px" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px"><div id="settings_page__full_name" class="wf-node wf-input wf-field" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label" for="settings_page__full_name__input">Full name</label><span class="wf-control"><input id="settings_page__full_name__input" type="text" placeholder="" value="Ada Lovelace" /></span></div>
 <div id="settings_page__email" class="wf-node wf-input wf-field" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-field-label" for="settings_page__email__input">Email</label><span class="wf-control"><span class="wf-affix wf-affix-start"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-envelope" data-wf-glyph="E"></i></span><input id="settings_page__email__input" type="email" placeholder="" value="ada@example.com" /></span></div></div><div class="wf-form-actions"><button class="wf-act wf-button-primary">Save changes</button></div></form></div></div>
 <div id="settings_page__notifications" class="wf-node wf-card wf-surface" style="display:flex;flex-direction:column;gap:16px;padding:16px" data-wf-frame="surface" data-wf-state-bindings="{}"><header class="wf-block-head"><div class="wf-block-text"><div class="wf-card-title">Notifications</div><div class="wf-block-desc">Choose what we email you about.</div></div></header><div class="wf-node-children" style="display:flex;flex-direction:column;gap:16px"><div id="settings_page__notify_updates" class="wf-node wf-toggle" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-choice wf-choice-on"><span class="wf-toggle-track wf-toggle-on" role="switch" aria-labelledby="settings_page__notify_updates__label" aria-describedby="settings_page__notify_updates__help" aria-checked="true" data-wf-checked><span class="wf-toggle-thumb"></span></span><span class="wf-choice-text"><span class="wf-choice-label" id="settings_page__notify_updates__label">Product updates</span><span class="wf-choice-desc" id="settings_page__notify_updates__help">New features and improvements.</span></span></label></div>
 <div id="settings_page__notify_summary" class="wf-node wf-toggle" data-wf-frame="control" data-wf-state-bindings="{}"><label class="wf-choice"><span class="wf-toggle-track" role="switch" aria-labelledby="settings_page__notify_summary__label" aria-describedby="settings_page__notify_summary__help" aria-checked="false"><span class="wf-toggle-thumb"></span></span><span class="wf-choice-text"><span class="wf-choice-label" id="settings_page__notify_summary__label">Weekly summary</span><span class="wf-choice-desc" id="settings_page__notify_summary__help">A digest of activity in your workspace.</span></span></label></div>
@@ -1636,8 +1675,8 @@ wf component copy std.signup --as my_signup</pre>
     <span class="cat-name">std.site_footer</span>
     <span class="cat-frame">pattern</span>
   </div>
-  <p class="cat-summary">Marketing site footer: logo and tagline, link columns (the columns slot), copyright and social links.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="site_footer" class="wf-node wf-stack wf-group" style="display:flex;flex-direction:column;gap:24px" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="site_footer__top" class="wf-node wf-row wf-group" style="display:flex;flex-direction:row;gap:48px;align-items:start;justify-content:space-between" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="site_footer__brand" class="wf-node wf-stack wf-group" style="display:flex;flex-direction:column;gap:8px;width:240px;flex:0 1 auto" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="site_footer__logo" class="wf-node wf-image wf-image-logo wf-company-logo" style="width:112px;height:32px;max-width:100%;flex:none;align-self:flex-start;overflow:hidden" data-wf-frame="content" data-wf-state-bindings="{}"><div data-wf-logo-slot="logo_1" data-wf-logo-width="112" data-wf-logo-height="32" class="wf-image-placeholder" role="img" aria-label="Acme" title="Acme" style="width:100%;height:100%;min-height:0;padding:4px"><span class="wf-image-caption">Acme</span></div></div>
+  <p class="cat-summary">Marketing site footer across the full width: logo and tagline, link columns (the columns slot), copyright and social links. A blank tagline, an empty link list or social: [] is left out.</p>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="site_footer" class="wf-node wf-section wf-surface" style="display:flex;flex-direction:column;gap:24px;padding:16px" data-wf-frame="surface" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="site_footer__top" class="wf-node wf-row wf-group" style="display:flex;flex-direction:row;gap:48px;align-items:start;justify-content:space-between" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="site_footer__brand" class="wf-node wf-stack wf-group" style="display:flex;flex-direction:column;gap:8px;width:240px;flex:0 1 auto" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="site_footer__logo" class="wf-node wf-image wf-image-logo wf-company-logo" style="width:160px;height:40px;max-width:100%;flex:none;align-self:flex-start;overflow:hidden" data-wf-frame="content" data-wf-state-bindings="{}"><div data-wf-logo-slot="logo_1" data-wf-logo-width="160" data-wf-logo-height="40" class="wf-image-placeholder" role="img" aria-label="Acme" title="Acme" style="width:100%;height:100%;min-height:0;padding:4px"><span class="wf-image-caption">Acme</span></div></div>
 <span id="site_footer__tagline" class="wf-node wf-text wf-text-meta" data-wf-frame="content" data-wf-state-bindings="{}">Tools for teams that ship.</span></div></div>
 <div id="site_footer__link_columns" class="wf-node wf-row wf-group" style="display:flex;flex-direction:row;gap:32px;align-items:start" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><nav id="site_footer__product" class="wf-node wf-nav" style="width:160px;flex:0 1 auto" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-nav-group">Product</span><span class="wf-nav-item"><span class="wf-nav-label">Features</span></span><span class="wf-nav-item"><span class="wf-nav-label">Pricing</span></span><span class="wf-nav-item"><span class="wf-nav-label">Changelog</span></span></nav>
 <nav id="site_footer__company" class="wf-node wf-nav" style="width:160px;flex:0 1 auto" data-wf-frame="content" data-wf-state-bindings="{}"><span class="wf-nav-group">Company</span><span class="wf-nav-item"><span class="wf-nav-label">About</span></span><span class="wf-nav-item"><span class="wf-nav-label">Careers</span></span><span class="wf-nav-item"><span class="wf-nav-label">Contact</span></span></nav>
@@ -1654,7 +1693,7 @@ wf component copy std.signup --as my_signup</pre>
 
 wf component show std.site_footer
 wf component copy std.site_footer --as my_site_footer</pre>
-    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Default</th><th>What it sets</th></tr></thead><tbody><tr><td>brand</td><td>Acme</td><td>Company name, used as the logo's text</td></tr><tr><td>tagline</td><td>Tools for teams that ship.</td><td>Line under the logo</td></tr><tr><td>productLinks</td><td>list of 4</td><td>First link column (nav items; a heading item titles the column)</td></tr><tr><td>companyLinks</td><td>list of 4</td><td>Second link column</td></tr><tr><td>resourceLinks</td><td>list of 4</td><td>Third link column</td></tr><tr><td>copyright</td><td>© Acme Inc. All rights reserved.</td><td>Copyright line at the bottom</td></tr></tbody></table><p class="cat-aliases">Slots: <code>columns</code> falls back to product, company, resources; <code>social</code> falls back to social_row. Fill one with <code>slots.&lt;name&gt;</code> (instance <code>children</code> fill <code>default</code>); <code>[]</code> leaves it empty.</p></div>
+    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Default</th><th>What it sets</th></tr></thead><tbody><tr><td>brand</td><td>Acme</td><td>Company name, used as the logo's text</td></tr><tr><td>tagline</td><td>Tools for teams that ship.</td><td>Line under the logo; blank leaves it out</td></tr><tr><td>productLinks</td><td>list of 4</td><td>First link column (nav items; a heading item titles the column); [] leaves it out</td></tr><tr><td>companyLinks</td><td>list of 4</td><td>Second link column; [] leaves it out</td></tr><tr><td>resourceLinks</td><td>list of 4</td><td>Third link column; [] leaves it out</td></tr><tr><td>copyright</td><td>© Acme Inc. All rights reserved.</td><td>Copyright line at the bottom</td></tr></tbody></table><p class="cat-aliases">Slots: <code>columns</code> falls back to product, company, resources; <code>social</code> falls back to social_row. Fill one with <code>slots.&lt;name&gt;</code> (instance <code>children</code> fill <code>default</code>); <code>[]</code> leaves it empty.</p></div>
   </div>
 </article>
 <article class="cat-item" id="pattern-std-site_header">
@@ -1663,8 +1702,8 @@ wf component copy std.site_footer --as my_site_footer</pre>
     <span class="cat-frame">pattern</span>
   </div>
   <p class="cat-summary">Marketing site header: logo, a top navigation menu (nav variant top) and an actions slot.</p>
-  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="site_header" class="wf-node wf-row wf-group" style="display:flex;flex-direction:row;gap:32px;align-items:center;justify-content:space-between" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="site_header__brand" class="wf-node wf-row wf-group" style="display:flex;flex-direction:row;gap:32px;align-items:center" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="site_header__logo" class="wf-node wf-image wf-image-logo wf-company-logo" style="width:112px;height:32px;max-width:100%;flex:none;align-self:flex-start;overflow:hidden" data-wf-frame="content" data-wf-state-bindings="{}"><div data-wf-logo-slot="logo_1" data-wf-logo-width="112" data-wf-logo-height="32" class="wf-image-placeholder" role="img" aria-label="Acme" title="Acme" style="width:100%;height:100%;min-height:0;padding:4px"><span class="wf-image-caption">Acme</span></div></div>
-<nav id="site_header__menu" class="wf-node wf-nav wf-nav-top" data-wf-frame="content" data-wf-state-bindings="{}"><div class="wf-nav-menu"><button type="button" class="wf-nav-item wf-nav-trigger" aria-expanded="false"><span class="wf-nav-label">Product</span><span class="wf-nav-chevron"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-chevron-down" data-wf-glyph="C"></i></span></button></div><div class="wf-nav-menu"><button type="button" class="wf-nav-item wf-nav-trigger" aria-expanded="false"><span class="wf-nav-label">Solutions</span><span class="wf-nav-chevron"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-chevron-down" data-wf-glyph="C"></i></span></button></div><span class="wf-nav-item"><span class="wf-nav-label">Pricing</span></span><span class="wf-nav-item"><span class="wf-nav-label">Docs</span></span></nav></div></div>
+  <div class="cat-demo cat-demo-dark wf wf-mode-card wf-platform-web"><div id="site_header" class="wf-node wf-row wf-group" style="display:flex;flex-direction:row;gap:32px;align-items:center;justify-content:space-between" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="site_header__brand" class="wf-node wf-row wf-group" style="display:flex;flex-direction:row;gap:32px;align-items:center" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="site_header__logo" class="wf-node wf-image wf-image-logo wf-company-logo" style="width:160px;height:40px;max-width:100%;flex:none;align-self:flex-start;overflow:hidden" data-wf-frame="content" data-wf-state-bindings="{}"><div data-wf-logo-slot="logo_1" data-wf-logo-width="160" data-wf-logo-height="40" class="wf-image-placeholder" role="img" aria-label="Acme" title="Acme" style="width:100%;height:100%;min-height:0;padding:4px"><span class="wf-image-caption">Acme</span></div></div>
+<nav id="site_header__menu" class="wf-node wf-nav wf-group wf-nav-top" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-nav-menu"><button type="button" class="wf-nav-item wf-nav-trigger" aria-expanded="false"><span class="wf-nav-label">Product</span><span class="wf-nav-chevron"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-chevron-down" data-wf-glyph="C"></i></span></button></div><div class="wf-nav-menu"><button type="button" class="wf-nav-item wf-nav-trigger" aria-expanded="false"><span class="wf-nav-label">Solutions</span><span class="wf-nav-chevron"><i aria-hidden="true" class="wf-icon-glyph fa-solid fa-chevron-down" data-wf-glyph="C"></i></span></button></div><span class="wf-nav-item"><span class="wf-nav-label">Pricing</span></span><span class="wf-nav-item"><span class="wf-nav-label">Docs</span></span></nav></div></div>
 <div id="site_header__action_row" class="wf-node wf-row wf-group" style="display:flex;flex-direction:row;gap:8px;align-items:center;flex-wrap:wrap" data-wf-frame="group" data-wf-state-bindings="{}"><div class="wf-node-children"><div id="site_header__sign_in" class="wf-node wf-button wf-button-ghost wf-button-md" style="flex:0 0 auto" data-wf-frame="control" data-wf-state-bindings="{}"><button>Sign in</button></div>
 <div id="site_header__cta" class="wf-node wf-button wf-button-primary wf-button-md" style="flex:0 0 auto" data-wf-frame="control" data-wf-state-bindings="{}"><button>Get started</button></div></div></div></div></div></div>
   <div class="cat-split">
@@ -1674,7 +1713,7 @@ wf component copy std.site_footer --as my_site_footer</pre>
 
 wf component show std.site_header
 wf component copy std.site_header --as my_site_header</pre>
-    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Default</th><th>What it sets</th></tr></thead><tbody><tr><td>brand</td><td>Acme</td><td>Company name, used as the logo's text</td></tr><tr><td>items</td><td>list of 4</td><td>Top-level menu items; an item with items opens a panel</td></tr><tr><td>open</td><td>&quot;&quot;</td><td>Label of the menu item whose panel is drawn open</td></tr><tr><td>signIn</td><td>Sign in</td><td>Label of the secondary action</td></tr><tr><td>cta</td><td>Get started</td><td>Label of the primary action</td></tr><tr><td>signInRoute</td><td>—</td><td>Route id the secondary action opens</td></tr><tr><td>ctaRoute</td><td>—</td><td>Route id the primary action opens</td></tr></tbody></table><p class="cat-aliases">Slots: <code>actions</code> falls back to action_row. Fill one with <code>slots.&lt;name&gt;</code> (instance <code>children</code> fill <code>default</code>); <code>[]</code> leaves it empty.</p></div>
+    <div><table class="cat-props"><thead><tr><th>Prop</th><th>Default</th><th>What it sets</th></tr></thead><tbody><tr><td>brand</td><td>Acme</td><td>Company name, used as the logo's text</td></tr><tr><td>items</td><td>list of 4</td><td>Top-level menu items; an item with items opens a panel; [] leaves the menu out</td></tr><tr><td>open</td><td>&quot;&quot;</td><td>Label of the menu item whose panel is drawn open</td></tr><tr><td>signIn</td><td>Sign in</td><td>Label of the secondary action; blank leaves it out</td></tr><tr><td>cta</td><td>Get started</td><td>Label of the primary action; blank leaves it out</td></tr><tr><td>signInRoute</td><td>—</td><td>Route id the secondary action opens</td></tr><tr><td>ctaRoute</td><td>—</td><td>Route id the primary action opens</td></tr></tbody></table><p class="cat-aliases">Slots: <code>actions</code> falls back to action_row. Fill one with <code>slots.&lt;name&gt;</code> (instance <code>children</code> fill <code>default</code>); <code>[]</code> leaves it empty.</p></div>
   </div>
 </article>
       </main>

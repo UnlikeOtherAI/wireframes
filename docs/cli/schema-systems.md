@@ -23,6 +23,14 @@ Grid:
 * columns defined per context
 * spans must not exceed columns
 * span cannot coexist with explicit width
+* without `columns`, a grid whose children use no `gridItem` lays out tiles at
+  least `grid.minItemWidth` wide (web 220, tablet 200, mobile 150) that fill the
+  row and wrap. This applies to the `grid` element and to `layout: { type: grid }`
+  alike. An explicit `manifest.defaultGridColumns` gives such a grid that many
+  equal columns, but an authored `minItemWidth` and adaptive reflow take
+  priority over it. Any child placed with `gridItem` keeps the column system
+  (`columns`, else the manifest default, else 12) in every mode. Precedence:
+  [rendering-data.md § Grid columns](rendering-data.md#grid-columns)
 
 Separators:
 
@@ -444,6 +452,18 @@ errors.
 wherever it sits, so reordering never retargets it and a stale id fails. See
 `wf inspect` and `wf node` in brief.md.
 
+## 14.2 Leaving out empty parts
+
+`when` on a node keeps it only when its value has content. A component writes
+a prop token (`when: "{{props.tagline}}"`), and a caller who passes a blank
+string, an empty list, `null` or `false` gets no node, rather than a skeleton
+bar or an empty column. The resolver evaluates it once, on the resolved tree
+(`engine/resolver/when.js`). By then props, slot fills and fallbacks and repeat
+rows are all substituted, so a row's own values decide its parts. The key is
+removed from every node it keeps. Validation and rendering see the pruned tree.
+A prop the caller leaves out keeps its `propDefaults` value. The std patterns
+use it for optional parts ([stdlib.md](stdlib.md#using-a-pattern)).
+
 ---
 
 # 15. Elements
@@ -463,7 +483,23 @@ Every node carries the renderer's decision as `data-wf-frame`:
 | `group` | a layout wrapper: spacing and alignment only |
 | `control` | element-owned chrome: inputs, buttons |
 | `content` | bare content: text, icons, images |
-| `edge` | one divider edge: tab bars, app bars, rules |
+| `edge` | one divider edge: tab bars, app bars, rules, and the panels, strips and bars below |
+
+Two frame classes draw chrome only at the top level. Inside a framed
+container, or inside a `role: sidebar` slot that draws its own panel, the
+container owns that chrome:
+
+- `B`, a bar's own edge: `nav` with `variant: sidebar | rail | top` and
+  `menubar`. A sidebar is a panel at `sidebar.width`, a rail a narrow strip
+  of icon tiles, a top nav a bar across the width with a bottom rule, and a
+  menubar a strip ruled above and below. A `nav` without a variant never
+  frames, as before.
+- `T`, a box: `menu`, drawn as the dropdown panel.
+
+A template slot with `role: sidebar` draws a sidebar panel: a fill in card
+mode, one edge on the side facing the content, and a comfortable inset when
+no padding above 0 is authored. A persistent sidebar region stays a surface
+([rendering-navigation.md § Navigation kinds](rendering-navigation.md#navigation-kinds)).
 
 One function, `decideFrame(node, ctx)` in `engine/renderer/frame-rules.js`,
 settles it, and both the renderer and the linter call it. The ten rules in
@@ -595,6 +631,9 @@ Form controls share the field props in
   are not submitted. `readonly` values stay bound and are submitted.
 - With both `readonly` and `disabled`, `disabled` wins visually and both are
   written.
+- Every read-only control draws the same cue, distinct from disabled: a lock
+  after the label and a dashed field edge, with the value at full contrast
+  ([rendering-controls.md](rendering-controls.md)).
 
 | Widget | Field label | Help and error | `readonly` |
 |---|---|---|---|

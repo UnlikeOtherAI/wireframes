@@ -147,6 +147,9 @@ function renderNode(node, options = {}) {
     isOverlayChild: options.isOverlayChild === true,
     paneData,
     defaultGridColumns: Number.isInteger(options.defaultGridColumns) ? options.defaultGridColumns : undefined,
+    adaptive: options.adaptive === true,
+    // Below a region that draws a sidebar panel, nav and menus draw no chrome of their own.
+    insideChrome: options.insideChrome === true,
     density: options.density,
     rendering: options.rendering,
     pageStyle: options.pageStyle,

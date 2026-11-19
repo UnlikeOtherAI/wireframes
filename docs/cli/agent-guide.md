@@ -72,7 +72,7 @@ header, app_bar, sidebar, nav, main, aside, footer, toolbar, tabbar, form, dialo
 
 A `role: sidebar` region is 256px on web, 220 on tablet; a header is 56 tall.
 Override one value project-wide in `manifest.sizing`, or locally with `size`
-on the node. Available tokens: sidebar.width, sidebar.collapsedWidth, sidebar.minWidth, aside.width, header.height, tabbar.height, footer.minHeight, page.gutter, content.narrowWidth, card.padding, card.gap, grid.gap, control.height, control.minWidth, row.height, modal.width, drawer.width, sheet.maxHeight, chart.height, stat.minHeight, statusbar.height, homeindicator.height.
+on the node. Available tokens: sidebar.width, sidebar.collapsedWidth, sidebar.minWidth, aside.width, header.height, tabbar.height, footer.minHeight, page.gutter, content.narrowWidth, card.padding, card.gap, grid.gap, grid.minItemWidth, control.height, control.minWidth, row.height, modal.width, drawer.width, sheet.maxHeight, chart.height, stat.minHeight, statusbar.height, homeindicator.height.
 
 Never hand-size a sidebar, header, footer, tab bar or control unless the design
 actually differs from the default.

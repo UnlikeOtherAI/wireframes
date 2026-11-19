@@ -21,7 +21,8 @@ function runInfo(_args, context = {}) {
     console.log(`Project Name: ${info.projectName ?? '<missing>'}`);
     console.log(`Schema Version: ${info.schemaVersion ?? '<missing>'}`);
     console.log(`Created With CLI: ${info.createdWithCLI ?? '<missing>'}`);
-    console.log(`Default Grid Columns: ${info.defaultGridColumns ?? '<missing>'}`);
+    // Unset means tiles: a grid without columns or placed children fills the row.
+    console.log(`Default Grid Columns: ${info.defaultGridColumns ?? 'auto'}`);
     console.log('Default Wireframe Style:');
     console.log(formatStyle(info.defaultWireframeStyle));
   } catch (error) {

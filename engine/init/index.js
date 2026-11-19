@@ -19,7 +19,7 @@ function projectIdFromName(name) {
 }
 
 function buildManifestDocument({ projectName, projectId }) {
-  return `documentType: manifest\nspecVersion: ${quote(SUPPORTED_SPEC_VERSION)}\nid: manifest\nmanifest:\n  projectId: ${quote(projectId)}\n  name: ${quote(projectName)}\n  schemaVersion: ${quote(SUPPORTED_SPEC_VERSION)}\n  createdWithCLI: ${quote(`wf ${SUPPORTED_CLI_VERSION}`)}\n  defaultGridColumns: 12\n  defaultWireframeStyle:\n    border:\n      style: solid\n      width: thin\n    corner:\n      style: rounded\n      radius: 8\n`;
+  return `documentType: manifest\nspecVersion: ${quote(SUPPORTED_SPEC_VERSION)}\nid: manifest\nmanifest:\n  projectId: ${quote(projectId)}\n  name: ${quote(projectName)}\n  schemaVersion: ${quote(SUPPORTED_SPEC_VERSION)}\n  createdWithCLI: ${quote(`wf ${SUPPORTED_CLI_VERSION}`)}\n  defaultWireframeStyle:\n    border:\n      style: solid\n      width: thin\n    corner:\n      style: rounded\n      radius: 8\n`;
 }
 
 function buildConfigDocument() {

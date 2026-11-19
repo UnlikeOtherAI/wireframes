@@ -205,6 +205,7 @@ node:
     - scroll          # boolean; native overflow:auto, no resize handle
     - position        # for absolute layout children only
     - visibility
+    - when            # draw only when the value has content; in a component, "{{props.x}}" (blank, [], null, false → no node)
     - accessibility
     - binding
     - interaction
@@ -405,7 +406,8 @@ primitives:
     - alert           # text, title, variant (info|success|warning|error|neutral), icon, dismissible, inline, actions
 
 # Frame class per element: S always, C decided by the frame rules,
-# N never, E one divider edge. See docs/cli/schema.md section 4.2.
+# N never, E one divider edge, B its own bar edge at the top level only,
+# T a box at the top level only. See docs/cli/schema.md section 4.2.
 frameClass:
   section: C
   card: S
@@ -449,9 +451,9 @@ frameClass:
   breadcrumb: N
   pagination: N
   stepper: N
-  nav: N
-  menu: N
-  menubar: N
+  nav: B           # variant sidebar | rail | top; a nav without a variant is N
+  menu: T
+  menubar: B
   command: C
   app_bar: E
   action_sheet: N
@@ -516,6 +518,7 @@ sizingTokens:
   - card.padding
   - card.gap
   - grid.gap
+  - grid.minItemWidth   # web 220, tablet 200, mobile 150: the narrowest auto tile
   - control.height
   - control.minWidth
   - row.height
@@ -546,7 +549,15 @@ layout:
     - separatorStyle # solid | dashed (defaults to solid)
 
   grid:
-    defaultColumns: 12
+    # Tracks, decided once for every grid host and for adaptive mode:
+    #   1. a child placed with gridItem (span, offset, row, column): columns, else
+    #      manifest.defaultGridColumns, else 12. Adaptive mode never reflows it.
+    #   2. minItemWidth: tiles of at least that width.
+    #   3. adaptive mode: tiles at the shown device's grid.minItemWidth.
+    #   4. columns, then an explicit manifest.defaultGridColumns.
+    #   5. otherwise tiles at grid.minItemWidth that fill the row and wrap.
+    # Every track is minmax(0,1fr), and a tile minimum never exceeds the container.
+    placementColumns: 12
     rules:
       - span must not exceed column count
       - span cannot coexist with explicit width

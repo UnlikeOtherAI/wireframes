@@ -1,6 +1,6 @@
 'use strict';
 
-const { fieldState, fieldLabel, fieldHelp, describedBy } = require('./controls-field');
+const { partId, fieldState, fieldLabel, fieldHelp, describedBy } = require('./controls-field');
 const { rangeThumbs, displayNumber } = require('./controls-bounds');
 
 const INPUT_TYPES = new Set([
@@ -123,10 +123,12 @@ function renderTextarea(node, ctx, lib) {
     : '';
   const invalid = lib.str(props.error) ? ' wf-field-invalid' : '';
   const state = fieldState(props, lib);
+  // The visible label names the textarea; an id on it would change its submit key.
+  const labelId = lib.str(props.label) ? partId(node, 'label') : '';
   return {
-    inner: `${fieldLabel(props, ctx, lib)}<textarea rows="${rows}" placeholder="${lib.escapeAttr(placeholder)}"${
+    inner: `${fieldLabel(props, ctx, lib, null, labelId)}<textarea rows="${rows}" placeholder="${lib.escapeAttr(placeholder)}"${
       lib.stateAttrs(state, { owner: lib.STATE_OWNERS.field })
-    }${describedBy(props, lib, node)}></textarea>${fieldHelp(props, ctx, lib, node)}${counter}`,
+    }${labelId ? ` aria-labelledby="${lib.escapeAttr(labelId)}"` : ''}${describedBy(props, lib, node)}></textarea>${fieldHelp(props, ctx, lib, node)}${counter}`,
     className: `wf-field${invalid}`,
   };
 }

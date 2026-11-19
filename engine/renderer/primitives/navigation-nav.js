@@ -21,7 +21,11 @@ function heading(label, lib, className = 'wf-nav-group') {
 function navRow(item, view, depth) {
   const { ctx, lib, on, inert } = view;
   const label = lib.str(item.label);
-  const glyph = lib.iconSpan(item.icon, { style: item.iconStyle });
+  // A rail is icon tiles: an item without an icon keeps an empty, decorative
+  // tile, so the rail reads as a rail and its current item stays filled.
+  const glyph = lib.str(item.icon) || view.variant !== 'rail'
+    ? lib.iconSpan(item.icon, { style: item.iconStyle })
+    : '<span class="wf-ico wf-ico-placeholder" aria-hidden="true"></span>';
   const badge = item.badge != null ? `<span class="wf-nav-badge">${lib.escapeHtml(String(item.badge))}</span>` : '';
   const nested = children(item);
   // Children always show unless the item says `expanded: false`; only an
@@ -115,8 +119,8 @@ function renderNav(node, ctx, lib) {
   // A disabled row is never inferred current.
   const onList = itemsOn(flat, lib, (item) => item.legacyActive === true
     || (item.disabled !== true && item.route != null && String(item.route) === ctx.currentRoute));
-  const view = { ctx, lib, on: new Map(flat.map((item, index) => [item, onList[index]])), inert: hasInteraction(node) };
   const variant = VARIANTS.includes(props.variant) ? props.variant : '';
+  const view = { ctx, lib, variant, on: new Map(flat.map((item, index) => [item, onList[index]])), inert: hasInteraction(node) };
   const opened = variant === 'top' ? openIndex(entries, props.open) : -1;
   const markup = variant === 'top'
     ? entries.map((entry, index) => topEntry(entry, index, opened, view)).join('')

@@ -126,7 +126,7 @@ describe('Layout types', () => {
               props:
                 text: Col 3`));
     assert.ok(html.includes('display:grid'), 'should have grid display');
-    assert.ok(html.includes('grid-template-columns:repeat(3,1fr)'), 'should have 3 columns');
+    assert.ok(html.includes('grid-template-columns:repeat(3,minmax(0,1fr))'), 'should have 3 columns');
   });
 
   it('absolute layout uses position:relative', () => {

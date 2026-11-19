@@ -12,6 +12,7 @@ const {
 const { placeFills, prepareSlottedInstance } = require('./slotted-instance');
 const { createExpansionBudget } = require('../component-registry/expansion');
 const { expandHostRows, materializeDefinitionRows, origin } = require('./repeat-rows');
+const { pruneByWhen } = require('./when');
 
 function buildContentMap(list, idField) {
   const map = new Map();
@@ -316,7 +317,8 @@ function resolveRegion(region, slotMap, injections, components, componentStack, 
   if (!resolvedChildren.ok) {
     return resolvedChildren;
   }
-  resolved.children = resolvedChildren.nodes;
+  // A node whose `when` resolved empty is not drawn (resolver/when.js).
+  resolved.children = pruneByWhen(resolvedChildren.nodes);
 
   return {
     ok: true,

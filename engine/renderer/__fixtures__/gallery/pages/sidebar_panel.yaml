@@ -1,0 +1,35 @@
+documentType: page
+specVersion: "1.1"
+id: sidebar_panel
+page:
+  id: sidebar_panel
+  template: sidebar_slot_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: card
+  slots:
+    # A role: sidebar slot draws the sidebar panel; its nav draws no frame of its own.
+    - slotId: panel_side
+      content:
+        - id: panel_nav
+          component: nav
+          props:
+            variant: sidebar
+            items:
+              - { label: Overview, icon: gauge, route: sidebar_panel }
+              - { label: Projects, icon: folder, route: data }
+              - { label: Settings, icon: gear, route: forms }
+    - slotId: panel_main
+      content:
+        - id: panel_title
+          component: heading
+          props: { text: Workspace, level: 2 }
+        - id: panel_tiles
+          component: grid
+          repeat:
+            cell: card
+            items:
+              - { id: active, title: Projects, description: 12 active }
+              - { id: review, title: Reviews, description: 3 waiting }
+              - { id: done, title: Shipped, description: 48 this year }

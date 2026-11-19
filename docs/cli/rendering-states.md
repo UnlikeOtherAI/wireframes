@@ -87,6 +87,9 @@ Spread a preset to change its token, for example
   `aria-current` and `aria-disabled` only. They get no `menu` or `listbox`
   roles, because no keyboard behaviour ships.
 - `readonly` with `disabled`: both are written; `disabled` wins visually.
+  A read-only field (not disabled) draws the shared read-only look: a lock
+  after its label and a dashed field edge
+  ([rendering-controls.md](rendering-controls.md#field-contract-per-widget)).
 - An element with both `indeterminate` and `checked: true` passes
   `checked: 'mixed'`: indeterminate wins.
 - Runtime code that changes a state (segmented, toggles, toolbar pressed, tabs)

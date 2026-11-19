@@ -65,6 +65,27 @@ templates:
           type: stack
           gap: 20
           padding: 24
+  # The iPad app's sidebar layout: a sidebar slot (stack, padding 0) beside main.
+  sidebar_slot_shell:
+    layout:
+      type: row
+      gap: 0
+      padding: 0
+      align: stretch
+    regions:
+      - id: panel_side
+        kind: slot
+        role: sidebar
+        layout:
+          type: stack
+          padding: 0
+      - id: panel_main
+        kind: slot
+        role: main
+        layout:
+          type: stack
+          gap: 20
+          padding: 24
   mobile_shell:
     layout:
       type: stack

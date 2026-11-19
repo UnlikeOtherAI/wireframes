@@ -1,6 +1,6 @@
 'use strict';
 
-const { partId, fieldState, fieldLabel, fieldHelp, describedBy, optionValueAttr } = require('./controls-field');
+const { partId, fieldState, fieldLabel, readonlyLock, fieldHelp, describedBy, optionValueAttr } = require('./controls-field');
 
 const MARK_ROLE = { checkbox: 'checkbox', radio: 'radio', toggle: 'switch' };
 // A radio announces checked and disabled; read-only belongs to its group.
@@ -43,11 +43,14 @@ function renderSelect(node, ctx, lib) {
     ? `<span class="wf-affix wf-affix-start">${lib.icon('magnifying-glass')}</span>`
     : '';
   const state = lib.stateAttrs(fieldState(props, lib), { owner: lib.STATE_OWNERS.select });
+  // The visible label names the select; an id on the select itself would change its submit key.
+  const labelId = lib.str(props.label) ? partId(node, 'label') : '';
+  const named = labelId ? ` aria-labelledby="${lib.escapeAttr(labelId)}"` : '';
   const control = `<span class="wf-control">${searchGlyph}<select${
     props.multiple === true ? ' multiple' : ''
-  }${state}${describedBy(props, lib, node)}><option value="">${lib.escapeHtml(placeholder)}</option>${options}</select></span>`;
+  }${state}${named}${describedBy(props, lib, node)}><option value="">${lib.escapeHtml(placeholder)}</option>${options}</select></span>`;
   return {
-    inner: `${fieldLabel(props, ctx, lib)}${control}${fieldHelp(props, ctx, lib, node)}`,
+    inner: `${fieldLabel(props, ctx, lib, null, labelId)}${control}${fieldHelp(props, ctx, lib, node)}`,
     className: `wf-field${invalid}${props.searchable === true ? ' wf-select-searchable' : ''}`,
   };
 }
@@ -81,7 +84,7 @@ function renderChoice(kind) {
       ? `<span class="wf-toggle-track${checked === true ? ' wf-toggle-on' : ''}"${attrs}><span class="wf-toggle-thumb"></span></span>`
       : choiceMark(kind, attrs);
     const on = checked === true ? ' wf-choice-on' : '';
-    const required = state.required ? '<span class="wf-req">*</span>' : '';
+    const required = `${state.required ? '<span class="wf-req">*</span>' : ''}${readonlyLock(props)}`;
     const body = `<span class="wf-choice-text"><span class="wf-choice-label" id="${lib.escapeAttr(labelId)}">${lib.bound(label, ctx)}${required}</span>${
       description ? `<span class="wf-choice-desc" id="${lib.escapeAttr(partId(node, 'help'))}">${lib.bound(description, ctx)}</span>` : ''
     }</span>`;

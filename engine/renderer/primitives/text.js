@@ -4,9 +4,15 @@ const { renderLogo } = require('./logo');
 
 // Returns inner HTML for a node, or { tag, inner, className, style, noChildren }.
 
+// Prose keeps its authored line breaks (white-space:pre-line), so a block
+// scalar's edge newlines, such as the one `|` ends with, are dropped.
+function prose(text) {
+  return typeof text === 'string' ? text.replace(/^\s*\n|\n\s*$/g, '') : text;
+}
+
 function renderHeading(node, ctx, lib) {
   const level = Math.max(1, Math.min(6, lib.num(node.props?.level, 3)));
-  const text = lib.textProp(node.props);
+  const text = prose(lib.textProp(node.props));
   const body = text == null ? lib.renderSkeleton(12) : lib.bound(text, ctx);
   return {
     inner: `<h${level}>${ctx.link(body)}</h${level}>`,
@@ -15,7 +21,7 @@ function renderHeading(node, ctx, lib) {
 }
 
 function renderParagraph(node, ctx, lib) {
-  const text = lib.textProp(node.props);
+  const text = prose(lib.textProp(node.props));
   if (text != null) {
     return { inner: `<p>${ctx.link(lib.bound(text, ctx))}</p>` };
   }
@@ -29,7 +35,7 @@ function renderParagraph(node, ctx, lib) {
 
 function renderText(node, ctx, lib) {
   const variant = lib.str(node.props?.variant) || 'body';
-  const text = lib.textProp(node.props);
+  const text = prose(lib.textProp(node.props));
   const body = text == null ? lib.renderSkeleton(8) : lib.bound(text, ctx);
   return { tag: 'span', inner: ctx.link(body), className: `wf-text-${lib.toSafeClass(variant)}` };
 }
@@ -160,9 +166,11 @@ function renderStat(node, ctx, lib) {
   const head = `<div class="wf-stat-head">${glyph}<span class="wf-stat-label">${
     label ? lib.bound(label, ctx) : lib.renderSkeleton(9)
   }</span></div>`;
+  // The number has its own box so it can wrap between digits inside a narrow
+  // tile instead of painting past it; the delta wraps below it as one unit.
   const figure = value == null || value === ''
     ? lib.renderSkeleton(6)
-    : lib.bound(String(value), ctx);
+    : `<span class="wf-stat-number">${lib.bound(String(value), ctx)}</span>`;
   const trend = lib.str(node.props?.trend);
   const delta = lib.str(node.props?.delta);
   const deltaMarkup = delta

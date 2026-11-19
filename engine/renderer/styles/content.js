@@ -54,10 +54,12 @@ const contentStyles = [
   '.wf-stat{display:flex;flex-direction:column;gap:6px;justify-content:center;min-width:0}',
   '.wf-stat[data-wf-frame="surface"]{padding:16px}',
   '.wf-stat-head{display:flex;align-items:center;gap:8px;min-width:0}',
+  // A narrow tile wraps its label rather than cutting it to "SA…".
   '.wf-stat-label{font-size:12px;font-weight:500;color:var(--wf-ink-3);text-transform:uppercase;letter-spacing:.04em;'
-    + 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+    + 'min-width:0;overflow-wrap:anywhere}',
   '.wf-stat-head .wf-icon-glyph{color:var(--wf-ink-4)}',
-  '.wf-stat-value{display:flex;align-items:baseline;gap:10px;font-size:24px;font-weight:650;color:var(--wf-ink);line-height:1.15}',
+  '.wf-stat-value{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;min-width:0;font-size:24px;font-weight:650;color:var(--wf-ink);line-height:1.15}',
+  '.wf-stat-number{min-width:0;overflow-wrap:anywhere}',
   '.wf-stat-delta{font-size:12px;font-weight:500;color:var(--wf-ink-3);white-space:nowrap}',
   '.wf-stat-spark{width:100%;height:22px;display:block;fill:none;stroke:var(--wf-ink-4);stroke-width:1.5}',
 

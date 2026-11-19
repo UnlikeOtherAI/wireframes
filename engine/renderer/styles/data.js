@@ -38,8 +38,11 @@ const dataStyles = [
   '.wf-list-lead{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}',
   '.wf-list-lead .wf-icon-glyph{color:var(--wf-ink-4);font-size:17px}',
   '.wf-list-body{display:flex;flex-direction:column;gap:2px;flex:1 1 auto;min-width:0}',
-  '.wf-list-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--wf-ink);'
+  // A block, not a flex box: a flex box never draws its text's ellipsis, so a
+  // long title was clipped mid-glyph. The badge sits inline after the title.
+  '.wf-list-title{display:block;font-size:13px;font-weight:500;color:var(--wf-ink);'
     + 'min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+  '.wf-list-title>.wf-badge{margin-left:8px;vertical-align:middle}',
   '.wf-list-text{font-size:12px;color:var(--wf-ink-3);line-height:1.45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
   '.wf-list-meta{font-size:11px;color:var(--wf-ink-4);flex:0 0 auto;white-space:nowrap}',
   '.wf-list-trail{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto}',

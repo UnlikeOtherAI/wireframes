@@ -67,8 +67,11 @@ const navigationPrimitives = [
     name: 'nav',
     shellBackground: true,
     family: 'navigation',
-    frame: 'N',
-    summary: 'Side navigation; rail stacks icons above labels; collapsed hides labels; top is a horizontal site menu whose open item draws its panel.',
+    // sidebar, rail and top draw their own panel, strip or bar at the top level;
+    // inside a framed region or a sidebar panel the container owns that chrome.
+    frame: 'B',
+    frameVariants: ['sidebar', 'rail', 'top'],
+    summary: 'Side navigation; rail stacks icons above labels; collapsed hides labels; top is a horizontal site menu whose open item draws its panel. Put a sidebar or rail in a template region with role: sidebar beside main.',
     props: {
       variant: { type: 'string', enum: ['rail', 'sidebar', 'top'] },
       items: { type: 'array', items: true, primary: true },
@@ -83,8 +86,8 @@ const navigationPrimitives = [
   {
     name: 'menu',
     family: 'navigation',
-    frame: 'N',
-    summary: 'Menu item list for a dropdown or context overlay; the overlay owns the frame.',
+    frame: 'T',
+    summary: 'Menu item list. On the page it draws as a dropdown panel; in a dropdown, card or modal the container owns the frame.',
     props: {
       items: { type: 'array', items: true, primary: true },
     },
@@ -93,13 +96,13 @@ const navigationPrimitives = [
   {
     name: 'menubar',
     family: 'navigation',
-    frame: 'N',
-    summary: 'Desktop application menu row; open draws that menu panel under its trigger. Never framed: the bar it sits in owns the frame.',
+    frame: 'B',
+    summary: 'Desktop application menu row. A title with items is a menu; open draws its panel. A title without items is a plain link: give it a route, never a one-item menu repeating its name. Mark the page with current, not open. At the top level it draws as a menu strip; in a framed bar the bar owns it.',
     props: {
       items: { type: 'array', items: true, primary: true },
       open: { type: 'string' },
     },
-    example: '- menubar: { items: [{ label: File, items: [New, Open] }, { label: Edit, items: [{ label: Undo, shortcut: "⌘Z" }, { label: Redo, shortcut: "⇧⌘Z" }] }, { label: View, items: [Zoom in] }] }',
+    example: '- menubar: { items: [{ label: Home, route: home, current: true }, { label: File, items: [New, Open] }, { label: Edit, items: [{ label: Undo, shortcut: "⌘Z" }, { label: Redo, shortcut: "⇧⌘Z" }] }] }',
   },
   {
     name: 'command',

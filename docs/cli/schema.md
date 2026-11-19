@@ -395,7 +395,6 @@ manifest:
   name: Wireframe Builder
   schemaVersion: "1.1"
   createdWithCLI: "wf 0.3.0"
-  defaultGridColumns: 12
   defaultWireframeStyle:
     border:
       style: solid
@@ -410,6 +409,13 @@ Rules:
 * `schemaVersion` is REQUIRED
 * `projectId` must match Id format
 * `defaultWireframeStyle` provides inheritable defaults for pages
+* `defaultGridColumns` is optional. Set, it gives a grid without `columns`
+  that many equal columns, except that an authored `minItemWidth` and adaptive
+  reflow take priority and lay out tiles. It is also the column count for a
+  grid without `columns` whose children are placed with `gridItem`. Unset (new
+  projects), an unplaced grid without `columns` lays out tiles that fill the
+  row, and a placed one uses 12 columns
+  ([rendering-data.md § Grid columns](rendering-data.md#grid-columns))
 * Used by `wf info` and future `wf migrate`
 
 ---
@@ -556,6 +562,10 @@ Optional:
 * `scroll` — boolean; opt into native overflow scrolling, bounded by existing size dimensions, without a resize handle
 * `gridItem` — grid positioning (span, offset, row, column)
 * `visibility` — conditional visibility via a Condition
+* `when` — draw the node only when the value has content. In a component,
+  write a prop token (`when: "{{props.tagline}}"`). A caller who passes a
+  blank string, an empty list, `null` or `false` gets no node. It is evaluated
+  after props, slots and repeat rows resolve, and never reaches the output
 * `accessibility` — label, role, description for accessibility annotations
 * `binding` — data source binding (source expression, itemVar for collections)
 * `interaction` — array of Interaction objects (navigation, overlays, state changes, etc.)
@@ -604,7 +614,7 @@ or a control with its own chrome; **edge only** draws one divider edge;
 | `card` | always | title, description, actions, media, footer |
 | `stack` | never | gap, padding, align |
 | `row` | never | gap, padding, align, justify, wrap, nowrap |
-| `grid` | never | columns, gap, minItemWidth |
+| `grid` | never | columns, gap, minItemWidth (no columns: tiles that fill the row) |
 | `split` | never | gap, orientation: row\|stack |
 | `form` | never | title, submit, columns |
 | `carousel` | rules decide | dots, arrows, items |
@@ -628,6 +638,8 @@ or a control with its own chrome; **edge only** draws one divider edge;
 | `divider` | edge only | label, orientation: horizontal\|vertical |
 | `spacer` | never | size |
 | `empty_state` | rules decide | title, text, icon, action, variant: empty\|error\|404\|offline |
+
+A newline in prose is a line break: `heading`, `paragraph` and `text` text, the `title` and `description` of `card`, `section` and `form`, and `alert` and `empty_state` text. Write it with a `|` block or `\n`; folded `>` text has no newlines. List rows, labels and tabs stay on one line ([rendering-text.md](rendering-text.md)).
 
 **controls**
 
@@ -659,9 +671,9 @@ or a control with its own chrome; **edge only** draws one divider edge;
 | `breadcrumb` | never | items, separator |
 | `pagination` | never | page, pages, variant: numbers\|simple\|dots |
 | `stepper` | never | steps, current, orientation: row\|stack |
-| `nav` | never | variant: rail|sidebar|top, items, collapsed, groups, open |
-| `menu` | never | items |
-| `menubar` | never | items, open |
+| `nav` | edge at top level (variant sidebar, rail, top); otherwise never | variant: rail|sidebar|top, items, collapsed, groups, open |
+| `menu` | box at top level | items |
+| `menubar` | edge at top level | items, open |
 | `command` | rules decide | placeholder, query, items, empty, footer |
 | `app_bar` | edge only | title, subtitle, leading, actions |
 | `action_sheet` | never | items, title, cancel |
@@ -715,9 +727,13 @@ Precedence, first match wins:
 
 1. `surface: true` / `surface: false` on the node.
 2. A border in the node's `wireframeStyle`.
-3. The element's own class from the registry (`always`, `never`, `edge only`).
+3. The element's own class from the registry (`always`, `never`, `edge only`,
+   `edge at top level`, `box at top level`). The last two draw their chrome
+   only at surface depth 0 and outside a sidebar panel; anywhere else they
+   draw none.
 4. Overlay chrome owns the frame, so overlay content does not double-box.
-5. Template regions: a slot never frames, a `role: main` region never frames,
+5. Template regions: a slot never frames, except that a `role: sidebar` slot
+   draws a sidebar panel (`edge`). A `role: main` region never frames, and
    any other persistent region does.
 6. A node with a `pane` is a panel, so it frames.
 7. A parent that separates its children draws the strokes, so the children do not.

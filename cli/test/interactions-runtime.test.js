@@ -430,8 +430,11 @@ test('renderNode renders labels for text input, textarea, and select controls', 
   });
 
   assert.equal(inputHtml.includes('<label class="wf-field-label" for="project_name__input">Project Name</label>'), true);
-  assert.equal(textareaHtml.includes('<label class="wf-field-label">Notes</label>'), true);
-  assert.equal(selectHtml.includes('<label class="wf-field-label">Status</label>'), true);
+  // A textarea or select is named by its label; an id on the control would change its submit key.
+  assert.equal(textareaHtml.includes('<label class="wf-field-label" id="project_notes__label">Notes</label>'), true);
+  assert.match(textareaHtml, /<textarea [^>]*aria-labelledby="project_notes__label"/);
+  assert.equal(selectHtml.includes('<label class="wf-field-label" id="project_status__label">Status</label>'), true);
+  assert.match(selectHtml, /<select [^>]*aria-labelledby="project_status__label"/);
   assert.equal(unlabeledHtml.includes('wf-field-label'), false);
 });
 

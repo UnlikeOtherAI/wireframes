@@ -1074,6 +1074,9 @@
         "scroll": {
           "type": "boolean",
           "description": "Opt into native overflow scrolling without resizing. Bound the node with size.height/maxHeight or width/maxWidth; sticky children use this scroll boundary."
+        },
+        "when": {
+          "description": "Draw this node only when the value has content. In a component, write a prop token (\"{{props.tagline}}\"): a caller who leaves the prop blank, null, false or an empty list gets no node. Evaluated after props, slots and repeat rows resolve."
         }
       },
       "allOf": [
@@ -2814,6 +2817,10 @@
           "type": "number",
           "minimum": 0
         },
+        "grid.minItemWidth": {
+          "type": "number",
+          "minimum": 0
+        },
         "header.height": {
           "type": "number",
           "minimum": 0
@@ -3083,7 +3090,7 @@
     },
     "PrimitiveProps_grid": {
       "type": "object",
-      "description": "Grid layout group. Never framed; its children become framed tiles.",
+      "description": "Grid layout group. Never framed; its children become framed tiles. Without columns the tiles fill the row and wrap.",
       "properties": {
         "columns": {
           "type": "number"
@@ -4158,7 +4165,7 @@
     },
     "PrimitiveProps_nav": {
       "type": "object",
-      "description": "Side navigation; rail stacks icons above labels; collapsed hides labels; top is a horizontal site menu whose open item draws its panel.",
+      "description": "Side navigation; rail stacks icons above labels; collapsed hides labels; top is a horizontal site menu whose open item draws its panel. Put a sidebar or rail in a template region with role: sidebar beside main.",
       "properties": {
         "variant": {
           "type": "string",
@@ -4184,7 +4191,7 @@
     },
     "PrimitiveProps_menu": {
       "type": "object",
-      "description": "Menu item list for a dropdown or context overlay; the overlay owns the frame.",
+      "description": "Menu item list. On the page it draws as a dropdown panel; in a dropdown, card or modal the container owns the frame.",
       "properties": {
         "items": {
           "type": "array"
@@ -4193,7 +4200,7 @@
     },
     "PrimitiveProps_menubar": {
       "type": "object",
-      "description": "Desktop application menu row; open draws that menu panel under its trigger. Never framed: the bar it sits in owns the frame.",
+      "description": "Desktop application menu row. A title with items is a menu; open draws its panel. A title without items is a plain link: give it a route, never a one-item menu repeating its name. Mark the page with current, not open. At the top level it draws as a menu strip; in a framed bar the bar owns it.",
       "properties": {
         "items": {
           "type": "array"

@@ -21,8 +21,9 @@ function catalogueModel() {
     defaultVariant: entry.defaultVariant || null,
     colors: [
       ...(entry.name === 'spacer' || entry.name === 'skeleton' ? [] : ['text']),
-      ...(entry.frame === 'S' || entry.frame === 'C' || FILL.has(entry.name) || entry.shellBackground ? ['background'] : []),
-      ...(entry.frame !== 'N' || BORDER.has(entry.name) ? ['border'] : []),
+      ...(['S', 'C', 'T'].includes(entry.frame) || FILL.has(entry.name) || entry.shellBackground ? ['background'] : []),
+      // A bar's own edge (B) is drawn from --wf-panel-edge, not a skin border.
+      ...(!['N', 'B'].includes(entry.frame) || BORDER.has(entry.name) ? ['border'] : []),
       ...(ACCENT.has(entry.name) ? ['accent'] : []),
     ],
   }));

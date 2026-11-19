@@ -86,11 +86,55 @@ const navigationStyles = [
   '.wf-nav-collapsed .wf-nav-item{justify-content:center;padding:8px}',
 
   // --- Menu ---
-  '.wf-menu{display:flex;flex-direction:column;gap:1px;min-width:180px}',
+  '.wf-menu{display:flex;flex-direction:column;gap:1px;min-width:min(180px,100%)}',
   '.wf-menu-item{display:flex;align-items:center;gap:10px;padding:7px 12px;font-size:13px;color:var(--wf-ink-2);'
     + 'text-decoration:none;border-radius:4px;min-width:0}',
-  '.wf-menu-label{flex:1 1 auto;min-width:0;white-space:nowrap}',
-  '.wf-menu-shortcut{font-size:11px;color:var(--wf-ink-4);flex:0 0 auto}',
+  // A row too narrow for its parts keeps the label, which is what people read:
+  // the shortcut truncates and then hides (see .wf-menu-shortcut), and only
+  // after that does the label end in an ellipsis, never shorter than a letter.
+  // The label's limit is the row less the 16 px icon and the 10 px gaps beside
+  // it. Icons keep their size.
+  '.wf-menu-label{flex:1 1 auto;min-width:min(2em,100%);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+  '.wf-menu-label:has(+.wf-menu-shortcut){flex-shrink:0;max-width:calc(100% - 10px)}',
+  '.wf-ico+.wf-menu-label:has(+.wf-menu-shortcut){max-width:calc(100% - 36px)}',
+  // On the page (frame T at the top level) a menu is the dropdown panel itself.
+  '.wf-menu[data-wf-frame="surface"]{width:max-content;max-width:100%;padding:5px}',
+  '.wf-mode-card .wf-menu[data-wf-frame="surface"]{border-radius:8px;box-shadow:0 10px 30px rgba(17,24,39,.12)}',
+  '.wf-mode-line .wf-menu[data-wf-frame="surface"]{outline:none;border:1px solid var(--wf-line-strong);border-radius:0}',
+
+  // --- Navigation kinds at the top level (frame B: the element's own edge).
+  // Inside a framed region or a sidebar panel the container owns this chrome.
+  // A sidebar slot region draws the same panel (frame-rules rule 5). ---
+  '.wf-mode-card{--wf-panel-edge:var(--wf-line)}',
+  '.wf-mode-line{--wf-panel-edge:var(--wf-line-strong)}',
+  '.wf-mode-card .wf-root.wf-role-sidebar[data-wf-frame="edge"],.wf-mode-card .wf-nav-sidebar[data-wf-frame="edge"],'
+    + '.wf-mode-card .wf-nav-rail[data-wf-frame="edge"],.wf-mode-card .wf-nav-top[data-wf-frame="edge"],'
+    + '.wf-mode-card .wf-menubar[data-wf-frame="edge"]{background:#ffffff}',
+  '.wf-root.wf-role-sidebar[data-wf-edge-side="end"],.wf-nav-sidebar[data-wf-frame="edge"],.wf-nav-rail[data-wf-frame="edge"]'
+    + '{border-right:1px solid var(--wf-panel-edge)}',
+  '.wf-root.wf-role-sidebar[data-wf-edge-side="start"]{border-left:1px solid var(--wf-panel-edge)}',
+  '.wf-root.wf-role-sidebar[data-wf-edge-side="bottom"]{border-bottom:1px solid var(--wf-panel-edge)}',
+  '.wf-root.wf-role-sidebar[data-wf-edge-side="top"]{border-top:1px solid var(--wf-panel-edge)}',
+  // Sidebar: a panel at the sidebar width, never wider than its slot or track.
+  // An authored size is an inline width and wins. Rail: a narrow strip of icon tiles.
+  '.wf-nav-sidebar[data-wf-frame="edge"]{width:min(var(--wf-sidebar-w,256px),100%);flex:0 1 auto;min-width:0;'
+    + 'align-self:stretch;padding:8px}',
+  '.wf-nav-rail[data-wf-frame="edge"]{align-self:stretch;padding:8px 0}',
+  '.wf-nav-rail .wf-ico-placeholder{border:1px dashed var(--wf-line)}',
+  '.wf-mode-line .wf-nav-rail .wf-ico-placeholder{border-color:var(--wf-line-strong)}',
+  '.wf-nav-rail .wf-nav-on .wf-ico-placeholder{border-color:transparent}',
+  // Top nav: a bar across the width with a bottom rule.
+  '.wf-nav-top[data-wf-frame="edge"]{align-self:stretch;min-height:var(--wf-header-h,56px);padding:0 12px;'
+    + 'border-bottom:1px solid var(--wf-panel-edge)}',
+  // Menubar: a compact strip of menu titles, ruled above and below.
+  '.wf-menubar[data-wf-frame="edge"]{align-self:stretch;min-height:36px;padding:0 4px;gap:0;'
+    + 'border-top:1px solid var(--wf-panel-edge);border-bottom:1px solid var(--wf-panel-edge)}',
+  '.wf-menubar[data-wf-frame="edge"] .wf-menubar-trigger{border-radius:0}',
+  // A shortcut cut narrower than two letters would leave a stray mark, so the
+  // mask, opaque only while the box is at least 2em wide, hides it whole.
+  '.wf-menu-shortcut{font-size:11px;color:var(--wf-ink-4);flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;'
+    + 'text-overflow:ellipsis;-webkit-mask-image:linear-gradient(90deg,#000 calc((100% - 2em) * 1000),transparent 0);'
+    + 'mask-image:linear-gradient(90deg,#000 calc((100% - 2em) * 1000),transparent 0)}',
   '.wf-menu-danger{color:var(--wf-danger);font-weight:500}',
   '.wf-menu-sep{height:1px;background:var(--wf-line-2);margin:4px 0}',
   '.wf-menu-item .wf-icon-glyph{color:var(--wf-ink-4);width:16px;min-width:16px;font-size:13px}',
@@ -194,6 +238,11 @@ const navigationStyles = [
     + 'font-size:13px;font-weight:500;color:var(--wf-ink-2);background:transparent;border:0;'
     + 'border-radius:var(--wf-corner-radius,6px);cursor:pointer}',
   '.wf-menubar-trigger[data-wf-expanded]{background:var(--wf-fill);color:var(--wf-ink)}',
+  // A title without a menu is a page link (or plain text) in the bar.
+  'a.wf-menubar-trigger,span.wf-menubar-trigger{text-decoration:none}',
+  'span.wf-menubar-trigger{cursor:default}',
+  // Current is an underline, so it never reads as the open (expanded) menu.
+  '.wf-menubar-trigger[data-wf-current]{color:var(--wf-ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--wf-ink)}',
   '.wf-mode-line .wf-menubar-trigger{border-radius:0}',
   '.wf-mode-line .wf-menubar-trigger[data-wf-expanded]{background:transparent;outline:1px dashed var(--wf-line-strong);outline-offset:-1px}',
   '.wf-menubar-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:30;min-width:220px;padding:5px;'

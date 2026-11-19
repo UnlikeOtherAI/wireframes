@@ -1,6 +1,11 @@
 'use strict';
 
+const { token } = require('./sizing-tokens');
+
+// The span system's width. A grid only uses it when a child is placed with
+// `gridItem` or the manifest sets `defaultGridColumns`.
 const DEFAULT_GRID_COLUMNS = 12;
+const GRID_PLACEMENT = ['span', 'offset', 'row', 'column'];
 const DEFAULT_DENSITY = 'comfortable';
 const DENSITY_FACTORS = {
   comfortable: 1,
@@ -61,6 +66,49 @@ function shouldRenderParentSeparators(layout = {}) {
   return resolveSeparatorPolicy(layout) === 'divide';
 }
 
+function positiveInteger(value) {
+  return Number.isInteger(value) && value > 0 ? value : null;
+}
+
+/** `manifest.defaultGridColumns` when the author set it, else null: unset is not 12. */
+function resolveDefaultGridColumns(manifest) {
+  return positiveInteger(Number(isObject(manifest) ? manifest.defaultGridColumns : undefined));
+}
+
+function isPlacedGridChild(child) {
+  return isObject(child) && isObject(child.gridItem) && GRID_PLACEMENT.some((key) => child.gridItem[key] != null);
+}
+
+function autoFitTracks(min) {
+  return `repeat(auto-fit,minmax(min(${min}px,100%),1fr))`;
+}
+
+/**
+ * The one decision for a grid's tracks, shared by every host and by adaptive
+ * mode (docs/done/2026-11-19-render-polish.md §9.1):
+ *  1. a child placed with `gridItem` keeps the column system, even adapted;
+ *  2. `minItemWidth` gives tiles of at least that width;
+ *  3. adaptive mode gives tiles at the shown device's `grid.minItemWidth`;
+ *  4. explicit `columns`, then an explicit manifest default;
+ *  5. otherwise tiles at the page device's `grid.minItemWidth`.
+ * Tracks never grow around their content, and a tile minimum never exceeds
+ * the container.
+ */
+function gridTemplateColumns(layout = {}, options = {}) {
+  const columns = positiveInteger(layout.columns);
+  const fallback = positiveInteger(options.defaultGridColumns);
+  const children = Array.isArray(options.children) ? options.children : [];
+  if (children.some(isPlacedGridChild)) {
+    return `repeat(${columns || fallback || DEFAULT_GRID_COLUMNS},minmax(0,1fr))`;
+  }
+  const authoredMin = options.minItemWidth == null ? NaN : Number(options.minItemWidth);
+  if (Number.isFinite(authoredMin) && authoredMin > 0) return autoFitTracks(authoredMin);
+  const tileMin = token('grid.minItemWidth', options.viewport, options.sizing);
+  if (options.adaptive === true) return autoFitTracks(tileMin);
+  if (columns || fallback) return `repeat(${columns || fallback},minmax(0,1fr))`;
+  return autoFitTracks(tileMin);
+}
+
 function layoutToCss(layout = {}, size = {}, options = {}) {
   if (!isObject(layout)) {
     return '';
@@ -68,9 +116,6 @@ function layoutToCss(layout = {}, size = {}, options = {}) {
 
   const sizeProperties = isObject(size) ? size : {};
   const resolvedOptions = isObject(options) ? options : {};
-  const defaultColumns = Number.isInteger(resolvedOptions.defaultGridColumns)
-    ? resolvedOptions.defaultGridColumns
-    : DEFAULT_GRID_COLUMNS;
   const densityFactor = resolveDensityFactor(resolvedOptions.density);
 
   const css = [];
@@ -83,10 +128,7 @@ function layoutToCss(layout = {}, size = {}, options = {}) {
   } else if (type === 'row') {
     css.push('display:flex', 'flex-direction:row');
   } else if (type === 'grid') {
-    const columns = Number.isInteger(layout.columns) && layout.columns > 0
-      ? layout.columns
-      : defaultColumns;
-    css.push('display:grid', `grid-template-columns:repeat(${columns},1fr)`);
+    css.push('display:grid', `grid-template-columns:${gridTemplateColumns(layout, resolvedOptions)}`);
   } else if (type === 'absolute') {
     css.push('position:relative');
   } else if (type === 'overlay') {
@@ -222,6 +264,8 @@ module.exports = {
   DEFAULT_GRID_COLUMNS,
   DEFAULT_DENSITY,
   DENSITY_FACTORS,
+  resolveDefaultGridColumns,
+  gridTemplateColumns,
   toPx,
   resolveDensityFactor,
   resolveSeparatorPolicy,

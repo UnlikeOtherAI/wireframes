@@ -20,6 +20,23 @@ function fieldState(props, lib) {
   };
 }
 
+// Drawn inline in currentColor, so it shows even where the icon font is not
+// loaded, as in the browser bundle's default mount.
+const LOCK_GLYPH = '<svg viewBox="0 0 12 14" width="10" height="12" aria-hidden="true" focusable="false">'
+  + '<path d="M3.5 6.5v-2a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/>'
+  + '<rect x="1.5" y="6.5" width="9" height="6.5" rx="1.5" fill="currentColor"/></svg>';
+
+/**
+ * The lock after a read-only field's label, the cue every control shares.
+ * Decorative: the control's own read-only state is what assistive tech reads.
+ * Disabled wins, so a disabled field shows no lock.
+ */
+function readonlyLock(props) {
+  return props?.readonly === true && props.disabled !== true
+    ? `<span class="wf-field-lock" aria-hidden="true">${LOCK_GLYPH}</span>`
+    : '';
+}
+
 /**
  * The visible label above a control; `required` adds the marker. `inputId`
  * associates a native control, `labelId` lets a group name itself with
@@ -28,7 +45,7 @@ function fieldState(props, lib) {
 function fieldLabel(props, ctx, lib, inputId, labelId) {
   const label = lib.str(props?.label);
   if (!label) return '';
-  const required = props.required === true ? '<span class="wf-req">*</span>' : '';
+  const required = `${props.required === true ? '<span class="wf-req">*</span>' : ''}${readonlyLock(props)}`;
   const forAttr = inputId ? ` for="${lib.escapeAttr(inputId)}"` : '';
   const idAttr = labelId ? ` id="${lib.escapeAttr(labelId)}"` : '';
   return `<label class="wf-field-label"${forAttr}${idAttr}>${lib.bound(label, ctx)}${required}</label>`;
@@ -70,6 +87,7 @@ module.exports = {
   partId,
   fieldState,
   fieldLabel,
+  readonlyLock,
   fieldHelp,
   describedBy,
   optionValueAttr,

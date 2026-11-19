@@ -73,10 +73,17 @@ function itemProps(name) {
     .map(([prop]) => prop);
 }
 
-/** Frame class: S always framed, C decided by frame rules, N never, E edge only. */
-function frameClass(name) {
+/**
+ * Frame class: S always framed, C decided by frame rules, N never, E edge only,
+ * B its own bar edge at the top level only, T a surface at the top level only.
+ * An entry with `frameVariants` has that class only for those variants; its
+ * other variants never frame (N).
+ */
+function frameClass(name, variant) {
   const entry = getPrimitive(name);
-  return entry ? entry.frame : null;
+  if (!entry) return null;
+  if (Array.isArray(entry.frameVariants) && !entry.frameVariants.includes(variant)) return 'N';
+  return entry.frame;
 }
 
 module.exports = {

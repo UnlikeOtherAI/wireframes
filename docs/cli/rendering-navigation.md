@@ -21,6 +21,47 @@ Inherited page/skin defaults alone preserve transparent legacy panels. A selecte
 rail icon box or sidebar row uses accent for its fill and text for its foreground;
 choose a pair with at least 4.5:1 contrast. The no-variant selected style is unchanged.
 
+## Navigation kinds
+
+Each kind is recognisable at a glance at the top level of content (surface
+depth 0), in card and line mode:
+
+| Kind | Draws | Frame |
+|---|---|---|
+| `nav variant: sidebar` | a panel at `sidebar.width` (`--wf-sidebar-w`), white in card mode, one edge on the right, 8px inset | `B` → `edge` |
+| `nav variant: rail` | a narrow strip of icon tiles with a right edge. An item without an `icon` keeps an empty, `aria-hidden` tile, so the current tile stays filled | `B` → `edge` |
+| `nav variant: top` | a bar across the width, `header.height` tall, with a bottom rule | `B` → `edge` |
+| `menubar` | a compact strip of menu titles, ruled above and below | `B` → `edge` |
+| `menu` | the dropdown panel: 5px inset, radius 8 and a shadow in card mode, a solid edge in line mode. `min-width: min(180px, 100%)` and `max-width: 100%`, so it never overflows a narrow container; long labels end in an ellipsis, while shortcuts and chevrons never shrink | `T` → `surface` |
+| `nav` without a variant, `tab_bar` | unchanged | `N`, `E` |
+
+The edges use `--wf-panel-edge`: `--wf-line` in card mode and
+`--wf-line-strong` in line mode. The current row's fill shows on the white
+panels. Skins still paint `nav.sidebar` and `nav.rail` inline, over the
+white fill.
+
+Chrome follows where the author put the element. Inside a framed container
+(a card, a modal, a persistent region), inside a dropdown, or inside a
+sidebar panel, the container owns the chrome and these elements draw none.
+
+A template slot with `role: sidebar` draws the sidebar panel itself
+(frame-rules rule 5, `edge`):
+
+- a white fill in card mode;
+- one edge on the side facing the content: right when it comes before the
+  main region, left after it, bottom or top in a stacked body
+  (`data-wf-edge-side`);
+- a `card.padding` inset when no padding above 0 is authored.
+
+Its `nav`, `menu` and `menubar` draw nothing of their own. A persistent
+sidebar region stays a surface, as before.
+
+In adaptive phone mode, a sidebar panel and a standalone sidebar or rail
+reflow like the region sidebar always did. Each becomes a full-width row
+across the top that scrolls inside itself, ruled below instead of beside,
+so it never forces horizontal overflow. Adaptive tablet mode keeps them
+beside the content.
+
 ## Items
 
 Every navigation list reads the shared item model through its profile:
@@ -76,6 +117,8 @@ States go on the element that owns them, through `lib.stateAttrs`:
 | Step | `<span class="wf-step">` | `aria-current="step" data-wf-current` | `aria-disabled="true" data-wf-disabled` |
 | Current page number or dot | `<button>` or `<span>` | `aria-current="page" data-wf-current` | — |
 | Menu, command and menubar panel row | `<a>` or `<span>` | `data-wf-selected`; `current` adds `aria-current="true" data-wf-current` | `aria-disabled="true" data-wf-disabled` |
+| Menubar title without a menu | `<a>` or `<span>` | `aria-current="page" data-wf-current` | `aria-disabled="true" data-wf-disabled` |
+| Menubar title with a menu | `<button>` | `aria-current="page" data-wf-current`, beside `aria-expanded` | `aria-disabled="true" data-wf-disabled` |
 | Action sheet row | `<button>` | — | native `disabled`, `data-wf-disabled` |
 
 A tab button that was blank or unselectable was already disabled; it keeps its
@@ -100,7 +143,8 @@ An item `route` renders a link in `nav`, `breadcrumb`, `tab_bar`,
   actions then render as plain buttons.
 - The current crumb never links.
 
-`menubar` panel rows are display-only and never link.
+A `menubar` title without a menu links like a nav row. Its panel rows are
+display-only and never link.
 
 ## Expanded rows
 
@@ -143,10 +187,24 @@ A horizontal site menu (`wf-nav-top`):
 
 ## `menubar`
 
-A desktop application menu row (`wf-menubar`), never framed:
+A desktop application menu row (`wf-menubar`). At the top level it is a menu
+strip ([Navigation kinds](#navigation-kinds)); in a framed bar it is bare:
 
-- Each top-level item is a `<button class="wf-menubar-trigger">`. Items with
-  nested `items` are disclosures with `aria-expanded`.
+- A top-level item with nested `items` is a `<button class="wf-menubar-trigger">`
+  disclosure with `aria-expanded`. Its own `route` is not used.
+- A top-level item without `items` is a page link in the bar, through
+  `itemLink` as a nav row: `<a class="wf-menubar-trigger" href>` when its route
+  is known, focusable and followed on Enter. With an unknown or missing route,
+  when `disabled`, or when the menubar has its own `interaction`, it is a
+  `<span>` that takes no focus. Write a plain link this way, never as a title
+  whose one-item menu repeats its name.
+- Which titles are current follows nav's rule: an item's own `selected` or
+  `current` decides first, and every marked item is on. Otherwise an enabled
+  title without a menu whose `route` is the page being rendered is current.
+  An item marked `false` is never inferred. Current titles get
+  `aria-current="page"`, ink, weight 600 and a 2px underline; an open
+  (`expanded`) menu keeps its fill (card) or dashed outline (line), so the two
+  never look alike. Mark the page with `current`, not `open`.
 - `open` names the menu drawn open, by `value` or `label`; without a match, the
   first item with `expanded: true` opens. The panel (`wf-menubar-panel`) hangs
   below its trigger, out of the layout flow.

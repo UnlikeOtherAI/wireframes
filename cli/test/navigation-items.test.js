@@ -28,10 +28,27 @@ function tag(html, text) {
   return html.slice(html.lastIndexOf('<', end), end + 1);
 }
 
+// At the top level a sidebar, rail or top nav and a menubar draw their own edge
+// (frame B) and a menu its dropdown box (frame T): the shell's frame decision,
+// not the element's markup (docs/done/2026-11-19-render-polish.md §9.3-9.4).
+const TOP_LEVEL_FRAME = { B: 'edge', T: 'surface' };
+function withoutFrame(html) {
+  return html.replace(/ data-wf-frame="\w+"/, ' data-wf-frame').replace(' wf-surface"', '"');
+}
+
 for (const { name, node, html } of legacy.cases) {
   test(`legacy ${name}: only state attributes are added`, () => {
-    const now = renderNode(node, { routeTable: legacy.routeTable, routeId: legacy.routeId });
-    assert.equal(now.replace(LEGACY_STATE, ''), html);
+    const now = renderNode(node, { routeTable: legacy.routeTable, routeId: legacy.routeId }).replace(LEGACY_STATE, '');
+    const frame = TOP_LEVEL_FRAME[frameClass(node.component, node.props?.variant)];
+    if (!frame) {
+      assert.equal(now, html);
+      return;
+    }
+    assert.match(now, new RegExp(`data-wf-frame="${frame}"`));
+    assert.equal(withoutFrame(now), withoutFrame(html));
+    // Inside a frame it draws exactly what it always did.
+    const nested = renderNode(node, { routeTable: legacy.routeTable, routeId: legacy.routeId, surfaceDepth: 1 }).replace(LEGACY_STATE, '');
+    assert.equal(nested, html);
   });
 }
 
@@ -66,7 +83,10 @@ test('navigation item props are marked items: true; app-bar actions stay glyph d
   assert.deepEqual(itemProps('app_bar'), []);
   assert.deepEqual(getPrimitive('nav').props.variant.enum, ['rail', 'sidebar', 'top']);
   assert.equal(frameClass('command'), 'C');
-  assert.equal(frameClass('menubar'), 'N');
+  assert.equal(frameClass('menubar'), 'B');
+  assert.equal(frameClass('menu'), 'T');
+  assert.equal(frameClass('nav'), 'N', 'a nav without a variant keeps its legacy look');
+  for (const variant of ['sidebar', 'rail', 'top']) assert.equal(frameClass('nav', variant), 'B');
 });
 
 test('canonical-only items render in every navigation consumer', () => {

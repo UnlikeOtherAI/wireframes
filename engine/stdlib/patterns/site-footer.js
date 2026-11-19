@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-  summary: 'Marketing site footer: logo and tagline, link columns (the columns slot), copyright and social links.',
+  summary: 'Marketing site footer across the full width: logo and tagline, link columns (the columns slot), copyright and social links. A blank tagline, an empty link list or social: [] is left out.',
   source: `
 propDefaults:
   brand: Acme
@@ -12,15 +12,17 @@ propDefaults:
   copyright: © Acme Inc. All rights reserved.
 propHints:
   brand: Company name, used as the logo's text
-  tagline: Line under the logo
-  productLinks: First link column (nav items; a heading item titles the column)
-  companyLinks: Second link column
-  resourceLinks: Third link column
+  tagline: Line under the logo; blank leaves it out
+  productLinks: First link column (nav items; a heading item titles the column); [] leaves it out
+  companyLinks: Second link column; [] leaves it out
+  resourceLinks: Third link column; [] leaves it out
   copyright: Copyright line at the bottom
+# A section, so at the top of a page the footer is one full-width panel; in a
+# framed footer region it is plain and the region draws the frame.
 root:
   id: site_footer
-  component: stack
-  props: { gap: 24 }
+  component: section
+  layout: { type: stack, gap: 24 }
   children:
     - id: top
       component: row
@@ -33,9 +35,10 @@ root:
           children:
             - id: logo
               component: image
-              props: { kind: logo, slot: logo_1, alt: "{{props.brand}}", width: 112, height: 32 }
+              props: { kind: logo, slot: logo_1, alt: "{{props.brand}}", width: 160, height: 40 }
             - id: tagline
               component: text
+              when: "{{props.tagline}}"
               props: { text: "{{props.tagline}}", variant: meta }
         - id: link_columns
           component: row
@@ -46,14 +49,17 @@ root:
               children:
                 - id: product
                   component: nav
+                  when: "{{props.productLinks}}"
                   size: { width: 160 }
                   props: { items: "{{props.productLinks}}" }
                 - id: company
                   component: nav
+                  when: "{{props.companyLinks}}"
                   size: { width: 160 }
                   props: { items: "{{props.companyLinks}}" }
                 - id: resources
                   component: nav
+                  when: "{{props.resourceLinks}}"
                   size: { width: 160 }
                   props: { items: "{{props.resourceLinks}}" }
     - id: rule
@@ -64,6 +70,7 @@ root:
       children:
         - id: copyright
           component: text
+          when: "{{props.copyright}}"
           props: { text: "{{props.copyright}}", variant: meta }
         - id: social
           slot: social
