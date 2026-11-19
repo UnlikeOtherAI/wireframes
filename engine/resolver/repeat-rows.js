@@ -15,8 +15,10 @@
 const { childNodeLists } = require('../component-registry/child-nodes');
 const { repeatNodeCount } = require('../component-registry/expansion');
 const { repeatRows } = require('../component-registry/repeat');
+const { isSlotPlaceholder } = require('../component-registry/slot-placeholders');
 
 const isObject = (value) => value != null && typeof value === 'object' && !Array.isArray(value);
+const NONE = new Set();
 
 /** Where a failure came from: enough of the node for validation to find it in its source. */
 function origin(node) {
@@ -29,41 +31,54 @@ function origin(node) {
 
 /**
  * Replaces the host's `repeat` with its rows, after its authored children.
- * `hostId` is the id the host is written with (see `repeatRows`).
+ * - `hostId` is the id the host is written with (see `repeatRows`);
+ * - `written` is the node as its author wrote it, whose stamps the rows take;
+ * - `reserved` is what rows already made beside it will expand to, so hosts
+ *   that share a definition share the budget.
+ * Returns what the rows will expand to as `need`.
  */
-function expandHostRows(host, definitions, budget, hostId = host?.id) {
-  if (!isObject(host) || !Object.hasOwn(host, 'repeat')) return { ok: true };
-  const rows = repeatRows(host, hostId);
+function expandHostRows(host, definitions, budget, { hostId = host?.id, written = host, reserved = 0 } = {}) {
+  if (!isObject(host) || !Object.hasOwn(host, 'repeat')) return { ok: true, need: 0 };
+  const rows = repeatRows(host, hostId, written);
+  let need = 0;
   if (rows.length > 0) {
-    const need = repeatNodeCount(host, definitions, budget);
-    if (budget.used + need > budget.max) {
+    need = repeatNodeCount(host, definitions, budget);
+    if (budget.used + reserved + need > budget.max) {
       return {
         ok: false,
         reason: 'repeat-budget',
         error: `Repeat on "${hostId}" would expand to ${need} more nodes; a page may expand to at most ${budget.max}.`,
-        host: { ...origin(host), id: hostId },
+        host: { ...origin(written), id: hostId },
       };
     }
     host.children = [...(Array.isArray(host.children) ? host.children : []), ...rows];
   }
   delete host.repeat;
-  return { ok: true };
+  return { ok: true, need };
 }
 
 /**
  * Expands every host a prepared definition tree contains, the root included.
- * `rootId` is the definition root's own id; the root carries its instance's.
+ * - `root` is the definition's root as written: the prepared root carries its
+ *   instance's id and stamps, its rows the definition's;
+ * - `replaced` names the slots the caller fills, whose fallbacks never render.
  */
-function materializeDefinitionRows(root, definitions, budget, rootId = root?.id) {
-  const expanded = expandHostRows(root, definitions, budget, rootId);
-  if (!expanded.ok) return expanded;
-  for (const list of childNodeLists(root)) {
-    for (const node of list) {
-      const below = materializeDefinitionRows(node, definitions, budget);
-      if (!below.ok) return below;
+function materializeDefinitionRows(tree, definitions, budget, { root = tree, replaced = NONE } = {}) {
+  let reserved = 0;
+  const visit = (node, options) => {
+    if (isSlotPlaceholder(node) && replaced.has(node.slot)) return { ok: true };
+    const expanded = expandHostRows(node, definitions, budget, { ...options, reserved });
+    if (!expanded.ok) return expanded;
+    reserved += expanded.need;
+    for (const list of childNodeLists(node)) {
+      for (const child of list) {
+        const below = visit(child, {});
+        if (!below.ok) return below;
+      }
     }
-  }
-  return { ok: true };
+    return { ok: true };
+  };
+  return visit(tree, { hostId: root?.id, written: root });
 }
 
 module.exports = { expandHostRows, materializeDefinitionRows, origin };

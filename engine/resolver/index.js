@@ -112,6 +112,10 @@ function resolveComponentNode(node, components, componentStack, injections, budg
     ...instanceOverrides,
     id,
   };
+  // Instance children replace the root's children, and its rows with them.
+  if (Object.hasOwn(instanceOverrides, 'children')) {
+    delete resolvedNode.repeat;
+  }
 
   const mergedProps = mergeNodeProps(props, resolvedNode.props, componentDoc.propDefaults);
   if (Object.keys(mergedProps).length > 0) {
@@ -123,8 +127,9 @@ function resolveComponentNode(node, components, componentStack, injections, budg
     resolvedNode[key] = value;
   }
 
-  // The definition's rows are its own content: substituted above, namespaced below.
-  const rows = materializeDefinitionRows(resolvedNode, components, budget, componentDoc.root.id);
+  // The definition's rows are its own content: substituted above, namespaced below,
+  // and stamped with where the definition writes them.
+  const rows = materializeDefinitionRows(resolvedNode, components, budget, { root: componentDoc.root });
   if (!rows.ok) {
     return rows;
   }
@@ -168,8 +173,9 @@ function resolveSlottedInstance(node, componentDoc, components, componentStack, 
   }
 
   const token = Symbol('slot fills');
+  // A fallback the caller replaces never renders, so its rows are not made.
   const prepared = prepareSlottedInstance(node, componentDoc, fills, token,
-    (tree) => materializeDefinitionRows(tree, components, budget, componentDoc.root.id));
+    (tree) => materializeDefinitionRows(tree, components, budget, { root: componentDoc.root, replaced: new Set(fills.keys()) }));
   if (!prepared.ok) {
     return prepared;
   }
