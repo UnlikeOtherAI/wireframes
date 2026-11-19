@@ -75,6 +75,15 @@ function keyedItems(items) {
     });
 }
 
+/** The node one item renders as, without its provenance. */
+function repeatRowNode(hostId, cell, item) {
+  const { id: itemId, ...props } = item;
+  const row = { id: repeatRowId(hostId, itemId) };
+  row[isElementCell(cell) ? 'component' : 'use'] = cell;
+  if (Object.keys(props).length > 0) row.props = cloneDeep(props);
+  return row;
+}
+
 /**
  * The rows a host renders, in item order. Empty unless the host can host rows.
  * `hostId` is the id the host is written with: a definition root has taken its
@@ -83,13 +92,9 @@ function keyedItems(items) {
 function repeatRows(host, hostId = host?.id) {
   const repeat = repeatOf(host);
   if (!repeat || typeof hostId !== 'string' || repeatHostProblem(host) != null) return [];
-  const element = isElementCell(repeat.cell);
   return keyedItems(repeat.items).map(({ item, index }) => {
-    const { id: itemId, ...props } = item;
-    const row = { id: repeatRowId(hostId, itemId) };
-    row[element ? 'component' : 'use'] = repeat.cell;
-    if (Object.keys(props).length > 0) row.props = cloneDeep(props);
-    row.__repeat = { host: hostId, item: itemId, index };
+    const row = repeatRowNode(hostId, repeat.cell, item);
+    row.__repeat = { host: hostId, item: item.id, index };
     if (typeof host.__source === 'string') row.__source = `${host.__source.split('#')[0]}#${row.id}`;
     if (typeof host.__sourcePath === 'string') row.__sourcePath = `${host.__sourcePath}.repeat.items[${index}]`;
     return row;
@@ -104,5 +109,6 @@ module.exports = {
   repeatHostProblem,
   repeatOf,
   repeatRowId,
+  repeatRowNode,
   repeatRows,
 };

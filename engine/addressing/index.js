@@ -1,6 +1,7 @@
 'use strict';
 
 const { childNodeLists } = require('../component-registry/child-nodes');
+const { repeatOf, repeatRowId } = require('../component-registry/repeat');
 
 const ADDRESS_PREFIX = 'wf://';
 const WF_ID_REGEX = /^[a-z][a-z0-9_]*$/;
@@ -67,7 +68,9 @@ function ensureArrayField(owner, fieldName, context) {
   return { ok: true, value: current };
 }
 
-function buildRootNode(origin, sourceRef, kind, id, nodes, aliases = []) {
+// `host` is the node the container stands for, when it is one: a component's
+// root, whose repeat rows are addressed under it.
+function buildRootNode(origin, sourceRef, kind, id, nodes, aliases = [], host = null) {
   return {
     kind,
     id,
@@ -75,7 +78,19 @@ function buildRootNode(origin, sourceRef, kind, id, nodes, aliases = []) {
     nodes,
     origin,
     sourceRef,
+    host,
   };
+}
+
+/**
+ * The item a row id names under `host`, found by its id wherever it now sits,
+ * so reordering, inserting or removing items never retargets an address.
+ */
+function findRepeatItem(host, rowId) {
+  const repeat = repeatOf(host);
+  if (!repeat || typeof host.id !== 'string') return null;
+  const index = repeat.items.findIndex((item) => isObject(item) && typeof item.id === 'string' && repeatRowId(host.id, item.id) === rowId);
+  return index === -1 ? null : { host, items: repeat.items, index, item: repeat.items[index], cell: repeat.cell };
 }
 
 function buildPageRoots(pageDoc, pageId) {
@@ -175,6 +190,7 @@ function buildComponentRootsFromMap(components, componentId) {
         rootId,
         rootChildren,
         ['root'],
+        componentRoot,
       ),
     ],
   };
@@ -207,12 +223,24 @@ function findInLists(lists, segment) {
   return null;
 }
 
+/**
+ * A repeat row resolves to `targetType: 'repeat-item'`: its `host`, the host's
+ * `items`, the item's current `index` and the `item` itself. A row has no
+ * authored children, so nothing resolves below it.
+ */
 function resolveAddressInRoots(roots, segments, { allowContainerFinal = false } = {}) {
   const currentNodes = roots;
   let currentLists = [];
+  // The node whose lists are searched, so its repeat rows can be found too.
+  let currentHost = null;
   let resolvedPath = [];
   let activeOrigin = null;
   let activeSourceRef = null;
+  const descend = (node, segment) => {
+    currentHost = node;
+    currentLists = childNodeLists(node);
+    return currentLists.length > 0 || repeatOf(node) != null ? null : { ok: false, error: `Node "${segment}" has no children.` };
+  };
 
   for (let index = 0; index < segments.length; index += 1) {
     const segment = segments[index];
@@ -250,10 +278,8 @@ function resolveAddressInRoots(roots, segments, { allowContainerFinal = false } 
             };
           }
 
-          currentLists = childNodeLists(directMatchNode);
-          if (currentLists.length === 0) {
-            return { ok: false, error: `Node "${segment}" has no children.` };
-          }
+          const leaf = descend(directMatchNode, segment);
+          if (leaf) return leaf;
           continue;
         }
       }
@@ -293,6 +319,7 @@ function resolveAddressInRoots(roots, segments, { allowContainerFinal = false } 
       }
 
       currentLists = [rootNode.nodes];
+      currentHost = rootNode.host || null;
       continue;
     }
 
@@ -302,7 +329,24 @@ function resolveAddressInRoots(roots, segments, { allowContainerFinal = false } 
 
     const found = findInLists(currentLists, segment);
     if (!found) {
-      return { ok: false, error: `Node "${segment}" not found while resolving address.` };
+      const row = findRepeatItem(currentHost, segment);
+      if (!row) {
+        return { ok: false, error: `Node "${segment}" not found while resolving address.` };
+      }
+      const baseRefPrefix = String(activeSourceRef).split('#')[0];
+      if (!isLast) {
+        return { ok: false, error: `Node "${segment}" is a repeat row of "${currentHost.id}"; it has no authored children.` };
+      }
+      return {
+        ok: true,
+        targetType: 'repeat-item',
+        ...row,
+        rowId: segment,
+        hostAddress: `${baseRefPrefix}#${resolvedPath.join('.')}`,
+        origin: activeOrigin,
+        sourceRef: activeSourceRef,
+        resolvedAddress: `${baseRefPrefix}#${[...resolvedPath, segment].join('.')}`,
+      };
     }
 
     const node = found.list[found.index];
@@ -322,10 +366,8 @@ function resolveAddressInRoots(roots, segments, { allowContainerFinal = false } 
       };
     }
 
-    currentLists = childNodeLists(node);
-    if (currentLists.length === 0) {
-      return { ok: false, error: `Node "${segment}" has no children.` };
-    }
+    const leaf = descend(node, segment);
+    if (leaf) return leaf;
   }
 
   return { ok: false, error: 'Unable to resolve address.' };
