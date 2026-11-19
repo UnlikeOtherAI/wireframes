@@ -1,4 +1,24 @@
 documentType: components
 specVersion: "1.1"
 id: components
-components: {}
+components:
+  # A small local component, repeated as a cell on the navigation pages.
+  member_chip:
+    propDefaults:
+      name: Member
+    root:
+      id: member_chip
+      component: row
+      props:
+        gap: 8
+        align: center
+      children:
+        - id: avatar
+          component: avatar
+          props:
+            name: "{{props.name}}"
+            size: sm
+        - id: name
+          component: text
+          props:
+            text: "{{props.name}}"

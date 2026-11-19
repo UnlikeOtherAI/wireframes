@@ -162,3 +162,24 @@ page:
                       - { label: Copy data, start: 1, end: 3 }
                       - { label: Verify, start: 2.5, end: 4, tone: info }
                       - { label: Switch over, start: 3.6, end: 4, tone: success }
+                # One cell per keyed item: stat tiles, then a small local component.
+                - id: lnav_kpis
+                  component: grid
+                  props:
+                    columns: 3
+                  repeat:
+                    cell: stat
+                    items:
+                      - { id: seats, label: Seats, value: "48" }
+                      - { id: active, label: Active, value: "41" }
+                      - { id: invited, label: Invited, value: "7" }
+                - id: lnav_members
+                  component: row
+                  props:
+                    gap: 16
+                  repeat:
+                    cell: member_chip
+                    items:
+                      - { id: ada, name: Ada Lovelace }
+                      - { id: grace, name: Grace Hopper }
+                      - { id: alan, name: Alan Turing }
