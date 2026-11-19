@@ -223,6 +223,11 @@ with a result count.
 |---|---|
 | `filters` | a search field and two selects (status, plan) |
 
+The `filters` slot sits in a filter bar, a row with `role: toolbar`. The
+filters you pass sit inline at their natural width and wrap as a row, on a
+phone too; a filter's `size.width` still wins. `filters: []` leaves the bar
+empty, and an empty bar draws nothing and adds no gap.
+
 ```yaml
 - id: invoices
   use: std.data_page

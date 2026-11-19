@@ -191,3 +191,22 @@ test('rendering a pattern twice is byte-identical and never changes the built-in
   assert.equal(render(), render());
   assert.equal(JSON.stringify(EXPECTED.map((id) => builtinComponentDefinition(id))), before);
 });
+
+test('std.data_page filters sit in a wrapping toolbar row at their natural width', () => {
+  const status = { id: 'status_filter', component: 'select', props: { label: 'Status', options: ['Active', 'Pending', 'Inactive'] } };
+  const documentMap = memoryProject([
+    { id: 'customers', use: 'std.data_page', slots: { filters: [status] } },
+    { id: 'plain', use: 'std.data_page' },
+  ]);
+  const validation = validateProject(documentMap);
+  assert.deepEqual(validation.errors, []);
+  assert.equal([...validation.warnings, ...(validation.info || [])].some((entry) => entry.code === 'UNKNOWN_ROLE'), false);
+  const html = buildProject(documentMap, { platform: 'web', basePath: '/' }).pages[0].html;
+  // The bar wraps, and a passed filter (it keeps its own id) keeps its natural width instead of growing to 320px.
+  assert.match(html, /id="customers__filter_bar" class="[^"]*wf-role-toolbar[^"]*" style="[^"]*flex-wrap:wrap/);
+  assert.match(html, /id="status_filter" class="[^"]*" style="flex:0 1 auto;width:auto;max-width:100%/);
+  assert.doesNotMatch(html, /id="status_filter"[^>]*max-width:320px/);
+  // The default filters keep their authored widths.
+  assert.match(html, /id="plain__search" class="[^"]*" style="[^"]*width:280px/);
+  assert.match(html, /id="plain__status" class="[^"]*" style="[^"]*width:160px/);
+});

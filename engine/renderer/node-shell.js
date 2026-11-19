@@ -85,8 +85,11 @@ function rowFlexStyle(element, node, ctx) {
   if (size.width != null) return 'flex:0 1 auto';
   if (ROW_INTRINSIC.has(element)) return 'flex:0 0 auto';
   // A field in a row grows into the space, but only so far: a zoom select
-  // should not eat a toolbar. Override with size.width.
-  if (ROW_FLEXIBLE.has(element)) return 'flex:1 1 auto;min-width:0;max-width:320px';
+  // should not eat a toolbar. In a `role: toolbar` row, such as a filter bar,
+  // it keeps its natural width. Override with size.width.
+  if (ROW_FLEXIBLE.has(element)) {
+    return ctx.parentRole === 'toolbar' ? 'flex:0 1 auto;width:auto;max-width:100%' : 'flex:1 1 auto;min-width:0;max-width:320px';
+  }
   return '';
 }
 
@@ -124,7 +127,7 @@ function wrapStyle(element, node, decision, ctx) {
   // when every child is an intrinsic-width control.
   const layoutType = isObject(node.layout) ? node.layout.type : (element === 'row' ? 'row' : null);
   if (layoutType === 'row' && props.nowrap !== true) {
-    if (props.wrap === true || isToolbarRow(node)) parts.push('flex-wrap:wrap');
+    if (props.wrap === true || node.role === 'toolbar' || isToolbarRow(node)) parts.push('flex-wrap:wrap');
   }
   // A frame needs breathing room, unless the element draws its own insets.
   const SELF_PADDED = new Set(['table', 'list', 'calendar', 'accordion', 'tree', 'code', 'carousel', 'alert', 'upload', 'editor', 'empty_state', 'stat', 'menu']);

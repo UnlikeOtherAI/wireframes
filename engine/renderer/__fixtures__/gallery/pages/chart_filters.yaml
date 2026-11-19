@@ -1,0 +1,39 @@
+documentType: page
+specVersion: "1.1"
+id: chart_filters
+page:
+  id: chart_filters
+  template: app_shell
+  viewport:
+    device: web
+    orientation: landscape
+  renderMode: card
+  slots:
+    - slotId: main
+      content:
+        # Tick i names the band from i to i+1: each bar fills one quarter.
+        - id: cf_roadmap
+          component: chart
+          props:
+            chartType: gantt
+            title: Release Timeline
+            ticks: [Q1, Q2, Q3, Q4]
+            data:
+              - { label: Feature Alpha, start: 0, end: 1 }
+              - { label: Feature Beta, start: 1, end: 2 }
+              - { label: Feature Release, start: 2, end: 3 }
+              - { label: Feature Final, start: 3, end: 4 }
+        # A filter passed to std.data_page sits inline at its natural width.
+        - id: cf_customers
+          use: std.data_page
+          props:
+            rows:
+              - { name: Ada Lovelace, email: ada@example.com, plan: Pro, status: Active }
+              - { name: Grace Hopper, email: grace@example.com, plan: Team, status: Pending }
+            summary: Showing 1–2 of 2
+            pages: 1
+          slots:
+            filters:
+              - id: cf_status
+                component: select
+                props: { label: Status, options: [Active, Pending, Inactive] }

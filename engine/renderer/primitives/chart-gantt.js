@@ -19,20 +19,29 @@ function ganttRow(entry) {
   return { label: entry.label, tone: entry.tone, span };
 }
 
-/** A staircase of greeked bars, a pure function of the node id. */
-function seededRows(node, lib) {
+/**
+ * A staircase of greeked bars, a pure function of the node id. With ticks it
+ * is drawn across the ticks' bands.
+ */
+function seededRows(node, lib, bands) {
   const seed = node.id || 'chart';
-  return Array.from({ length: SEEDED_ROWS }, (_, i) => {
+  const rows = Array.from({ length: SEEDED_ROWS }, (_, i) => {
     const start = i * 12 + Math.round(lib.seeded(seed, i * 2) * 10);
     const length = 14 + Math.round(lib.seeded(seed, i * 2 + 1) * 24);
     return { label: '', tone: null, span: [start, start + length] };
   });
+  if (bands === 0) return rows;
+  const scale = bands / Math.max(...rows.map((row) => row.span[1]));
+  return rows.map((row) => ({ ...row, span: row.span.map((at) => at * scale) }));
 }
 
-/** Smallest start to largest end; a zero-width domain is padded by ±1. */
-function domainOf(rows) {
-  let low = Infinity;
-  let high = -Infinity;
+/**
+ * Smallest start to largest end. With ticks the axis also spans every tick's
+ * band, from 0 to the tick count. A zero-width domain is padded by ±1.
+ */
+function domainOf(rows, bands) {
+  let low = bands > 0 ? 0 : Infinity;
+  let high = bands > 0 ? bands : -Infinity;
   for (const row of rows) {
     if (!row.span) continue;
     if (row.span[0] < low) low = row.span[0];
@@ -59,15 +68,14 @@ function percent(value) {
   return `${(value * 100).toFixed(2)}%`;
 }
 
-/** Tick labels spaced evenly from the start of the domain to its end. */
-function tickMarks(ticks) {
-  const labels = (Array.isArray(ticks) ? ticks : [])
+/**
+ * Tick labels on the bars' scale: tick i names the band from i to i+1, so
+ * `start: 0, end: 1` fills the first tick's band exactly.
+ */
+function tickLabels(ticks) {
+  return (Array.isArray(ticks) ? ticks : [])
     .filter((tick) => typeof tick === 'string' || typeof tick === 'number')
     .map(String);
-  return labels.map((label, i) => ({
-    label,
-    at: labels.length > 1 ? i / (labels.length - 1) : 0,
-  }));
 }
 
 function rowMarkup(row, domain, ctx, lib) {
@@ -89,12 +97,15 @@ function rowMarkup(row, domain, ctx, lib) {
  */
 function ganttBody(node, ctx, lib) {
   const props = node.props || {};
-  const rows = Array.isArray(props.data) ? lib.items(props.data).map(ganttRow) : seededRows(node, lib);
-  const domain = domainOf(rows);
-  const marks = tickMarks(props.ticks);
-  const grid = marks.length > 0
+  const labels = tickLabels(props.ticks);
+  const rows = Array.isArray(props.data) ? lib.items(props.data).map(ganttRow) : seededRows(node, lib, labels.length);
+  const domain = domainOf(rows, labels.length);
+  // A gridline at each band's edge, 0 to the tick count.
+  const grid = labels.length > 0
     ? `<div class="wf-gantt-grid" aria-hidden="true">${
-      marks.map((mark) => `<span class="wf-gantt-gridline" style="left:${percent(mark.at)}"></span>`).join('')
+      Array.from({ length: labels.length + 1 }, (_, i) => (
+        `<span class="wf-gantt-gridline" style="left:${percent(placeBar([i, i], domain).left)}"></span>`
+      )).join('')
     }</div>`
     : '';
   const body = rows.length > 0
@@ -102,10 +113,11 @@ function ganttBody(node, ctx, lib) {
     : '<div class="wf-gantt-empty">No data</div>';
   const height = lib.num(props.height, null);
   const heightStyle = height ? ` style="height:${height}px"` : '';
-  const axis = marks.length > 0
-    ? `<div class="wf-gantt-axis">${marks.map((mark, i) => {
-      const edge = i === 0 ? ' wf-gantt-tick-start' : (i === marks.length - 1 ? ' wf-gantt-tick-end' : '');
-      return `<span class="wf-gantt-tick${edge}" style="left:${percent(mark.at)}">${lib.escapeHtml(mark.label)}</span>`;
+  // Each label is centred in its own band and ends in an ellipsis if it is wider.
+  const axis = labels.length > 0
+    ? `<div class="wf-gantt-axis">${labels.map((label, i) => {
+      const band = placeBar([i, i + 1], domain);
+      return `<span class="wf-gantt-tick" style="left:${percent(band.left)};width:${percent(band.width)}">${lib.escapeHtml(label)}</span>`;
     }).join('')}</div>`
     : '';
   return `<div class="wf-gantt"><div class="wf-gantt-plot"${heightStyle}><div class="wf-gantt-rows">${grid}${body}</div></div>${axis}</div>`;

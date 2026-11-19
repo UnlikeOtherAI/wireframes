@@ -22,6 +22,8 @@ const PAGE_IDS = [
   'polish', 'line_polish', 'sidebar_panel',
   // A labelled editor is a field: its label above its box, in both modes.
   'field_frames', 'line_field_frames',
+  // Gantt ticks name bands on the bars' scale; std.data_page filters sit inline.
+  'chart_filters', 'line_chart_filters',
 ];
 const MAX_DIFF_PIXEL_RATIO = 0.01;
 
