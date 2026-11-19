@@ -1,6 +1,6 @@
 # Render polish: tiles, text, read-only and navigation kinds
 
-Status: design, 19 November 2026 (branch `claude/render-polish`, from `57c953f`). Awaiting adversarial review.
+Status: reviewed by Codex on 19 November 2026 (branch `claude/render-polish`, from `57c953f`). §9 records the review decisions. Where §9 and §4 differ, §9 wins.
 
 ## 1. Problem Statement
 
@@ -205,3 +205,84 @@ One focused commit per step, each with tests that fail first, the docs and the r
 3. **Tile width.** Is 220/200/150 px the right minimum? It is the same as `adaptive`'s reflow, and leaves five tiles across at 1280.
 4. **The new frame class.** Is `B` worth adding, or should top-level nav chrome come from `C` plus per-kind overrides of the surface box?
 5. **Menubar inference.** Should menubar leaves infer current from the route, as `nav` does? This design says yes, for consistency and because a menubar in a template cannot know its page.
+
+The review settled all five: (1) keep an explicit 12 and stop writing it; (2) lock plus dashed edge, if they pass contrast and render in WebKit; (3) start from 220/200/150 and check the content box after gaps; (4) `B` only at depth zero, and a nav with no `variant` is unchanged; (5) infer from the route, with the resolver's precedence.
+
+## 9. Review Findings
+
+Codex reviewed `2e90056`. Decisions, by finding:
+
+| # | Finding | Decision | What changes |
+|---|---|---|---|
+| 1 | Adaptive `!important` floors override the clamp and cover only `.wf-grid` and `.wf-form` | adopt | Tracks for every grid host come from one function in normal and adaptive mode alike. `styles/adaptive.js` drops its grid track rules. |
+| 2 | Hosts, validation and output paths decide columns separately | adopt, narrowed | One column decision, shared by every render host. Validation unchanged. Parity test: bundle against build. |
+| 3 | `1fr` tracks can grow around long content | adopt | Every emitted track is `minmax(0,1fr)`. |
+| 4 | A lock alone does not make a control read-only | adopt, narrowed | The existing state owners and guards are reused, not rebuilt. Added: tests, contrast floors and WebKit checks. |
+| 5 | Menu `min-width` beats a smaller `max-width`; rule 8 frames a menu in a card's grid | adopt | `min-width:min(180px,100%)`, defined overflow, and new frame class `T`. |
+| 6 | Menubar fallback, current and expanded need distinct contracts | adopt | Fallback through `itemLink`, as in nav. Current gets an underline, unlike expanded. Selection uses resolver precedence. |
+| 7 | Nav chrome can bypass mobile reflow | adopt, narrowed | Chrome follows authored placement. Adaptive phone reflows standalone sidebars and rails. Placeholders are decorative. |
+| 8 | List newline longhands lack a WebKit fallback | adopt | List summaries stay single-line, outside the prose rule. Everything is checked in WebKit. |
+| 9 | Docs and checks list incomplete | adopt | Added: `brief.md`, `schema-systems.md`, the determinism test and per-project page checks. |
+
+### 9.1 Grid columns
+- **One function.** `gridTemplateColumns` in `layout.js` decides the tracks. It is the only place a host gets `grid-template-columns`, and its inputs are the layout, `minItemWidth`, the rendered children, the explicit manifest default, the viewport and the sizing tokens.
+- **Precedence:**
+  1. Any child placed with `gridItem` (span, offset, row or column) gives `repeat(columns ?? default ?? 12, minmax(0,1fr))`. This holds in adaptive mode too: placement is never reflowed.
+  2. Else `minItemWidth` gives `repeat(auto-fit,minmax(min(<min>px,100%),1fr))`, as today but clamped.
+  3. Else, in adaptive mode, the same auto-fit at the shown device's `grid.minItemWidth`: tablet 200, mobile 150. These are today's adaptive floors, now clamped and applied to every grid host.
+  4. Else explicit `columns`, then an explicit manifest default, as `minmax(0,1fr)` tracks.
+  5. Else auto-fit at the page device's `grid.minItemWidth`.
+- **Hosts.** These hosts call it with their own rendered children:
+  - `node-shell.buildShell`, for every element. That covers `grid`, `form` with `columns`, and a `section` or `card` with a grid layout. The shell's CSS also lays out the split-body children wrapper.
+  - The region body (`renderRoot`) and the page body (`renderPageShell`) in `screenshots/renderer.js`. The region body never received the manifest default before.
+  - The tab-body paths in `node-primitives.js` are not a host: the file is imported nowhere.
+  - Repeat rows and component uses are expanded before render, so the decision sees the real children.
+- **Validation needs no change.** Auto tiles apply only when no child uses `gridItem`, so `INVALID_GRID_SPAN` cannot fire on them. A placed grid with no columns and no explicit default resolves to 12 in both the doctor and the renderer.
+- **Adaptive is a deliberate change.** Grid-layout sections, cards and forms now reflow too. Before, only `.wf-grid` and `.wf-form` did, and placed spans were reflowed into overflow.
+
+### 9.2 Read-only semantics
+- **Owners stay as they are** (rendering-controls.md "Field contract per widget"):
+  - native `readonly` for text inputs, textareas and the tags text box;
+  - `aria-readonly` plus `data-wf-readonly` on `select`;
+  - `aria-readonly` on checkbox and switch marks;
+  - `data-wf-readonly` on a single radio, and `aria-readonly` on a radio group;
+  - data attributes on segmented, range, otp, stepper, picker, colour and the editor.
+- **Guards stay as they are.** The runtime in `interactions-controls.js` already blocks pointer and keyboard changes; tests now pin it.
+- **Contrast.**
+  - The dashed edge is `--wf-ink-3` in card mode: 4.8:1 on white, 4.4:1 on the page colour. In line mode it is `--wf-line-strong`, 7.5:1.
+  - The lock is `--wf-ink-3`.
+  - Both pass 3:1, and tests measure the computed colours in both modes.
+- **The lock is kept.** It falls back to a caption only if WebKit cannot draw the glyph.
+
+### 9.3 Menus and the menubar
+- **Frame class `T`.** A surface at surface depth 0 and content inside any frame, decided at rule 3. It is used by `menu`. `C` would let rule 8 frame `states_menu` inside its card's grid; `T` keeps every embedded menu as it is today. The top-level inline menu gets the dropdown surface.
+- **Menu overflow.** Labels truncate with an ellipsis; shortcuts and chevrons never shrink.
+- **Menubar leaf markup** follows `itemLink`, as for `nav`:
+  - a known route gives `<a class="wf-menubar-trigger" href>`, which is focusable and navigates on Enter;
+  - an unknown route, a disabled leaf, or an element with its own `interaction` gives `<span class="wf-menubar-trigger">`, which is not focusable, like a nav row;
+  - triggers with submenus stay `<button aria-expanded>`.
+  - The gallery's route-less `Help` therefore becomes a `<span>`.
+- **Current against expanded.**
+  - Current is ink, weight 600 and a 2 px underline, with `aria-current="page" data-wf-current`.
+  - Expanded keeps its fill in card mode, or its dashed outline in line mode.
+  - A current, expanded trigger shows both.
+- **Which items are current.** `itemsOn` with nav's rule:
+  - explicit `selected` or `current` first, and every marked item is on;
+  - an item marked `false` is never inferred;
+  - otherwise, an enabled leaf whose route is the rendered page.
+
+### 9.4 Navigation kinds
+- **Where `B` applies.** Only to `menubar` and to `nav` with variant `sidebar`, `rail` or `top`. The registry lists those variants; a nav with no variant keeps frame `N`.
+- **Placement.** Chrome follows where the author put the element. Moving a sidebar into a side region is the app's job.
+- **Adaptive phone.** A standalone sidebar or rail reflows like a region sidebar: full width, a horizontal row that scrolls inside itself, and a bottom rule instead of the right rule. It never overflows the page.
+- **Placeholders.** Rail placeholder boxes are `aria-hidden`; the link keeps its label as its accessible name.
+- **Skins.** Their inline `background-color` still wins over the white panel, and the selected row keeps the skin's accent and text pair.
+
+### 9.5 Text, lists and checks
+- **List rows.** They stay single-line summaries with a real ellipsis, and are outside the prose newline rule. The `preserve-breaks` longhands are dropped.
+- **Docs.** `brief.md` says `wf init` no longer writes `defaultGridColumns`. `schema-systems.md` covers frame classes `B` and `T`.
+- **New checks:**
+  - two renders of one input give identical HTML;
+  - every page of the gallery, examples and the three in-repo projects is rendered before and after in both modes, and each pixel change is explained;
+  - targeted assertions cover the states below the baseline crop.
+- **WebKit.** Every fixed case is checked in Playwright WebKit as well as Chromium.
