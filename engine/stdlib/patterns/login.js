@@ -1,6 +1,7 @@
 'use strict';
 
 module.exports = {
+  placement: 'screen',
   summary: 'Centred sign-in card: email, password, remember me, forgot link, single sign-on and a sign-up prompt.',
   source: `
 propDefaults:

@@ -1,6 +1,7 @@
 'use strict';
 
 module.exports = {
+  placement: 'screen',
   summary: 'Not-found screen: a 404 empty state with a way home and a support link.',
   source: `
 propDefaults:

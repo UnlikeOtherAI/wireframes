@@ -1,6 +1,7 @@
 'use strict';
 
 module.exports = {
+  placement: 'screen',
   summary: 'Settings screen: page header, a section nav on the left and setting cards on the right (the default slot).',
   source: `
 propDefaults:

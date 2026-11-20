@@ -1,6 +1,7 @@
 'use strict';
 
 module.exports = {
+  placement: 'section',
   summary: 'Landing hero: eyebrow badge, headline, intro, two calls to action and a media slot with an image fallback.',
   source: `
 propDefaults:

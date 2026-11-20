@@ -1,6 +1,7 @@
 'use strict';
 
 module.exports = {
+  placement: 'bottom',
   summary: 'Marketing site footer across the full width: logo and tagline, link columns (the columns slot), copyright and social links. A blank tagline, an empty link list or social: [] is left out.',
   source: `
 propDefaults:
