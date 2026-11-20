@@ -12,21 +12,28 @@ writing a components document:
 They work the same in `wf build`, `wf serve`, the API and the browser bundle,
 including a `.wf` file with no components document.
 
-| Pattern | What it draws |
-|---|---|
-| [`std.login`](#stdlogin) | Centred sign-in card |
-| [`std.signup`](#stdsignup) | Centred sign-up card |
-| [`std.settings_page`](#stdsettings_page) | Page header, section nav and setting cards |
-| [`std.data_page`](#stddata_page) | Page header, filters, table and pagination |
-| [`std.site_header`](#stdsite_header) | Logo, top navigation menu and actions |
-| [`std.hero`](#stdhero) | Headline, intro, calls to action and media |
-| [`std.site_footer`](#stdsite_footer) | Logo, link columns, copyright and social links |
-| [`std.not_found`](#stdnot_found) | 404 state with a way home |
+| Pattern | What it draws | Placement |
+|---|---|---|
+| [`std.login`](#stdlogin) | Centred sign-in card | `screen` |
+| [`std.signup`](#stdsignup) | Centred sign-up card | `screen` |
+| [`std.settings_page`](#stdsettings_page) | Page header, section nav and setting cards | `screen` |
+| [`std.data_page`](#stddata_page) | Page header, filters, table and pagination | `screen` |
+| [`std.site_header`](#stdsite_header) | Logo, top navigation menu and actions | `top` |
+| [`std.hero`](#stdhero) | Headline, intro, calls to action and media | `section` |
+| [`std.site_footer`](#stdsite_footer) | Logo, link columns, copyright and social links | `bottom` |
+| [`std.not_found`](#stdnot_found) | 404 state with a way home | `screen` |
 
 `wf component list --std` lists them, `wf component show std.<name>` prints a
 pattern's props, slots and outline, and the element catalogue
 (`wf catalogue`, [docs/catalogue](../catalogue/index.html)) draws each one with
 its defaults. `wf llm` lists them for agents.
+
+Placement says where a pattern belongs, so a tool that adds one (the mobile
+app's chat, for example) can put it there without guessing:
+`builtinComponentPlacement(id)` in `engine/stdlib` returns `screen` (a page of
+its own), `top` or `bottom` (the start or end of the page's main content), or
+`section` (anywhere the author chooses). It is a hint for tools; the engine
+renders a pattern wherever it is used.
 
 ## Using a pattern
 

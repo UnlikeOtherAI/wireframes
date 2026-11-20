@@ -15,6 +15,7 @@ const { assertComponentExpansion } = require('../../engine/component-registry/ex
 const {
   builtinComponentDefinition,
   builtinComponentIds,
+  builtinComponentPlacement,
   builtinComponentSource,
   builtinComponentSummary,
 } = require('../../engine/stdlib');
@@ -59,6 +60,21 @@ test('the first batch is exactly the eight patterns, each with a summary', () =>
     assert.ok(builtinComponentSummary(id).length > 20, id);
     assert.equal(typeof builtinComponentSource(id), 'string');
   }
+});
+
+test('every pattern says where it belongs on a page', () => {
+  assert.deepEqual(Object.fromEntries(EXPECTED.map((id) => [id, builtinComponentPlacement(id)])), {
+    'std.data_page': 'screen',
+    'std.hero': 'section',
+    'std.login': 'screen',
+    'std.not_found': 'screen',
+    'std.settings_page': 'screen',
+    'std.signup': 'screen',
+    'std.site_footer': 'bottom',
+    'std.site_header': 'top',
+  });
+  assert.equal(builtinComponentPlacement('std.missing'), null);
+  assert.equal(builtinComponentPlacement('hero'), null);
 });
 
 test('every pattern is a valid, self-contained component with documented props', () => {

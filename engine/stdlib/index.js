@@ -56,6 +56,16 @@ function builtinComponentSummary(id) {
   return name ? PATTERNS[name].summary : null;
 }
 
+/**
+ * Where a built-in belongs on a page, so a tool can place it without guessing:
+ * `screen` is a whole page of its own, `top` and `bottom` open and close the
+ * page, and `section` goes wherever the author puts it.
+ */
+function builtinComponentPlacement(id) {
+  const name = patternName(id);
+  return name ? PATTERNS[name].placement : null;
+}
+
 /** What to tell someone who tries to change a built-in. */
 function builtinCopyHint(id) {
   return `Component "${id}" is a built-in std pattern and is read-only. `
@@ -73,6 +83,7 @@ module.exports = {
   builtinCopyHint,
   builtinComponentDefinition,
   builtinComponentIds,
+  builtinComponentPlacement,
   builtinComponentSource,
   builtinComponentSummary,
 };

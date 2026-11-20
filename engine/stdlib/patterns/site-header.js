@@ -1,6 +1,7 @@
 'use strict';
 
 module.exports = {
+  placement: 'top',
   summary: 'Marketing site header: logo, a top navigation menu (nav variant top) and an actions slot.',
   source: `
 propDefaults:

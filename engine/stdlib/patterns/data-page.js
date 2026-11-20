@@ -1,6 +1,7 @@
 'use strict';
 
 module.exports = {
+  placement: 'screen',
   summary: 'List screen: page header with actions, a filters slot, a data table and pagination with a result count.',
   source: `
 propDefaults:
